@@ -105,4 +105,8 @@ inicioAPP:
 
 Uma documentação mais detalhada do Hexagon será disponibilizada no futuro.
 
+# Informação de localização na árvore de construção do Hexagonix/Andromeda:
+
+Este repositório deve ser clonado diretamente no diretório raiz local, com o nome de Hexagon.
+
 Versão deste arquivo: 1.0
