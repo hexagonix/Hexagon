@@ -5,7 +5,7 @@
 ;;        #$@$@    #@#@$
 ;;        @#@$%    %#$#%
 ;;        @#$@$    #@#$@
-;;        #@#$$#$#%!@#@#     Copyright © 2016-2021 Felipe Miguel Nery Lunkes
+;;        #@#$$#$#%!@#@#     Copyright © 2016-2022 Felipe Miguel Nery Lunkes
 ;;        @#@%!@&$#&$#@#             Todos os direitos reservados
 ;;        !@$%#    @&$%#
 ;;        @$#!%    #&*@&
@@ -17,7 +17,7 @@
 ;;                                                                                  
 ;;                                 Kernel Hexagon®          
 ;;                                                                   
-;;                  Copyright © 2016-2021 Felipe Miguel Nery Lunkes                
+;;                  Copyright © 2016-2022 Felipe Miguel Nery Lunkes                
 ;;                          Todos os direitos reservados.                    
 ;;                                                                   
 ;;************************************************************************************
@@ -48,7 +48,7 @@ Hexagon.Info:
                   db "        #$@$@    #@#@$", 10
                   db "        @#@$%    %#$#%                     Versao ", Hexagon.Versao.definicao, 10
                   db "        @#$@$    #@#$@", 10
-                  db "        #@#$$#$#%!@#@#     Copyright (C) 2016-2021 Felipe Miguel Nery Lunkes", 10
+                  db "        #@#$$#$#%!@#@#     Copyright (C) 2016-2022 Felipe Miguel Nery Lunkes", 10
                   db "        @#@%!@&$#&$#@#             Todos os direitos reservados", 10
                   db "        !@$%#    @&$%#", 10
                   db "        @$#!%    #&*@&", 10

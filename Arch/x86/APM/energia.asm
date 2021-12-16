@@ -5,7 +5,7 @@
 ;;        #$@$@    #@#@$
 ;;        @#@$%    %#$#%
 ;;        @#$@$    #@#$@
-;;        #@#$$#$#%!@#@#     Copyright © 2016-2021 Felipe Miguel Nery Lunkes
+;;        #@#$$#$#%!@#@#     Copyright © 2016-2022 Felipe Miguel Nery Lunkes
 ;;        @#@%!@&$#&$#@#             Todos os direitos reservados
 ;;        !@$%#    @&$%#
 ;;        @$#!%    #&*@&
@@ -17,7 +17,7 @@
 ;;                                                                                  
 ;;                                 Kernel Hexagon®          
 ;;                                                                   
-;;                  Copyright © 2016-2021 Felipe Miguel Nery Lunkes                
+;;                  Copyright © 2016-2022 Felipe Miguel Nery Lunkes                
 ;;                          Todos os direitos reservados.                    
 ;;                                                                   
 ;;************************************************************************************
@@ -57,7 +57,7 @@ match =SIM, VERBOSE
 ;;
 ;;             Parte da implementação APM do Hexagon®
 ;;
-;;          Copyright © 2016-2021 Felipe Miguel Nery Lunkes
+;;          Copyright © 2016-2022 Felipe Miguel Nery Lunkes
 ;;
 ;;*********************************************************************/
 
