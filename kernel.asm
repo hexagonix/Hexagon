@@ -488,6 +488,11 @@ include "Kernel/relatorio.asm"                    ;; Funções para manipulaçã
 include "Kernel/panico.asm"                       ;; Funções para exibição e identificação de erros do Hexagon®  
 include "Kernel/usuarios.asm"                     ;; Funções de gerenciamento de permissões e usuários
 
+;; Processos, modelo de processo e de imagens executáveis
+
+include "Lib/HAPP.asm"                            ;; Funções para tratamento de imagens HAPP
+include "Kernel/proc.asm"                         ;; Funções para a manipulação de processos
+
 ;; Gerenciamento de Dispositivos do Hexagon®
 
 include "Arch/x86/Procx86/procx86.asm"	          ;; IDT, GDT e procedimentos para definir modo real e protegido
@@ -511,11 +516,6 @@ include "Arch/x86/Memx86/memoria.asm"             ;; Diagnóstico de memória in
 ;; Sistemas de arquivos suportados pelo Hexagon®
 
 include "FS/FAT16/fat16.asm"                      ;; Rotinas para manipulação de arquivos no sistema de arquivos FAT16
-
-;; Processos, modelo de processo e de imagens executáveis
-
-include "Lib/HAPP.asm"                            ;; Funções para tratamento de imagens HAPP
-include "Kernel/proc.asm"                         ;; Funções para a manipulação de processos
 
 ;; Bibliotecas do Hexagon®
 
