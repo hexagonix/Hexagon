@@ -490,18 +490,18 @@ include "Kernel/usuarios.asm"                     ;; Funções de gerenciamento 
 
 ;; Processos, modelo de processo e de imagens executáveis
 
-include "Lib/HAPP.asm"                            ;; Funções para tratamento de imagens HAPP
 include "Kernel/proc.asm"                         ;; Funções para a manipulação de processos
+include "Lib/HAPP.asm"                            ;; Funções para tratamento de imagens HAPP
 
 ;; Gerenciamento de Dispositivos do Hexagon®
 
+include "Dev/Universal/Teclado/teclado.asm"	      ;; Funções necessárias para o uso do teclado
 include "Arch/x86/Procx86/procx86.asm"	          ;; IDT, GDT e procedimentos para definir modo real e protegido
 include "Arch/x86/BIOS/BIOS.asm"		          ;; Interrupções do BIOS em modo real
 include "Dev/Universal/Console/console.asm"	      ;; Funções de gerenciamento de vídeo do Hexagon®
 include "Arch/x86/APM/energia.asm"                ;; Implementação APM do Hexagon®
 include "Dev/Universal/Som/som.asm"               ;; Funções para controle de som do Hexagon®
 include "Dev/Universal/PS2/PS2.asm"               ;; Funções para controle de portas PS/2 do Hexagon®
-include "Dev/Universal/Teclado/teclado.asm"	      ;; Funções necessárias para o uso do teclado
 include "Arch/x86/Timer/timer.asm"                ;; Funções para manipulação de timer do Hexagon®   
 include "Dev/x86/Disco/disco.asm"		          ;; Funções para ler e escrever em discos rígidos do Hexagon®
 include "FS/vfs.asm"                              ;; Sistema de arquivos virtual (VFS) para Hexagon®
@@ -523,9 +523,14 @@ include "Lib/string.asm"	                      ;; Funções para manipulação d
 include "Lib/num.asm"                             ;; Funções de geração e alimentação de números aleatórios
 include "Lib/relogio.asm"                         ;; Interface de relógio em tempo real
 
+;; Aqui temos um stub que previne a execução da imagem do Hexagon® diretamente pelo usuário, o que poderia
+;; causar problemas visto a natureza da imagem (ser um Kernel, não um processo comum)
+
+include "Lib/stubHAPP.asm"                       ;; Stub para prevenir execução acidental da imagem
+
 ;; Fonte padrão do Sistema
 
-include "Lib/fonte.asm"	                      ;; Fontes e serviços de texto para modo gráfico do Hexagon®
+include "Lib/fonte.asm"	                         ;; Fontes e serviços de texto para modo gráfico do Hexagon®
 
 ;; Mensagens do Hexagon® para verbose, caso seja desejado o suporte a verbose. Em caso negativo, o
 ;; arquivo estará em branco
@@ -536,10 +541,7 @@ include "Kernel/verbose.asm"                      ;; Contém as mensagens para v
 
 include "Kernel/parametros.asm"
 
-;; Aqui temos um stub que previne a execução da imagem do Hexagon® diretamente pelo usuário, o que poderia
-;; causar problemas visto a natureza da imagem (ser um Kernel, não um processo comum)
-
-include "Lib/stubHAPP.asm"                        ;; Stub para prevenir execução acidental da imagem
+                   
 
 ;;************************************************************************************
 
