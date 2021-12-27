@@ -179,9 +179,9 @@ Hexagon.Kernel.Dev.x86.Disco.Disco.lerMBR:
 
 ;; Primeiro devemos carregar a MBR na memória
 
-	mov eax, 01h                      ;; Número de setores para ler
-	mov esi, 00h                      ;; LBA do setor inicial
-	mov cx, 0x50			          ;; Segmento
+	mov eax, 01h                    ;; Número de setores para ler
+	mov esi, 00h                    ;; LBA do setor inicial
+	mov cx, 0x50			        ;; Segmento
 	mov edi, Hexagon.CacheDisco+20000 ;; Deslocamento
 	mov dl, byte[Hexagon.Dev.Universal.Disco.Controle.driveAtual]
 
@@ -193,20 +193,11 @@ Hexagon.Kernel.Dev.x86.Disco.Disco.lerMBR:
 
 	add ebx, 0x1BE ;; Deslocamento da primeira partição
 
-	mov ah, byte[es:ebx+04h]          ;; Contém o sistema de arquivos
+	mov ah, byte[es:ebx+04h]        ;; Contém o sistema de arquivos
 
 	jmp .fim
 
 .erro:
-
-match =SIM, VERBOSE {
-
-	mov esi, Hexagon.Verbose.Disco.erroLerMBR
-	mov ebx, Hexagon.Relatorio.Prioridades.p5
-
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
 
 	stc
 
@@ -243,15 +234,6 @@ Hexagon.Kernel.Dev.x86.Disco.Disco.lerBPB:
 
 .erro:
 
-match =SIM, VERBOSE {
-
-	mov esi, Hexagon.Verbose.Disco.erroLerBPB
-	mov ebx, Hexagon.Relatorio.Prioridades.p5
-
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
-
 	stc
 
 .fim:
@@ -281,15 +263,6 @@ Hexagon.Kernel.Dev.x86.Disco.Disco.reiniciarDisco:
 	jmp .fim
 
 .erro:
-
-match =SIM, VERBOSE {
-
-	mov esi, Hexagon.Verbose.Disco.erroReiniciarDisco
-	mov ebx, Hexagon.Relatorio.Prioridades.p5
-
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
 
 	stc
 
@@ -345,15 +318,6 @@ Hexagon.Kernel.Dev.x86.Disco.Disco.detectarDisco:
 
 .erro:
 
-match =SIM, VERBOSE {
-
-	mov esi, Hexagon.Verbose.Disco.erroDiscoNaoDetectado
-	mov ebx, Hexagon.Relatorio.Prioridades.p5
-
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
-
 ;; A tabela de erros BIOS deve ser observada
 
 	stc
@@ -399,7 +363,7 @@ Hexagon.Kernel.Dev.x86.Disco.Disco.lerSetores:
 	mov esi, .PED
 	mov ah, 0x42				      ;; Leitura extendida BIOS
 	
-	call Hexagon.Kernel.Arch.x86.BIOS.BIOS.int13h ;; Serviços de disco do BIOS BIOS
+	call Hexagon.Kernel.Arch.x86.BIOS.BIOS.int13h				          ;; Serviços de disco do BIOS BIOS
 	
 	jnc .semErro
 	
@@ -427,15 +391,6 @@ Hexagon.Kernel.Dev.x86.Disco.Disco.lerSetores:
 	
 .errosGerais:
 
-match =SIM, VERBOSE {
-
-	mov esi, Hexagon.Verbose.Disco.erroGeralLeitura
-	mov ebx, Hexagon.Relatorio.Prioridades.p5
-
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
-
     mov esi, Hexagon.Disco.erroDisco
 	
 	mov eax, 1
@@ -443,16 +398,7 @@ match =SIM, VERBOSE {
 	call Hexagon.Kernel.Kernel.Panico.panico
 	
 .semMidia:
-
-match =SIM, VERBOSE {
-
-	mov esi, Hexagon.Verbose.Disco.erroSemMidia
-	mov ebx, Hexagon.Relatorio.Prioridades.p5
-
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
-
+	
 	mov dl, byte [Hexagon.Dev.Universal.Disco.Controle.driveBoot]
 	mov byte [Hexagon.Dev.Universal.Disco.Controle.driveAtual], dl
 	
@@ -526,7 +472,7 @@ Hexagon.Kernel.Dev.x86.Disco.Disco.escreverSetores:
 	mov ah, 0x43				      ;; Escrita extendida BIOS
 	mov al, 0
 
-	call Hexagon.Kernel.Arch.x86.BIOS.BIOS.int13h ;; Serviços de disco BIOS
+	call Hexagon.Kernel.Arch.x86.BIOS.BIOS.int13h				          ;; Serviços de disco BIOS
 	
 	jnc .semErro
 
@@ -566,15 +512,6 @@ Hexagon.Kernel.Dev.x86.Disco.Disco.escreverSetores:
 	
 .protegidoEscrita:
 
-match =SIM, VERBOSE {
-
-	mov esi, Hexagon.Verbose.Disco.erroProtegidoEscrita
-	mov ebx, Hexagon.Relatorio.Prioridades.p5
-
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
-
     stc
 
 	mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Universal.Disco.HD.IO.protegidoEscrita
@@ -582,15 +519,6 @@ match =SIM, VERBOSE {
     ret	
 	
 .discoNaoPronto:
-
-match =SIM, VERBOSE {
-
-	mov esi, Hexagon.Verbose.Disco.erroDiscoNaoPronto
-	mov ebx, Hexagon.Relatorio.Prioridades.p5
-
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
 
     stc
 
@@ -600,15 +528,6 @@ match =SIM, VERBOSE {
 
 .discoEmUso:
 
-match =SIM, VERBOSE {
-
-	mov esi, Hexagon.Verbose.Disco.erroEmUso
-	mov ebx, Hexagon.Relatorio.Prioridades.p5
-
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
-
     stc
 
 	mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Universal.Disco.HD.IO.discoEmUso
@@ -616,15 +535,6 @@ match =SIM, VERBOSE {
     ret
 
 .falhaEscrita:
-
-match =SIM, VERBOSE {
-
-	mov esi, Hexagon.Verbose.Disco.erroEscrita
-	mov ebx, Hexagon.Relatorio.Prioridades.p5
-
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
 
     stc
   
@@ -634,15 +544,6 @@ match =SIM, VERBOSE {
 	
 .errosGerais:
 
-match =SIM, VERBOSE {
-
-	mov esi, Hexagon.Verbose.Disco.erroGeralEscrita
-	mov ebx, Hexagon.Relatorio.Prioridades.p5
-
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
-
     mov esi, Hexagon.Disco.erroDisco
 	
 	mov eax, 1
@@ -650,16 +551,7 @@ match =SIM, VERBOSE {
 	call Hexagon.Kernel.Kernel.Panico.panico
 	
 .semMidia:
-
-match =SIM, VERBOSE {
-
-	mov esi, Hexagon.Verbose.Disco.erroSemMidia
-	mov ebx, Hexagon.Relatorio.Prioridades.p5
-
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
-
+	
 	mov dl, byte [Hexagon.Dev.Universal.Disco.Controle.driveBoot]
 	mov byte [Hexagon.Dev.Universal.Disco.Controle.driveAtual], dl
 	
@@ -704,7 +596,7 @@ Hexagon.Kernel.Dev.x86.Disco.Disco.testarVolume:
 
 	mov eax, 1
 	mov esi, 01
-	mov cx, 0x50			            ;; Segmento
+	mov cx, 0x50			        ;; Segmento
 	mov edi, Hexagon.CacheDisco+20000	;; Deslocamento
 	mov dl, byte[Hexagon.Dev.Universal.Disco.Controle.driveAtual]
 	
