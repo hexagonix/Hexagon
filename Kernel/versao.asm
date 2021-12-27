@@ -32,13 +32,13 @@
 
 Hexagon.Arquitetura.suporte = 1 ;; Arquitetura desta imagem
 
-Hexagon.Versao.definicao equ "8.55"
+Hexagon.Versao.definicao equ "8.56"
 
 Hexagon.Versao:
 
 .numeroVersao     = 8
-.numeroSubversao  = 55
-.caractereRevisao = "P"
+.numeroSubversao  = 56
+.caractereRevisao = "c"
 .nomeKernel:      db "Hexagon(R)", 0
 
 Hexagon.Info:
