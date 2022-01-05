@@ -397,3 +397,14 @@ Hexagon.Kernel.Lib.Graficos.desenharBloco:
 
 ;;************************************************************************************	
 
+;; Configura a resolução e configurações padrão de vídeo durante a inicialização
+
+Hexagon.Kernel.Lib.Graficos.configurarVideo:
+
+.modoGrafico1:
+
+	mov eax, 01h
+	
+	call Hexagon.Kernel.Dev.Universal.Console.Console.definirResolucao
+	
+	ret				

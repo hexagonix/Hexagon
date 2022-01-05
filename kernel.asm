@@ -30,7 +30,86 @@
 
 use32					
 
-iniciarHexagon:                 ;; Agora as estruturas do Kernel serão inicializadas
+;;************************************************************************************
+;;
+;; Arquivos e funções que compõem o Kernel Hexagon®
+;;
+;;************************************************************************************
+
+;; Versão do Hexagon®
+
+include "Kernel/versao.asm"                       ;; Contém informações de versão do Hexagon®
+
+;; Serviços do Hexagon®
+
+include "API/api.asm"		                      ;; Manipulador de interrupção do Hexagon®
+include "Lib/graficos.asm"	                      ;; Funções para gráficos do Hexagon®
+include "API/servicos.asm"	                      ;; Rotinas de interrupção e manipuladores de IRQs
+
+;; Usuários e outras utilidades
+
+include "Kernel/relatorio.asm"                    ;; Funções para manipulação de mensagens do Kernel
+include "Kernel/panico.asm"                       ;; Funções para exibição e identificação de erros do Hexagon®  
+include "Kernel/usuarios.asm"                     ;; Funções de gerenciamento de permissões e usuários
+
+;; Gerenciamento de Dispositivos do Hexagon®
+
+include "Dev/Universal/Teclado/teclado.asm"	      ;; Funções necessárias para o uso do teclado
+include "Arch/x86/Procx86/procx86.asm"	          ;; IDT, GDT e procedimentos para definir modo real e protegido
+include "Arch/x86/BIOS/BIOS.asm"		          ;; Interrupções do BIOS em modo real
+include "Dev/Universal/Console/console.asm"	      ;; Funções de gerenciamento de vídeo do Hexagon®
+include "Arch/x86/APM/energia.asm"                ;; Implementação APM do Hexagon®
+include "Dev/Universal/Som/som.asm"               ;; Funções para controle de som do Hexagon®
+include "Dev/Universal/PS2/PS2.asm"               ;; Funções para controle de portas PS/2 do Hexagon®
+include "Arch/x86/Timer/timer.asm"                ;; Funções para manipulação de timer do Hexagon®   
+include "Dev/x86/Disco/disco.asm"		          ;; Funções para ler e escrever em discos rígidos do Hexagon®
+include "FS/vfs.asm"                              ;; Sistema de arquivos virtual (VFS) para Hexagon®
+include "Dev/Universal/Mouse/mouse.asm"		      ;; Funções para mouse PS/2 do Hexagon®
+include "Dev/Universal/Impressora/impressora.asm" ;; Funções de manipulação de impressora
+include "Dev/Universal/COM/serial.asm"            ;; Funções para manipulação de portas seriais em modo protegido
+include "Arch/x86/CMOS/cmos.asm"                  ;; Funções para manipulação de data e hora  
+include "Dev/dev.asm"                             ;; Funções de gerenciamento e abstração de Hardware do Hexagon®
+include "Arch/Universal/memoria.asm"              ;; Funções para gerenciamento de memória do Hexagon® 
+include "Arch/x86/Memx86/memoria.asm"             ;; Diagnóstico de memória instalada no dispositivo
+
+;; Processos, modelo de processo e de imagens executáveis
+
+include "Kernel/proc.asm"                         ;; Funções para a manipulação de processos
+include "Lib/HAPP.asm"                            ;; Funções para tratamento de imagens HAPP
+
+;; Sistemas de arquivos suportados pelo Hexagon®
+
+include "FS/FAT16/fat16.asm"                      ;; Rotinas para manipulação de arquivos no sistema de arquivos FAT16
+
+;; Bibliotecas do Hexagon®
+
+include "Lib/string.asm"	                      ;; Funções para manipulação de String
+include "Lib/num.asm"                             ;; Funções de geração e alimentação de números aleatórios
+include "Lib/relogio.asm"                         ;; Interface de relógio em tempo real
+
+;; Aqui temos um stub que previne a execução da imagem do Hexagon® diretamente pelo usuário, o que poderia
+;; causar problemas visto a natureza da imagem (ser um Kernel, não um processo comum)
+
+include "Lib/stubHAPP.asm"                       ;; Stub para prevenir execução acidental da imagem
+
+;; Fonte padrão do Sistema
+
+include "Lib/fonte.asm"	                         ;; Fontes e serviços de texto para modo gráfico do Hexagon®
+
+;; Mensagens do Hexagon® para verbose, caso seja desejado o suporte a verbose. Em caso negativo, o
+;; arquivo estará em branco
+
+include "Kernel/verbose.asm"                     ;; Contém as mensagens para verbose exclusivas do Hexagon®
+
+;; Aqui temos as variáveis, constantes e funções para interpretar parâmetros passados pelo HBoot
+
+include "Kernel/parametros.asm"                  ;; Código de análise e processamento de parâmetros
+
+;;************************************************************************************
+
+;; Ponto de entrada do Hexagon® - Inicialização do kernel
+
+Hexagon.init:                   ;; Agora as estruturas do Kernel serão inicializadas
 
 ;; Primeiramente os registradores de segmento e da pilha serão configurados
 
@@ -53,7 +132,7 @@ iniciarHexagon:                 ;; Agora as estruturas do Kernel serão iniciali
 
 	call Hexagon.Kernel.Arch.Universal.Memoria.iniciarMemoria ;; Inicia o alocador de memória do Hexagon®
 
-	call configurarVideo ;; Configura a resolução e configurações padrão de vídeo
+	call Hexagon.Kernel.Lib.Graficos.configurarVideo ;; Configura a resolução e configurações padrão de vídeo
 
 	call Hexagon.Kernel.Kernel.Relatorio.iniciarRelatorio ;; Inicia o relatório de componentes do Hexagon®
 	
@@ -430,7 +509,7 @@ componenteFinalizado: db "Um componente critico do Sistema foi finalizado de for
 ;;
 ;; AVISO! Esta porção de código pode ser removida com o tempo.
 ;; 
-;; - Futuramente, o Sistema não poderá ser utilizado sem o carregamento do Shell.
+;; - Futuramente, o Sistema não poderá ser utilizado sem o carregamento de init.
 ;; - Por enquanto, ao não localizar o Inicializador do Sistema (Init), o Sistema tentará 
 ;;   carregar o Shell.
 ;;
@@ -445,103 +524,6 @@ shellFinalizado:      db "O Shell do Sistema foi finalizado de forma inesperada.
                       db "Este pequeno problema impede a execucao do sistema de maneira adequada e, para evitar qualquer", 10, 10
 				      db "problema mais grave ou a perda de seus dados, o Sistema foi finalizado.", 10, 10
 				      db "O Sistema pede desculpas por qualquer inconveniente causado.", 10, 10, 10, 0
-
-;;************************************************************************************
-
-;; Configura a resolução e configurações padrão de vídeo durante a inicialização
-
-configurarVideo:
-
-.modoGrafico1:
-
-	mov eax, 1
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.definirResolucao
-	
-	ret
-
-;;************************************************************************************
-
-;; A partir de aqui, temos apenas atividade administrativa, atendendo aos processos
-
-use32				
-
-;;************************************************************************************
-;;
-;; Arquivos e funções que compõem o Kernel Hexagon®
-;;
-;;************************************************************************************
-
-;; Versão do Hexagon®
-
-include "Kernel/versao.asm"                       ;; Contém informações de versão do Hexagon®
-
-;; Serviços do Hexagon®
-
-include "API/api.asm"		                      ;; Manipulador de interrupção do Hexagon®
-include "Lib/graficos.asm"	                      ;; Funções para gráficos do Hexagon®
-include "API/servicos.asm"	                      ;; Rotinas de interrupção e manipuladores de IRQs
-
-;; Usuários e outras utilidades
-
-include "Kernel/relatorio.asm"                    ;; Funções para manipulação de mensagens do Kernel
-include "Kernel/panico.asm"                       ;; Funções para exibição e identificação de erros do Hexagon®  
-include "Kernel/usuarios.asm"                     ;; Funções de gerenciamento de permissões e usuários
-
-;; Processos, modelo de processo e de imagens executáveis
-
-include "Kernel/proc.asm"                         ;; Funções para a manipulação de processos
-include "Lib/HAPP.asm"                            ;; Funções para tratamento de imagens HAPP
-
-;; Gerenciamento de Dispositivos do Hexagon®
-
-include "Dev/Universal/Teclado/teclado.asm"	      ;; Funções necessárias para o uso do teclado
-include "Arch/x86/Procx86/procx86.asm"	          ;; IDT, GDT e procedimentos para definir modo real e protegido
-include "Arch/x86/BIOS/BIOS.asm"		          ;; Interrupções do BIOS em modo real
-include "Dev/Universal/Console/console.asm"	      ;; Funções de gerenciamento de vídeo do Hexagon®
-include "Arch/x86/APM/energia.asm"                ;; Implementação APM do Hexagon®
-include "Dev/Universal/Som/som.asm"               ;; Funções para controle de som do Hexagon®
-include "Dev/Universal/PS2/PS2.asm"               ;; Funções para controle de portas PS/2 do Hexagon®
-include "Arch/x86/Timer/timer.asm"                ;; Funções para manipulação de timer do Hexagon®   
-include "Dev/x86/Disco/disco.asm"		          ;; Funções para ler e escrever em discos rígidos do Hexagon®
-include "FS/vfs.asm"                              ;; Sistema de arquivos virtual (VFS) para Hexagon®
-include "Dev/Universal/Mouse/mouse.asm"		      ;; Funções para mouse PS/2 do Hexagon®
-include "Dev/Universal/Impressora/impressora.asm" ;; Funções de manipulação de impressora
-include "Dev/Universal/COM/serial.asm"            ;; Funções para manipulação de portas seriais em modo protegido
-include "Arch/x86/CMOS/cmos.asm"                  ;; Funções para manipulação de data e hora  
-include "Dev/dev.asm"                             ;; Funções de gerenciamento e abstração de Hardware do Hexagon®
-include "Arch/Universal/memoria.asm"              ;; Funções para gerenciamento de memória do Hexagon® 
-include "Arch/x86/Memx86/memoria.asm"             ;; Diagnóstico de memória instalada no dispositivo
-
-;; Sistemas de arquivos suportados pelo Hexagon®
-
-include "FS/FAT16/fat16.asm"                      ;; Rotinas para manipulação de arquivos no sistema de arquivos FAT16
-
-;; Bibliotecas do Hexagon®
-
-include "Lib/string.asm"	                      ;; Funções para manipulação de String
-include "Lib/num.asm"                             ;; Funções de geração e alimentação de números aleatórios
-include "Lib/relogio.asm"                         ;; Interface de relógio em tempo real
-
-;; Aqui temos um stub que previne a execução da imagem do Hexagon® diretamente pelo usuário, o que poderia
-;; causar problemas visto a natureza da imagem (ser um Kernel, não um processo comum)
-
-include "Lib/stubHAPP.asm"                       ;; Stub para prevenir execução acidental da imagem
-
-;; Fonte padrão do Sistema
-
-include "Lib/fonte.asm"	                         ;; Fontes e serviços de texto para modo gráfico do Hexagon®
-
-;; Mensagens do Hexagon® para verbose, caso seja desejado o suporte a verbose. Em caso negativo, o
-;; arquivo estará em branco
-
-include "Kernel/verbose.asm"                      ;; Contém as mensagens para verbose exclusivas do Hexagon®
-
-;; Aqui temos as variáveis, constantes e funções para interpretar parâmetros passados pelo HBoot
-
-include "Kernel/parametros.asm"
-
-                   
 
 ;;************************************************************************************
 

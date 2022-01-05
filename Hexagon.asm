@@ -26,6 +26,20 @@
 
 ;; Neste momento, o ambiente de operação é o modo real
 
+;; Especificações de inicialização do Hexagon®
+;;
+;; Parâmetros que devem ser fornecidos pelo HBoot (ou gerenciador compatível):
+;; 
+;; Os parâmetros devem ser fornecidos nos registradores, em valor absoluto ou endereço
+;; de memória para estrutura, como árvore de dispositivos, ou variáveis
+;;
+;; BL  - Código da unidade de unicialização
+;; CX  - Memória total reconhecida pelo HBoot
+;; AX  - Endereço da árvore de dispositivos de 16 bits
+;; EBP - Ponteiro para o BPB (BIOS Parameter Block)
+;; ESI - Linha de comando para o Hexagon®
+;; EDI - Endereço da árvore de dispositivos de 32 bits
+
 use16				
 
 cabecalhoHexagon:
@@ -85,7 +99,10 @@ cabecalhoHexagon:
 ;; Agora vamos salvar a localização da estrutura de parâmetros fornecida pelo HBoot
 
 	mov dword[Hexagon.Boot.Parametros.linhaComando], esi
-	
+
+;; Agora vamos arrumar a casa para entrar em modo protegido e ir para o ponto de entrada de fato do
+;; Hexagon®, iniciando de fato o kernel
+
 ;; Habilitar A20, necessário para endereçamento de 4 GB de memória RAM e para entrar em modo protegido
 	
 	call Hexagon.Kernel.Arch.x86.Procx86.Procx86.ativarA20        ;; Ativar A20, necessário para o modo protegido
@@ -96,4 +113,8 @@ cabecalhoHexagon:
  
 ;; Agora o código de modo protegido será executado (já estamos em 32 bits!)
 
-include "kernel.asm"            ;; Incluir o restante do Kernel, em ambiente de modo protegido
+use32 
+
+	jmp Hexagon.init  ;; Vamos agora para o ponto de entrada do Hexagon® em modo protegido
+
+include "kernel.asm"  ;; Incluir o restante do Kernel, em ambiente de modo protegido
