@@ -101,8 +101,6 @@ struc Hexagon.Gerenciamento.Tarefas maxProcessos
 
 Hexagon.Processos Hexagon.Gerenciamento.Tarefas 20 ;; 21 processos por enquanto
 
-align 4
-
 ;;************************************************************************************
 ;;
 ;;                      Bloco de Controle de Processo do Hexagon®
@@ -128,6 +126,8 @@ tabelaProcessos: times 13 * Hexagon.Processos.limiteProcessos db ' ' ;; Cria uma
 tabelaPilha: times 13 * Hexagon.Processos.limiteProcessos     db 0   ;; Armazenará o nome dos processos na pilha
 
 ;;************************************************************************************
+
+align 32 
 
 ;; Destravar a pilha de processos, permitindo o fechamento do aplicativo pelo usuário
 
