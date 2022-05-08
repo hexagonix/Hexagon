@@ -38,14 +38,14 @@ Hexagon.API.Controle:
 
 ;;************************************************************************************
 
-;; Manipulador de interrupção do Sistema Operacional Hexagon®
+;; Manipulador de interrupção do Sistema Operacional Hexagonix®
 ;;
 ;; Saída:
 ;;
 ;;	EBP = 0xABC12345 em caso de função não disponível
 ;;  CF definido em caso de função não disponível
 	
-manipuladorAndromeda:
+manipuladorHexagon:
 
 	push ebp
 	

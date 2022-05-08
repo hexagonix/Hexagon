@@ -55,7 +55,7 @@ instalarInterrupcoes:
 	
 	call instalarISR
 	
-	mov esi, manipuladorAndromeda           ;; Serviços do Hexagon®
+	mov esi, manipuladorHexagon             ;; Serviços do Hexagon®
 	mov eax, Hexagon.Int.interrupcaoHexagon ;; Número da interrupção       
 	
 	call instalarISR
