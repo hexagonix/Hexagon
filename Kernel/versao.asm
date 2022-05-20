@@ -32,19 +32,19 @@
 
 Hexagon.Arquitetura.suporte = 1 ;; Arquitetura desta imagem
 
-Hexagon.Versao.definicao equ "9.1"
+Hexagon.Versao.definicao equ "9.2"
 
 Hexagon.Versao:
 
 .numeroVersao     = 9
-.numeroSubversao  = 01
+.numeroSubversao  = 2
 .caractereRevisao = "A"
 .nomeKernel:      db "Hexagon(R)", 0
 
 Hexagon.Info:
 
 .sobreHexagon:    db 10, 10
-                  db "        %#@$%    &@$%$                  Kernel Hexagon(R)", 10
+                  db "        %#@$%    &@$%$                  Kernel ", Hexagon.Versao.nomeKernel, 10
                   db "        #$@$@    #@#@$", 10
                   db "        @#@$%    %#$#%                     Versao ", Hexagon.Versao.definicao, 10
                   db "        @#$@$    #@#$@", 10
