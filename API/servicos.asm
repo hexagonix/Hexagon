@@ -54,14 +54,16 @@ instalarInterrupcoes:
 	mov eax, Hexagon.Int.interrupcaoTeclado ;; Número da interrupção			
 	
 	call instalarISR
-	
-	mov esi, manipuladorHexagon             ;; Serviços do Hexagon®
-	mov eax, Hexagon.Int.interrupcaoHexagon ;; Número da interrupção       
-	
-	call instalarISR
 
 	mov esi, manipuladorMousePS2            ;; IRQ 12
 	mov eax, Hexagon.Int.interrupcaoMouse   ;; Número da interrupção	    
+	
+	call instalarISR
+
+;; Instalar o manipulador de chamadas do Hexagon®
+
+	mov esi, manipuladorHexagon             ;; Serviços do Hexagon®
+	mov eax, Hexagon.Int.interrupcaoHexagon ;; Número da interrupção       
 	
 	call instalarISR
 

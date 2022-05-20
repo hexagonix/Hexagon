@@ -134,6 +134,10 @@ Hexagon.init:                   ;; Agora as estruturas do Kernel serão iniciali
 
 	call Hexagon.Kernel.Arch.Universal.Memoria.iniciarMemoria ;; Inicia o alocador de memória do Hexagon®
 
+	call Hexagon.Kernel.Dev.Universal.Teclado.Teclado.iniciarTeclado ;; Iniciar o serviço de teclado do Hexagon®
+
+	call Hexagon.Kernel.Dev.Universal.Mouse.Mouse.iniciarMouse ;; Iniciar o serviço de mouse do Hexagon®
+
 	call Hexagon.Kernel.Lib.Graficos.configurarVideo ;; Configura a resolução e configurações padrão de vídeo
 
 	call Hexagon.Kernel.Kernel.Relatorio.iniciarRelatorio ;; Inicia o relatório de componentes do Hexagon®
@@ -203,6 +207,23 @@ match =SIM, VERBOSE {
 
 ;;************************************************************************************
 
+match =SIM, VERBOSE {
+	
+	mov esi, Hexagon.Verbose.teclado 
+	mov ebx, Hexagon.Relatorio.Prioridades.p5
+	
+	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
+
+	
+	mov esi, Hexagon.Verbose.mouse
+	mov ebx, Hexagon.Relatorio.Prioridades.p5 
+	
+	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
+
+}
+
+;;************************************************************************************
+
 	call Hexagon.Kernel.Arch.x86.Timer.Timer.iniciarTimer ;; Inicializa o serviço de timer do Sistema
 
 match =SIM, VERBOSE {
@@ -212,7 +233,7 @@ match =SIM, VERBOSE {
 	
 	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
 
-	}
+}
 
 ;;************************************************************************************
 
@@ -222,32 +243,6 @@ match =SIM, VERBOSE {
 	
 	mov esi, Hexagon.Verbose.escalonador 
 	mov ebx, Hexagon.Relatorio.Prioridades.p5
-	
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
-
-;;************************************************************************************
-
-	call Hexagon.Kernel.Dev.Universal.Teclado.Teclado.iniciarTeclado ;; Iniciar o serviço de teclado do Hexagon®
-
-match =SIM, VERBOSE {
-	
-	mov esi, Hexagon.Verbose.teclado 
-	mov ebx, Hexagon.Relatorio.Prioridades.p5
-	
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
-
-;;************************************************************************************
-
-	call Hexagon.Kernel.Dev.Universal.Mouse.Mouse.iniciarMouse ;; Iniciar o serviço de mouse do Hexagon®
-
-match =SIM, VERBOSE {
-	
-	mov esi, Hexagon.Verbose.mouse
-	mov ebx, Hexagon.Relatorio.Prioridades.p5 
 	
 	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
 
