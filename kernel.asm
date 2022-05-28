@@ -30,6 +30,8 @@
 
 use32					
 
+align 128
+
 ;;************************************************************************************
 ;;
 ;; Arquivos e funções que compõem o Kernel Hexagon®
@@ -54,7 +56,7 @@ include "Kernel/usuarios.asm"                     ;; Funções de gerenciamento 
 
 ;; Gerenciamento de Dispositivos do Hexagon®
 
-align 32 
+align 128
 
 include "Dev/Universal/Teclado/teclado.asm"	      ;; Funções necessárias para o uso do teclado
 include "Arch/x86/Procx86/procx86.asm"	          ;; IDT, GDT e procedimentos para definir modo real e protegido
@@ -473,7 +475,7 @@ match =SIM, VERBOSE {
 	
 .fimInit:                      ;; Imprimir mensagem e finalizar o sistema
 
-	mov esi, componenteFinalizado
+	mov esi, semInit
 	
 	mov eax, 1
 
@@ -490,38 +492,36 @@ match =SIM, VERBOSE {
 ;;************************************************************************************
 	 
 initHexagon:          db "init.app", 0 ;; Nome do arquivo que contêm o Inicializador do Sistema (init)
-shellHexagon:         db "sh.app", 0   ;; Nome do Shell padrão
+shellHexagon:         db "sh.app", 0   ;; Nome do shell padrão
 		   
-semInit:              db "Um componente critico do Sistema (Inicializador do Sistema (init)) nao foi encontrado no disco.", 10, 10
-		              db 10, "Certifique-se que o arquivo 'init.app' ou equivalente esteja presente neste disco do sistema", 10
-	                  db "Caso nao esteja presente, utilize o disco de instalacao original do sistema para corrigir este problema.", 10, 10, 0
+semInit:              db "Um componente critico (init) nao foi encontrado no volume de inicializacao.", 10, 10
+		              db "Certifique-se que o arquivo 'init.app' ou equivalente esteja presente no volume do sistema.", 10
+	                  db "Caso nao esteja presente, utilize o disco de instalacao original para corrigir este problema.", 10, 10, 0
 		 
-componenteFinalizado: db "Um componente critico do Sistema foi finalizado de forma inesperada.", 10
-                      db 10, "Algum erro inesperado fez com que um componente do Sistema fosse finalizado.", 10, 10
-                      db "Este pequeno problema impede a execucao do sistema de maneira adequada e, para evitar qualquer", 10, 10
-    		          db "problema mais grave ou a perda de seus dados, o Sistema foi finalizado.", 10, 10
-			          db "O Sistema pede desculpas por qualquer inconveniente causado.", 10, 10, 10, 0
+componenteFinalizado: db "Um componente critico (init) foi finalizado de forma inesperada.", 10, 10
+                      db "Algum erro inesperado fez com que um componente do sistema fosse finalizado.", 10
+                      db "Este pequeno problema impede a execucao do sistema de maneira adequada e, para evitar qualquer", 10
+    		          db "problema mais grave ou a perda de seus dados, o sistema foi finalizado.", 10, 0
 
 ;;************************************************************************************
 ;;
 ;; AVISO! Esta porção de código pode ser removida com o tempo.
 ;; 
-;; - Futuramente, o Sistema não poderá ser utilizado sem o carregamento de init.
+;; - Futuramente, o sistema não poderá ser utilizado sem o carregamento de init.
 ;; - Por enquanto, ao não localizar o Inicializador do Sistema (Init), o Sistema tentará 
-;;   carregar o Shell.
+;;   carregar o shell.
 ;;
 ;;************************************************************************************
 
-semShell:             db "O Shell padrao (/sh.app) para o Sistema nao foi localizado.", 10, 10
-		              db 10, 10, "Certifique-se que o Shell padrao esteja presente neste disco do Sistema e tente novamente.", 10
-	                  db "Caso nao esteja presente, utilize o disco de instalacao original do Sistema para corrigir este problema.", 10, 10, 0
+semShell:             db "O shell padrao (/sh.app) nao foi localizado neste volume.", 10, 10
+		              db "Certifique-se que o Shell padrao esteja presente no volume do sistema e tente novamente.", 10
+	                  db "Caso nao esteja presente, utilize o disco de instalacao original para corrigir este problema.", 10, 10, 0
 		 
-shellFinalizado:      db "O Shell do Sistema foi finalizado de forma inesperada.", 10, 10
-                      db 10, "Algum erro inesperado fez com que o Shell do Sistema fosse finalizado.", 10, 10
-                      db "Este pequeno problema impede a execucao do sistema de maneira adequada e, para evitar qualquer", 10, 10
-				      db "problema mais grave ou a perda de seus dados, o Sistema foi finalizado.", 10, 10
-				      db "O Sistema pede desculpas por qualquer inconveniente causado.", 10, 10, 10, 0
-
+shellFinalizado:      db "O shell do sistema foi finalizado de forma inesperada.", 10, 10
+                      db 10, "Algum erro inesperado fez com que o shell do sistema fosse finalizado.", 10
+                      db "Este pequeno problema impede a execucao do sistema de maneira adequada e, para evitar qualquer", 10
+				      db "problema mais grave ou a perda de seus dados, o sistema foi finalizado.", 10, 0
+				     
 ;;************************************************************************************
 
 Hexagon.FimCodigo:

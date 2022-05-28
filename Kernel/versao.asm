@@ -32,28 +32,21 @@
 
 Hexagon.Arquitetura.suporte = 1 ;; Arquitetura desta imagem
 
-Hexagon.Versao.definicao equ "9.2"
+Hexagon.Versao.definicao equ "9.3"
 
 Hexagon.Versao:
 
 .numeroVersao     = 9
-.numeroSubversao  = 2
-.caractereRevisao = "B"
+.numeroSubversao  = 3
+.caractereRevisao = "?"
 .nomeKernel:      db "Hexagon(R)", 0
 
 Hexagon.Info:
 
 .sobreHexagon:    db 10, 10
-                  db "        %#@$%    &@$%$                  Kernel Hexagon(R)", 10
-                  db "        #$@$@    #@#@$", 10
-                  db "        @#@$%    %#$#%                     Versao ", Hexagon.Versao.definicao, 10
-                  db "        @#$@$    #@#$@", 10
-                  db "        #@#$$#$#%!@#@#     Copyright (C) 2016-2022 Felipe Miguel Nery Lunkes", 10
-                  db "        @#@%!@&$#&$#@#             Todos os direitos reservados", 10
-                  db "        !@$%#    @&$%#", 10
-                  db "        @$#!%    #&*@&", 10
-                  db "        $#$#%    &%$#@", 10
-                  db "        @#!$$    !#@#@", 10, 10, 0
+                  db "Kernel Hexagon(R) versao ", Hexagon.Versao.definicao, 10
+                  db "Copyright (C) 2016-2022 Felipe Miguel Nery Lunkes", 10
+                  db "Todos os direitos reservados.", 0
 
 ;;************************************************************************************
 
