@@ -38,7 +38,7 @@ Hexagon.Versao:
 
 .numeroVersao     = 9
 .numeroSubversao  = 3
-.caractereRevisao = "?"
+.caractereRevisao = "A"
 .nomeKernel:      db "Hexagon(R)", 0
 
 Hexagon.Info:
