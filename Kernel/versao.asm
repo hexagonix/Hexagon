@@ -32,12 +32,12 @@
 
 Hexagon.Arquitetura.suporte = 1 ;; Arquitetura desta imagem
 
-Hexagon.Versao.definicao equ "9.3"
+Hexagon.Versao.definicao equ "9.4"
 
 Hexagon.Versao:
 
 .numeroVersao     = 9
-.numeroSubversao  = 3
+.numeroSubversao  = 4
 .caractereRevisao = "A"
 .nomeKernel:      db "Hexagon(R)", 0
 
@@ -59,6 +59,8 @@ Hexagon.Info:
 ;; CH  - Revisão
 ;; EDX - Arquitetura
 ;; ESI - String de nome
+
+align 4
 
 Hexagon.Kernel.Kernel.Versao.retornarVersao:
 

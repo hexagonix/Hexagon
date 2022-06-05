@@ -85,6 +85,7 @@ Hexagon.Video.modoTexto:
 ;; EAX - Número relativo a resolução à ser utilizada
 ;;       1 - Resolução de 800x600 pixels
 ;;       2 - Resolução de 1024x768 pixels
+;;       3 - Alterar para modo texto
 
 Hexagon.Kernel.Dev.Universal.Console.Console.definirResolucao:
 

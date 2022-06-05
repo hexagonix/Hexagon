@@ -215,7 +215,7 @@ manipuladorHexagon:
 	dd Hexagon.Kernel.Dev.Universal.Console.Console.imprimir           ;; 29
 	dd Hexagon.Kernel.Dev.Universal.Console.Console.limparConsole      ;; 30
 	dd Hexagon.Kernel.Dev.Universal.Console.Console.limparLinha        ;; 31
-	dd Hexagon.Kernel.Dev.Universal.Console.Console.definirModoGrafico ;; 32
+	dd Hexagon.Kernel.API.API.Nulo                                     ;; 32
 	dd Hexagon.Kernel.Dev.Universal.Console.Console.rolarParaBaixo     ;; 33
 	dd Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor   ;; 34
 	dd Hexagon.Kernel.Lib.Graficos.colocarPixel                        ;; 35

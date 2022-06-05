@@ -44,8 +44,8 @@ Hexagon.Verbose:
 .travando:          db "Habilitando diretrizes de usuario e seguranca...", 0
 .timer:             db "Iniciando e configurando o timer (119 Hz)...", 0
 .escalonador:       db "Iniciando o escalonador de memoria...", 0
-.teclado:           db "O servico de gerenciamento de teclado foi iniciado...", 0 
-.mouse:             db "O servico de gerenciamento de mouse foi iniciado...", 0
+.teclado:           db "O servico de gerenciamento de teclado foi iniciado.", 0 
+.mouse:             db "O servico de gerenciamento de mouse foi iniciado.", 0
 .serial:            db "O servico de gerenciamento de portas seriais esta sendo iniciado...", 0
 .definirVolume:     db "O Hexagon esta procurando o volume principal para montagem...", 0
 .montagemAceita:    db "O volume ", 0
@@ -59,7 +59,7 @@ Hexagon.Verbose:
 .memoriaTotal:      db "Memoria total instalada e disponivel: ", 0
 .megabytes:         db " Mb (", 0
 .bytes:             db " bytes).", 0
-.initEncontrado:    db "PID 1: entregando o controle para /init.app.", 0
+.initEncontrado:    db "PID 1: iniciando /init.app.", 0
 .initNaoEncontrado: db "PID 1: procurando /sh.app...", 0
 .desligando:        db "Finalizando e congelando CPU...", 0
 .novaLinha:         db 10, 0

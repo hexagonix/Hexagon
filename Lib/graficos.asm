@@ -198,9 +198,7 @@ Hexagon.Kernel.Lib.Graficos.colocarCaractereBitmap:
 Hexagon.Kernel.Lib.Graficos.usarBufferKernel:
 
 	mov eax, [Hexagon.Video.Memoria.enderecoLFB]
-	mov [Hexagon.Video.Memoria.bufferVideo1], eax ;; Salvar endereço original
-	
-	mov ebx, eax
+	mov [Hexagon.Video.Memoria.bufferVideo1], eax ;; Salvar endereço original 
 
 	mov eax, [Hexagon.Video.Memoria.bufferVideoKernel]
 	mov [Hexagon.Video.Memoria.enderecoLFB], eax
@@ -214,8 +212,8 @@ Hexagon.Kernel.Lib.Graficos.usarBufferKernel:
 Hexagon.Kernel.Lib.Graficos.usarBufferVideo2:
 
 	mov eax, [Hexagon.Video.Memoria.enderecoLFB]
-	mov [Hexagon.Video.Memoria.bufferVideo1], eax ;; Salvar endereço original
-	
+	mov [Hexagon.Video.Memoria.bufferVideo1], eax ;; Salvar endereço original 
+
 	mov eax, [Hexagon.Video.Memoria.bufferVideo2]
 	mov [Hexagon.Video.Memoria.enderecoLFB], eax
 	

@@ -423,13 +423,13 @@ Hexagon.Kernel.Dev.Dev.abrir:
 	
 	ret
 
-.vd0: ;; Dispositivo principal de saída (monitor)
+.vd0: ;; Console principal
 
 	call Hexagon.Kernel.Lib.Graficos.usarBufferVideo1
 	
 	ret
 	
-.vd1: ;; Dispositivo secundário de saída em memória (Buffer)
+.vd1: ;; Primeiro console virtual
 
 	call Hexagon.Kernel.Lib.Graficos.usarBufferVideo2
 	
