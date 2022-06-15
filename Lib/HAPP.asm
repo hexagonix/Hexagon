@@ -248,12 +248,17 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
 	cmp byte[edi+5], Hexagon.Versao.numeroVersao ;; Versão declarada do Kernel
 	jg .cabecalhoInvalido ;; A imagem requer uma versão do Andromeda superior a essa
 
+	cmp byte[edi+5], Hexagon.Versao.numeroVersao ;; Versão declarada do Kernel
+	jl .cabecalhoValido ;; A imagem requer uma versão do Andromeda superior a essa
+
 	mov ah, byte[edi+5]
 	mov byte[Hexagon.Imagem.Executavel.HAPP.versaoMinima], ah
 
 	cmp byte[edi+6], Hexagon.Versao.numeroSubversao ;; Subversão declarada do Kernel
 	jg .cabecalhoInvalido ;; A imagem requer uma versão do Andromeda superior a essa
-	
+
+.cabecalhoValido:
+
 	mov ah, byte[edi+6]
 	mov byte[Hexagon.Imagem.Executavel.HAPP.subVersaoMinima], ah
 
