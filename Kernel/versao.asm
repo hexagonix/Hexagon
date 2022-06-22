@@ -36,10 +36,10 @@ Hexagon.Versao.definicao equ "1.0"
 
 Hexagon.Versao:
 
-.numeroVersao     = 1
-.numeroSubversao  = 0
+.numeroVersao     = 1 ;; Número principal de versão do Hexagon
+.numeroSubversao  = 0 ;; Número de subversão (secundária) do Hexagon
 .caractereRevisao = 0 ;; Adicionar caractere de revisão, caso necessário
-.nomeKernel:      db "Hexagon(R)", 0
+.nomeKernel:      db "Hexagon(R)", 0 ;; Nome fornecido ao espaço de usuário
 
 Hexagon.Info:
 
@@ -58,7 +58,7 @@ Hexagon.Info:
 ;; EBX - Número da subversão do Sistema
 ;; CH  - Revisão
 ;; EDX - Arquitetura
-;; ESI - String de nome
+;; ESI - String de nome do kernel
 
 align 4
 
