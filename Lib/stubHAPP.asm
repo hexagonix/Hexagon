@@ -28,7 +28,7 @@
 
 use32
 
-;; Aqui temos um ponto de entrada com um stub que prevene a execução da  imagem,
+;; Aqui temos um ponto de entrada com um stub que previne a execução da imagem do kernel,
 ;; que é finalizada de forma graciosa
 
 ;;************************************************************************************ 
