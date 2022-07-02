@@ -77,7 +77,7 @@ use16
 
 use32
 
-;; Computa o processador de volta ao modo real
+;; Comuta o processador de volta ao modo real
 
 Hexagon.Kernel.Arch.x86.Procx86.Procx86.irPara16:				
 	
