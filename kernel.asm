@@ -372,7 +372,7 @@ match =SIM, VERBOSE {
 
 ;;************************************************************************************
 
-	call instalarInterrupcoes ;; Instala os manipuladores de interrupção do Sistema
+	call instalarInterrupcoes ;; Instala os manipuladores de interrupção do Hexagon
 	
 ;; Primeiramente, deve-se impedir que o usuário mate processos com uma tecla especial, impedindo
 ;; que qualquer processo relevante, como o de login, seja finalizado prematuramente
@@ -404,10 +404,10 @@ match =SIM, VERBOSE {
 
 .iniciarInit:
 	
-;; Agora o Sistema tentará carregar o Inicializador do Sistema (Init) e, em caso de sucesso,
-;; transferir o controle para ele, que finalizará a inicialização do Sistema
+;; Agora o Hexagon tentará carregar o init e, em caso de sucesso, transferir o controle para
+;; ele, que finalizará a inicialização do sistema em modo usuário
 	
-;; Primeiro, verificar se o arquivo existe no disco
+;; Primeiro, verificar se o arquivo existe no volume
 
 match =SIM, VERBOSE {
 
@@ -438,7 +438,7 @@ match =SIM, VERBOSE {
 	
 	clc
 	
-	call Hexagon.Kernel.Kernel.Proc.criarProcesso ;; Solicitar o carregamento do Inicializador do Sistema (Init)
+	call Hexagon.Kernel.Kernel.Proc.criarProcesso ;; Solicitar o carregamento do init
 
 match =SIM, VERBOSE {
 
@@ -451,9 +451,9 @@ match =SIM, VERBOSE {
 
 	jnc .fimInit
 
-.initNaoEncontrado:            ;; O Inicializador do Sistema (Init) não pôde ser localizado
+.initNaoEncontrado:            ;; O init não pôde ser localizado
 	
-;; Por enquanto, o Sistema tentará carregar o Shell padrão do Sistema
+;; Por enquanto, o Hexagon tentará carregar o shell padrão do sistema
 
 match =SIM, VERBOSE {
 
@@ -469,7 +469,7 @@ match =SIM, VERBOSE {
 	
 	clc
 	
-	call Hexagon.Kernel.Kernel.Proc.criarProcesso ;; Solicitar o carregamento do Shell padrão
+	call Hexagon.Kernel.Kernel.Proc.criarProcesso ;; Solicitar o carregamento do shell padrão
 
 	jnc .fimShell
 	
@@ -491,7 +491,7 @@ match =SIM, VERBOSE {
 	
 ;;************************************************************************************
 	 
-initHexagon:          db "init.app", 0 ;; Nome do arquivo que contêm o Inicializador do Sistema (init)
+initHexagon:          db "init.app", 0 ;; Nome de arquivo do init
 shellHexagon:         db "sh.app", 0   ;; Nome do shell padrão
 		   
 semInit:              db "Um componente critico (init) nao foi encontrado no volume de inicializacao.", 10, 10
@@ -508,8 +508,7 @@ componenteFinalizado: db "Um componente critico (init) foi finalizado de forma i
 ;; AVISO! Esta porção de código pode ser removida com o tempo.
 ;; 
 ;; - Futuramente, o sistema não poderá ser utilizado sem o carregamento de init.
-;; - Por enquanto, ao não localizar o Inicializador do Sistema (Init), o Sistema tentará 
-;;   carregar o shell.
+;; - Por enquanto, ao não localizar o init, o Hexagon tentará carregar o shell.
 ;;
 ;;************************************************************************************
 
