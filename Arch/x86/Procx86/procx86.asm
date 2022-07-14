@@ -135,6 +135,9 @@ Hexagon.Kernel.Arch.x86.Procx86.Procx86.modoReal:
 		
 Hexagon.Kernel.Arch.x86.Procx86.Procx86.ativarA20:  
 
+match =A20NAOSEGURO, A20
+{
+	
  .testarA20:
 	
 	mov edi, 0x112345  ;; Endereço par
@@ -147,6 +150,8 @@ Hexagon.Kernel.Arch.x86.Procx86.Procx86.ativarA20:
 	cmpsd             ;; Comparar para ver se são equivalentes
 	
 	jne .A20Pronto    ;; Se não, o A20 já está habilitado
+
+}
 
 .habilitarA20:
 
