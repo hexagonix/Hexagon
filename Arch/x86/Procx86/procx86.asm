@@ -135,6 +135,12 @@ Hexagon.Kernel.Arch.x86.Procx86.Procx86.modoReal:
 		
 Hexagon.Kernel.Arch.x86.Procx86.Procx86.ativarA20:  
 
+match =A20NAOSEGURO, A20
+{
+
+;; Aqui temos um método para checar se o A20 está habilitado. Entretanto, o código
+;; parece gerar erros dependendo da plataforma (máquina física, KVM, etc)
+
  .testarA20:
 	
 	mov edi, 0x112345  ;; Endereço par
@@ -147,6 +153,10 @@ Hexagon.Kernel.Arch.x86.Procx86.Procx86.ativarA20:
 	cmpsd             ;; Comparar para ver se são equivalentes
 	
 	jne .A20Pronto    ;; Se não, o A20 já está habilitado
+
+}
+
+;; Aqui temos o método mais seguro de ativar a linha A20
 
 .habilitarA20:
 
