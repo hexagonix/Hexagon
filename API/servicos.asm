@@ -45,10 +45,10 @@ instalarInterrupcoes:
     
     mov dword[ordemKernel], ordemKernelExecutar
 
-    mov esi, manipuladorTimer               ;; IRQ 0
-    mov eax, Hexagon.Int.interrupcaoTimer   ;; Número da interrupção
+    ;mov esi, manipuladorTimer               ;; IRQ 0
+    ;mov eax, Hexagon.Int.interrupcaoTimer   ;; Número da interrupção
     
-    call instalarISR
+    ;call instalarISR
 
     mov esi, manipuladorTeclado             ;; IRQ 1
     mov eax, Hexagon.Int.interrupcaoTeclado ;; Número da interrupção         
