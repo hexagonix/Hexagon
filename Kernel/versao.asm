@@ -32,12 +32,12 @@
 
 Hexagon.Arquitetura.suporte = 1 ;; Arquitetura desta imagem
 
-Hexagon.Versao.definicao equ "1.0"
+Hexagon.Versao.definicao equ "1.1"
 
 Hexagon.Versao:
 
 .numeroVersao     = 1 ;; Número principal de versão do Hexagon
-.numeroSubversao  = 0 ;; Número de subversão (secundária) do Hexagon
+.numeroSubversao  = 1 ;; Número de subversão (secundária) do Hexagon
 .caractereRevisao = 0 ;; Adicionar caractere de revisão, caso necessário
 .nomeKernel:      db "Hexagon(R)", 0 ;; Nome fornecido ao espaço de usuário
 
@@ -64,11 +64,11 @@ align 4
 
 Hexagon.Kernel.Kernel.Versao.retornarVersao:
 
-	mov eax, Hexagon.Versao.numeroVersao
-	mov ebx, Hexagon.Versao.numeroSubversao
-	mov ch, Hexagon.Versao.caractereRevisao
+    mov eax, Hexagon.Versao.numeroVersao
+    mov ebx, Hexagon.Versao.numeroSubversao
+    mov ch, Hexagon.Versao.caractereRevisao
     mov edx, Hexagon.Arquitetura.suporte
-	mov esi, Hexagon.Versao.nomeKernel
-	
-	ret
+    mov esi, Hexagon.Versao.nomeKernel
+    
+    ret
     

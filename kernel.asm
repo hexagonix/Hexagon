@@ -56,8 +56,6 @@ include "Kernel/usuarios.asm"                     ;; Funções de gerenciamento 
 
 ;; Gerenciamento de Dispositivos do Hexagon®
 
-align 4
-
 include "Dev/Universal/Teclado/teclado.asm"	      ;; Funções necessárias para o uso do teclado
 include "Arch/x86/Procx86/procx86.asm"	          ;; IDT, GDT e procedimentos para definir modo real e protegido
 include "Arch/x86/BIOS/BIOS.asm"		          ;; Interrupções do BIOS em modo real

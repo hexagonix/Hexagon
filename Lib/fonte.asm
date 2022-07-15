@@ -37,7 +37,7 @@
 Hexagon.Fontes:
 
 .largura = 8
-.altura	 = 16
+.altura  = 16
 
 .espacoFonte:   ;; Área protegida para o carregamento de novas fontes
 

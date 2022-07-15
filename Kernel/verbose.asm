@@ -35,7 +35,7 @@
 use32
 
 match =SIM, VERBOSE {
-	
+    
 Hexagon.Verbose:
 
 .Hexagon:           db "Bem-vindo ao Hexagon(R)", 10

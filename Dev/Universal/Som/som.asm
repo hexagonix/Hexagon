@@ -38,46 +38,46 @@ Hexagon.Kernel.Dev.Universal.Som.Som.emitirSom:       ;; Mova para AX o tom a se
 
     pushad
 
-	mov cx, ax	 ;; Som a ser emitido		
+    mov cx, ax   ;; Som a ser emitido       
 
-	mov al, 182  ;; Dado a ser enviado
-	
-	out 43h, al  
-	
-	mov ax, cx		
-	
-	out 42h, al
-	
-	mov al, ah
-	
-	out 42h, al
+    mov al, 182  ;; Dado a ser enviado
+    
+    out 43h, al  
+    
+    mov ax, cx      
+    
+    out 42h, al
+    
+    mov al, ah
+    
+    out 42h, al
 
-	in al, 61h		
-	
-	or al, 03h
-	
-	out 61h, al
+    in al, 61h      
+    
+    or al, 03h
+    
+    out 61h, al
 
-	popad
-	
-	ret
-	
+    popad
+    
+    ret
+    
 ;;*******************************************************************
-	
+    
 ;; Desabilita o alto-falante interno do computador
-	
+    
 Hexagon.Kernel.Dev.Universal.Som.Som.desligarSom:    ;; Desliga o alto-falante interno do computador
 
-	pushad
+    pushad
 
-	in al, 61h
-	
-	and al, 0FCh
-	
-	out 61h, al
+    in al, 61h
+    
+    and al, 0FCh
+    
+    out 61h, al
 
-	popad
-	
-	ret	
-	
+    popad
+    
+    ret 
+    
 ;;*******************************************************************

@@ -45,17 +45,17 @@ Hexagon.Video:
 .modoGrafico:   db 0
 .tamanhoVideo:  dd 0
 .modoVBE:       dw .padrao 
-.padrao	        = 0x118	
+.padrao         = 0x118 
 .maxColunas:    dw 0
-.maxLinhas:	    dw 0
+.maxLinhas:     dw 0
 .bitsPorPixel:  db 0
 .bytesPorPixel: dd 0
 .bytesPorLinha: dd 0
 
 Hexagon.Video.Resolucao:
 
-.x:	dw 1024
-.y:	dw 768
+.x: dw 1024
+.y: dw 768
 
 Hexagon.Video.Memoria:
 
@@ -68,13 +68,13 @@ Hexagon.Video.Memoria:
 
 Hexagon.Video.modoTexto:
 
-.corAtual:	    db .corPadrao
-.corPadrao	    = 0xf0
-.cursor.X:	    db 0
-.cursor.Y:	    db 0
+.corAtual:      db .corPadrao
+.corPadrao      = 0xf0
+.cursor.X:      db 0
+.cursor.Y:      db 0
 .maximoLinhas   = 24 ;; Contando de 0
 .maximoColunas  = 79 ;; Contando de 0
-.memoriaDeVideo	= 0xB8000
+.memoriaDeVideo = 0xB8000
 
 ;;************************************************************************************
 
@@ -90,39 +90,39 @@ Hexagon.Video.modoTexto:
 Hexagon.Kernel.Dev.Universal.Console.Console.definirResolucao:
 
     cmp eax, 01h ;; 800x600 pixels
-	je .modoGrafico1
-	
-	cmp eax, 02h ;; 1024x768
-	je .modoGrafico2
-	
-	cmp eax, 03h ;; Modo texto legado (será removido)
-	je .modoTexto
-	
-	jmp .fim
-	
+    je .modoGrafico1
+    
+    cmp eax, 02h ;; 1024x768
+    je .modoGrafico2
+    
+    cmp eax, 03h ;; Modo texto legado (será removido)
+    je .modoTexto
+    
+    jmp .fim
+    
 .modoGrafico1:
 
     mov word[Hexagon.Video.modoVBE], 0x115 ;; Resolução de 800x600 pixels segundo especificação VESA 3.0
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.definirModoGrafico
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.definirModoGrafico
 
-	jmp .fim
-	
+    jmp .fim
+    
 .modoGrafico2:
 
     mov word[Hexagon.Video.modoVBE], 0x118 ;; Resolução de 1024x768 pixels segundo especificação VESA 3.0
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.definirModoGrafico	
-	
-	jmp .fim
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.definirModoGrafico    
+    
+    jmp .fim
 
 .modoTexto:
 
-	call Hexagon.Kernel.Dev.Universal.Console.Console.definirModoTexto
-	
+    call Hexagon.Kernel.Dev.Universal.Console.Console.definirModoTexto
+    
 .fim:
 
-	ret
+    ret
 
 ;;************************************************************************************
 
@@ -137,50 +137,50 @@ Hexagon.Kernel.Dev.Universal.Console.Console.definirResolucao:
 Hexagon.Kernel.Dev.Universal.Console.Console.obterResolucao:
 
     mov ax, word[Hexagon.Video.modoVBE]
-	
-	cmp ax, 0x115
-	je .modoGrafico1
-	
-	cmp ax, 0x118
-	je .modoGrafico2
-	
-	ret
+    
+    cmp ax, 0x115
+    je .modoGrafico1
+    
+    cmp ax, 0x118
+    je .modoGrafico2
+    
+    ret
 
 .modoGrafico1:
  
     mov eax, 1
-	
-	ret
-	
+    
+    ret
+    
 .modoGrafico2:
  
     mov eax, 2
-	
-	ret	
+    
+    ret 
 
 ;;************************************************************************************
 
 Hexagon.Kernel.Dev.Universal.Console.Console.definirModoTexto:
 
-	push eax
-	
-	mov ah, 0		;; Função para definir modo de vídeo
-	mov al, 3		;; Vídeo em modo texto
-	
-	call Hexagon.Kernel.Arch.x86.BIOS.BIOS.int10h		;; Chamar interrupção BIOS de modo real
-	
-	mov ax, 0x1003	
-	mov bx, 0
-	
-	call Hexagon.Kernel.Arch.x86.BIOS.BIOS.int10h		;; Desligar blinking
+    push eax
+    
+    mov ah, 0       ;; Função para definir modo de vídeo
+    mov al, 3       ;; Vídeo em modo texto
+    
+    call Hexagon.Kernel.Arch.x86.BIOS.BIOS.int10h       ;; Chamar interrupção BIOS de modo real
+    
+    mov ax, 0x1003  
+    mov bx, 0
+    
+    call Hexagon.Kernel.Arch.x86.BIOS.BIOS.int10h       ;; Desligar blinking
 
-	mov byte[Hexagon.Video.modoGrafico], 0
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.limparConsole
-	
-	pop eax
-	
-	ret
+    mov byte[Hexagon.Video.modoGrafico], 0
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.limparConsole
+    
+    pop eax
+    
+    ret
 
 ;;************************************************************************************
 
@@ -192,116 +192,116 @@ Hexagon.Kernel.Dev.Universal.Console.Console.definirModoTexto:
 
 Hexagon.Kernel.Dev.Universal.Console.Console.definirModoGrafico:
 
-	push eax
-	push ebx
-	push ecx
-	push edi	
+    push eax
+    push ebx
+    push ecx
+    push edi    
 
-	mov ax, word[Hexagon.Video.modoVBE]	;; O padrão é 1024*768*24
+    mov ax, word[Hexagon.Video.modoVBE] ;; O padrão é 1024*768*24
 
-	mov cx, ax				            ;; CX: modo de obter informações
-	mov ax, 0x4f01				        ;; Função para obter informações de vídeo
-	mov di, Hexagon.BlocoModoVBE + 0x500 ;; Endereço onde são armazenados os dados
-	
-	call Hexagon.Kernel.Arch.x86.BIOS.BIOS.int10h				            ;; Chamar interrupção BIOS em modo real
+    mov cx, ax                          ;; CX: modo de obter informações
+    mov ax, 0x4f01                      ;; Função para obter informações de vídeo
+    mov di, Hexagon.BlocoModoVBE + 0x500 ;; Endereço onde são armazenados os dados
+    
+    call Hexagon.Kernel.Arch.x86.BIOS.BIOS.int10h                           ;; Chamar interrupção BIOS em modo real
 
-	mov esi, dword[Hexagon.BlocoModoVBE+40]   ;; Ponteiro para a base da memória de vídeo	
-	mov dword[Hexagon.Video.Memoria.enderecoLFB], esi
+    mov esi, dword[Hexagon.BlocoModoVBE+40]   ;; Ponteiro para a base da memória de vídeo 
+    mov dword[Hexagon.Video.Memoria.enderecoLFB], esi
 
-	or cx, 100000000000000b			    ;; Definir bit 14 para obter frame buffer linear
-	
-	mov bx, cx
-	mov ax, 0x4f02			            ;; Função para definir modo de vídeo
-	
-	call Hexagon.Kernel.Arch.x86.BIOS.BIOS.int10h				            ;; Chamar interrupção BIOS em modo real
-	
-	mov ax, word[Hexagon.BlocoModoVBE+16]
-	mov word[Hexagon.Video.bytesPorLinha], ax
-	
-	mov al, byte[Hexagon.BlocoModoVBE+25]     ;; Obter bits por pixel
-	
-	cmp al, 0
-	jne .bitsPorPixelOK
-	
-	mov al, 24
+    or cx, 100000000000000b             ;; Definir bit 14 para obter frame buffer linear
+    
+    mov bx, cx
+    mov ax, 0x4f02                      ;; Função para definir modo de vídeo
+    
+    call Hexagon.Kernel.Arch.x86.BIOS.BIOS.int10h                           ;; Chamar interrupção BIOS em modo real
+    
+    mov ax, word[Hexagon.BlocoModoVBE+16]
+    mov word[Hexagon.Video.bytesPorLinha], ax
+    
+    mov al, byte[Hexagon.BlocoModoVBE+25]     ;; Obter bits por pixel
+    
+    cmp al, 0
+    jne .bitsPorPixelOK
+    
+    mov al, 24
 
 .bitsPorPixelOK:
 
-	mov byte[Hexagon.Video.bitsPorPixel], al ;; Salvar bits por pixel
-	shr al, 3				                 ;; Divide por 8
-	mov byte[Hexagon.Video.bytesPorPixel], al
+    mov byte[Hexagon.Video.bitsPorPixel], al ;; Salvar bits por pixel
+    shr al, 3                                ;; Divide por 8
+    mov byte[Hexagon.Video.bytesPorPixel], al
 
-	mov ax, word[Hexagon.BlocoModoVBE+18]          ;; Obter resolução X
-	
-	cmp ax, 0
-	jne .xResOK
-	
-	mov ax, 1024
-	
+    mov ax, word[Hexagon.BlocoModoVBE+18]          ;; Obter resolução X
+    
+    cmp ax, 0
+    jne .xResOK
+    
+    mov ax, 1024
+    
 .xResOK:
 
-	mov word[Hexagon.Video.Resolucao.x], ax  ;; Salvar resolução X
-	
-	mov ax, word[Hexagon.BlocoModoVBE+20]          ;; Obter resolução Y
-	
-	cmp ax, 0
-	jne .yResOK
-	
-	mov ax, 768
-	
+    mov word[Hexagon.Video.Resolucao.x], ax  ;; Salvar resolução X
+    
+    mov ax, word[Hexagon.BlocoModoVBE+20]          ;; Obter resolução Y
+    
+    cmp ax, 0
+    jne .yResOK
+    
+    mov ax, 768
+    
 .yResOK:
 
-	mov word[Hexagon.Video.Resolucao.y], ax  ;; Salvar resolução Y
+    mov word[Hexagon.Video.Resolucao.y], ax  ;; Salvar resolução Y
 
-	movzx eax, word[Hexagon.Video.Resolucao.x]
-	mov ebx, Hexagon.Fontes.largura
-	
-	xor edx, edx
-	
-	div ebx
-	
-	dec ax                                   ;; Contando de 0
-	
-	mov word[Hexagon.Video.maxColunas], ax
-	
-	movzx eax, word[Hexagon.Video.Resolucao.y]
-	mov ebx, Hexagon.Fontes.altura
-	
-	xor edx, edx
-	
-	div ebx
-	
-	dec ax                                  ;; Contando de 0
-	
-	mov word[Hexagon.Video.maxLinhas], ax
-	
-	mov byte[Hexagon.Video.modoGrafico], 1
-	
-	mov eax, dword[Hexagon.Video.bytesPorLinha]
-	movzx ebx, word[Hexagon.Video.Resolucao.y]
-	
-	mul ebx
-	
-	mov dword[Hexagon.Video.tamanhoVideo], eax
-	
-	mov eax, dword[Hexagon.Video.bytesPorLinha]
-	mov ebx, Hexagon.Fontes.altura
-	
-	mul ebx
-	
-	mov dword[Hexagon.Graficos.bytesPorLinha], eax
-	
-	mov eax, [Hexagon.Video.Memoria.enderecoLFB]
-	mov [Hexagon.Video.Memoria.bufferVideo1], eax ;; Salvar endereço original
+    movzx eax, word[Hexagon.Video.Resolucao.x]
+    mov ebx, Hexagon.Fontes.largura
+    
+    xor edx, edx
+    
+    div ebx
+    
+    dec ax                                   ;; Contando de 0
+    
+    mov word[Hexagon.Video.maxColunas], ax
+    
+    movzx eax, word[Hexagon.Video.Resolucao.y]
+    mov ebx, Hexagon.Fontes.altura
+    
+    xor edx, edx
+    
+    div ebx
+    
+    dec ax                                  ;; Contando de 0
+    
+    mov word[Hexagon.Video.maxLinhas], ax
+    
+    mov byte[Hexagon.Video.modoGrafico], 1
+    
+    mov eax, dword[Hexagon.Video.bytesPorLinha]
+    movzx ebx, word[Hexagon.Video.Resolucao.y]
+    
+    mul ebx
+    
+    mov dword[Hexagon.Video.tamanhoVideo], eax
+    
+    mov eax, dword[Hexagon.Video.bytesPorLinha]
+    mov ebx, Hexagon.Fontes.altura
+    
+    mul ebx
+    
+    mov dword[Hexagon.Graficos.bytesPorLinha], eax
+    
+    mov eax, [Hexagon.Video.Memoria.enderecoLFB]
+    mov [Hexagon.Video.Memoria.bufferVideo1], eax ;; Salvar endereço original
 
-	call Hexagon.Kernel.Dev.Universal.Console.Console.limparConsole
-	
-	pop edi
-	pop ecx
-	pop ebx
-	pop eax
-	
-	ret
+    call Hexagon.Kernel.Dev.Universal.Console.Console.limparConsole
+    
+    pop edi
+    pop ecx
+    pop ebx
+    pop eax
+    
+    ret
 
 ;;************************************************************************************
 
@@ -313,154 +313,154 @@ Hexagon.Kernel.Dev.Universal.Console.Console.definirModoGrafico:
 ;; EBX - Colunas (bits 0-7), Linhas (8-15), Bits por Pixel (16-23)
 ;; EDX - Endereço inicial do buffer
 ;; CF definido quando em modo de vídeo
-	
+    
 Hexagon.Kernel.Dev.Universal.Console.Console.obterInfoVideo:
 
-	cmp byte[Hexagon.Video.modoGrafico], 0
-	je .modoTextoVideo
+    cmp byte[Hexagon.Video.modoGrafico], 0
+    je .modoTextoVideo
 
 .modoGraficoVideo:
 
-	push ecx
-	
-	mov bl, byte[Hexagon.Video.bitsPorPixel]
-	shl ebx, 8
-	
-	mov bl, byte[Hexagon.Video.maxLinhas]
-	
-	inc bl			           ;; Contando de 1
+    push ecx
+    
+    mov bl, byte[Hexagon.Video.bitsPorPixel]
+    shl ebx, 8
+    
+    mov bl, byte[Hexagon.Video.maxLinhas]
+    
+    inc bl                     ;; Contando de 1
 
-	shl ebx, 8
-	
-	mov bl, byte[Hexagon.Video.maxColunas]
-	
-	inc bl			           ;; Contando de 1
-	
-	mov ax, word[Hexagon.Video.Resolucao.y]
-	shl eax, 16
-	mov ax, word[Hexagon.Video.Resolucao.x]	
-	
-	mov edx, dword[Hexagon.Video.Memoria.enderecoLFB]
+    shl ebx, 8
+    
+    mov bl, byte[Hexagon.Video.maxColunas]
+    
+    inc bl                     ;; Contando de 1
+    
+    mov ax, word[Hexagon.Video.Resolucao.y]
+    shl eax, 16
+    mov ax, word[Hexagon.Video.Resolucao.x] 
+    
+    mov edx, dword[Hexagon.Video.Memoria.enderecoLFB]
 
-	pop ecx
-	
-	clc
-	
-	ret
-	
+    pop ecx
+    
+    clc
+    
+    ret
+    
 .modoTextoVideo:
 
-	mov bl, Hexagon.Video.modoTexto.maximoColunas+1
-	mov bh, Hexagon.Video.modoTexto.maximoLinhas+1
-	
-	and ebx, 0xffff
-	
-	mov eax, 0
-	mov edx, Hexagon.Video.modoTexto.memoriaDeVideo
-	
-	stc
-	
-	ret
-	
+    mov bl, Hexagon.Video.modoTexto.maximoColunas+1
+    mov bh, Hexagon.Video.modoTexto.maximoLinhas+1
+    
+    and ebx, 0xffff
+    
+    mov eax, 0
+    mov edx, Hexagon.Video.modoTexto.memoriaDeVideo
+    
+    stc
+    
+    ret
+    
 ;;************************************************************************************
 
 ;; Limpa a tela
 
 Hexagon.Kernel.Dev.Universal.Console.Console.limparConsole:
 
-	cmp byte[Hexagon.Video.modoGrafico], 1 ;; Checar modo gráfico
-	je .graficos
+    cmp byte[Hexagon.Video.modoGrafico], 1 ;; Checar modo gráfico
+    je .graficos
 
 .texto:
 
-	xor edx, edx
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor
+    xor edx, edx
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor
 
-	mov edi, Hexagon.Video.modoTexto.memoriaDeVideo	
-	mov ecx, (Hexagon.Video.modoTexto.maximoLinhas+1) * (Hexagon.Video.modoTexto.maximoColunas+1)
-	mov ah, byte[Hexagon.Video.modoTexto.corAtual] ;; Cor
-	mov al, ' '                       ;; Caractere para preencher a tela
-	
-	rep stosw                         ;; Realizar loop para preencher (limpar) a memória de vídeo
-	
-	jmp .fim
+    mov edi, Hexagon.Video.modoTexto.memoriaDeVideo 
+    mov ecx, (Hexagon.Video.modoTexto.maximoLinhas+1) * (Hexagon.Video.modoTexto.maximoColunas+1)
+    mov ah, byte[Hexagon.Video.modoTexto.corAtual] ;; Cor
+    mov al, ' '                       ;; Caractere para preencher a tela
+    
+    rep stosw                         ;; Realizar loop para preencher (limpar) a memória de vídeo
+    
+    jmp .fim
 
 align 16
 
 .graficos:
 
-	mov ebx, Hexagon.Graficos.corFundoPadrao
+    mov ebx, Hexagon.Graficos.corFundoPadrao
 
-	cmp dword[Hexagon.Graficos.corFundo], ebx
-	je .sseLimpar
-	
-	mov esi, dword[Hexagon.Video.Memoria.enderecoLFB]
-	
-	mov eax, dword[Hexagon.Video.tamanhoVideo]
-	mov ebx, dword[Hexagon.Video.bytesPorPixel]
-	xor edx, edx
-	
-	div ebx
-	
-	mov ecx, eax
-	
-	mov ebx, dword[Hexagon.Video.bytesPorPixel]
-	mov edx, dword[Hexagon.Graficos.corFundo]
-	
+    cmp dword[Hexagon.Graficos.corFundo], ebx
+    je .sseLimpar
+    
+    mov esi, dword[Hexagon.Video.Memoria.enderecoLFB]
+    
+    mov eax, dword[Hexagon.Video.tamanhoVideo]
+    mov ebx, dword[Hexagon.Video.bytesPorPixel]
+    xor edx, edx
+    
+    div ebx
+    
+    mov ecx, eax
+    
+    mov ebx, dword[Hexagon.Video.bytesPorPixel]
+    mov edx, dword[Hexagon.Graficos.corFundo]
+    
 .limparLoop:
 
-	mov dword[gs:esi], edx
-	
-	add esi, ebx
-	
-	loop .limparLoop	
-	
-	mov dx, 0
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor
-	
-	ret
+    mov dword[gs:esi], edx
+    
+    add esi, ebx
+    
+    loop .limparLoop    
+    
+    mov dx, 0
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor
+    
+    ret
 
 .sseLimpar:
 
-	mov edi, dword[Hexagon.Video.Memoria.enderecoLFB]
-	
-	movdqa xmm0, [.bytesLimpos]
-	
-	mov ecx, dword[Hexagon.Video.tamanhoVideo]
-	shr ecx, 7
-	
-	push ds
-	
-	mov ax, 0x18
-	mov ds, ax
-	
+    mov edi, dword[Hexagon.Video.Memoria.enderecoLFB]
+    
+    movdqa xmm0, [.bytesLimpos]
+    
+    mov ecx, dword[Hexagon.Video.tamanhoVideo]
+    shr ecx, 7
+    
+    push ds
+    
+    mov ax, 0x18
+    mov ds, ax
+    
 .loop:
 
-	movdqa [edi+00], xmm0
-	movdqa [edi+16], xmm0
-	movdqa [edi+32], xmm0
-	movdqa [edi+48], xmm0
-	movdqa [edi+64], xmm0
-	movdqa [edi+80], xmm0
-	movdqa [edi+96], xmm0
-	movdqa [edi+112], xmm0
-	
-	add edi, 128
-	
-	loop .loop
-	
-	pop ds
-	
-	mov dx, 0
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor
-	
+    movdqa [edi+00], xmm0
+    movdqa [edi+16], xmm0
+    movdqa [edi+32], xmm0
+    movdqa [edi+48], xmm0
+    movdqa [edi+64], xmm0
+    movdqa [edi+80], xmm0
+    movdqa [edi+96], xmm0
+    movdqa [edi+112], xmm0
+    
+    add edi, 128
+    
+    loop .loop
+    
+    pop ds
+    
+    mov dx, 0
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor
+    
 .fim:
 
-	ret
-	
+    ret
+    
 align 16
 
 .bytesLimpos: times 4 dd Hexagon.Graficos.corFundoPadrao
@@ -475,215 +475,215 @@ align 16
 
 Hexagon.Kernel.Dev.Universal.Console.Console.limparLinha:
 
-	cmp byte[Hexagon.Video.modoGrafico], 1
-	je .graficos
-	
-	push eax
-	push ecx
-	push edx
-	push edi
-	
-	push es
-	
-	push 0x18
-	pop es
-	
-	mov dl, 0
-	mov dh, al
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor
+    cmp byte[Hexagon.Video.modoGrafico], 1
+    je .graficos
+    
+    push eax
+    push ecx
+    push edx
+    push edi
+    
+    push es
+    
+    push 0x18
+    pop es
+    
+    mov dl, 0
+    mov dh, al
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor
 
-	movzx eax, al			     ;; Calcular posição
-	mov ecx, 160	
-	
-	xor edx, edx
-	
-	mul cx
+    movzx eax, al                ;; Calcular posição
+    mov ecx, 160    
+    
+    xor edx, edx
+    
+    mul cx
 
-	mov edi, Hexagon.Video.modoTexto.memoriaDeVideo
-	add edi, eax
+    mov edi, Hexagon.Video.modoTexto.memoriaDeVideo
+    add edi, eax
 
-	shr ecx, 2			         ;; Dividir ECX por 4
+    shr ecx, 2                   ;; Dividir ECX por 4
 
-	mov ah, [Hexagon.Video.modoTexto.corAtual] ;; Cor
-	mov al, ' '
-	shl eax, 16
-	mov ah, [Hexagon.Video.modoTexto.corAtual] ;; Cor
-	mov al, ' '
-	
-	rep stosd
+    mov ah, [Hexagon.Video.modoTexto.corAtual] ;; Cor
+    mov al, ' '
+    shl eax, 16
+    mov ah, [Hexagon.Video.modoTexto.corAtual] ;; Cor
+    mov al, ' '
+    
+    rep stosd
 
-	pop es
-	
-	pop edi
-	pop edx
-	pop ecx
-	pop eax
-	
-	ret
-	
+    pop es
+    
+    pop edi
+    pop edx
+    pop ecx
+    pop eax
+    
+    ret
+    
 .graficos:
 
-	push eax
-	push ebx
-	push ecx
-	push edx
-	push esi
-	
-	xor dl, dl
-	mov dh, al
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor
-	 
-	mov esi, dword[Hexagon.Video.Memoria.enderecoLFB]
-	
-	and eax, 0xff
-	mov ebx, Hexagon.Fontes.altura
-	
-	mul ebx
-	
-	mov ebx, dword[Hexagon.Video.bytesPorLinha]
-	
-	mul ebx
-	
-	add esi, eax
-	
-	movzx eax, word[Hexagon.Video.bytesPorLinha]
-	mov ebx, Hexagon.Fontes.altura
-	
-	mul ebx
-	
-	mov ebx, dword[Hexagon.Video.bytesPorPixel]
-	xor edx, edx
-	
-	div ebx
-	
-	mov ecx, eax
+    push eax
+    push ebx
+    push ecx
+    push edx
+    push esi
+    
+    xor dl, dl
+    mov dh, al
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor
+     
+    mov esi, dword[Hexagon.Video.Memoria.enderecoLFB]
+    
+    and eax, 0xff
+    mov ebx, Hexagon.Fontes.altura
+    
+    mul ebx
+    
+    mov ebx, dword[Hexagon.Video.bytesPorLinha]
+    
+    mul ebx
+    
+    add esi, eax
+    
+    movzx eax, word[Hexagon.Video.bytesPorLinha]
+    mov ebx, Hexagon.Fontes.altura
+    
+    mul ebx
+    
+    mov ebx, dword[Hexagon.Video.bytesPorPixel]
+    xor edx, edx
+    
+    div ebx
+    
+    mov ecx, eax
 
-	mov ebx, dword[Hexagon.Video.bytesPorPixel]
-	mov edx, dword[Hexagon.Graficos.corFundo]
-	
+    mov ebx, dword[Hexagon.Video.bytesPorPixel]
+    mov edx, dword[Hexagon.Graficos.corFundo]
+    
 .limparLoop:
 
-	mov dword[gs:esi], edx
-	add esi, ebx
-	
-	loop .limparLoop
-	
-	pop esi
-	pop edx
-	pop ecx
-	pop ebx
-	pop eax
-	
-	ret
-	
+    mov dword[gs:esi], edx
+    add esi, ebx
+    
+    loop .limparLoop
+    
+    pop esi
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+    
+    ret
+    
 ;;************************************************************************************
 
 ;; Rolar a tela para baixo
 
 Hexagon.Kernel.Dev.Universal.Console.Console.rolarParaBaixo:
 
-	push eax
-	push ecx
-	push edx
-	push esi
-	push edi
-	
-	push ds
-	push es
-	
-	cmp byte[Hexagon.Video.modoGrafico], 1
-	je .graficos
-	
+    push eax
+    push ecx
+    push edx
+    push esi
+    push edi
+    
+    push ds
+    push es
+    
+    cmp byte[Hexagon.Video.modoGrafico], 1
+    je .graficos
+    
 .texto:
 
 ;; Mover todo o conteúdo da tela uma linha acima
 
-	mov ax, 0x18
-	mov es, ax
-	mov ds, ax
-	
-	mov esi, Hexagon.Video.modoTexto.memoriaDeVideo
-	mov edi, Hexagon.Video.modoTexto.memoriaDeVideo-160 ;; Uma linha acima
-	mov ecx, 2000
-	
-	rep movsw ;; Repetir ECX vezes (mov byte[ES:EDI], byte[DS:ESI])
-	
-	mov ax, 0x10
-	mov ds, ax
-	
-	mov eax, Hexagon.Video.modoTexto.maximoLinhas	    ;; Limpar última linha
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.limparLinha
-	
-	jmp .fim
-	
+    mov ax, 0x18
+    mov es, ax
+    mov ds, ax
+    
+    mov esi, Hexagon.Video.modoTexto.memoriaDeVideo
+    mov edi, Hexagon.Video.modoTexto.memoriaDeVideo-160 ;; Uma linha acima
+    mov ecx, 2000
+    
+    rep movsw ;; Repetir ECX vezes (mov byte[ES:EDI], byte[DS:ESI])
+    
+    mov ax, 0x10
+    mov ds, ax
+    
+    mov eax, Hexagon.Video.modoTexto.maximoLinhas       ;; Limpar última linha
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.limparLinha
+    
+    jmp .fim
+    
 .graficos:
 
-	mov esi, dword[Hexagon.Video.Memoria.enderecoLFB]
-	
-	mov edi, esi
-	
-	sub edi, dword[Hexagon.Graficos.bytesPorLinha]
-	
-	mov ecx, [Hexagon.Video.tamanhoVideo]
-	shr ecx, 7		                      ;; Dividir por 128
-	
-	mov ax, 0x18
-	mov es, ax
-	mov ds, ax
-	
+    mov esi, dword[Hexagon.Video.Memoria.enderecoLFB]
+    
+    mov edi, esi
+    
+    sub edi, dword[Hexagon.Graficos.bytesPorLinha]
+    
+    mov ecx, [Hexagon.Video.tamanhoVideo]
+    shr ecx, 7                            ;; Dividir por 128
+    
+    mov ax, 0x18
+    mov es, ax
+    mov ds, ax
+    
 .copiar:
 
-	prefetchnta [esi+0]
-	prefetchnta [esi+32]
-	prefetchnta [esi+64]
-	prefetchnta [esi+96]
+    prefetchnta [esi+0]
+    prefetchnta [esi+32]
+    prefetchnta [esi+64]
+    prefetchnta [esi+96]
 
-	movdqa xmm0, [esi+0]
-	movdqa xmm1, [esi+16]
-	movdqa xmm2, [esi+32]
-	movdqa xmm3, [esi+48]
-	movdqa xmm4, [esi+64]
-	movdqa xmm5, [esi+80]
-	movdqa xmm6, [esi+96]
-	movdqa xmm7, [esi+112]
-	
-	movdqa [edi+0], xmm0 
-	movdqa [edi+16], xmm1
-	movdqa [edi+32], xmm2
-	movdqa [edi+48], xmm3
-	movdqa [edi+64], xmm4
-	movdqa [edi+80], xmm5
-	movdqa [edi+96], xmm6
-	movdqa [edi+112], xmm7
-	
-	add edi, 128
-	add esi, 128
-	
-	loop .copiar
-	
-	mov ax, 0x10
-	mov ds, ax
-	
-	movzx eax, word[Hexagon.Video.maxLinhas]
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.limparLinha
-	
+    movdqa xmm0, [esi+0]
+    movdqa xmm1, [esi+16]
+    movdqa xmm2, [esi+32]
+    movdqa xmm3, [esi+48]
+    movdqa xmm4, [esi+64]
+    movdqa xmm5, [esi+80]
+    movdqa xmm6, [esi+96]
+    movdqa xmm7, [esi+112]
+    
+    movdqa [edi+0], xmm0 
+    movdqa [edi+16], xmm1
+    movdqa [edi+32], xmm2
+    movdqa [edi+48], xmm3
+    movdqa [edi+64], xmm4
+    movdqa [edi+80], xmm5
+    movdqa [edi+96], xmm6
+    movdqa [edi+112], xmm7
+    
+    add edi, 128
+    add esi, 128
+    
+    loop .copiar
+    
+    mov ax, 0x10
+    mov ds, ax
+    
+    movzx eax, word[Hexagon.Video.maxLinhas]
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.limparLinha
+    
 .fim:
 
-	pop es
-	pop ds
-	
-	pop edi
-	pop esi
-	pop edx
-	pop ecx
-	pop eax
-	
-	ret
-	
+    pop es
+    pop ds
+    
+    pop edi
+    pop esi
+    pop edx
+    pop ecx
+    pop eax
+    
+    ret
+    
 ;;************************************************************************************
 
 ;; Central de solicitações de saída para dispositivos do Sistema
@@ -700,21 +700,21 @@ Hexagon.Kernel.Dev.Universal.Console.Console.rolarParaBaixo:
 
 Hexagon.Kernel.Dev.Universal.Console.Console.imprimir:
 
-	cmp ebx, 01h
-	je Hexagon.Kernel.Dev.Universal.Console.Console.imprimirDecimal
-	
-	cmp ebx, 02h
-	je Hexagon.Kernel.Dev.Universal.Console.Console.imprimirHexadecimal
-	
-	cmp ebx, 03h
-	je Hexagon.Kernel.Dev.Universal.Console.Console.imprimirBinario
-	
-	cmp ebx, 04h
-	je Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
-	
-	stc
-	
-	ret
+    cmp ebx, 01h
+    je Hexagon.Kernel.Dev.Universal.Console.Console.imprimirDecimal
+    
+    cmp ebx, 02h
+    je Hexagon.Kernel.Dev.Universal.Console.Console.imprimirHexadecimal
+    
+    cmp ebx, 03h
+    je Hexagon.Kernel.Dev.Universal.Console.Console.imprimirBinario
+    
+    cmp ebx, 04h
+    je Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
+    
+    stc
+    
+    ret
 
 ;;************************************************************************************
 
@@ -722,76 +722,76 @@ Hexagon.Kernel.Dev.Universal.Console.Console.imprimir:
 ;;
 ;; Entrada:
 ;;
-;; EAX - Inteiro	
+;; EAX - Inteiro    
 
 Hexagon.Kernel.Dev.Universal.Console.Console.imprimirDecimal:
 
-	push eax
-	push ebx
-	push ecx
-	push edx
-	push esi
-	push edi
+    push eax
+    push ebx
+    push ecx
+    push edx
+    push esi
+    push edi
 
 ;; Checar se negativo
 
-	cmp eax, 0
-	jge .positivo
-	
+    cmp eax, 0
+    jge .positivo
+    
 .nagativo:
 
-	push eax
-	
-	mov al, '-'		   ;; Imprimir menos
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere
-	
-	pop eax
-	
-	neg eax
-		
+    push eax
+    
+    mov al, '-'        ;; Imprimir menos
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere
+    
+    pop eax
+    
+    neg eax
+        
 .positivo:
 
 ;; Converter inteiro para string para poder imprimir
 
-	mov ebx, 10        ;; Decimais estão na base 10	
-	xor ecx, ecx       ;; mov ECX, 0
-	
+    mov ebx, 10        ;; Decimais estão na base 10    
+    xor ecx, ecx       ;; mov ECX, 0
+    
 .loopConverter:
 
-	xor edx, edx       ;; mov EDX, 0
-	
-	div ebx		
-				 
-	add dl, 0x30       ;; Converter para ASCII
-	
-	push edx
-	
-	inc ecx
-	
-	or eax, eax        ;; cmp EAX, 0
-	jne .loopConverter
+    xor edx, edx       ;; mov EDX, 0
+    
+    div ebx     
+                 
+    add dl, 0x30       ;; Converter para ASCII
+    
+    push edx
+    
+    inc ecx
+    
+    or eax, eax        ;; cmp EAX, 0
+    jne .loopConverter
  
-	mov edx, esi
-	
+    mov edx, esi
+    
 .loopImprimir:
 
-	pop eax
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere
-	
-	loop .loopImprimir
-	
+    pop eax
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere
+    
+    loop .loopImprimir
+    
 .fim:
 
-	pop edi
-	pop esi
-	pop edx
-	pop ecx
-	pop ebx
-	pop eax
-	
-	ret
+    pop edi
+    pop esi
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+    
+    ret
 
 ;;************************************************************************************
 
@@ -800,81 +800,81 @@ Hexagon.Kernel.Dev.Universal.Console.Console.imprimirDecimal:
 ;; Entrada:
 ;;
 ;; EAX - Inteiro
-	
+    
 Hexagon.Kernel.Dev.Universal.Console.Console.imprimirBinario:
 
-	push eax
-	push ebx
-	push ecx
-	push edx
-	push esi
-	push edi
-	
+    push eax
+    push ebx
+    push ecx
+    push edx
+    push esi
+    push edi
+    
 ;; Checar por negativo
 
-	cmp eax, 0
-	jge .positivo
-	
+    cmp eax, 0
+    jge .positivo
+    
 .nagativo:
 
-	push eax
-	
-	mov al, '-'			;; Imprimir menos
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere
-	
-	pop eax
-	
-	neg eax
-		
+    push eax
+    
+    mov al, '-'         ;; Imprimir menos
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere
+    
+    pop eax
+    
+    neg eax
+        
 .positivo:
 
 ;; Converter inteiro para string para que possa ser impresso
 
-	mov ebx, 2          ;; Números em binário tem base 2	
-	xor ecx, ecx        ;; mov ECX, 0
-	
+    mov ebx, 2          ;; Números em binário tem base 2  
+    xor ecx, ecx        ;; mov ECX, 0
+    
 .loopConverter:
 
-	xor edx, edx        ;; mov EDX, 0
-	
-	div ebx		
-				 
-	add dl, 0x30        ;; Converter isso para ASCII
-	
-	push edx
-	
-	inc ecx
-	
-	or eax, eax         ;; cmp EAX, 0
-	jne .loopConverter
+    xor edx, edx        ;; mov EDX, 0
+    
+    div ebx     
+                 
+    add dl, 0x30        ;; Converter isso para ASCII
+    
+    push edx
+    
+    inc ecx
+    
+    or eax, eax         ;; cmp EAX, 0
+    jne .loopConverter
  
-	mov edx, esi
-	
+    mov edx, esi
+    
 .loopImprimir:
 
-	pop eax
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere
-	
-	loop .loopImprimir
-	
+    pop eax
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere
+    
+    loop .loopImprimir
+    
 .fim:
 
-	mov al, 'b'
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere
-	
-	pop edi
-	pop esi
-	pop edx
-	pop ecx
-	pop ebx
-	pop eax
-	
-	ret
+    mov al, 'b'
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere
+    
+    pop edi
+    pop esi
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+    
+    ret
 
-;;************************************************************************************	
+;;************************************************************************************  
 
 ;; Imprimir um inteiro como hexadecimal
 ;;
@@ -884,97 +884,97 @@ Hexagon.Kernel.Dev.Universal.Console.Console.imprimirBinario:
 
 Hexagon.Kernel.Dev.Universal.Console.Console.imprimirHexadecimal:
 
-	push eax
-	push ebx
-	push ecx
-	push edx
-	push esi
-	push edi
-	
+    push eax
+    push ebx
+    push ecx
+    push edx
+    push esi
+    push edi
+    
 ;; Checar por negativo
 
-	cmp eax, 0
-	jge .positivo
-	
+    cmp eax, 0
+    jge .positivo
+    
 .nagativo:
 
-	push eax
-	
-	mov al, '-'			;; Imprimir negativo
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere
-	
-	pop eax
-	
-	neg eax
-		
+    push eax
+    
+    mov al, '-'         ;; Imprimir negativo
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere
+    
+    pop eax
+    
+    neg eax
+        
 .positivo:
-	
-	push eax
-	
-	mov al, '0'
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere
-	
-	mov al, 'x'
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere
-	
-	pop eax
-	
+    
+    push eax
+    
+    mov al, '0'
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere
+    
+    mov al, 'x'
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere
+    
+    pop eax
+    
 ;; Converter inteiro para hexadecimal
 
-	mov ebx, 16         ;; Números hexadecimais tem base 16
-	xor ecx, ecx        ;; mov ECX, 0
-	
+    mov ebx, 16         ;; Números hexadecimais tem base 16
+    xor ecx, ecx        ;; mov ECX, 0
+    
 .loopConverter:
 
-	xor edx, edx        ;; mov EDX, 0
-	
-	div ebx		
-	
-	add dl, 0x30
-	
-	cmp dl, 0x39
-	ja .adicionar
-	
-	jmp short .proximo
+    xor edx, edx        ;; mov EDX, 0
+    
+    div ebx     
+    
+    add dl, 0x30
+    
+    cmp dl, 0x39
+    ja .adicionar
+    
+    jmp short .proximo
 
-.adicionar:		 
+.adicionar:      
 
-	add dl, 7          ;; Converter isso para ASCII
+    add dl, 7          ;; Converter isso para ASCII
 
 .proximo:
 
-	push edx
-	
-	inc ecx
-	
-	or eax, eax        ;; cmp EAX, 0
-	jne .loopConverter
+    push edx
+    
+    inc ecx
+    
+    or eax, eax        ;; cmp EAX, 0
+    jne .loopConverter
  
-	mov edx, esi
-	
+    mov edx, esi
+    
 .loopImprimir:
 
-	pop eax
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere
-	
-	loop .loopImprimir
-	
+    pop eax
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere
+    
+    loop .loopImprimir
+    
 .fim:
 
-	pop edi
-	pop esi
-	pop edx
-	pop ecx
-	pop ebx
-	pop eax
-	
-	ret
+    pop edi
+    pop esi
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+    
+    ret
 
-;;************************************************************************************	
+;;************************************************************************************  
 
 ;; Realiza a mesma função que Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere, mas não move o cursor
 ;;
@@ -984,212 +984,212 @@ Hexagon.Kernel.Dev.Universal.Console.Console.imprimirHexadecimal:
 
 Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractereBase:
 
-	cmp byte[Hexagon.Video.modoGrafico], 1
-	je Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere.graficos
-	
-	mov dl, byte[Hexagon.Video.modoTexto.cursor.X]
-	mov dh, byte[Hexagon.Video.modoTexto.cursor.Y]
+    cmp byte[Hexagon.Video.modoGrafico], 1
+    je Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere.graficos
+    
+    mov dl, byte[Hexagon.Video.modoTexto.cursor.X]
+    mov dh, byte[Hexagon.Video.modoTexto.cursor.Y]
 
-	cmp al, 10		  ;; Caractere de nova linha
-	je .novaLinha
-	
-	cmp al, 9
-	je .tab
-	
-	cmp al, ' '		  ;; Primeiro caractere imprimível
-	jb .naoImprimivel
-	
-	cmp al, '~'		  ;; Último caractere imprimível
-	ja .naoImprimivel
-	
-	jmp .proximo
-	
+    cmp al, 10        ;; Caractere de nova linha
+    je .novaLinha
+    
+    cmp al, 9
+    je .tab
+    
+    cmp al, ' '       ;; Primeiro caractere imprimível
+    jb .naoImprimivel
+    
+    cmp al, '~'       ;; Último caractere imprimível
+    ja .naoImprimivel
+    
+    jmp .proximo
+    
 .tab:
 
-	mov al, ' '		
-	
-	jmp .proximo
-	
+    mov al, ' '     
+    
+    jmp .proximo
+    
 .novaLinha:
 
-	inc dh
-	
-	mov dl, 0
-	mov al, 0xff
-	
-	jmp .proximo
+    inc dh
+    
+    mov dl, 0
+    mov al, 0xff
+    
+    jmp .proximo
 
 .naoImprimivel:
 
-	mov al, 0xff
+    mov al, 0xff
 
 .proximo:
-	
+    
 ;; Consertar X e Y
 
-	cmp dh, Hexagon.Video.modoTexto.maximoLinhas
-	jna .yOK
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.rolarParaBaixo
-	
-	mov dh, Hexagon.Video.modoTexto.maximoLinhas
-	
+    cmp dh, Hexagon.Video.modoTexto.maximoLinhas
+    jna .yOK
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.rolarParaBaixo
+    
+    mov dh, Hexagon.Video.modoTexto.maximoLinhas
+    
 .yOK:
 
-	cmp dl, Hexagon.Video.modoTexto.maximoColunas
-	jna .xOK
-	
-	mov dl, 0
-	
-	inc dh
-	
+    cmp dl, Hexagon.Video.modoTexto.maximoColunas
+    jna .xOK
+    
+    mov dl, 0
+    
+    inc dh
+    
 .xOK:
-	
-	push edx	
-	push eax
-	
+    
+    push edx    
+    push eax
+    
 ;; Calcular posição do caractere na tela
 
-	mov eax, 0
-	mov al, dl
-	shl ax, 1			                  ;; Multiplicar X por 2
-	mov edi, eax			              ;; Adicionar isso ao índice
-	mov al, (Hexagon.Video.modoTexto.maximoColunas+1)*2 ;; Contando de 1
-	
-	mul dh				                  ;; Multiplica Y por maximoColunas*2
-	
-	add edi, eax			              ;; Adicionar isso ao índice
+    mov eax, 0
+    mov al, dl
+    shl ax, 1                             ;; Multiplicar X por 2
+    mov edi, eax                          ;; Adicionar isso ao índice
+    mov al, (Hexagon.Video.modoTexto.maximoColunas+1)*2 ;; Contando de 1
+    
+    mul dh                                ;; Multiplica Y por maximoColunas*2
+    
+    add edi, eax                          ;; Adicionar isso ao índice
 
-	pop eax
-	
+    pop eax
+    
 ;; Colocar caractere
 
-	pop edx
-	
-	cmp al, 0xff
-	je .caractereNaoImprimivel
-	
-	inc dl
+    pop edx
+    
+    cmp al, 0xff
+    je .caractereNaoImprimivel
+    
+    inc dl
 
-	mov ah, byte[Hexagon.Video.modoTexto.corAtual]
-	
+    mov ah, byte[Hexagon.Video.modoTexto.corAtual]
+    
 ;; Se o caractere já existe
 
-	cmp word[gs:Hexagon.Video.modoTexto.memoriaDeVideo + edi], ax
-	je .fim
-	
-	mov word[gs:Hexagon.Video.modoTexto.memoriaDeVideo + edi], ax
+    cmp word[gs:Hexagon.Video.modoTexto.memoriaDeVideo + edi], ax
+    je .fim
+    
+    mov word[gs:Hexagon.Video.modoTexto.memoriaDeVideo + edi], ax
 
 .caractereNaoImprimivel:
 
-.fim:	
+.fim:   
 
 ;; Atualizar o cursor
 
-	call Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor
-	
-	ret
-	
+    call Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor
+    
+    ret
+    
 Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere.graficos:
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.obterCursor
-	
-	cmp al, 9
-	je .tab
-	
-	cmp al, 10
-	je .retorno
-	
-	cmp al, '~'
-	ja .naoImprimivel
-	
-	cmp al, ' '
-	jl .naoImprimivel
-	
-	jmp .consertarXeY
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.obterCursor
+    
+    cmp al, 9
+    je .tab
+    
+    cmp al, 10
+    je .retorno
+    
+    cmp al, '~'
+    ja .naoImprimivel
+    
+    cmp al, ' '
+    jl .naoImprimivel
+    
+    jmp .consertarXeY
 
 .tab:
 
-	mov al, ' '	
-	
-	jmp .consertarXeY
-	
+    mov al, ' ' 
+    
+    jmp .consertarXeY
+    
 .naoImprimivel:
 
-	mov al, ' '
-	
-	jmp .consertarXeY
-	
+    mov al, ' '
+    
+    jmp .consertarXeY
+    
 .retorno:
 
-	movzx eax, word[Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor.graficos.Xanterior]
-	movzx ebx, word[Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor.graficos.Yanterior]
-	
-	push edx
-	
-	mov ecx, Hexagon.Fontes.altura
-	mov edx, [Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor.graficos.corCursorAnterior]
-	
+    movzx eax, word[Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor.graficos.Xanterior]
+    movzx ebx, word[Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor.graficos.Yanterior]
+    
+    push edx
+    
+    mov ecx, Hexagon.Fontes.altura
+    mov edx, [Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor.graficos.corCursorAnterior]
+    
 .limparCursorAnterior:
 
-	call Hexagon.Kernel.Lib.Graficos.colocarPixel
-	
-	inc ebx
-	
-	loop .limparCursorAnterior
-	
-	pop edx
+    call Hexagon.Kernel.Lib.Graficos.colocarPixel
+    
+    inc ebx
+    
+    loop .limparCursorAnterior
+    
+    pop edx
 
-	mov dl, 0
-	
-	inc dh
-	
-	mov al, 0	;; Marcar como não imprimível
-	
+    mov dl, 0
+    
+    inc dh
+    
+    mov al, 0   ;; Marcar como não imprimível
+    
 .consertarXeY:
 
-	cmp dl, byte[Hexagon.Video.maxColunas]
-	jna .yOK
-	
-	mov dl, 0
-	
-	inc dh
-	
-.yOK:	
+    cmp dl, byte[Hexagon.Video.maxColunas]
+    jna .yOK
+    
+    mov dl, 0
+    
+    inc dh
+    
+.yOK:   
 
-	cmp dh, byte[Hexagon.Video.maxLinhas]
-	jna .xOK
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.rolarParaBaixo
-	
-	mov dh, byte[Hexagon.Video.maxLinhas]
-	mov dl, 0
-	
+    cmp dh, byte[Hexagon.Video.maxLinhas]
+    jna .xOK
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.rolarParaBaixo
+    
+    mov dh, byte[Hexagon.Video.maxLinhas]
+    mov dl, 0
+    
 .xOK:
 
-	cmp al, 0
-	je .proximo
-	
+    cmp al, 0
+    je .proximo
+    
 .imprimivel:
 
-	push edx
-	
-	call Hexagon.Kernel.Lib.Graficos.colocarCaractereBitmap
-	
-	pop edx
-	
-	inc dl
-	
-	jmp .proximo
-	
+    push edx
+    
+    call Hexagon.Kernel.Lib.Graficos.colocarCaractereBitmap
+    
+    pop edx
+    
+    inc dl
+    
+    jmp .proximo
+    
 .proximo:
 
-	mov byte[Hexagon.Video.modoTexto.cursor.X], dl
-	mov byte[Hexagon.Video.modoTexto.cursor.Y], dh
-	
-	ret
-	
-;;************************************************************************************	
+    mov byte[Hexagon.Video.modoTexto.cursor.X], dl
+    mov byte[Hexagon.Video.modoTexto.cursor.Y], dh
+    
+    ret
+    
+;;************************************************************************************  
 
 ;; Escrever um caractere na posição do cursor
 ;;
@@ -1197,31 +1197,31 @@ Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere.graficos:
 ;;
 ;; AL - Caractere
 ;; EBX - 01h para posicionar o cursor e diferente disso para não alterar a posição
-	
+    
 Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere:
 
-	pushad
-	
-	push ebx
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractereBase
-	
-	pop ebx
-	
-	cmp ebx, 01h
-	je .alterarCursor
-	
-	jmp .fim
-	
+    pushad
+    
+    push ebx
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractereBase
+    
+    pop ebx
+    
+    cmp ebx, 01h
+    je .alterarCursor
+    
+    jmp .fim
+    
 .alterarCursor:
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor
 
 .fim:
-	
-	popad
-	
-	ret
+    
+    popad
+    
+    ret
 
 ;;************************************************************************************
 
@@ -1229,15 +1229,15 @@ Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere:
 ;;
 ;; Saída:
 ;; DL - X
-;; DH - Y	
+;; DH - Y   
 
 Hexagon.Kernel.Dev.Universal.Console.Console.obterCursor:
 
-	mov dl, byte[Hexagon.Video.modoTexto.cursor.X]
-	mov dh, byte[Hexagon.Video.modoTexto.cursor.Y]
-	
-	ret
-	
+    mov dl, byte[Hexagon.Video.modoTexto.cursor.X]
+    mov dh, byte[Hexagon.Video.modoTexto.cursor.Y]
+    
+    ret
+    
 ;;************************************************************************************
 
 ;; Mover o cursor para a posição específica
@@ -1245,147 +1245,147 @@ Hexagon.Kernel.Dev.Universal.Console.Console.obterCursor:
 ;; Entrada:
 ;;
 ;; DL - X
-;; DH - Y	
+;; DH - Y   
 
 Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor:
 
-	cmp byte[Hexagon.Video.modoGrafico], 1
-	je Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor.graficos
-	
-	push eax
-	push ebx
-	push edx
+    cmp byte[Hexagon.Video.modoGrafico], 1
+    je Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor.graficos
+    
+    push eax
+    push ebx
+    push edx
 
-	mov byte[Hexagon.Video.modoTexto.cursor.X], dl
-	mov byte[Hexagon.Video.modoTexto.cursor.Y], dh
-	
+    mov byte[Hexagon.Video.modoTexto.cursor.X], dl
+    mov byte[Hexagon.Video.modoTexto.cursor.Y], dh
+    
 ;; Consertar X e Y
 
-	cmp dh, Hexagon.Video.modoTexto.maximoLinhas
-	jna .yOK
-	
-	mov dh, Hexagon.Video.modoTexto.maximoLinhas
-	
+    cmp dh, Hexagon.Video.modoTexto.maximoLinhas
+    jna .yOK
+    
+    mov dh, Hexagon.Video.modoTexto.maximoLinhas
+    
 .yOK:
 
-	cmp dl, Hexagon.Video.modoTexto.maximoColunas
-	jna .xOK
-	
-	mov dl, Hexagon.Video.modoTexto.maximoColunas
-	
+    cmp dl, Hexagon.Video.modoTexto.maximoColunas
+    jna .xOK
+    
+    mov dl, Hexagon.Video.modoTexto.maximoColunas
+    
 .xOK:
-	
+    
 ;; Agora devemos multiplicar Y pelo total de colunas de X 
 
-	movzx eax, dh
-	mov bl, Hexagon.Video.modoTexto.maximoColunas+1	;; Contando de 1
-	
-	mul bl				                ;; Multiplicando Y pelas colunas
+    movzx eax, dh
+    mov bl, Hexagon.Video.modoTexto.maximoColunas+1 ;; Contando de 1
+    
+    mul bl                              ;; Multiplicando Y pelas colunas
 
-	movzx ebx, dl
-	add eax, ebx			            ;; Adicionar X para isso
+    movzx ebx, dl
+    add eax, ebx                        ;; Adicionar X para isso
 
-	mov ebx, eax
-	
-	mov al, 0x0f
-	mov dx, 0x3d4
-	
-	out dx, al
+    mov ebx, eax
+    
+    mov al, 0x0f
+    mov dx, 0x3d4
+    
+    out dx, al
 
 ;; Enviar byte menos significante para a porta VGA 
 
-	mov al, bl			                ;; BL é o byte menos significante
-	mov dx, 0x3d5		                ;; Porta VGA
-	
-	out dx, al
+    mov al, bl                          ;; BL é o byte menos significante
+    mov dx, 0x3d5                       ;; Porta VGA
+    
+    out dx, al
 
-	mov al, 0x0e
-	mov dx, 0x3d4
-	
-	out dx, ax
+    mov al, 0x0e
+    mov dx, 0x3d4
+    
+    out dx, ax
 
 ;; Enviar byte mais significante para a porta VGA 
 
-	mov al, bh			               ;; BH é o byte mais significante
-	mov dx, 0x3d5		               ;; Porta VGA
-	
-	out dx, al
-	
-	pop edx
-	pop ebx
-	pop eax
-	
-	ret
-	
+    mov al, bh                         ;; BH é o byte mais significante
+    mov dx, 0x3d5                      ;; Porta VGA
+    
+    out dx, al
+    
+    pop edx
+    pop ebx
+    pop eax
+    
+    ret
+    
 Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor.graficos:
 
-	push eax
-	push ebx
-	push ecx
-	push edx
-	
-	mov byte[Hexagon.Video.modoTexto.cursor.X], dl
-	mov byte[Hexagon.Video.modoTexto.cursor.Y], dh	
-	
-	push edx
-	
-	mov eax, Hexagon.Fontes.largura
-	movzx ebx, dl
-	
-	mul ebx
-	
-	mov word[.x], ax
-	
-	pop edx
-	
-	mov eax, Hexagon.Fontes.altura
-	movzx ebx, dh
-	
-	mul ebx
-	
-	mov word[.y], ax
+    push eax
+    push ebx
+    push ecx
+    push edx
+    
+    mov byte[Hexagon.Video.modoTexto.cursor.X], dl
+    mov byte[Hexagon.Video.modoTexto.cursor.Y], dh  
+    
+    push edx
+    
+    mov eax, Hexagon.Fontes.largura
+    movzx ebx, dl
+    
+    mul ebx
+    
+    mov word[.x], ax
+    
+    pop edx
+    
+    mov eax, Hexagon.Fontes.altura
+    movzx ebx, dh
+    
+    mul ebx
+    
+    mov word[.y], ax
 
-	movzx eax, word[.Xanterior]
-	movzx ebx, word[.Yanterior]
-	
-	mov ecx, Hexagon.Fontes.altura
-	mov edx, [.corCursorAnterior]
-	
+    movzx eax, word[.Xanterior]
+    movzx ebx, word[.Yanterior]
+    
+    mov ecx, Hexagon.Fontes.altura
+    mov edx, [.corCursorAnterior]
+    
 .limparCursorAnterior:
 
-	call Hexagon.Kernel.Lib.Graficos.colocarPixel
-	
-	inc ebx
-	
-	loop .limparCursorAnterior
-	
-	movzx eax, word[.x]
-	movzx ebx, word[.y]
-	
-	mov word[.Xanterior], ax
-	mov word[.Yanterior], bx
+    call Hexagon.Kernel.Lib.Graficos.colocarPixel
+    
+    inc ebx
+    
+    loop .limparCursorAnterior
+    
+    movzx eax, word[.x]
+    movzx ebx, word[.y]
+    
+    mov word[.Xanterior], ax
+    mov word[.Yanterior], bx
 
-	mov edx, dword[Hexagon.Graficos.corFundo]
-	mov dword[.corCursorAnterior], edx
-	
-	mov ecx, Hexagon.Fontes.altura
-	mov edx, dword[Hexagon.Graficos.corFonte]
-	
+    mov edx, dword[Hexagon.Graficos.corFundo]
+    mov dword[.corCursorAnterior], edx
+    
+    mov ecx, Hexagon.Fontes.altura
+    mov edx, dword[Hexagon.Graficos.corFonte]
+    
 .desenharCursor:
 
-	call Hexagon.Kernel.Lib.Graficos.colocarPixel
-	
-	inc ebx
-	
-	loop .desenharCursor
-	
-	pop edx
-	pop ecx
-	pop ebx
-	pop eax
-	
-	ret
-	
+    call Hexagon.Kernel.Lib.Graficos.colocarPixel
+    
+    inc ebx
+    
+    loop .desenharCursor
+    
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+    
+    ret
+    
 .Xanterior: dw 0
 .Yanterior: dw 0
 .corCursorAnterior: dd Hexagon.Graficos.corFundoPadrao
@@ -1402,40 +1402,40 @@ Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor.graficos:
 
 Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString:
 
-	push esi
-	push eax
-	push ecx
+    push esi
+    push eax
+    push ecx
 
 ;; Checar por nulo
 
-	cmp byte[esi], 0
-	je .fim
-	
+    cmp byte[esi], 0
+    je .fim
+    
 ;; Obter tamanho da string
-	
-	call Hexagon.Kernel.Lib.String.tamanhoString
-	
-	mov ecx, eax
+    
+    call Hexagon.Kernel.Lib.String.tamanhoString
+    
+    mov ecx, eax
 
 ;; Escrever todos os caracteres
 
 .imprimirStringLoop:
 
-	lodsb			;; mov AL, byte[ESI] & inc ESI
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere
-	
-	loop .imprimirStringLoop	
-	
+    lodsb           ;; mov AL, byte[ESI] & inc ESI
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere
+    
+    loop .imprimirStringLoop    
+    
 .fim:
 
-	pop ecx
-	pop eax
-	pop esi
-	
-	ret
-	
-;;************************************************************************************	
+    pop ecx
+    pop eax
+    pop esi
+    
+    ret
+    
+;;************************************************************************************  
 
 ;; Alterar o fundo do texto e a cor do primeiro plano
 ;;
@@ -1449,34 +1449,34 @@ Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString:
 
 Hexagon.Kernel.Dev.Universal.Console.Console.definirCorTexto:
 
-	cmp byte[Hexagon.Video.modoGrafico], 1
-	je .graficos
-	
+    cmp byte[Hexagon.Video.modoGrafico], 1
+    je .graficos
+    
 .modoTextoVideo:
 
-	mov byte[Hexagon.Video.modoTexto.corAtual], Hexagon.Video.modoTexto.corPadrao
-	
-	ret
-	
+    mov byte[Hexagon.Video.modoTexto.corAtual], Hexagon.Video.modoTexto.corPadrao
+    
+    ret
+    
 .graficos:
 
-	mov dword[Hexagon.Graficos.corFonte], eax
-	mov dword[Hexagon.Graficos.corFundo], ebx
-	
-	cmp ecx, 1234h
-	je .definirTema
+    mov dword[Hexagon.Graficos.corFonte], eax
+    mov dword[Hexagon.Graficos.corFundo], ebx
+    
+    cmp ecx, 1234h
+    je .definirTema
 
-	jmp .fim
+    jmp .fim
 
 .definirTema:
 
-	mov dword[Hexagon.Graficos.corFonteTema], eax
-	mov dword[Hexagon.Graficos.corFundoTema], ebx
+    mov dword[Hexagon.Graficos.corFonteTema], eax
+    mov dword[Hexagon.Graficos.corFundoTema], ebx
 
 .fim:
 
-	ret
-	
+    ret
+    
 ;;************************************************************************************
 
 ;; Obter cor do fundo e primeiro plano
@@ -1484,31 +1484,31 @@ Hexagon.Kernel.Dev.Universal.Console.Console.definirCorTexto:
 ;; Saída:
 ;;
 ;; EAX - Primeiro plano (hex RGB)
-;; EBX - Plano de fundo (hex RGB)	
+;; EBX - Plano de fundo (hex RGB)   
 ;; ECX - Cor definida para a fonte segundo o tema escolhido
 ;; EDX - Cor definida para o plano de fundo de acordo com o tema
 
 Hexagon.Kernel.Dev.Universal.Console.Console.obterCorTexto:
 
-	cmp byte[Hexagon.Video.modoGrafico], 1
-	je .graficos
-	
+    cmp byte[Hexagon.Video.modoGrafico], 1
+    je .graficos
+    
 .modoTextoVideo:
 
-	mov al, Hexagon.Video.modoTexto.corPadrao
-	
-	ret
-	
+    mov al, Hexagon.Video.modoTexto.corPadrao
+    
+    ret
+    
 .graficos:
 
-	mov eax, dword[Hexagon.Graficos.corFonte]
-	mov ebx, dword[Hexagon.Graficos.corFundo]
-	
-	mov ecx, dword[Hexagon.Graficos.corFonteTema]
-	mov edx, dword[Hexagon.Graficos.corFundoTema]
+    mov eax, dword[Hexagon.Graficos.corFonte]
+    mov ebx, dword[Hexagon.Graficos.corFundo]
+    
+    mov ecx, dword[Hexagon.Graficos.corFonteTema]
+    mov edx, dword[Hexagon.Graficos.corFundoTema]
 
-	ret
-	
+    ret
+    
 ;;************************************************************************************
 
 ;; Altera a fonte utilizada para exibir informações na tela
@@ -1523,20 +1523,20 @@ Hexagon.Kernel.Dev.Universal.Console.Console.obterCorTexto:
 
 Hexagon.Kernel.Dev.Universal.Console.Console.alterarFonte:
 
-	call Hexagon.Kernel.FS.VFS.arquivoExiste
-	
-	jc .erroFonte
-	
-	mov edi, Hexagon.Fontes.espacoFonte
-		
-	call Hexagon.Kernel.FS.VFS.carregarArquivo
-	
-	ret
-	
+    call Hexagon.Kernel.FS.VFS.arquivoExiste
+    
+    jc .erroFonte
+    
+    mov edi, Hexagon.Fontes.espacoFonte
+        
+    call Hexagon.Kernel.FS.VFS.carregarArquivo
+    
+    ret
+    
 .erroFonte:
 
-	stc
-	
-	ret
+    stc
+    
+    ret
 
 ;;************************************************************************************

@@ -83,19 +83,19 @@ Hexagon.Kernel.Kernel.Relatorio.iniciarRelatorio:
 
 Hexagon.Kernel.Kernel.Relatorio.adicionarMensagem:
 
-	call Hexagon.Kernel.Lib.Graficos.usarBufferKernel
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
-	
-	call Hexagon.Kernel.Lib.Graficos.usarBufferVideo1
-	
-	ret
+    call Hexagon.Kernel.Lib.Graficos.usarBufferKernel
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
+    
+    call Hexagon.Kernel.Lib.Graficos.usarBufferVideo1
+    
+    ret
 
 ;;************************************************************************************
 
 Hexagon.Kernel.Kernel.Relatorio.dataParaRelatorio:
 
-	push eax
+    push eax
     push ebx
     push esi
 
@@ -179,7 +179,7 @@ Hexagon.Kernel.Kernel.Relatorio.dataParaRelatorio:
 
 Hexagon.Kernel.Kernel.Relatorio.horaParaRelatorio:
 
-	push eax
+    push eax
     push ebx
     push esi
 
@@ -239,10 +239,10 @@ Hexagon.Kernel.Kernel.Relatorio.horaParaRelatorio:
    
     call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere
    
-	mov esi, Hexagon.Relatorio.infoData
-	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
-	
+    mov esi, Hexagon.Relatorio.infoData
+    
+    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
+    
     pop esi
     pop ebx
     pop eax
@@ -274,25 +274,25 @@ Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon:
 
 .envioPadrao:
 
-	push esi
+    push esi
 
     cmp byte[Hexagon.API.Controle.chamadaSistema], 01h
     je .processoUsuario
 
 .mensagemHexagon:
 
-	mov esi, Hexagon.Relatorio.identificadorHexagon
-	
+    mov esi, Hexagon.Relatorio.identificadorHexagon
+    
     call mensagemHexagonParaSerial
 
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
+    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
 
     jmp .mensagemRecebida
 
 .processoUsuario:
 
     mov esi, Hexagon.Relatorio.identificadorUsuarioInicial
-	
+    
     call mensagemHexagonParaSerial
 
     call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
@@ -308,28 +308,28 @@ Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon:
     call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
 
     mov esi, Hexagon.Relatorio.identificadorUsuarioFinal
-	
+    
     call mensagemHexagonParaSerial
 
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
+    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
 
     jmp .mensagemRecebida
 
 .mensagemRecebida:
 
-	pop esi
+    pop esi
 
     call mensagemHexagonParaSerial
 
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
+    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
 
     mov esi, Hexagon.Relatorio.novaLinha
 
     call mensagemHexagonParaSerial
 
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
+    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
 
-	ret
+    ret
 
 .apenasSaidaSerial:
 
@@ -340,8 +340,8 @@ Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon:
 
 .serialMensagemHexagon:
 
-	mov esi, Hexagon.Relatorio.identificadorHexagon
-	
+    mov esi, Hexagon.Relatorio.identificadorHexagon
+    
     call mensagemHexagonParaSerial
 
     jmp .serialMensagemRecebida
@@ -349,7 +349,7 @@ Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon:
 .serialProcessoUsuario:
 
     mov esi, Hexagon.Relatorio.identificadorUsuarioInicial
-	
+    
     call mensagemHexagonParaSerial
 
 ;; O PID do processo será exibido na tela
@@ -361,7 +361,7 @@ Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon:
     call mensagemHexagonParaSerial
 
     mov esi, Hexagon.Relatorio.identificadorUsuarioFinal
-	
+    
     call mensagemHexagonParaSerial
 
 .serialMensagemRecebida:

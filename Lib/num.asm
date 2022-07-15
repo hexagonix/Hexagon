@@ -34,50 +34,50 @@
 
 Hexagon.Kernel.Lib.Num.obterAleatorio:
 
-	mov ecx, eax
-	
-	mov eax, [.numeroAleatorio]
+    mov ecx, eax
+    
+    mov eax, [.numeroAleatorio]
 
-	push ecx
+    push ecx
 
-	movzx ecx, byte[Hexagon.Arch.x86.CMOS.hora]
+    movzx ecx, byte[Hexagon.Arch.x86.CMOS.hora]
 
-	add eax, ecx
+    add eax, ecx
 
-	movzx ecx, byte[Hexagon.Arch.x86.CMOS.minuto]
+    movzx ecx, byte[Hexagon.Arch.x86.CMOS.minuto]
 
-	add eax, ecx
+    add eax, ecx
 
-	movzx ecx, byte[Hexagon.Arch.x86.CMOS.segundo]
+    movzx ecx, byte[Hexagon.Arch.x86.CMOS.segundo]
 
-	add eax, ecx
+    add eax, ecx
 
-	pop ecx
+    pop ecx
 
-	mov ebx, 9FA3204Ah
-	
-	mul ebx
-	
-	add eax, 15EA5h
+    mov ebx, 9FA3204Ah
+    
+    mul ebx
+    
+    add eax, 15EA5h
 
-	mov [.numeroAleatorio], eax
-	
-	mov ebx, 10000h
-	mov edx, 0
-	
-	div ebx
-	
-	mov ebx, ecx
-	mov edx, 0
-	
-	div ebx
-	
-	mov eax, edx ;; Resto da divisão
-	
-	ret
-	
-.numeroAleatorio:	dd 1
-	
+    mov [.numeroAleatorio], eax
+    
+    mov ebx, 10000h
+    mov edx, 0
+    
+    div ebx
+    
+    mov ebx, ecx
+    mov edx, 0
+    
+    div ebx
+    
+    mov eax, edx ;; Resto da divisão
+    
+    ret
+    
+.numeroAleatorio:   dd 1
+    
 ;;************************************************************************************
 
 ;; Alimentar o gerador de números aleatórios
@@ -88,10 +88,10 @@ Hexagon.Kernel.Lib.Num.obterAleatorio:
 
 Hexagon.Kernel.Lib.Num.alimentarAleatorios:
 
-	mov [Hexagon.Kernel.Lib.Num.obterAleatorio.numeroAleatorio], eax
+    mov [Hexagon.Kernel.Lib.Num.obterAleatorio.numeroAleatorio], eax
 
-	ret
-	
+    ret
+    
 ;;************************************************************************************
 
 ;; Realiza a conversão de BCD para binário
@@ -106,11 +106,11 @@ Hexagon.Kernel.Lib.Num.alimentarAleatorios:
 
 Hexagon.Kernel.Lib.Num.BCDParaBinario:
 
-	push ebx
-	
-	mov bl, al    ;; BL = AL mod 16
-	and bl, 0x0F 
-	shr al, 4     ;; AL = AL / 16
+    push ebx
+    
+    mov bl, al    ;; BL = AL mod 16
+    and bl, 0x0F 
+    shr al, 4     ;; AL = AL / 16
     mov bh, 10
     
     mul bh        ;; Multiplicar por 10
