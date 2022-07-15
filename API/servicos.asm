@@ -45,10 +45,10 @@ instalarInterrupcoes:
     
     mov dword[ordemKernel], ordemKernelExecutar
 
-    ;mov esi, manipuladorTimer               ;; IRQ 0
-    ;mov eax, Hexagon.Int.interrupcaoTimer   ;; Número da interrupção
+    mov esi, manipuladorTimer               ;; IRQ 0
+    mov eax, Hexagon.Int.interrupcaoTimer   ;; Número da interrupção
     
-    ;call instalarISR
+    call instalarISR
 
     mov esi, manipuladorTeclado             ;; IRQ 1
     mov eax, Hexagon.Int.interrupcaoTeclado ;; Número da interrupção         
@@ -85,6 +85,13 @@ manipuladorTimer:
 
     push eax
     
+    push ds
+    
+    mov ax, 0x10            ;; Segmento de dados do Kernel
+    mov ds, ax
+        
+    call Hexagon.Kernel.Arch.x86.CMOS.CMOS.atualizarDadosCMOS ;; Atualizar o relógio em tempo real a cada intervalo
+
     inc dword[.contagemTimer] ;; Incrementa o contador
     inc dword[.contadorRelativo]
 
@@ -92,13 +99,8 @@ manipuladorTimer:
     
     out 0x20, al
 
-    pop eax
-    
-    pushad
-
-    call Hexagon.Kernel.Arch.x86.CMOS.CMOS.atualizarDadosCMOS ;; Atualizar o relógio em tempo real a cada intervalo
-
-    popad
+    pop ds
+    pop eax 
 
     iret
     
