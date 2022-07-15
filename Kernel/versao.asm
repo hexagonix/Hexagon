@@ -64,11 +64,11 @@ align 4
 
 Hexagon.Kernel.Kernel.Versao.retornarVersao:
 
-	mov eax, Hexagon.Versao.numeroVersao
-	mov ebx, Hexagon.Versao.numeroSubversao
-	mov ch, Hexagon.Versao.caractereRevisao
+    mov eax, Hexagon.Versao.numeroVersao
+    mov ebx, Hexagon.Versao.numeroSubversao
+    mov ch, Hexagon.Versao.caractereRevisao
     mov edx, Hexagon.Arquitetura.suporte
-	mov esi, Hexagon.Versao.nomeKernel
-	
-	ret
+    mov esi, Hexagon.Versao.nomeKernel
+    
+    ret
     

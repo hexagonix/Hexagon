@@ -67,44 +67,44 @@ Hexagon.Usuarios.Grupos:
 ;; ESI - Nome do usuário logado
 
 Hexagon.Kernel.Kernel.Usuarios.definirUsuario:
-	
-	push eax
-	
-	push esi
-	
-	push ds
-	pop es
-	
-	call Hexagon.Kernel.Lib.String.tamanhoString
-	
-	cmp eax, 32
-	jl .nomeValido
-	
-	stc
-	
-	ret
-	
+    
+    push eax
+    
+    push esi
+    
+    push ds
+    pop es
+    
+    call Hexagon.Kernel.Lib.String.tamanhoString
+    
+    cmp eax, 32
+    jl .nomeValido
+    
+    stc
+    
+    ret
+    
 .nomeValido:
-	
-	mov ecx, eax
-	
-	inc ecx
-	
+    
+    mov ecx, eax
+    
+    inc ecx
+    
 ;; Copiar o nome do usuário
-	
-	mov edi, nomeUsuario
-	
-	pop esi
+    
+    mov edi, nomeUsuario
+    
+    pop esi
 
-	rep movsb		;; Copiar (ECX) caracteres de ESI para EDI
-	
-	pop eax
-	
-	mov dword [IDUsuario], eax
-	
-	mov byte[loginFeito], 01h
-	
-	ret
+    rep movsb       ;; Copiar (ECX) caracteres de ESI para EDI
+    
+    pop eax
+    
+    mov dword [IDUsuario], eax
+    
+    mov byte[loginFeito], 01h
+    
+    ret
 
 ;;************************************************************************************
 
@@ -117,16 +117,16 @@ Hexagon.Kernel.Kernel.Usuarios.definirUsuario:
 
 Hexagon.Kernel.Kernel.Usuarios.obterUsuario:
 
-	cmp byte[loginFeito], 00h
-	je .fim
-	
-	mov esi, nomeUsuario ;; Enviar o nome do usuário
-	mov eax, [IDUsuario] ;; Enviar o ID de grupo do usuário
+    cmp byte[loginFeito], 00h
+    je .fim
+    
+    mov esi, nomeUsuario ;; Enviar o nome do usuário
+    mov eax, [IDUsuario] ;; Enviar o ID de grupo do usuário
 
 .fim:
-	
-	ret
-	
+    
+    ret
+    
 ;;************************************************************************************
 
 Hexagon.Kernel.Kernel.Usuarios.verificarUsuario:
@@ -146,29 +146,29 @@ Hexagon.Kernel.Kernel.Usuarios.validarUsuario:
 
 Hexagon.Kernel.Kernel.Usuarios.verificarPermissoes:
 
-	mov eax, [IDUsuario]
-	
-	cmp eax, Hexagon.Usuarios.ID.root
-	je .usuarioRaiz
-	
-	cmp eax, Hexagon.Usuarios.ID.supervisor
-	je .supervisor
-	
-	mov eax, Hexagon.Usuarios.Grupos.padrao
-	
-	ret
-	
+    mov eax, [IDUsuario]
+    
+    cmp eax, Hexagon.Usuarios.ID.root
+    je .usuarioRaiz
+    
+    cmp eax, Hexagon.Usuarios.ID.supervisor
+    je .supervisor
+    
+    mov eax, Hexagon.Usuarios.Grupos.padrao
+    
+    ret
+    
 .usuarioRaiz:
 
-	mov eax, Hexagon.Usuarios.Grupos.root
-	
-	ret
-	
+    mov eax, Hexagon.Usuarios.Grupos.root
+    
+    ret
+    
 .supervisor:
 
-	mov eax, Hexagon.Usuarios.Grupos.supervisor
-	
-	ret
+    mov eax, Hexagon.Usuarios.Grupos.supervisor
+    
+    ret
 
 ;;************************************************************************************
 

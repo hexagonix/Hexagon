@@ -100,17 +100,17 @@ Hexagon.Kernel.FS.Dir.definirDiretorioAtual:
     call Hexagon.Kernel.Lib.String.tamanhoString
 
     mov ecx, eax
-	
-	inc ecx
-	
+    
+    inc ecx
+    
 ;; Copiar o caminho agora
-	
-	mov edi, Hexagon.VFS.Diretorio.diretorioAnterior
-	
+    
+    mov edi, Hexagon.VFS.Diretorio.diretorioAnterior
+    
     mov esi, Hexagon.VFS.Diretorio.diretorioAtual
 
-	rep movsb		;; Copiar (ECX) caracteres de ESI para EDI
-	
+    rep movsb       ;; Copiar (ECX) caracteres de ESI para EDI
+    
 ;; Agora sim, preencher a variável com o valor fornecido
 
     pop esi
@@ -118,15 +118,15 @@ Hexagon.Kernel.FS.Dir.definirDiretorioAtual:
     call Hexagon.Kernel.Lib.String.tamanhoString
 
     mov ecx, eax
-	
-	inc ecx
-	
+    
+    inc ecx
+    
 ;; Copiar agora o nome fornecido para o local adequado
-	
-	mov edi, Hexagon.VFS.Diretorio.diretorioAtual
-	
-	rep movsb		;; Copiar (ECX) caracteres de ESI para EDI
-	
+    
+    mov edi, Hexagon.VFS.Diretorio.diretorioAtual
+    
+    rep movsb       ;; Copiar (ECX) caracteres de ESI para EDI
+    
     clc
 
 .fim:
@@ -202,17 +202,17 @@ Hexagon.Kernel.FS.Dir.definirPontodeMontagem:
     call Hexagon.Kernel.Lib.String.tamanhoString
 
     mov ecx, eax
-	
-	inc ecx
-	
+    
+    inc ecx
+    
 ;; Copiar agora o nome fornecido para o local adequado
-	
-	mov edi, Hexagon.VFS.Montagem.pontoMontagem
-	
-	rep movsb		;; Copiar (ECX) caracteres de ESI para EDI
+    
+    mov edi, Hexagon.VFS.Montagem.pontoMontagem
+    
+    rep movsb       ;; Copiar (ECX) caracteres de ESI para EDI
 
     clc
-	
+    
 .fim:
 
     ret
@@ -233,10 +233,10 @@ Hexagon.Kernel.FS.Dir.obterPontodeMontagem:
 ;; Primeiro, resgatar o volume físico montado, para EDI
 
     mov ah, byte[Hexagon.Dev.Universal.Disco.Controle.driveAtual]
-	
-	mov dl, 01h                 ;; Classe de dispositivo de armazenamento
-	
-	call Hexagon.Kernel.Dev.Dev.paraDispositivo ;; Converter para nome de dispositivo
+    
+    mov dl, 01h                 ;; Classe de dispositivo de armazenamento
+    
+    call Hexagon.Kernel.Dev.Dev.paraDispositivo ;; Converter para nome de dispositivo
 
     mov edi, esi
 

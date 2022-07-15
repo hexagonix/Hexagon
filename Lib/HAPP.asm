@@ -177,98 +177,98 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
 
 ;; Vamos salvar o nome do arquivo para a função que chamou
 
-	push esi
+    push esi
 
 ;; O arquivo existe em disco? Precisamos dos dados de tamanho
 
-	call Hexagon.Kernel.FS.VFS.arquivoExiste
+    call Hexagon.Kernel.FS.VFS.arquivoExiste
 
-	push eax ;; Aqui temos o tamanho
-	push esi
+    push eax ;; Aqui temos o tamanho
+    push esi
 
-	call Hexagon.Kernel.Arch.Universal.Memoria.confirmarUsoMemoria ;; Vamos aqui confirmar o uso de memória
+    call Hexagon.Kernel.Arch.Universal.Memoria.confirmarUsoMemoria ;; Vamos aqui confirmar o uso de memória
 
-	pop esi
-	pop eax
+    pop esi
+    pop eax
 
-	push eax
+    push eax
 
 ;; O que está sendo feito aqui deverá ser desfeito ao final do processo, visto que estamos
 ;; utilizando uma área previamente alocada para a imagem e ela poderá ser rejeitada. Devemos
 ;; confirmar o uso de memória que deve ser liberado após, independente do resultado
 
-	add dword[Hexagon.Processos.enderecoAplicativos], eax ;; Somar à área alocada
-	mov ebx, dword[Hexagon.Processos.tamanhoUltimoPrograma] ;; Pegar o offset da área
-	add dword[Hexagon.Processos.enderecoAplicativos], ebx ;; Somar isso ao endereço
+    add dword[Hexagon.Processos.enderecoAplicativos], eax ;; Somar à área alocada
+    mov ebx, dword[Hexagon.Processos.tamanhoUltimoPrograma] ;; Pegar o offset da área
+    add dword[Hexagon.Processos.enderecoAplicativos], ebx ;; Somar isso ao endereço
 
-	mov edi, dword[Hexagon.Processos.enderecoAplicativos] ;; Endereço final para carregamento
-	
-	sub edi, 0x500	
+    mov edi, dword[Hexagon.Processos.enderecoAplicativos] ;; Endereço final para carregamento
+    
+    sub edi, 0x500  
 
 ;; Vamos carregar a imagem para começar as análises
 
-	call Hexagon.Kernel.FS.VFS.carregarArquivo
+    call Hexagon.Kernel.FS.VFS.carregarArquivo
 
-	jc .imagemAusente
+    jc .imagemAusente
 
 ;; Vamos começar a checagem do cabeçalho executável da imagem carregada
 
-	mov edi, [Hexagon.Processos.enderecoAplicativos]
-	sub edi, 0x500
+    mov edi, [Hexagon.Processos.enderecoAplicativos]
+    sub edi, 0x500
 
 ;; Pronto, agora devemos iniciar a análise da imagem
 
 ;; Vamos verificar os 4 bytes do "número mágico" do cabeçalho
 
-	cmp byte[edi+0], "H" ;; H de HAPP
-	jne .cabecalhoInvalido
+    cmp byte[edi+0], "H" ;; H de HAPP
+    jne .cabecalhoInvalido
 
-	cmp byte[edi+1], "A" ;; A de HAPP
-	jne .cabecalhoInvalido
+    cmp byte[edi+1], "A" ;; A de HAPP
+    jne .cabecalhoInvalido
 
-	cmp byte[edi+2], "P" ;; P de HAPP
-	jne .cabecalhoInvalido
+    cmp byte[edi+2], "P" ;; P de HAPP
+    jne .cabecalhoInvalido
 
-	cmp byte[edi+3], "P" ;; P de HAPP
-	jne .cabecalhoInvalido
+    cmp byte[edi+3], "P" ;; P de HAPP
+    jne .cabecalhoInvalido
 
 ;; Se chegamos até aqui, temos o cabeçalho no arquivo, devemos checar o restante dos campos,
 ;; como as versões mínimas do Kernel necessárias para a execução, bem como a arquitetura
 
 ;; Vamos checar se a arquitetura da imagem é a mesma do Sistema
 
-	cmp byte[edi+4], Hexagon.Arquitetura.suporte ;; Arquitetura suportada
-	jne .cabecalhoInvalido
+    cmp byte[edi+4], Hexagon.Arquitetura.suporte ;; Arquitetura suportada
+    jne .cabecalhoInvalido
 
-	mov ah, byte[edi+4]
-	mov byte[Hexagon.Imagem.Executavel.HAPP.arquiteturaImagem], ah
+    mov ah, byte[edi+4]
+    mov byte[Hexagon.Imagem.Executavel.HAPP.arquiteturaImagem], ah
 
 ;; Pronto, agora vamos chegar as versões do Kernel necessárias como dependências da imagem
 
-	cmp byte[edi+5], Hexagon.Versao.numeroVersao ;; Versão declarada do Kernel
-	jg .cabecalhoInvalido ;; A imagem requer uma versão do Andromeda superior a essa
+    cmp byte[edi+5], Hexagon.Versao.numeroVersao ;; Versão declarada do Kernel
+    jg .cabecalhoInvalido ;; A imagem requer uma versão do Andromeda superior a essa
 
-	cmp byte[edi+5], Hexagon.Versao.numeroVersao ;; Versão declarada do Kernel
-	jl .cabecalhoValido ;; A imagem requer uma versão do Andromeda superior a essa
+    cmp byte[edi+5], Hexagon.Versao.numeroVersao ;; Versão declarada do Kernel
+    jl .cabecalhoValido ;; A imagem requer uma versão do Andromeda superior a essa
 
-	mov ah, byte[edi+5]
-	mov byte[Hexagon.Imagem.Executavel.HAPP.versaoMinima], ah
+    mov ah, byte[edi+5]
+    mov byte[Hexagon.Imagem.Executavel.HAPP.versaoMinima], ah
 
-	cmp byte[edi+6], Hexagon.Versao.numeroSubversao ;; Subversão declarada do Kernel
-	jg .cabecalhoInvalido ;; A imagem requer uma versão do Andromeda superior a essa
+    cmp byte[edi+6], Hexagon.Versao.numeroSubversao ;; Subversão declarada do Kernel
+    jg .cabecalhoInvalido ;; A imagem requer uma versão do Andromeda superior a essa
 
 .cabecalhoValido:
 
-	mov ah, byte[edi+6]
-	mov byte[Hexagon.Imagem.Executavel.HAPP.subVersaoMinima], ah
+    mov ah, byte[edi+6]
+    mov byte[Hexagon.Imagem.Executavel.HAPP.subVersaoMinima], ah
 
 ;; Agora vamos obter o ponto de entrada. O Hexagon não precisa mais conhecer o ponto exato de
 ;; entrada da imagem, ele está indicado no cabeçalho HAPP. Agora, não importa mais a ordem do código,
 ;; o Hexagon encontrará o ponto de entrada (offset) relativo da imagem, caso ele esteja declarada no
 ;; cabeçalho. 
 
-	mov eax, dword[edi+7]
-	mov dword[Hexagon.Imagem.Executavel.HAPP.entradaHAPP], eax
+    mov eax, dword[edi+7]
+    mov dword[Hexagon.Imagem.Executavel.HAPP.entradaHAPP], eax
 
 ;; Os tipos de imagem podem ser (01h) imagens executáveis e (02h e 03h) bibliotecas
 ;; estáticas ou dinâminas (implementações futuras)
@@ -276,51 +276,51 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
 ;; Primeiro, vamos avaliar se a imagem está em um formato executável funcional. Imagens do kernel podem
 ;; ter um número de tipo de imagem diferente, para impedir a execução direta
 
-	cmp byte[edi+11], 03h
-	ja .tipoExecutavelInvalido
+    cmp byte[edi+11], 03h
+    ja .tipoExecutavelInvalido
 
 ;; Se tudo estiver certo, vamos prosseguir com a verificação da imagem
 
-	mov ah, byte[edi+11]
-	mov byte[Hexagon.Imagem.Executavel.HAPP.tipoImagem], ah
+    mov ah, byte[edi+11]
+    mov byte[Hexagon.Imagem.Executavel.HAPP.tipoImagem], ah
 
 ;; Se tudo certo com o cabeçalho, marcar que a imagem pode ser executada
 
-	mov byte[Hexagon.Imagem.Executavel.HAPP.imagemIncompativel], 00h ;; Marcar imagem como compatível
+    mov byte[Hexagon.Imagem.Executavel.HAPP.imagemIncompativel], 00h ;; Marcar imagem como compatível
 
-	jmp .final ;; Vamos continuar sem marcar erro na imagem
+    jmp .final ;; Vamos continuar sem marcar erro na imagem
 
 .cabecalhoInvalido: ;; Algo no cabeçalho está inválido, então a imagem não pode ser executada
 
-	mov byte[Hexagon.Imagem.Executavel.HAPP.imagemIncompativel], 01h ;; Marcar como inválida
+    mov byte[Hexagon.Imagem.Executavel.HAPP.imagemIncompativel], 01h ;; Marcar como inválida
 
-	jmp .final ;; Pular para o final da função
+    jmp .final ;; Pular para o final da função
 
 .imagemAusente:
 
-	mov byte[Hexagon.Imagem.Executavel.HAPP.imagemIncompativel], 02h ;; Marcar erro durante o carregamento
+    mov byte[Hexagon.Imagem.Executavel.HAPP.imagemIncompativel], 02h ;; Marcar erro durante o carregamento
 
-	jmp .final
+    jmp .final
 
 .tipoExecutavelInvalido:
 
-	mov byte[Hexagon.Imagem.Executavel.HAPP.imagemIncompativel], 03h
+    mov byte[Hexagon.Imagem.Executavel.HAPP.imagemIncompativel], 03h
 
-	jmp .final
+    jmp .final
 
 .final:
 
-	pop eax 
-	pop esi 
+    pop eax 
+    pop esi 
 
 ;; Agora vamos limpar a área de alocação utilizada para o teste
 
-	sub dword[Hexagon.Processos.enderecoAplicativos], eax
-	mov ebx, dword[Hexagon.Processos.tamanhoUltimoPrograma]
-	sub dword[Hexagon.Processos.enderecoAplicativos], ebx
+    sub dword[Hexagon.Processos.enderecoAplicativos], eax
+    mov ebx, dword[Hexagon.Processos.tamanhoUltimoPrograma]
+    sub dword[Hexagon.Processos.enderecoAplicativos], ebx
 
-	call Hexagon.Kernel.Arch.Universal.Memoria.liberarUsoMemoria ;; Vamos liberar a memória
+    call Hexagon.Kernel.Arch.Universal.Memoria.liberarUsoMemoria ;; Vamos liberar a memória
 
-	ret
+    ret
 
 ;;************************************************************************************

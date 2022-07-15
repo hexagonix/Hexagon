@@ -100,32 +100,32 @@ include "FS/dir.asm"
 
 Hexagon.Kernel.FS.VFS.novoArquivo:
 
-	call Hexagon.Kernel.Kernel.Usuarios.verificarPermissoes
-	
-	cmp eax, 03h ;; Código de grupo para usuário padrão
-	je .permissaoNegada
-	
-	mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
-	
-	cmp ah, Hexagon.VFS.FS.FAT16B
-	je .novoArquivoFAT16B
-	
-	ret
+    call Hexagon.Kernel.Kernel.Usuarios.verificarPermissoes
+    
+    cmp eax, 03h ;; Código de grupo para usuário padrão
+    je .permissaoNegada
+    
+    mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
+    
+    cmp ah, Hexagon.VFS.FS.FAT16B
+    je .novoArquivoFAT16B
+    
+    ret
 
 .novoArquivoFAT16B:
 
-	call Hexagon.Kernel.FS.FAT16.novoArquivoFAT16B
-	
-	ret
+    call Hexagon.Kernel.FS.FAT16.novoArquivoFAT16B
+    
+    ret
 
 .permissaoNegada:
 
-	stc
-	
-	mov eax, 05h
-	
-	ret
-	
+    stc
+    
+    mov eax, 05h
+    
+    ret
+    
 ;;************************************************************************************
 
 ;; Remover um arquivo do disco
@@ -142,32 +142,32 @@ Hexagon.Kernel.FS.VFS.novoArquivo:
 
 Hexagon.Kernel.FS.VFS.deletarArquivo:
 
-	call Hexagon.Kernel.Kernel.Usuarios.verificarPermissoes
-	
-	cmp eax, 03h ;; Código de grupo para usuário padrão
-	je .permissaoNegada
-	
-	mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
-	
-	cmp ah, Hexagon.VFS.FS.FAT16B
-	je .deletarArquivoFAT16B
-	
-	ret
+    call Hexagon.Kernel.Kernel.Usuarios.verificarPermissoes
+    
+    cmp eax, 03h ;; Código de grupo para usuário padrão
+    je .permissaoNegada
+    
+    mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
+    
+    cmp ah, Hexagon.VFS.FS.FAT16B
+    je .deletarArquivoFAT16B
+    
+    ret
 
 .deletarArquivoFAT16B:
 
-	call Hexagon.Kernel.FS.FAT16.deletarArquivoFAT16B
-	
-	ret
+    call Hexagon.Kernel.FS.FAT16.deletarArquivoFAT16B
+    
+    ret
 
 .permissaoNegada:
 
-	stc
-	
-	mov eax, 05h
-	
-	ret
-	
+    stc
+    
+    mov eax, 05h
+    
+    ret
+    
 ;;************************************************************************************
 
 ;; Salvar arquivo no disco
@@ -185,24 +185,24 @@ Hexagon.Kernel.FS.VFS.deletarArquivo:
 
 Hexagon.Kernel.FS.VFS.salvarArquivo:
 
-	pushad
-	
-	mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
-	
-	cmp ah, Hexagon.VFS.FS.FAT16B
-	je .salvarArquivoFAT16B
-	
-	popad
-	
-	ret
+    pushad
+    
+    mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
+    
+    cmp ah, Hexagon.VFS.FS.FAT16B
+    je .salvarArquivoFAT16B
+    
+    popad
+    
+    ret
 
 .salvarArquivoFAT16B:
 
-	popad
-	
-	call Hexagon.Kernel.FS.FAT16.salvarArquivoFAT16B
-	
-	ret
+    popad
+    
+    call Hexagon.Kernel.FS.FAT16.salvarArquivoFAT16B
+    
+    ret
 
 ;;************************************************************************************
 
@@ -215,19 +215,19 @@ Hexagon.Kernel.FS.VFS.salvarArquivo:
 
 Hexagon.Kernel.FS.VFS.listarArquivos:
 
-	mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
-	
-	cmp ah, Hexagon.VFS.FS.FAT16B
-	je .listarArquivosFAT16B
-	
-	ret
+    mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
+    
+    cmp ah, Hexagon.VFS.FS.FAT16B
+    je .listarArquivosFAT16B
+    
+    ret
 
 .listarArquivosFAT16B:
 
-	call Hexagon.Kernel.FS.FAT16.listarArquivosFAT16B
-	
-	ret
-	
+    call Hexagon.Kernel.FS.FAT16.listarArquivosFAT16B
+    
+    ret
+    
 ;;************************************************************************************
 
 ;; Carregar arquivo na memória
@@ -241,22 +241,22 @@ Hexagon.Kernel.FS.VFS.listarArquivos:
 ;;
 ;; EAX - Tamanho do arquivo em bytes
 ;; CF definido caso o arquivo não tenha sido encontrado ou tenha nome inválido
-	
+    
 Hexagon.Kernel.FS.VFS.carregarArquivo:
 
-	mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
-	
-	cmp ah, Hexagon.VFS.FS.FAT16B
-	je .carregarArquivoFAT16B
-	
-	ret
+    mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
+    
+    cmp ah, Hexagon.VFS.FS.FAT16B
+    je .carregarArquivoFAT16B
+    
+    ret
 
 .carregarArquivoFAT16B:
 
-	call Hexagon.Kernel.FS.FAT16.carregarArquivoFAT16B
-	
-	ret
-	
+    call Hexagon.Kernel.FS.FAT16.carregarArquivoFAT16B
+    
+    ret
+    
 ;;************************************************************************************
 
 ;; Checar se um arquivo existe no disco
@@ -271,99 +271,99 @@ Hexagon.Kernel.FS.VFS.carregarArquivo:
 ;; EBX - Ponteiro para a entrada no diretório raiz
 ;; CF definido caso o arquivo não tenha sido encontrado ou tenha nome inválido
 
-Hexagon.Kernel.FS.VFS.arquivoExiste:	
-	
-	mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
-	
-	cmp ah, Hexagon.VFS.FS.FAT16B
-	je .arquivoExisteFAT16B
-	
-	ret
+Hexagon.Kernel.FS.VFS.arquivoExiste:    
+    
+    mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
+    
+    cmp ah, Hexagon.VFS.FS.FAT16B
+    je .arquivoExisteFAT16B
+    
+    ret
 
 .arquivoExisteFAT16B:
 
-	call Hexagon.Kernel.FS.FAT16.arquivoExisteFAT16B
-	
-	ret
+    call Hexagon.Kernel.FS.FAT16.arquivoExisteFAT16B
+    
+    ret
 
 ;;************************************************************************************
 
 Hexagon.Kernel.FS.VFS.montarVolume:
 
-	mov ah, byte[Hexagon.Dev.Universal.Disco.Controle.driveBoot]
-	
-	mov dl, 01h                 ;; Classe de dispositivo de armazenamento
-	
-	call Hexagon.Kernel.Dev.Dev.paraDispositivo ;; Converter para nome de dispositivo
+    mov ah, byte[Hexagon.Dev.Universal.Disco.Controle.driveBoot]
+    
+    mov dl, 01h                 ;; Classe de dispositivo de armazenamento
+    
+    call Hexagon.Kernel.Dev.Dev.paraDispositivo ;; Converter para nome de dispositivo
 
 ;; Habilitar os privilégios do Kernel para solicitação privilegiada
 
-	mov dword[ordemKernel], ordemKernelExecutar 
+    mov dword[ordemKernel], ordemKernelExecutar 
 
-	call Hexagon.Kernel.Dev.Dev.abrir ;; Abrir o dispositivo para leitura/escrita com privilégios
+    call Hexagon.Kernel.Dev.Dev.abrir ;; Abrir o dispositivo para leitura/escrita com privilégios
 
 ;; Desabilitar os privilégios do Kernel, uma vez que já não são necessários
 
-	mov dword[ordemKernel], ordemKernelDesativada 
+    mov dword[ordemKernel], ordemKernelDesativada 
 
-	ret
+    ret
 
 ;;************************************************************************************
-	
+    
 ;; Define o sistema de arquivos presente no disco atual, obtendo a informação adequada 
 ;; no MBR (Master Boot Record)
 
 Hexagon.Kernel.FS.VFS.definirSistemaArquivos:
-	
-	call Hexagon.Kernel.Dev.x86.Disco.Disco.lerMBR
+    
+    call Hexagon.Kernel.Dev.x86.Disco.Disco.lerMBR
 
-	jc .restaurarVolume 
+    jc .restaurarVolume 
 
-	mov byte[Hexagon.VFS.Controle.tipoSistemaArquivos], ah
+    mov byte[Hexagon.VFS.Controle.tipoSistemaArquivos], ah
 
-	jmp .finalizar
+    jmp .finalizar
 
 .restaurarVolume:
 
-	mov dl, byte [Hexagon.Dev.Universal.Disco.Controle.driveBoot]
-	mov byte [Hexagon.Dev.Universal.Disco.Controle.driveAtual], dl
-	
-	call Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos
-	
+    mov dl, byte [Hexagon.Dev.Universal.Disco.Controle.driveBoot]
+    mov byte [Hexagon.Dev.Universal.Disco.Controle.driveAtual], dl
+    
+    call Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos
+    
 .finalizar:
 
-	ret
+    ret
 
 ;;************************************************************************************
-		
+        
 ;; Inicializa o sistema de arquivos do disco montado, para uso com o Sistema
 
-Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos:	
-	
-	call Hexagon.Kernel.Dev.x86.Disco.Disco.testarVolume
+Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos:   
+    
+    call Hexagon.Kernel.Dev.x86.Disco.Disco.testarVolume
 
-	jc .volumeAusente
+    jc .volumeAusente
 
 .volumePresente:
 
     mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
-	
-	cmp ah, Hexagon.VFS.FS.FAT16B
-	je .iniciarFAT16B
-	
-	ret
+    
+    cmp ah, Hexagon.VFS.FS.FAT16B
+    je .iniciarFAT16B
+    
+    ret
 
 .volumeAusente:
 
-	mov ah, byte[Hexagon.Dev.Universal.Disco.Controle.driveBoot]
-	mov byte[Hexagon.Dev.Universal.Disco.Controle.driveAtual], ah
+    mov ah, byte[Hexagon.Dev.Universal.Disco.Controle.driveBoot]
+    mov byte[Hexagon.Dev.Universal.Disco.Controle.driveAtual], ah
 
-	mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
-	
-	cmp ah, Hexagon.VFS.FS.FAT16B
-	je .volumeDesconectadoFAT16B
-	
-	ret
+    mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
+    
+    cmp ah, Hexagon.VFS.FS.FAT16B
+    je .volumeDesconectadoFAT16B
+    
+    ret
 
 ;;************************************************************************************
 ;;
@@ -373,32 +373,32 @@ Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos:
 ;;************************************************************************************ 
 
 .iniciarFAT16B:
-	
-	push ebx 
+    
+    push ebx 
 
     call Hexagon.Kernel.FS.FAT16.iniciarVolumeFAT16B
-	
-	pop ebx 
+    
+    pop ebx 
 
-	ret
+    ret
 
 .volumeDesconectadoFAT16B:
-	
-	call .iniciarFAT16B
-	
-	stc
-	
-	ret
-	
+    
+    call .iniciarFAT16B
+    
+    stc
+    
+    ret
+    
 ;;************************************************************************************
-	
+    
 Hexagon.Kernel.FS.VFS.definirVolume:
 
-	mov dl, byte[Hexagon.Dev.Universal.Disco.Controle.driveBoot]
-	
-	mov byte[Hexagon.Dev.Universal.Disco.Controle.driveAtual], dl ;; Irá armazenar o volume a ser utilizado pelo sistema (pode ser alterado)
-	
-	ret
+    mov dl, byte[Hexagon.Dev.Universal.Disco.Controle.driveBoot]
+    
+    mov byte[Hexagon.Dev.Universal.Disco.Controle.driveAtual], dl ;; Irá armazenar o volume a ser utilizado pelo sistema (pode ser alterado)
+    
+    ret
 
 ;;************************************************************************************
 
@@ -414,12 +414,12 @@ Hexagon.Kernel.FS.VFS.definirVolume:
 Hexagon.Kernel.FS.VFS.obterVolume:
 
     mov ah, byte[Hexagon.Dev.Universal.Disco.Controle.driveAtual] ;; Número do dispositivo de armazenamento
-	mov dl, [Hexagon.Dev.Classes.bloco]           ;; Classe do dispositivo
-	
-	call Hexagon.Kernel.Dev.Dev.paraDispositivo
+    mov dl, [Hexagon.Dev.Classes.bloco]           ;; Classe do dispositivo
+    
+    call Hexagon.Kernel.Dev.Dev.paraDispositivo
 
-	mov edi, Hexagon.VFS.Controle.rotuloVolume
-	mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
+    mov edi, Hexagon.VFS.Controle.rotuloVolume
+    mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
 
     ret
 

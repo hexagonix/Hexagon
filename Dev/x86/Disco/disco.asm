@@ -101,11 +101,11 @@ Hexagon.Disco:
 
 .codigoOperacao:   db 0
 .erroDisco:        db "O Hexagon(R) nao conseguiu acessar o disco solicitado.", 10, 10
-		           db 10, 10, "Um erro desconhecido impediu o Hexagon(R) de acessar o disco de maneira adequada.", 10
-	               db "Para prevenir perda de dados, o Sistema foi finalizado.", 10
-		           db "Este problema pode ser pontual. E nao se preocupe, seus dados estao intactos.", 10
-		           db "Se algo de errado aconteceu, por favor utilize o disco de instalacao do Sistema para", 10
-		           db "corrigir possiveis erros no disco.", 10, 10, 0
+                   db 10, 10, "Um erro desconhecido impediu o Hexagon(R) de acessar o disco de maneira adequada.", 10
+                   db "Para prevenir perda de dados, o Sistema foi finalizado.", 10
+                   db "Este problema pode ser pontual. E nao se preocupe, seus dados estao intactos.", 10
+                   db "Se algo de errado aconteceu, por favor utilize o disco de instalacao do Sistema para", 10
+                   db "corrigir possiveis erros no disco.", 10, 10, 0
 
 struc Hexagon.Disco.Geral
 {
@@ -163,7 +163,7 @@ Hexagon.Dev.Universal.Disco.Codigos  Hexagon.Disco.Geral
 Hexagon.Dev.Universal.Disco.HD.IO    Hexagon.Disco.HD
 Hexagon.Dev.Universal.Disco.Controle Hexagon.Disco.Controle
 
-;;************************************************************************************	
+;;************************************************************************************  
 
 ;; Obtêm da MBR (Master Boot Record) informações úteis a respeito do disco
 ;;
@@ -174,36 +174,36 @@ Hexagon.Dev.Universal.Disco.Controle Hexagon.Disco.Controle
 
 Hexagon.Kernel.Dev.x86.Disco.Disco.lerMBR:
 
-	push ds 
-	pop es
+    push ds 
+    pop es
 
 ;; Primeiro devemos carregar a MBR na memória
 
-	mov eax, 01h                    ;; Número de setores para ler
-	mov esi, 00h                    ;; LBA do setor inicial
-	mov cx, 0x50			        ;; Segmento
-	mov edi, Hexagon.CacheDisco+20000 ;; Deslocamento
-	mov dl, byte[Hexagon.Dev.Universal.Disco.Controle.driveAtual]
+    mov eax, 01h                    ;; Número de setores para ler
+    mov esi, 00h                    ;; LBA do setor inicial
+    mov cx, 0x50                    ;; Segmento
+    mov edi, Hexagon.CacheDisco+20000 ;; Deslocamento
+    mov dl, byte[Hexagon.Dev.Universal.Disco.Controle.driveAtual]
 
-	call Hexagon.Kernel.Dev.x86.Disco.Disco.lerSetores
+    call Hexagon.Kernel.Dev.x86.Disco.Disco.lerSetores
 
-	jc .erro
+    jc .erro
 
-	mov ebx, Hexagon.CacheDisco + 0x500 + 20000
+    mov ebx, Hexagon.CacheDisco + 0x500 + 20000
 
-	add ebx, 0x1BE ;; Deslocamento da primeira partição
+    add ebx, 0x1BE ;; Deslocamento da primeira partição
 
-	mov ah, byte[es:ebx+04h]        ;; Contém o sistema de arquivos
+    mov ah, byte[es:ebx+04h]        ;; Contém o sistema de arquivos
 
-	jmp .fim
+    jmp .fim
 
 .erro:
 
-	stc
+    stc
 
 .fim:
 
-	ret
+    ret
 
 ;;************************************************************************************
 
@@ -215,30 +215,30 @@ Hexagon.Kernel.Dev.x86.Disco.Disco.lerMBR:
 
 Hexagon.Kernel.Dev.x86.Disco.Disco.lerBPB:
 
-	push ds 
-	pop es
+    push ds 
+    pop es
 
 ;; Primeiro devemos carregar a MBR na memória
 
-	mov eax, 01h
-	mov esi, 00h
-	mov cx, 0x2000			        ;; Segmento
-	mov edi, 0x7C00	                ;; Deslocamento
-	mov dl, byte[Hexagon.Dev.Universal.Disco.Controle.driveAtual]
+    mov eax, 01h
+    mov esi, 00h
+    mov cx, 0x2000                  ;; Segmento
+    mov edi, 0x7C00                 ;; Deslocamento
+    mov dl, byte[Hexagon.Dev.Universal.Disco.Controle.driveAtual]
 
-	call Hexagon.Kernel.Dev.x86.Disco.Disco.lerSetores
+    call Hexagon.Kernel.Dev.x86.Disco.Disco.lerSetores
 
-	jc .erro
+    jc .erro
 
-	jmp .fim
+    jmp .fim
 
 .erro:
 
-	stc
+    stc
 
 .fim:
 
-	ret
+    ret
 
 ;;************************************************************************************
 
@@ -254,23 +254,23 @@ Hexagon.Kernel.Dev.x86.Disco.Disco.lerBPB:
 
 Hexagon.Kernel.Dev.x86.Disco.Disco.reiniciarDisco:
 
-	mov ah, 00h
+    mov ah, 00h
 
-	call Hexagon.Kernel.Arch.x86.BIOS.BIOS.int13h
+    call Hexagon.Kernel.Arch.x86.BIOS.BIOS.int13h
 
-	jc .erro
+    jc .erro
 
-	jmp .fim
+    jmp .fim
 
 .erro:
 
-	stc
+    stc
 
-	mov eax, 01h
+    mov eax, 01h
 
 .fim:
 
-	ret
+    ret
 
 ;;************************************************************************************
 
@@ -290,41 +290,41 @@ Hexagon.Kernel.Dev.x86.Disco.Disco.reiniciarDisco:
 
 Hexagon.Kernel.Dev.x86.Disco.Disco.detectarDisco:
 
-	clc
+    clc
 
 ;; Vamos chamar o BIOS para solicitar esta informação
 
-	mov ah, 15h
+    mov ah, 15h
 
-	cmp eax, 00h
-	je .discoPadrao
+    cmp eax, 00h
+    je .discoPadrao
 
-	jmp .continuar
+    jmp .continuar
 
 .discoPadrao:
 
-	mov dl, byte[Hexagon.Dev.Universal.Disco.Controle.driveAtual]
+    mov dl, byte[Hexagon.Dev.Universal.Disco.Controle.driveAtual]
 
 .continuar:
 
-	mov al, 0xFF
-	mov cx, 0xFFFF
+    mov al, 0xFF
+    mov cx, 0xFFFF
 
-	call Hexagon.Kernel.Arch.x86.BIOS.BIOS.int13h
+    call Hexagon.Kernel.Arch.x86.BIOS.BIOS.int13h
 
-	jc .erro
+    jc .erro
 
-	jmp .fim
+    jmp .fim
 
 .erro:
 
 ;; A tabela de erros BIOS deve ser observada
 
-	stc
+    stc
 
 .fim:
 
-	ret		
+    ret     
 
 ;;************************************************************************************
 
@@ -341,98 +341,98 @@ Hexagon.Kernel.Dev.x86.Disco.Disco.detectarDisco:
 ;; Saída:
 ;;
 ;; EBX - Código de retorno da operação de disco executada, como em Hexagon.HD.IO, acima
-				
+                
 Hexagon.Kernel.Dev.x86.Disco.Disco.lerSetores:
 
-	push eax
-	push esi
+    push eax
+    push esi
 
-	mov dword[.PED.totalSetores], eax ;; Total de setores para carregar
-	mov dword[.PED.LBA], esi		  ;; Endereço de Bloco Linear (Linear Block Addres - LBA)
+    mov dword[.PED.totalSetores], eax ;; Total de setores para carregar
+    mov dword[.PED.LBA], esi          ;; Endereço de Bloco Linear (Linear Block Addres - LBA)
 
-	mov eax, edi
-	shr eax, 4
-	
-	add cx, ax
-	
-	and edi, 0xf
-	
-	mov word[.PED.segmento], cx		  ;; Segmento de modo real
-	mov word[.PED.deslocamento], di
-		
-	mov esi, .PED
-	mov ah, 0x42				      ;; Leitura extendida BIOS
-	
-	call Hexagon.Kernel.Arch.x86.BIOS.BIOS.int13h				          ;; Serviços de disco do BIOS BIOS
-	
-	jnc .semErro
-	
+    mov eax, edi
+    shr eax, 4
+    
+    add cx, ax
+    
+    and edi, 0xf
+    
+    mov word[.PED.segmento], cx       ;; Segmento de modo real
+    mov word[.PED.deslocamento], di
+        
+    mov esi, .PED
+    mov ah, 0x42                      ;; Leitura extendida BIOS
+    
+    call Hexagon.Kernel.Arch.x86.BIOS.BIOS.int13h                         ;; Serviços de disco do BIOS BIOS
+    
+    jnc .semErro
+    
 .verificarErro:
 
     cmp ah, Hexagon.Dev.Universal.Disco.Codigos.enderecoInvalido
-	je .semMidia
-	
-	cmp ah, Hexagon.Dev.Universal.Disco.Codigos.setorInvalido
     je .semMidia
-	
-	cmp ah, Hexagon.Dev.Universal.Disco.Codigos.falhaAtividade
+    
+    cmp ah, Hexagon.Dev.Universal.Disco.Codigos.setorInvalido
     je .semMidia
-	
-	cmp ah, Hexagon.Dev.Universal.Disco.Codigos.falhaControlador
+    
+    cmp ah, Hexagon.Dev.Universal.Disco.Codigos.falhaAtividade
     je .semMidia
-	
-	cmp al, Hexagon.Dev.Universal.Disco.Codigos.semMidia
-	je .semMidia
+    
+    cmp ah, Hexagon.Dev.Universal.Disco.Codigos.falhaControlador
+    je .semMidia
+    
+    cmp al, Hexagon.Dev.Universal.Disco.Codigos.semMidia
+    je .semMidia
 
-	cmp al, Hexagon.Dev.Universal.Disco.Codigos.timeOut
-	je .errosGerais
-	
-	jmp .errosGerais ;; Imprimir erro e aguardar reinício
-	
+    cmp al, Hexagon.Dev.Universal.Disco.Codigos.timeOut
+    je .errosGerais
+    
+    jmp .errosGerais ;; Imprimir erro e aguardar reinício
+    
 .errosGerais:
 
     mov esi, Hexagon.Disco.erroDisco
-	
-	mov eax, 1
-	
-	call Hexagon.Kernel.Kernel.Panico.panico
-	
+    
+    mov eax, 1
+    
+    call Hexagon.Kernel.Kernel.Panico.panico
+    
 .semMidia:
-	
-	mov dl, byte [Hexagon.Dev.Universal.Disco.Controle.driveBoot]
-	mov byte [Hexagon.Dev.Universal.Disco.Controle.driveAtual], dl
-	
-	call Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos
-	
-	mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Universal.Disco.HD.IO.semMidia
+    
+    mov dl, byte [Hexagon.Dev.Universal.Disco.Controle.driveBoot]
+    mov byte [Hexagon.Dev.Universal.Disco.Controle.driveAtual], dl
+    
+    call Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos
+    
+    mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Universal.Disco.HD.IO.semMidia
 
-	stc
-	
-	jmp .finalizar
+    stc
+    
+    jmp .finalizar
 
 .semErro:
 
-	mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Universal.Disco.HD.IO.semErro
+    mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Universal.Disco.HD.IO.semErro
 
 .finalizar:
 
-	pop esi
-	pop eax
-	
-	movzx ebx, byte[Hexagon.Disco.codigoOperacao] ;; Fornecer em EBX o código de retorno da operação
+    pop esi
+    pop eax
+    
+    movzx ebx, byte[Hexagon.Disco.codigoOperacao] ;; Fornecer em EBX o código de retorno da operação
 
-	ret
+    ret
 
 ;; PED = Pacote de Endereço de Disco. Do termo em inglês DAP (Disk Address Packet)
-	
+    
 .PED:
-.PED.tamanho:		db 16
-.PED.reservado:		db 0
-.PED.totalSetores:	dw 0
-.PED.deslocamento:	dw 0x0000
-.PED.segmento:		dw 0
-.PED.LBA:		    dd 0
-			        dd 0
+.PED.tamanho:       db 16
+.PED.reservado:     db 0
+.PED.totalSetores:  dw 0
+.PED.deslocamento:  dw 0x0000
+.PED.segmento:      dw 0
+.PED.LBA:           dd 0
+                    dd 0
 
 ;;************************************************************************************
 
@@ -452,85 +452,85 @@ Hexagon.Kernel.Dev.x86.Disco.Disco.lerSetores:
 
 Hexagon.Kernel.Dev.x86.Disco.Disco.escreverSetores:
 
-	push eax
-	push esi
-	
-	mov dword[.PED.totalSetores], eax ;; Total de setores para escrever
-	mov dword[.PED.LBA], esi		  ;; LBA
-	
-	mov eax, edi
-	shr eax, 4
-	
-	add cx, ax
-	
-	and edi, 0xf
-	
-	mov word[.PED.deslocamento], di
-	mov word[.PED.segmento], cx		  ;; Segmento de modo real
-	
-	mov esi, .PED
-	mov ah, 0x43				      ;; Escrita extendida BIOS
-	mov al, 0
+    push eax
+    push esi
+    
+    mov dword[.PED.totalSetores], eax ;; Total de setores para escrever
+    mov dword[.PED.LBA], esi          ;; LBA
+    
+    mov eax, edi
+    shr eax, 4
+    
+    add cx, ax
+    
+    and edi, 0xf
+    
+    mov word[.PED.deslocamento], di
+    mov word[.PED.segmento], cx       ;; Segmento de modo real
+    
+    mov esi, .PED
+    mov ah, 0x43                      ;; Escrita extendida BIOS
+    mov al, 0
 
-	call Hexagon.Kernel.Arch.x86.BIOS.BIOS.int13h				          ;; Serviços de disco BIOS
-	
-	jnc .semErro
+    call Hexagon.Kernel.Arch.x86.BIOS.BIOS.int13h                         ;; Serviços de disco BIOS
+    
+    jnc .semErro
 
 .verificarErro:
 
     cmp ah, Hexagon.Dev.Universal.Disco.Codigos.enderecoInvalido
-	je .semMidia
-	
-	cmp ah, Hexagon.Dev.Universal.Disco.Codigos.protegidoEscrita
-	je .protegidoEscrita
-	
-	cmp ah, Hexagon.Dev.Universal.Disco.Codigos.driveNaoPronto
-	je .discoNaoPronto
-	
-	cmp ah, Hexagon.Dev.Universal.Disco.Codigos.volumeEmUso
-	je .discoEmUso
-	
-	cmp ah, Hexagon.Dev.Universal.Disco.Codigos.falhaEscrita
-	je .falhaEscrita
-	
-	cmp ah, Hexagon.Dev.Universal.Disco.Codigos.setorInvalido
     je .semMidia
-	
-	cmp al, Hexagon.Dev.Universal.Disco.Codigos.falhaAtividade
+    
+    cmp ah, Hexagon.Dev.Universal.Disco.Codigos.protegidoEscrita
+    je .protegidoEscrita
+    
+    cmp ah, Hexagon.Dev.Universal.Disco.Codigos.driveNaoPronto
+    je .discoNaoPronto
+    
+    cmp ah, Hexagon.Dev.Universal.Disco.Codigos.volumeEmUso
+    je .discoEmUso
+    
+    cmp ah, Hexagon.Dev.Universal.Disco.Codigos.falhaEscrita
+    je .falhaEscrita
+    
+    cmp ah, Hexagon.Dev.Universal.Disco.Codigos.setorInvalido
     je .semMidia
-	
-	cmp al, Hexagon.Dev.Universal.Disco.Codigos.falhaControlador
+    
+    cmp al, Hexagon.Dev.Universal.Disco.Codigos.falhaAtividade
     je .semMidia
-	
-	cmp al, Hexagon.Dev.Universal.Disco.Codigos.semMidia
-	je .semMidia
+    
+    cmp al, Hexagon.Dev.Universal.Disco.Codigos.falhaControlador
+    je .semMidia
+    
+    cmp al, Hexagon.Dev.Universal.Disco.Codigos.semMidia
+    je .semMidia
 
-	cmp al, Hexagon.Dev.Universal.Disco.Codigos.timeOut
-	je .errosGerais
-	
-	jmp .errosGerais ;; Imprimir erro e aguardar reinício
-	
+    cmp al, Hexagon.Dev.Universal.Disco.Codigos.timeOut
+    je .errosGerais
+    
+    jmp .errosGerais ;; Imprimir erro e aguardar reinício
+    
 .protegidoEscrita:
 
     stc
 
-	mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Universal.Disco.HD.IO.protegidoEscrita
+    mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Universal.Disco.HD.IO.protegidoEscrita
 
-    ret	
-	
+    ret 
+    
 .discoNaoPronto:
 
     stc
 
-	mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Universal.Disco.HD.IO.discoNaoPronto
+    mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Universal.Disco.HD.IO.discoNaoPronto
 
-    ret	
+    ret 
 
 .discoEmUso:
 
     stc
 
-	mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Universal.Disco.HD.IO.discoEmUso
+    mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Universal.Disco.HD.IO.discoEmUso
 
     ret
 
@@ -538,55 +538,55 @@ Hexagon.Kernel.Dev.x86.Disco.Disco.escreverSetores:
 
     stc
   
-  	mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Universal.Disco.HD.IO.falhaOperacao
+    mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Universal.Disco.HD.IO.falhaOperacao
 
     ret
-	
+    
 .errosGerais:
 
     mov esi, Hexagon.Disco.erroDisco
-	
-	mov eax, 1
-	
-	call Hexagon.Kernel.Kernel.Panico.panico
-	
+    
+    mov eax, 1
+    
+    call Hexagon.Kernel.Kernel.Panico.panico
+    
 .semMidia:
-	
-	mov dl, byte [Hexagon.Dev.Universal.Disco.Controle.driveBoot]
-	mov byte [Hexagon.Dev.Universal.Disco.Controle.driveAtual], dl
-	
-	call Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos
-	
-	mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Universal.Disco.HD.IO.semMidia
+    
+    mov dl, byte [Hexagon.Dev.Universal.Disco.Controle.driveBoot]
+    mov byte [Hexagon.Dev.Universal.Disco.Controle.driveAtual], dl
+    
+    call Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos
+    
+    mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Universal.Disco.HD.IO.semMidia
 
-	stc
-	
-	jmp .finalizar
+    stc
+    
+    jmp .finalizar
 
 .semErro:
 
-	mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Universal.Disco.HD.IO.semErro
+    mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Universal.Disco.HD.IO.semErro
 
 .finalizar:
 
-	pop esi
-	pop eax
-	
-	movzx ebx, byte[Hexagon.Disco.codigoOperacao] ;; Fornecer em EBX o código de retorno da operação
+    pop esi
+    pop eax
+    
+    movzx ebx, byte[Hexagon.Disco.codigoOperacao] ;; Fornecer em EBX o código de retorno da operação
 
-	ret
+    ret
 
 ;; PED = Pacote de Endereço de Disco. Do termo em inglês DAP (Disk Address Packet)
-	
+    
 .PED:
-.PED.tamanho:		db 16
-.PED.reservado:		db 0
-.PED.totalSetores:	dw 0
-.PED.deslocamento:	dw 0x0000
-.PED.segmento:		dw 0
-.PED.LBA:		    dd 0
-			        dd 0
-			        
+.PED.tamanho:       db 16
+.PED.reservado:     db 0
+.PED.totalSetores:  dw 0
+.PED.deslocamento:  dw 0x0000
+.PED.segmento:      dw 0
+.PED.LBA:           dd 0
+                    dd 0
+                    
 ;;************************************************************************************
 
 ;; Testa um determinado volume para verificar sua presença. Caso não esteja presente, 
@@ -594,14 +594,14 @@ Hexagon.Kernel.Dev.x86.Disco.Disco.escreverSetores:
 
 Hexagon.Kernel.Dev.x86.Disco.Disco.testarVolume:
 
-	mov eax, 1
-	mov esi, 01
-	mov cx, 0x50			        ;; Segmento
-	mov edi, Hexagon.CacheDisco+20000	;; Deslocamento
-	mov dl, byte[Hexagon.Dev.Universal.Disco.Controle.driveAtual]
-	
-	call Hexagon.Kernel.Dev.x86.Disco.Disco.lerSetores
+    mov eax, 1
+    mov esi, 01
+    mov cx, 0x50                    ;; Segmento
+    mov edi, Hexagon.CacheDisco+20000   ;; Deslocamento
+    mov dl, byte[Hexagon.Dev.Universal.Disco.Controle.driveAtual]
+    
+    call Hexagon.Kernel.Dev.x86.Disco.Disco.lerSetores
 
-	ret
+    ret
 
 ;;************************************************************************************
