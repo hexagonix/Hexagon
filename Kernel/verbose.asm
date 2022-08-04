@@ -85,7 +85,7 @@ Hexagon.Verbose.Disco:
 .erroLerMBR:            db "Erro ao ler o MBR do volume.", 0
 .erroLerBPB:            db "Erro ao tentar ler o BPB do volume.", 0
 .erroReiniciarDisco:    db "Erro ao solicitar o reinicio do disco.", 0
-.erroDiscoNaoDetectado: db "O disco/volume solicitado nao foi detectado ou esta online.", 0
+.erroDiscoNaoDetectado: db "O disco/volume solicitado nao foi detectado ou esta offline.", 0
 .erroGeralLeitura:      db "Erro geral ao tentar ler setores no volume.", 0
 .erroSemMidia:          db "O disco/volume solicitado nao esta online.", 0
 .erroProtegidoEscrita:  db "O volume esta protegido contra escrita. Falha ao tentar gravar setores.", 0
