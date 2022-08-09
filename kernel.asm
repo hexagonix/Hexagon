@@ -23,12 +23,16 @@
 ;;************************************************************************************
 
 ;; Kernel Hexagon®
-
+;;
 ;; Daqui em diante, o ambiente de operação é o modo protegido
+;;
+;; Componente executivo do Kernel					
 
-;; Componente executivo do Kernel
+use32
 
-use32					
+;; Aqui vamos incluir macros para facilitar a organização e modificação do código
+
+include "Lib/macros.s"                           ;; Macros
 
 align 4
 
@@ -146,38 +150,23 @@ Hexagon.init:                   ;; Agora as estruturas do Kernel serão iniciali
 
 ;; Aqui se iniciam as mensagens de aviso do Hexagon®
 
-match =SIM, VERBOSE {
-
 	call Hexagon.Kernel.Dev.Universal.Console.Console.limparConsole
 
-	mov esi, Hexagon.Verbose.Hexagon
-
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
+	kprint Hexagon.Verbose.Hexagon
 	
-	mov esi, Hexagon.Verbose.versao 
-	mov ebx, Hexagon.Relatorio.Prioridades.p5
+	logHexagon Hexagon.Verbose.versao, Hexagon.Relatorio.Prioridades.p5
 
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-	mov esi, Hexagon.Relatorio.identificadorHexagon
-
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
+	kprint Hexagon.Relatorio.identificadorHexagon
 
 	call Hexagon.Kernel.Kernel.Relatorio.dataParaRelatorio
 
 	call Hexagon.Kernel.Kernel.Relatorio.horaParaRelatorio
 
-	mov esi, Hexagon.Verbose.novaLinha
+	kprint Hexagon.Verbose.novaLinha
 
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
+	kprint Hexagon.Relatorio.identificadorHexagon
 
-	mov esi, Hexagon.Relatorio.identificadorHexagon
-
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
-
-	mov esi, Hexagon.Verbose.memoriaTotal
-
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
+	kprint Hexagon.Verbose.memoriaTotal
 
 	call Hexagon.Kernel.Arch.Universal.Memoria.usoMemoria
 
@@ -185,9 +174,7 @@ match =SIM, VERBOSE {
 
 	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirDecimal
 
-	mov esi, Hexagon.Verbose.megabytes
-
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
+	kprint Hexagon.Verbose.megabytes
 
 	call Hexagon.Kernel.Arch.Universal.Memoria.usoMemoria
 
@@ -195,127 +182,65 @@ match =SIM, VERBOSE {
 
 	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirDecimal
 
-	mov esi, Hexagon.Verbose.bytes
+	kprint Hexagon.Verbose.bytes
 
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
-
-	mov esi, Hexagon.Verbose.novaLinha
-
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
-
-}
+	kprint Hexagon.Verbose.novaLinha
 
 ;;************************************************************************************
+	
+	logHexagon Hexagon.Verbose.teclado, Hexagon.Relatorio.Prioridades.p5
 
-match =SIM, VERBOSE {
-	
-	mov esi, Hexagon.Verbose.teclado 
-	mov ebx, Hexagon.Relatorio.Prioridades.p5
-	
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-	
-	mov esi, Hexagon.Verbose.mouse
-	mov ebx, Hexagon.Relatorio.Prioridades.p5 
-	
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
+	logHexagon Hexagon.Verbose.mouse, Hexagon.Relatorio.Prioridades.p5 
 
 ;;************************************************************************************
 
 	call Hexagon.Kernel.Arch.x86.Timer.Timer.iniciarTimer ;; Inicializa o serviço de timer do Sistema
 
-match =SIM, VERBOSE {
-
-	mov esi, Hexagon.Verbose.timer 
-	mov ebx, Hexagon.Relatorio.Prioridades.p5
-	
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
+	logHexagon Hexagon.Verbose.timer, Hexagon.Relatorio.Prioridades.p5
 
 ;;************************************************************************************
 
 	call Hexagon.Kernel.Kernel.Proc.iniciarEscalonador ;; Inicia o escalonador de processos do Hexagon®
 
-match =SIM, VERBOSE {
-	
-	mov esi, Hexagon.Verbose.escalonador 
-	mov ebx, Hexagon.Relatorio.Prioridades.p5
-	
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
 
-}
+	logHexagon Hexagon.Verbose.escalonador, Hexagon.Relatorio.Prioridades.p5
 
 ;;************************************************************************************
 
 	call Hexagon.Kernel.Dev.Universal.COM.Serial.iniciarCOM1 ;; Iniciar primeira porta serial para debug 
 
-match =SIM, VERBOSE {
-	
-	mov esi, Hexagon.Verbose.serial
-	mov ebx, Hexagon.Relatorio.Prioridades.p5 
-	
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
+	logHexagon Hexagon.Verbose.serial, Hexagon.Relatorio.Prioridades.p5 
 
 ;;************************************************************************************
 
 	call Hexagon.Kernel.FS.VFS.definirVolume ;; Define o volume com base em informações da inicialização   
 
-match =SIM, VERBOSE {
-
-	mov esi, Hexagon.Verbose.definirVolume
-	mov ebx, Hexagon.Relatorio.Prioridades.p5 
-	
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
+	logHexagon Hexagon.Verbose.definirVolume, Hexagon.Relatorio.Prioridades.p5 
 
 ;;************************************************************************************
 
 	call Hexagon.Kernel.FS.VFS.definirSistemaArquivos ;; Define o sistema de arquivos à ser utilizado para o volume
-
-match =SIM, VERBOSE {
 	
-	mov esi, Hexagon.Relatorio.identificadorHexagon
+	kprint Hexagon.Relatorio.identificadorHexagon
 
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
-
-	mov esi, Hexagon.Verbose.montagemAceita 
+	kprint Hexagon.Verbose.inicioMontagem 
 	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
+	call Hexagon.Kernel.FS.VFS.obterVolume ;; Obter o identificador do volume
 
-	call Hexagon.Kernel.FS.VFS.obterVolume
+	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString ;; Exibir
 
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
-
-	mov esi, Hexagon.Verbose.montagemRealizada 
+	kprint Hexagon.Verbose.montagemRealizada 
 	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
-
-	mov esi, Hexagon.Verbose.novaLinha
+	kprint Hexagon.Verbose.novaLinha
 	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
-
-}
-
 ;;************************************************************************************
 
 	call Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos ;; Inicializa as estruturas do sistema de arquivos do volume
-
-match =SIM, VERBOSE {
 	
-	mov esi, Hexagon.Relatorio.identificadorHexagon
+	kprint Hexagon.Relatorio.identificadorHexagon
 
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
-
-	mov esi, Hexagon.Verbose.sistemaArquivos 
+	kprint Hexagon.Verbose.sistemaArquivos 
 	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
-
 	call Hexagon.Kernel.FS.VFS.obterVolume
 
 	push esi
@@ -330,14 +255,10 @@ match =SIM, VERBOSE {
 
 	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere
 
-	mov esi, Hexagon.Relatorio.identificadorHexagon
+	kprint Hexagon.Relatorio.identificadorHexagon
 
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
-
-	mov esi, Hexagon.Verbose.rotuloVolume 
+	kprint Hexagon.Verbose.rotuloVolume 
 	
-	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
-
 	pop edi
 	pop esi
 
@@ -349,8 +270,6 @@ match =SIM, VERBOSE {
 
 	call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere
 
-}
-
 ;;************************************************************************************
 
 	mov esi, "/"
@@ -359,14 +278,7 @@ match =SIM, VERBOSE {
 
 	call Hexagon.Kernel.FS.VFS.montarVolume ;; Monta o volume padrão utilizado para a inicialização
 
-match =SIM, VERBOSE {
-	
-	mov esi, Hexagon.Verbose.sucessoMontagem
-	mov ebx, Hexagon.Relatorio.Prioridades.p5
-	
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}	
+	logHexagon Hexagon.Verbose.sucessoMontagem, Hexagon.Relatorio.Prioridades.p5
 
 ;;************************************************************************************
 
@@ -374,31 +286,18 @@ match =SIM, VERBOSE {
 	
 ;; Primeiramente, deve-se impedir que o usuário mate processos com uma tecla especial, impedindo
 ;; que qualquer processo relevante, como o de login, seja finalizado prematuramente
-	
-	call Hexagon.Kernel.Kernel.Proc.travar ;; Impede que o usuário mate processos com uma tecla especial
 
+;; Impede que o usuário mate processos com uma tecla especial
 
-match =SIM, VERBOSE {
+	call Hexagon.Kernel.Kernel.Proc.travar 
 
-	mov esi, Hexagon.Verbose.travando
-	mov ebx, Hexagon.Relatorio.Prioridades.p5 
-
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
+	logHexagon Hexagon.Verbose.travando, Hexagon.Relatorio.Prioridades.p5 
 
 ;;************************************************************************************
 
 iniciarComponentes:
 
-match =SIM, VERBOSE {
-
-	mov esi, Hexagon.Verbose.modoUsuario
-	mov ebx, Hexagon.Relatorio.Prioridades.p5
-
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
+	logHexagon Hexagon.Verbose.modoUsuario, Hexagon.Relatorio.Prioridades.p5
 
 .iniciarInit:
 	
@@ -407,14 +306,7 @@ match =SIM, VERBOSE {
 	
 ;; Primeiro, verificar se o arquivo existe no volume
 
-match =SIM, VERBOSE {
-
-	mov esi, Hexagon.Verbose.init
-	mov ebx, Hexagon.Relatorio.Prioridades.p5 
-
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
+	logHexagon Hexagon.Verbose.init, Hexagon.Relatorio.Prioridades.p5 
 
 	mov esi, initHexagon
 
@@ -422,14 +314,7 @@ match =SIM, VERBOSE {
 
 	jc .initNaoEncontrado
 
-match =SIM, VERBOSE {
-
-	mov esi, Hexagon.Verbose.initEncontrado
-	mov ebx, Hexagon.Relatorio.Prioridades.p5
-
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
+	logHexagon Hexagon.Verbose.initEncontrado, Hexagon.Relatorio.Prioridades.p5
 
 	mov eax, 0			       ;; Não fornecer argumentos
 	mov esi, initHexagon       ;; Nome do arquivo
@@ -438,14 +323,7 @@ match =SIM, VERBOSE {
 	
 	call Hexagon.Kernel.Kernel.Proc.criarProcesso ;; Solicitar o carregamento do init
 
-match =SIM, VERBOSE {
-
-	mov esi, Hexagon.Verbose.semInit
-	mov ebx, Hexagon.Relatorio.Prioridades.p5
-
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
+	logHexagon Hexagon.Verbose.semInit, Hexagon.Relatorio.Prioridades.p5
 
 	jnc .fimInit
 
@@ -453,14 +331,7 @@ match =SIM, VERBOSE {
 	
 ;; Por enquanto, o Hexagon tentará carregar o shell padrão do sistema
 
-match =SIM, VERBOSE {
-
-	mov esi, Hexagon.Verbose.initNaoEncontrado
-	mov ebx, Hexagon.Relatorio.Prioridades.p5
-
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
+	logHexagon Hexagon.Verbose.initNaoEncontrado, Hexagon.Relatorio.Prioridades.p5
 
     mov eax, 0                 ;; Não fornecer argumentos
 	mov esi, shellHexagon      ;; Nome do arquivo

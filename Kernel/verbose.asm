@@ -48,7 +48,7 @@ Hexagon.Verbose:
 .mouse:             db "O servico de gerenciamento de mouse foi iniciado.", 0
 .serial:            db "O servico de gerenciamento de portas seriais esta sendo iniciado...", 0
 .definirVolume:     db "O Hexagon esta procurando o volume principal para montagem...", 0
-.montagemAceita:    db "O volume ", 0
+.inicioMontagem:    db "O volume ", 0
 .montagemRealizada: db " foi marcado para montagem em /.", 0
 .sistemaArquivos:   db "O volume montado e formatado como (FSID): ", 0
 .rotuloVolume:      db "O rotulo do volume e: ", 0

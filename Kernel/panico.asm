@@ -54,9 +54,7 @@ Hexagon.Kernel.Kernel.Panico.panico:
     
     call Hexagon.Kernel.Kernel.Panico.prepararPanico
     
-    mov esi, Hexagon.Info.sobreHexagon
-    
-    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
+    kprint Hexagon.Info.sobreHexagon
     
     pop eax
     
@@ -69,34 +67,20 @@ Hexagon.Kernel.Kernel.Panico.panico:
     jmp .desconhecido
 
 .fatal:
-    
-    mov esi, Hexagon.Panico.cabecalhoPanico
-    
-    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
 
-match =SIM, VERBOSE {
+    kprint Hexagon.Panico.cabecalhoPanico
 
-    mov ebx, Hexagon.Relatorio.Prioridades.p4
-
-    call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
+    logHexagon Hexagon.Panico.cabecalhoPanico, Hexagon.Relatorio.Prioridades.p4
 
     pop esi
     
     call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
 
-match =SIM, VERBOSE {
-
     mov ebx, Hexagon.Relatorio.Prioridades.p4
 
     call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
 
-}
-
-    mov esi, Hexagon.Panico.erroReiniciar
-    
-    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
+    kprint Hexagon.Panico.erroReiniciar
     
     hlt
     
@@ -104,33 +88,21 @@ match =SIM, VERBOSE {
 
 .naoFatal:
 
-    mov esi, Hexagon.Panico.cabecalhoOops
-    
-    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
+    kprint Hexagon.Panico.cabecalhoOops
 
-match =SIM, VERBOSE {
-
-    mov ebx, Hexagon.Relatorio.Prioridades.p4
+    logHexagon Hexagon.Panico.cabecalhoOops, Hexagon.Relatorio.Prioridades.p4
 
     call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
 
     pop esi
     
     call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
 
-match =SIM, VERBOSE {
-
     mov ebx, Hexagon.Relatorio.Prioridades.p4
 
     call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
 
-}
-
-    mov esi, Hexagon.Panico.erroNaoFatal
-    
-    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
+    kprint Hexagon.Panico.erroNaoFatal
     
     call Hexagon.Kernel.Dev.Universal.Teclado.Teclado.aguardarTeclado
     
@@ -138,9 +110,7 @@ match =SIM, VERBOSE {
     
 .desconhecido:
 
-    mov esi, Hexagon.Panico.erroDesconhecido
-
-    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
+    kprint Hexagon.Panico.erroDesconhecido
 
     ret 
     
