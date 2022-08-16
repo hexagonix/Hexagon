@@ -40,12 +40,14 @@ Hexagon.Versao:
 .numeroSubversao  = 1 ;; Número de subversão (secundária) do Hexagon
 .caractereRevisao = 0 ;; Adicionar caractere de revisão, caso necessário
 .nomeKernel:      db "Hexagon(R)", 0 ;; Nome fornecido ao espaço de usuário
+.build:           db __stringdia, "/", __stringmes, "/", __stringano, " "
+                  db __stringhora, ":", __stringminuto, ":", __stringsegundo, " GMT", 0
 
 Hexagon.Info:
 
 .sobreHexagon:    db 10, 10
                   db "Kernel Hexagon(R) versao ", Hexagon.Versao.definicao, 10
-                  db "Copyright (C) 2016-2022 Felipe Miguel Nery Lunkes", 10
+                  db "Copyright (C) 2016-", __stringano, " Felipe Miguel Nery Lunkes", 10
                   db "Todos os direitos reservados.", 0
 
 ;;************************************************************************************
@@ -59,6 +61,7 @@ Hexagon.Info:
 ;; CH  - Revisão
 ;; EDX - Arquitetura
 ;; ESI - String de nome do kernel
+;; EDI - Build do kernel
 
 align 4
 
@@ -69,6 +72,7 @@ Hexagon.Kernel.Kernel.Versao.retornarVersao:
     mov ch, Hexagon.Versao.caractereRevisao
     mov edx, Hexagon.Arquitetura.suporte
     mov esi, Hexagon.Versao.nomeKernel
+    mov edi, Hexagon.Versao.build
     
     ret
     
