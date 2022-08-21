@@ -101,11 +101,4 @@ inicioAPP:
 
 Uma documentação mais detalhada do Hexagon será disponibilizada no futuro.
 
-## Aviso de direitos autorais
-
-* Sistema Operacional Hexagonix e Sistema Operacional Andromeda. Copyright © 2016-2022 Felipe Miguel Nery Lunkes. Todos os direitos reservados.
-* Kernel Hexagon. Copyright © 2016-2022 Felipe Miguel Nery Lunkes. Todos os direitos reservados.
-* Gerenciador de Boot Saturno. Copyright © 2016-2022 Felipe Miguel Nery Lunkes. Todos os direitos reservados.
-* Hexagon Boot (HBoot). Copyright © 2020-2022 Felipe Miguel Nery Lunkes. Todos os direitos reservados.
-
 Versão deste arquivo: 2.0
