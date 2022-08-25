@@ -1,3 +1,22 @@
+<p align="center">
+<img src="https://github.com/hexagonix/Doc/blob/main/Img/Hexagonix.png" width="150" height="150">
+</p>
+
+<div align="center">
+
+![](https://img.shields.io/github/license/hexagonix/Hexagon.svg)
+![](https://img.shields.io/github/stars/hexagonix/Hexagon.svg)
+![](https://img.shields.io/github/issues/hexagonix/Hexagon.svg)
+![](https://img.shields.io/github/issues-closed/hexagonix/Hexagon.svg)
+![](https://img.shields.io/github/issues-pr/hexagonix/Hexagon.svg)
+![](https://img.shields.io/github/issues-pr-closed/hexagonix/Hexagon.svg)
+![](https://img.shields.io/github/downloads/hexagonix/Hexagon/total.svg)
+![](https://img.shields.io/github/release/hexagonix/Hexagon.svg)
+
+</div>
+
+<hr>
+
 # Kernel Hexagon
 ## O que é
 
@@ -101,4 +120,8 @@ inicioAPP:
 
 Uma documentação mais detalhada do Hexagon será disponibilizada no futuro.
 
+<!--
+
 Versão deste arquivo: 2.0
+
+-->
