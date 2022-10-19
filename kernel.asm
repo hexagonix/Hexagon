@@ -359,11 +359,11 @@ iniciarComponentes:
     
 ;;************************************************************************************
      
-initHexagon:          db "init.app", 0 ;; Nome de arquivo do init
-shellHexagon:         db "sh.app", 0   ;; Nome do shell padrão
+initHexagon:          db "init", 0 ;; Nome de arquivo do init
+shellHexagon:         db "sh", 0   ;; Nome do shell padrão
            
 semInit:              db "Um componente critico (init) nao foi encontrado no volume de inicializacao.", 10, 10
-                      db "Certifique-se que o arquivo 'init.app' ou equivalente esteja presente no volume do sistema.", 10
+                      db "Certifique-se que o arquivo 'init' ou equivalente esteja presente no volume do sistema.", 10
                       db "Caso nao esteja presente, utilize o disco de instalacao original para corrigir este problema.", 10, 10, 0
          
 componenteFinalizado: db "Um componente critico (init) foi finalizado de forma inesperada.", 10, 10
@@ -380,8 +380,8 @@ componenteFinalizado: db "Um componente critico (init) foi finalizado de forma i
 ;;
 ;;************************************************************************************
 
-semShell:             db "O shell padrao (/sh.app) nao foi localizado neste volume.", 10, 10
-                      db "Certifique-se que o Shell padrao esteja presente no volume do sistema e tente novamente.", 10
+semShell:             db "O shell padrao (/sh) nao foi localizado neste volume.", 10, 10
+                      db "Certifique-se que o shell padrao esteja presente no volume do sistema e tente novamente.", 10
                       db "Caso nao esteja presente, utilize o disco de instalacao original para corrigir este problema.", 10, 10, 0
          
 shellFinalizado:      db "O shell do sistema foi finalizado de forma inesperada.", 10, 10
