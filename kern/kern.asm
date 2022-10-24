@@ -44,13 +44,13 @@ align 4
 
 ;; Versão do Hexagon®
 
-include "kern/versao.asm"                         ;; Contém informações de versão do Hexagon®
+include "kern/versao.asm"                        ;; Contém informações de versão do Hexagon®
 
 ;; Serviços do Hexagon®
 
-include "API/api.asm"                             ;; Manipulador de interrupção do Hexagon®
-include "libkern/graficos.asm"                    ;; Funções para gráficos do Hexagon®
-include "API/servicos.asm"                        ;; Rotinas de interrupção e manipuladores de IRQs
+include "API/api.asm"                            ;; Manipulador de interrupção do Hexagon®
+include "libkern/graficos.asm"                   ;; Funções para gráficos do Hexagon®
+include "API/servicos.asm"                       ;; Rotinas de interrupção e manipuladores de IRQs
 
 ;; Usuários e outras utilidades
 
@@ -60,23 +60,23 @@ include "kern/usuarios.asm"                      ;; Funções de gerenciamento d
 
 ;; Gerenciamento de Dispositivos do Hexagon®
 
-include "dev/Universal/Teclado/teclado.asm"      ;; Funções necessárias para o uso do teclado
-include "arch/x86/Procx86/procx86.asm"           ;; IDT, GDT e procedimentos para definir modo real e protegido
+include "dev/universal/teclado/teclado.asm"      ;; Funções necessárias para o uso do teclado
+include "arch/x86/procx86/procx86.asm"           ;; IDT, GDT e procedimentos para definir modo real e protegido
 include "arch/x86/BIOS/BIOS.asm"                 ;; Interrupções do BIOS em modo real
-include "dev/Universal/Console/console.asm"      ;; Funções de gerenciamento de vídeo do Hexagon®
+include "dev/universal/console/console.asm"      ;; Funções de gerenciamento de vídeo do Hexagon®
 include "arch/x86/APM/energia.asm"               ;; Implementação APM do Hexagon®
-include "dev/Universal/Som/som.asm"              ;; Funções para controle de som do Hexagon®
-include "dev/Universal/PS2/PS2.asm"              ;; Funções para controle de portas PS/2 do Hexagon®
-include "arch/x86/Timer/timer.asm"                ;; Funções para manipulação de timer do Hexagon®   
-include "dev/x86/Disco/disco.asm"                ;; Funções para ler e escrever em discos rígidos do Hexagon®
+include "dev/universal/snd/som.asm"              ;; Funções para controle de som do Hexagon®
+include "dev/universal/PS2/PS2.asm"              ;; Funções para controle de portas PS/2 do Hexagon®
+include "arch/x86/timer/timer.asm"               ;; Funções para manipulação de timer do Hexagon®   
+include "dev/x86/disco/disco.asm"                ;; Funções para ler e escrever em discos rígidos do Hexagon®
 include "fs/vfs.asm"                             ;; Sistema de arquivos virtual (VFS) para Hexagon®
-include "dev/Universal/Mouse/mouse.asm"          ;; Funções para mouse PS/2 do Hexagon®
-include "dev/Universal/Impressora/impressora.asm";; Funções de manipulação de impressora
-include "dev/Universal/COM/serial.asm"           ;; Funções para manipulação de portas seriais em modo protegido
+include "dev/universal/mouse/mouse.asm"          ;; Funções para mouse PS/2 do Hexagon®
+include "dev/universal/imp/impressora.asm"       ;; Funções de manipulação de impressora
+include "dev/universal/COM/serial.asm"           ;; Funções para manipulação de portas seriais em modo protegido
 include "arch/x86/CMOS/cmos.asm"                 ;; Funções para manipulação de data e hora  
 include "dev/dev.asm"                            ;; Funções de gerenciamento e abstração de Hardware do Hexagon®
-include "arch/Universal/memoria.asm"             ;; Funções para gerenciamento de memória do Hexagon® 
-include "arch/x86/Memx86/memoria.asm"            ;; Diagnóstico de memória instalada no dispositivo
+include "arch/universal/memoria.asm"             ;; Funções para gerenciamento de memória do Hexagon® 
+include "arch/x86/memx86/memoria.asm"            ;; Diagnóstico de memória instalada no dispositivo
 
 ;; Processos, modelo de processo e de imagens executáveis
 
