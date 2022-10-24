@@ -83,7 +83,7 @@ struc Hexagon.VFS.FAT
 
 ;; Estruturas de gerenciamento de arquivos e pontos de montagem do Hexagon®
 
-include "FS/dir.asm"
+include "fs/dir.asm"
 
 ;;************************************************************************************
 
