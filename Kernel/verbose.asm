@@ -42,7 +42,7 @@ Hexagon.Verbose:
 
 .Hexagon:           db "Bem-vindo ao Hexagon(R)", 10
                     db "Copyright (C) 2016-", __stringano, " Felipe Miguel Nery Lunkes", 10, 10, 0
-.versao:            db "Versao do Kernel Hexagon(R): ", Hexagon.Versao.definicao, 0
+.versao:            db "Versao do kernel Hexagon(R): ", Hexagon.Versao.definicao, 0
 .travando:          db "Habilitando diretrizes de usuario e seguranca...", 0
 .timer:             db "Iniciando e configurando o timer (119 Hz)...", 0
 .escalonador:       db "Iniciando o escalonador de memoria...", 0
@@ -55,14 +55,14 @@ Hexagon.Verbose:
 .sistemaArquivos:   db "O volume montado e formatado como (FSID): ", 0
 .rotuloVolume:      db "O rotulo do volume e: ", 0
 .sucessoMontagem:   db "Volume montado em / com sucesso.", 0
-.init:              db "Procurando /init.app ou /sh.app...", 0
-.semInit:           db "/init.app nao encontrado na raiz do disco. Tentando /sh.app...", 0
+.init:              db "Procurando /init ou /sh...", 0
+.semInit:           db "/init nao encontrado na raiz do volume. Tentando /sh...", 0
 .modoUsuario:       db "Indo para o modo usuario...", 0
 .memoriaTotal:      db "Memoria total instalada e disponivel: ", 0
 .megabytes:         db " Mb (", 0
 .bytes:             db " bytes).", 0
-.initEncontrado:    db "PID 1: iniciando /init.app.", 0
-.initNaoEncontrado: db "PID 1: procurando /sh.app...", 0
+.initEncontrado:    db "PID 1: iniciando /init.", 0
+.initNaoEncontrado: db "PID 1: procurando /sh...", 0
 .desligando:        db "Finalizando e congelando CPU...", 0
 .novaLinha:         db 10, 0
 .opcodeInvalido:    db "Opcode invalido encontrado no ambiente de execucao. Falha.", 0
@@ -80,7 +80,7 @@ Hexagon.Verbose.APM:
 
 Hexagon.Verbose.Servicos:
 
-.matarProcesso: db "O processo em execucao com este PID foi terminado pelo Hexagon(R) a pedido do usuario.", 0
+.matarProcesso: db "O processo em execucao com este PID foi terminado pelo Hexagon a pedido do usuario.", 0
 
 Hexagon.Verbose.Disco:
 
@@ -92,7 +92,7 @@ Hexagon.Verbose.Disco:
 .erroSemMidia:          db "O disco/volume solicitado nao esta online.", 0
 .erroProtegidoEscrita:  db "O volume esta protegido contra escrita. Falha ao tentar gravar setores.", 0
 .erroDiscoNaoPronto:    db "O disco/volume nao esta pronto.", 0
-.erroEmUso:             db "O volume ja esta em uso pelo Hexagon(R) ou outro processo.", 0
+.erroEmUso:             db "O volume ja esta em uso pelo Hexagon ou outro processo.", 0
 .erroEscrita:           db "Erro ao escrever no volume.", 0
 .erroGeralEscrita:      db "Erro geral ao tentar escrever setores no volume.", 0
 
