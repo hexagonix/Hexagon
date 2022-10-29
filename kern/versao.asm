@@ -32,7 +32,7 @@
 
 Hexagon.Arquitetura.suporte = 1 ;; Arquitetura desta imagem
 
-Hexagon.Versao.definicao equ "1.1.1"
+Hexagon.Versao.definicao equ "1.1.4"
 
 Hexagon.Versao:
 
