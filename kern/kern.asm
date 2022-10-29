@@ -148,7 +148,9 @@ Hexagon.init:                   ;; Agora as estruturas do Kernel serão iniciali
     
 ;;************************************************************************************
 
-;; Aqui se iniciam as mensagens de aviso do Hexagon®
+;; Aqui se iniciam as mensagens de aviso junto à inicialização do Hexagon®
+
+    call Hexagon.Kernel.Dev.Universal.COM.Serial.iniciarSerial ;; Iniciar corretamente a interface serial
 
     call Hexagon.Kernel.Dev.Universal.Console.Console.limparConsole
 
@@ -192,29 +194,13 @@ Hexagon.init:                   ;; Agora as estruturas do Kernel serão iniciali
 
     logHexagon Hexagon.Verbose.mouse, Hexagon.Relatorio.Prioridades.p5 
 
-;;************************************************************************************
-
-    call Hexagon.Kernel.Arch.x86.Timer.Timer.iniciarTimer ;; Inicializa o serviço de timer do Sistema
-
-    logHexagon Hexagon.Verbose.timer, Hexagon.Relatorio.Prioridades.p5
-
-;;************************************************************************************
+    call Hexagon.Kernel.Arch.x86.Timer.Timer.iniciarTimer ;; Inicializa o serviço de timer do sistema
 
     call Hexagon.Kernel.Kernel.Proc.iniciarEscalonador ;; Inicia o escalonador de processos do Hexagon®
 
-    logHexagon Hexagon.Verbose.escalonador, Hexagon.Relatorio.Prioridades.p5
-
-;;************************************************************************************
-
     call Hexagon.Kernel.Dev.Universal.COM.Serial.iniciarCOM1 ;; Iniciar primeira porta serial para debug 
 
-    logHexagon Hexagon.Verbose.serial, Hexagon.Relatorio.Prioridades.p5 
-
-;;************************************************************************************
-
-    call Hexagon.Kernel.FS.VFS.definirVolume ;; Define o volume com base em informações da inicialização   
-
-    logHexagon Hexagon.Verbose.definirVolume, Hexagon.Relatorio.Prioridades.p5 
+    call Hexagon.Kernel.FS.VFS.definirVolumeBoot ;; Define o volume com base em informações da inicialização   
 
 ;;************************************************************************************
 

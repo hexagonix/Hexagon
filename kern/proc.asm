@@ -167,6 +167,8 @@ Hexagon.Kernel.Kernel.Proc.iniciarEscalonador:
 
     mov dword[Hexagon.Processos.contagemProcessos], 0
 
+    logHexagon Hexagon.Verbose.escalonador, Hexagon.Relatorio.Prioridades.p5
+
     ret
 
 ;;************************************************************************************

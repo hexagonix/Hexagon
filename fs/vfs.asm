@@ -337,7 +337,7 @@ Hexagon.Kernel.FS.VFS.definirSistemaArquivos:
 
 ;;************************************************************************************
         
-;; Inicializa o sistema de arquivos do disco montado, para uso com o Sistema
+;; Inicializa o sistema de arquivos do disco montado, para uso com o sistema
 
 Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos:   
     
@@ -393,12 +393,13 @@ Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos:
     
 ;;************************************************************************************
     
-Hexagon.Kernel.FS.VFS.definirVolume:
+Hexagon.Kernel.FS.VFS.definirVolumeBoot:
 
     mov dl, byte[Hexagon.Dev.Universal.Disco.Controle.driveBoot]
-    
     mov byte[Hexagon.Dev.Universal.Disco.Controle.driveAtual], dl ;; Irá armazenar o volume a ser utilizado pelo sistema (pode ser alterado)
-    
+
+    logHexagon Hexagon.Verbose.definirVolume, Hexagon.Relatorio.Prioridades.p5 
+
     ret
 
 ;;************************************************************************************

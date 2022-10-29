@@ -46,6 +46,8 @@ Hexagon.Kernel.Arch.x86.Timer.Timer.iniciarTimer:
     
     out 0x40, al
     
+    logHexagon Hexagon.Verbose.timer, Hexagon.Relatorio.Prioridades.p5
+
     ret
 
 ;;************************************************************************************

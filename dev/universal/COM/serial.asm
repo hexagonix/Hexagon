@@ -221,7 +221,7 @@ Hexagon.Kernel.Dev.Universal.COM.Serial.iniciarSerial:
     pop ds
     
     popa
-    
+
     ret
 
 ;;************************************************************************************
@@ -248,6 +248,8 @@ Hexagon.Kernel.Dev.Universal.COM.Serial.iniciarCOM1:
     pop ecx
     pop ebx
     pop eax
+
+    logHexagon Hexagon.Verbose.serial, Hexagon.Relatorio.Prioridades.p5 
 
     ret
 
