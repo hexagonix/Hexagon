@@ -84,7 +84,7 @@ Hexagon.Verbose:
 .sistemaArquivos:   db "O volume montado e formatado como (FSID): ", 0
 .rotuloVolume:      db "O rotulo do volume e: ", 0
 .sucessoMontagem:   db "Volume montado em / com sucesso.", 0
-.init:              db "Procurando /init ou /sh...", 0
+.init:              db "Procurando /init...", 0
 .semInit:           db "/init nao encontrado na raiz do volume. Tentando /sh...", 0
 .modoUsuario:       db "Indo para o modo usuario...", 0
 .memoriaTotal:      db "Memoria total instalada e disponivel: ", 0
