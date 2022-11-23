@@ -99,14 +99,14 @@ Hexagon.Verbose:
 
 Hexagon.Verbose.APM:
 
+.reinicioAPM:            db "Solicitando reinicio...", 0
 .servicoAPM:             db "Solicitando servico de gerenciamento de energia...", 0
 .desligamentoAPM:        db "Solicitando desligamento...", 0
-.reinicioAPM:            db "Solicitando reinicio...", 0
 .erroAPM:                db "Ocorreu um erro na solicitacao de servico de gerenciamento de energia.", 0
 .erroComandoAPM:         db "Ocorreu um erro no comando fornecido ao gerenciamento de energia.", 0
 .erroConexaoAPM:         db "Ocorreu um erro na conexao ao servico de gerenciamento de energia.", 0
 .sucessoDesligamentoAPM: db "Sucesso na solicitacao ao sistema de gerenciamento de energia.", 0
-.erroInstalacaoAPM:      db "Erro na instalacao do servico de gerenciamento de energia do Hexagon (R)", 0
+.erroInstalacaoAPM:      db "Erro na instalacao do servico de gerenciamento de energia do Hexagon(R)", 0
 
 Hexagon.Verbose.Servicos:
 

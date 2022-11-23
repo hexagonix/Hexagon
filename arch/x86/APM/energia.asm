@@ -59,11 +59,61 @@
 
 use32
 
+;;*********************************************************************
+;;
+;;                  Implementação APM do Hexagon®
+;;
+;;          Copyright © 2016-2022 Felipe Miguel Nery Lunkes
+;;
+;;*********************************************************************
+
 ;;************************************************************************************
 
 Hexagon.Arch.x86.APM:
 
 .status: db 0
+
+;;************************************************************************************
+
+;; Reiniciar o computador
+
+Hexagon.Kernel.Arch.x86.APM.Energia.reiniciarPC:
+
+match =SIM, VERBOSE
+{
+
+    mov esi, Hexagon.Verbose.APM.servicoAPM
+    mov ebx, Hexagon.Relatorio.Prioridades.p5 
+
+    call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
+
+    mov esi, Hexagon.Verbose.APM.reinicioAPM
+    mov ebx, Hexagon.Relatorio.Prioridades.p5 
+
+    call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
+
+}
+
+.aguardarLoop:
+
+    in al, 0x64     ;; 0x64 é o registrador de estado
+    
+    bt ax, 1        ;; Checar segundo bit até se tornar 0
+    jnc .OK
+    
+    jmp .aguardarLoop
+    
+.OK:
+
+    mov al, 0xfe
+    
+    out 0x64, al
+
+    cli
+    
+    jmp $
+    
+    ret
 
 ;;************************************************************************************
 
@@ -84,15 +134,7 @@ match =SIM, VERBOSE
 
 }
 
-;;*********************************************************************/
-;;
-;;             Parte da implementação APM do Hexagon®
-;;
-;;          Copyright © 2016-2022 Felipe Miguel Nery Lunkes
-;;
-;;*********************************************************************/
-
-;;*********************************************************************/
+;;*********************************************************************
 ;;
 ;; Esta função pode retornar códigos de erro, os quais se seguem:
 ;;
@@ -104,7 +146,7 @@ match =SIM, VERBOSE
 ;; 2 = Driver APM versão 1.2 não suportado
 ;; 3 = Falha ao alterar o status para "off"
 ;;
-;;*********************************************************************/
+;;*********************************************************************
 
     push bx
     push cx
@@ -208,43 +250,6 @@ match =SIM, VERBOSE
     pop bx
     
     stc
-    
-    ret
-
-;;************************************************************************************
-    
-;; Reiniciar o computador
-
-Hexagon.Kernel.Arch.x86.APM.Energia.reiniciarPC:
-
-match =SIM, VERBOSE
-{
-
-    mov esi, Hexagon.Verbose.APM.reinicioAPM
-    mov ebx, Hexagon.Relatorio.Prioridades.p5 
-
-    call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
-
-}
-
-.aguardarLoop:
-
-    in al, 0x64     ;; 0x64 é o registrador de estado
-    
-    bt ax, 1        ;; Checar segundo bit até se tornar 0
-    jnc .OK
-    
-    jmp .aguardarLoop
-    
-.OK:
-
-    mov al, 0xfe
-    
-    out 0x64, al
-
-    cli
-    
-    jmp $
     
     ret
 
