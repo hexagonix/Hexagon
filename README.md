@@ -23,7 +23,6 @@
 # Escolha o idioma/choose language
  
 <details title="Português (Brasil)" align='left'>
-<br>
 <summary align='left'>🇧🇷 Português (Brasil)</summary>
 
 ## Kernel Hexagon
@@ -71,10 +70,9 @@ Outras características que estão sendo desenvolvidas:
 </details>
 
 <details title="English" align='left'>
-<br>
 <summary align='left'>🇬🇧 English</summary>
 
-## Kernel Hexagon
+## Hexagon kernel
 
 <p align="center">
 <img src="https://github.com/hexagonix/Doc/blob/main/Img/LogoHexagon.png" width="200" height="200">
