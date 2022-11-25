@@ -198,6 +198,11 @@ Hexagon.Kernel.Kernel.Proc.iniciarEscalonador:
 
     logHexagon Hexagon.Verbose.escalonador, Hexagon.Relatorio.Prioridades.p5
 
+;; Agora, uma função para iniciar os PBCs
+;; Essa função pode ser executada, mas o uso dos novos BCPs ainda estão em desenvolvimento
+
+    ;; call Hexagon.Kernel.Kernel.Proc.iniciarBCP
+    
     ret
 
 ;;************************************************************************************
