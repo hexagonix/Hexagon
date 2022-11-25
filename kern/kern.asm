@@ -110,6 +110,7 @@ include "arch/x86/memx86/memoria.asm"            ;; Diagnóstico de memória ins
 ;; Processos, modelo de processo e de imagens executáveis
 
 include "kern/proc.asm"                          ;; Funções para a manipulação de processos
+;; include "kern/procBCP.asm"                       ;; Novas funções para a manipulação de processos
 include "libkern/HAPP.asm"                       ;; Funções para tratamento de imagens HAPP
 
 ;; Sistemas de arquivos suportados pelo Hexagon®
