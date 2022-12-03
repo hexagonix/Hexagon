@@ -61,13 +61,13 @@
 
 Hexagon.Arquitetura.suporte = 1 ;; Arquitetura desta imagem
 
-Hexagon.Versao.definicao equ "1.1.8"
+Hexagon.Versao.definicao equ "1.2.0"
 
 Hexagon.Versao:
 
 .numeroVersao     = 1   ;; Número principal de versão do Hexagon
-.numeroSubversao  = 1   ;; Número de subversão (secundária) do Hexagon
-.caractereRevisao = "8" ;; Adicionar caractere de revisão, caso necessário (não número)
+.numeroSubversao  = 2   ;; Número de subversão (secundária) do Hexagon
+.caractereRevisao = "0" ;; Adicionar caractere de revisão, caso necessário (não número)
 
 .nomeKernel:      db "Hexagon(R)", 0 ;; Nome fornecido ao espaço de usuário
 .build:           db __stringdia, "/", __stringmes, "/", __stringano, " "
@@ -76,9 +76,9 @@ Hexagon.Versao:
 Hexagon.Info:
 
 .sobreHexagon:    db 10, 10
-                  db "Kernel Hexagon(R) versao ", Hexagon.Versao.definicao, 10
+                  db "Hexagon(R) Kernel version ", Hexagon.Versao.definicao, 10
                   db "Copyright (C) 2016-", __stringano, " Felipe Miguel Nery Lunkes", 10
-                  db "Todos os direitos reservados.", 0
+                  db "All rights reserved.", 0
 
 ;;************************************************************************************
 

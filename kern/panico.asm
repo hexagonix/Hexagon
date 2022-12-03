@@ -63,11 +63,11 @@ use32
 
 Hexagon.Panico:
 
-.cabecalhoPanico:  db 10, 10, "Panico no Kernel: ", 0   
+.cabecalhoPanico:  db 10, 10, "Kernel Panic: ", 0   
 .cabecalhoOops:    db 10, 10, "Kernel Oops: ", 0     
-.erroReiniciar:    db "Reinicie seu computador para continuar.", 0  
-.erroNaoFatal:     db "Pressione qualquer tecla para continuar...", 0
-.erroDesconhecido: db 10, 10, "A gravidade do erro nao foi fornecida ou e desconhecida pelo Sistema.", 10, 10, 0         
+.erroReiniciar:    db "Restart your computer to continue.", 0  
+.erroNaoFatal:     db "Press any key to continue...", 0
+.erroDesconhecido: db 10, 10, "The severity of the error was not provided or is unknown by the Hexagon.", 10, 10, 0         
     
 ;;************************************************************************************
 

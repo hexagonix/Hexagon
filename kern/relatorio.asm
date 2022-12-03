@@ -63,7 +63,7 @@ use32
 
 Hexagon.Relatorio:
 
-.dataInicio:                  db "Inicializacao do Sistema: ", 0
+.dataInicio:                  db "System initialization: ", 0
 .infoData:                    db " [CMOS]", 0
 .identificadorHexagon:        db "[Hexagon] ", 0
 .identificadorUsuarioInicial: db "[PID: ", 0
