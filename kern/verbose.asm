@@ -69,61 +69,61 @@ match =SIM, VERBOSE {
     
 Hexagon.Verbose:
 
-.Hexagon:           db "Bem-vindo ao Hexagon(R)", 10
+.Hexagon:           db "Welcome to Hexagon(R)", 10
                     db "Copyright (C) 2016-", __stringano, " Felipe Miguel Nery Lunkes", 10
-                    db "Todos os direitos reservados.", 10, 10, 0
-.versao:            db "Versao do kernel Hexagon(R): ", Hexagon.Versao.definicao, 0
-.travando:          db "Habilitando diretrizes de usuario e seguranca...", 0
-.timer:             db "Iniciando e configurando o timer (119 Hz)...", 0
-.escalonador:       db "Iniciando o escalonador de memoria...", 0
-.teclado:           db "O servico de gerenciamento de teclado foi iniciado.", 0 
-.mouse:             db "O servico de gerenciamento de mouse foi iniciado.", 0
-.serial:            db "O servico de gerenciamento de portas seriais esta sendo iniciado...", 0
-.definirVolume:     db "O Hexagon esta procurando o volume principal para montagem...", 0
-.inicioMontagem:    db "O volume ", 0
-.montagemRealizada: db " foi marcado para montagem em /.", 0
-.sistemaArquivos:   db "O volume montado e formatado como (FSID): ", 0
-.rotuloVolume:      db "O rotulo do volume e: ", 0
-.sucessoMontagem:   db "Volume montado em / com sucesso.", 0
-.init:              db "Procurando /init...", 0
-.semInit:           db "/init nao encontrado na raiz do volume. Tentando /sh...", 0
-.modoUsuario:       db "Indo para o modo usuario...", 0
-.memoriaTotal:      db "Memoria total instalada e disponivel: ", 0
+                    db "All rights reserved.", 10, 10, 0
+.versao:            db "Hexagon(R) kernel version: ", Hexagon.Versao.definicao, 0
+.travando:          db "Enabling user and security guidelines...", 0
+.timer:             db "Starting and setting the timer (119 Hz)...", 0
+.escalonador:       db "Starting the scheduler...", 0
+.teclado:           db "The keyboard management service has started.", 0 
+.mouse:             db "The mouse management service has started.", 0
+.serial:            db "The serial port management service is starting...", 0
+.definirVolume:     db "Hexagon is looking for a volume to mount...", 0
+.inicioMontagem:    db "The volume ", 0
+.montagemRealizada: db " has been marked for mounting on /.", 0
+.sistemaArquivos:   db "The mounted volume is formatted as (FSID): ", 0
+.rotuloVolume:      db "The volume label is: ", 0
+.sucessoMontagem:   db "Volume successfully mounted on /.", 0
+.init:              db "Looking for /init...", 0
+.semInit:           db "/init not found at the root of the volume. Trying /sh...", 0
+.modoUsuario:       db "Going to user mode...", 0
+.memoriaTotal:      db "Total memory installed and available: ", 0
 .megabytes:         db " Mb (", 0
 .bytes:             db " bytes).", 0
-.initEncontrado:    db "PID 1: iniciando /init.", 0
-.initNaoEncontrado: db "PID 1: procurando /sh...", 0
-.desligando:        db "Finalizando e congelando CPU...", 0
+.initEncontrado:    db "PID 1: starting /init.", 0
+.initNaoEncontrado: db "PID 1: looking for /sh...", 0
+.desligando:        db "Shuting down and halting the CPU...", 0
 .novaLinha:         db 10, 0
-.opcodeInvalido:    db "Opcode invalido encontrado no ambiente de execucao. Falha.", 0
+.opcodeInvalido:    db "Invalid opcode found at runtime. Failure.", 0
 
 Hexagon.Verbose.APM:
 
-.reinicioAPM:            db "Solicitando reinicio...", 0
-.servicoAPM:             db "Solicitando servico de gerenciamento de energia...", 0
-.desligamentoAPM:        db "Solicitando desligamento...", 0
-.erroAPM:                db "Ocorreu um erro na solicitacao de servico de gerenciamento de energia.", 0
-.erroComandoAPM:         db "Ocorreu um erro no comando fornecido ao gerenciamento de energia.", 0
-.erroConexaoAPM:         db "Ocorreu um erro na conexao ao servico de gerenciamento de energia.", 0
-.sucessoDesligamentoAPM: db "Sucesso na solicitacao ao sistema de gerenciamento de energia.", 0
-.erroInstalacaoAPM:      db "Erro na instalacao do servico de gerenciamento de energia do Hexagon(R)", 0
+.reinicioAPM:            db "Requesting restart...", 0
+.servicoAPM:             db "Requesting power management service...", 0
+.desligamentoAPM:        db "Requesting shutdown...", 0
+.erroAPM:                db "An error occurred in the power management service request.", 0
+.erroComandoAPM:         db "An error occurred in the command given to power management service.", 0
+.erroConexaoAPM:         db "There was an error connecting to the power management service.", 0
+.sucessoDesligamentoAPM: db "Success in requesting the power management system.", 0
+.erroInstalacaoAPM:      db "Error installing Hexagon(R) power management service.", 0
 
 Hexagon.Verbose.Servicos:
 
-.matarProcesso: db "O processo em execucao com este PID foi terminado pelo Hexagon a pedido do usuario.", 0
+.matarProcesso: db "The process running with this PID was terminated by Hexagon.", 0
 
 Hexagon.Verbose.Disco:
 
-.erroLerMBR:            db "Erro ao ler o MBR do volume.", 0
-.erroLerBPB:            db "Erro ao tentar ler o BPB do volume.", 0
-.erroReiniciarDisco:    db "Erro ao solicitar o reinicio do disco.", 0
-.erroDiscoNaoDetectado: db "O disco/volume solicitado nao foi detectado ou esta offline.", 0
-.erroGeralLeitura:      db "Erro geral ao tentar ler setores no volume.", 0
-.erroSemMidia:          db "O disco/volume solicitado nao esta online.", 0
-.erroProtegidoEscrita:  db "O volume esta protegido contra escrita. Falha ao tentar gravar setores.", 0
-.erroDiscoNaoPronto:    db "O disco/volume nao esta pronto.", 0
-.erroEmUso:             db "O volume ja esta em uso pelo Hexagon ou outro processo.", 0
-.erroEscrita:           db "Erro ao escrever no volume.", 0
-.erroGeralEscrita:      db "Erro geral ao tentar escrever setores no volume.", 0
+.erroLerMBR:            db "Error reading volume MBR.", 0
+.erroLerBPB:            db "Error trying to read volume BPB.", 0
+.erroReiniciarDisco:    db "Error requesting disk restart.", 0
+.erroDiscoNaoDetectado: db "The requested disk/volume is not detected or is offline.", 0
+.erroGeralLeitura:      db "General error when trying to read sectors on the volume.", 0
+.erroSemMidia:          db "The requested disk/volume is not online.", 0
+.erroProtegidoEscrita:  db "The volume is write protected. Failed to write sectors.", 0
+.erroDiscoNaoPronto:    db "The disk/volume is not ready.", 0
+.erroEmUso:             db "The volume is already in use by Hexagon or another process.", 0
+.erroEscrita:           db "Error writing to volume.", 0
+.erroGeralEscrita:      db "General error when trying to write sectors to the volume.", 0
 
 }
