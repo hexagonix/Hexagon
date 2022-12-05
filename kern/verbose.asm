@@ -74,8 +74,8 @@ Hexagon.Verbose:
                     db "All rights reserved.", 10, 10, 0
 .versao:            db "Hexagon(R) kernel version: ", Hexagon.Versao.definicao, 0
 .travando:          db "Enabling user and security guidelines...", 0
-.timer:             db "Starting and setting the timer (119 Hz)...", 0
-.escalonador:       db "Starting and setting the scheduler...", 0
+.timer:             db "Starting and setting up the timer (119 Hz)...", 0
+.escalonador:       db "Starting and setting up the scheduler...", 0
 .teclado:           db "The keyboard management service has started.", 0 
 .mouse:             db "The mouse management service has started.", 0
 .serial:            db "The serial port management service is starting...", 0
