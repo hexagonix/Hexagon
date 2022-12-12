@@ -76,7 +76,7 @@ Hexagon.API.Controle:
 ;;  EBP = 0xABC12345 em caso de função não disponível
 ;;  CF definido em caso de função não disponível
     
-manipuladorHexagon:
+Hexagon.API.API.manipuladorHexagon:
 
     push ebp
     
@@ -133,7 +133,7 @@ manipuladorHexagon:
 
     sti
     
-    call dword[.tabela+ebp*4]
+    call dword[Hexagon.API.API.servicosHexagon.tabela+ebp*4]
     
 .fim:
 
@@ -187,10 +187,183 @@ manipuladorHexagon:
 .totalChamadas: dd 68
 
 ;;************************************************************************************
+
+;; Manipulador de interrupção do Sistema Operacional Hexagonix®
+;;
+;; Saída:
+;;
+;;  EBP = 0xABC12345 em caso de função não disponível
+;;  CF definido em caso de função não disponível
+    
+Hexagon.API.API.manipuladorHexagonV2:
+
+    push ebp
+    
+    mov ebp, esp
+    
+    push 0x10                  ;; Segmento do Kernel
+    pop ds
+
+    mov [.es], es
+    
+    push 0x18
+    pop es
+    
+    cld
+    
+    mov dword[.eax], eax
+
+    pop eax                    ;; Limpar pilha
+    
+    mov dword[.ebp], eax
+    
+    pop eax
+    
+    mov dword[.eip], eax
+
+    pop eax
+    
+    mov dword[.cs], eax
+
+    pop eax                    ;; Bandeira
+
+    pop eax                    ;; EDI
+
+    mov dword[.regEDI], eax ;; Chamada do sistema
+
+    pop eax                    ;; ESI
+
+    mov dword[.regESI], eax ;; Chamada do sistema
+
+    pop eax                    ;; Chamada solicitada, armazenada na pilha
+    
+    mov dword[.parametro], eax ;; Chamada do sistema
+
+    mov dword[Hexagon.API.Controle.chamadaAtual], eax
+
+    mov eax, dword[.eax]
+    mov edi, dword[.regEDI]
+    mov esi, dword[.regESI]
+
+    mov ebp, dword[ds:.parametro]
+    
+    cmp ebp, dword[.totalChamadas]
+    ja .chamadaIndisponivel
+    
+    mov byte[Hexagon.API.Controle.chamadaSistema], 01h ;; Uma chamada foi sim solicitada
+
+    sti
+    
+    call dword[Hexagon.API.API.servicosHexagon.tabela+ebp*4]
+    
+.fim:
+
+    sti
+
+    mov byte[Hexagon.API.Controle.chamadaSistema], 00h  ;; Desmarcar a solicitação de chamada de Sistema
+    
+    push eax
+
+    mov eax, dword[Hexagon.API.Controle.chamadaAtual]
+    mov dword[Hexagon.API.Controle.ultimaChamada], eax
+
+    pop eax
+
+    pushfd
+    
+    push dword[.cs]
+    push dword[.eip]
+
+    mov es, [.es]
+    
+    push 0x38
+    pop ds
+
+    iret
+    
+.chamadaIndisponivel:
+
+    mov ebp, 0xABC12345
+    
+    stc
+    
+    jmp .fim
+    
+.eflags:    dd 0
+.parametro: dd 0
+.regESI:    dd 0
+.regEDI:    dd 0
+.eax:       dd 0
+.cs:        dd 0
+.es:        dw 0
+.eip:       dd 0
+.ebp:       dd 0
+
+.totalChamadas: dd 68
+
+;;************************************************************************************
+
+Hexagon.Kernel.API.API.desenharBloco:
+
+    sub esi, dword[Hexagon.Processos.enderecoAplicativos]
+    add esi, 0x500
+    
+    sub edi, dword[Hexagon.Processos.enderecoAplicativos]
+    add edi, 0x500
+
+    call Hexagon.Kernel.Lib.Graficos.desenharBloco
+
+    add esi, dword[Hexagon.Processos.enderecoAplicativos]
+    sub esi, 0x500
+    
+    add edi, dword[Hexagon.Processos.enderecoAplicativos]
+    sub edi, 0x500
+    
+    ret
+
+;;************************************************************************************
+    
+Hexagon.Kernel.API.API.Nulo:    
+    
+    mov ebp, 0xABC12345
+    
+    stc
+    
+    ret 
+
+;;************************************************************************************
+   
+Hexagon.Kernel.API.API.intalarInterrupcao:
+
+    cli
+    
+    call instalarISR
+    
+    ret
+
+;;************************************************************************************
+    
+Hexagon.Kernel.API.API.criarNovoProcesso:
+
+    push dword[Hexagon.API.API.manipuladorHexagon.eip]
+    push dword[Hexagon.API.API.manipuladorHexagon.cs]
+    
+    call Hexagon.Kernel.Kernel.Proc.criarProcesso
+    
+    pop dword[Hexagon.API.API.manipuladorHexagon.cs]
+    pop dword[Hexagon.API.API.manipuladorHexagon.eip]
+    
+    ret
+
+;;************************************************************************************
+
+;;************************************************************************************
 ;;
 ;; Chamadas de sistema do Hexagon®
 ;;
 ;;************************************************************************************
+
+Hexagon.API.API.servicosHexagon:
 
 .tabela:
 
@@ -199,7 +372,7 @@ manipuladorHexagon:
     dd Hexagon.Kernel.API.API.Nulo                                     ;; 0 - função nula, apenas retorna
     dd Hexagon.Kernel.Arch.Universal.Memoria.alocarMemoria             ;; 1
     dd Hexagon.Kernel.Arch.Universal.Memoria.liberarMemoria            ;; 2
-    dd .Hexagon.Kernel.API.API.criarNovoProcesso                       ;; 3
+    dd Hexagon.Kernel.API.API.criarNovoProcesso                        ;; 3
     dd Hexagon.Kernel.Kernel.Proc.encerrarProcesso                     ;; 4
     dd Hexagon.Kernel.Kernel.Proc.obterPID                             ;; 5
     dd Hexagon.Kernel.Arch.Universal.Memoria.usoMemoria                ;; 6
@@ -234,7 +407,7 @@ manipuladorHexagon:
     dd Hexagon.Kernel.Lib.Num.obterAleatorio                           ;; 23
     dd Hexagon.Kernel.Lib.Num.alimentarAleatorios                      ;; 24
     dd Hexagon.Kernel.Arch.x86.Timer.Timer.causarAtraso                ;; 25
-    dd .Hexagon.Kernel.API.API.intalarInterrupcao                      ;; 26
+    dd Hexagon.Kernel.API.API.intalarInterrupcao                      ;; 26
 
 ;; Gerenciamento de energia do Hexagon®
 
@@ -250,7 +423,7 @@ manipuladorHexagon:
     dd Hexagon.Kernel.Dev.Universal.Console.Console.rolarParaBaixo     ;; 33
     dd Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor   ;; 34
     dd Hexagon.Kernel.Lib.Graficos.colocarPixel                        ;; 35
-    dd .Hexagon.Kernel.API.API.desenharBloco                           ;; 36
+    dd Hexagon.Kernel.API.API.desenharBloco                            ;; 36
     dd Hexagon.Kernel.Dev.Universal.Console.Console.imprimirCaractere  ;; 37
     dd Hexagon.Kernel.Dev.Universal.Console.Console.definirCorTexto    ;; 38
     dd Hexagon.Kernel.Dev.Universal.Console.Console.obterCorTexto      ;; 39
@@ -301,59 +474,5 @@ manipuladorHexagon:
 
     dd Hexagon.Kernel.Lib.Relogio.retornarData                         ;; 67
     dd Hexagon.Kernel.Lib.Relogio.retornarHora                         ;; 68
-    
-;;************************************************************************************
-    
-.Hexagon.Kernel.API.API.intalarInterrupcao:
-
-    cli
-    
-    call instalarISR
-    
-    ret
-
-;;************************************************************************************
-    
-.Hexagon.Kernel.API.API.criarNovoProcesso:
-
-    push dword[.eip]
-    push dword[.cs]
-    
-    call Hexagon.Kernel.Kernel.Proc.criarProcesso
-    
-    pop dword[.cs]
-    pop dword[.eip]
-    
-    ret
-
-;;************************************************************************************
-    
-.Hexagon.Kernel.API.API.desenharBloco:
-
-    sub esi, dword[Hexagon.Processos.enderecoAplicativos]
-    add esi, 0x500
-    
-    sub edi, dword[Hexagon.Processos.enderecoAplicativos]
-    add edi, 0x500
-
-    call Hexagon.Kernel.Lib.Graficos.desenharBloco
-
-    add esi, dword[Hexagon.Processos.enderecoAplicativos]
-    sub esi, 0x500
-    
-    add edi, dword[Hexagon.Processos.enderecoAplicativos]
-    sub edi, 0x500
-    
-    ret
-
-;;************************************************************************************
-    
-Hexagon.Kernel.API.API.Nulo:    
-    
-    mov ebp, 0xABC12345
-    
-    stc
-    
-    ret 
-
+ 
 ;;************************************************************************************
