@@ -407,7 +407,7 @@ Hexagon.API.API.servicosHexagon:
     dd Hexagon.Kernel.Lib.Num.obterAleatorio                           ;; 23
     dd Hexagon.Kernel.Lib.Num.alimentarAleatorios                      ;; 24
     dd Hexagon.Kernel.Arch.x86.Timer.Timer.causarAtraso                ;; 25
-    dd Hexagon.Kernel.API.API.intalarInterrupcao                      ;; 26
+    dd Hexagon.Kernel.API.API.intalarInterrupcao                       ;; 26
 
 ;; Gerenciamento de energia do Hexagon®
 
