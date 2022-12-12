@@ -240,7 +240,6 @@ Hexagon.API.API.manipuladorHexagonV2:
     mov dword[.parametro], eax ;; Chamada do sistema
 
     mov dword[Hexagon.API.Controle.chamadaAtual], eax
-    mov dword[Hexagon.API.Controle.chamadaAtual], eax
 
     mov eax, dword[.eax]
     mov edi, dword[.regEDI]

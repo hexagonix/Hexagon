@@ -118,6 +118,8 @@ Hexagon.Kernel.Arch.x86.Memx86.Memoria.obterMemoriaTotal:
     pop ecx
     pop edx
     
+    add eax, 1048576 ;; Adicionar o 1 Mb de memória baixa (modo real)
+    
     mov dword[Hexagon.Memoria.memoriaTotal], eax ;; Fornecer memória total, em bytes
     
     ret
