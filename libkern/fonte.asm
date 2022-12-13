@@ -76,7 +76,7 @@ Hexagon.Fontes:
 
 ;; Agora vamos incluir aqui uma fonte padrão, em formato de fonte Hexagonix®
 
-include "../../Fontes/Avatar.asm"
+include "../../Fontes/aurora.asm"
 
 ;;************************************************************************************
 
