@@ -378,14 +378,14 @@ iniciarComponentes:
 initHexagon:          db "init", 0 ;; Nome de arquivo do init
 shellHexagon:         db "sh", 0   ;; Nome do shell padrão
            
-semInit:              db "Um componente critico (init) nao foi encontrado no volume de inicializacao.", 10, 10
-                      db "Certifique-se que o arquivo 'init' ou equivalente esteja presente no volume do sistema.", 10
-                      db "Caso nao esteja presente, utilize o disco de instalacao original para corrigir este problema.", 10, 10, 0
+semInit:              db "A critical component (init) was not found on the boot volume.", 10, 10
+                      db "Make sure the 'init' file or equivalent is present on the system volume.", 10
+                      db "If not present, use the original installation media to correct this problem.", 10, 10, 0
          
-componenteFinalizado: db "Um componente critico (init) foi finalizado de forma inesperada.", 10, 10
-                      db "Algum erro inesperado fez com que um componente do sistema fosse finalizado.", 10
-                      db "Este pequeno problema impede a execucao do sistema de maneira adequada e, para evitar qualquer", 10
-                      db "problema mais grave ou a perda de seus dados, o sistema foi finalizado.", 10, 0
+componenteFinalizado: db "A critical component (init) terminated unexpectedly.", 10, 10
+                      db "Some unexpected error caused a system component to terminate.", 10
+                      db "This problem prevents the system from running properly and to avoid any", 10
+                      db "more serious problem or the loss of your data, the system has halted.", 10, 0
 
 ;;************************************************************************************
 ;;
