@@ -57,9 +57,9 @@ macro logHexagon mensagem, prioridade
 {
 
     mov esi, mensagem
-	mov ebx, prioridade
+    mov ebx, prioridade
 
-	call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
+    call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
 
 }
 
