@@ -63,8 +63,7 @@ Outras características que estão sendo desenvolvidas:
 
 > Você pode ajudar a implementar as funções em desenvolvimento acima!
 
-* [Documentação completa do Hexagon](https://github.com/hexagonix/Doc/tree/main/Hexagon/README.pt.md)
-
+> **Este arquivo não fornece informações técnicas sobre o kernel Hexagon. Para acessar a documentação técnica completa, clique [aqui](https://github.com/hexagonix/Doc/blob/main/Hexagon/README.pt.md)**
 </div>
 
 </details>
@@ -110,7 +109,7 @@ Other features being developed:
 
 > You can help implement the above development functions!
 
-* [Hexagon Documentation](https://github.com/hexagonix/Doc/tree/main/Hexagon/README.en.md)
+> **This file does not provide technical information about the Hexagon kernel. To access the complete technical documentation, click [here](https://github.com/hexagonix/Doc/tree/main/Hexagon/README.en.md)**
 
 </div>
 
