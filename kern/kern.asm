@@ -5,7 +5,7 @@
 ;;        #$@$@    #@#@$
 ;;        @#@$%    %#$#%
 ;;        @#$@$    #@#$@
-;;        #@#$$#$#%!@#@#     Copyright © 2016-2023 Felipe Miguel Nery Lunkes
+;;        #@#$$#$#%!@#@#     Copyright © 2015-2023 Felipe Miguel Nery Lunkes
 ;;        @#@%!@&$#&$#@#             Todos os direitos reservados
 ;;        !@$%#    @&$%#
 ;;        @$#!%    #&*@&
@@ -101,7 +101,7 @@ include "arch/x86/timer/timer.asm"               ;; Funções para manipulação
 include "dev/x86/disco/disco.asm"                ;; Funções para ler e escrever em discos rígidos do Hexagon®
 include "fs/vfs.asm"                             ;; Sistema de arquivos virtual (VFS) para Hexagon®
 include "dev/universal/mouse/mouse.asm"          ;; Funções para mouse PS/2 do Hexagon®
-include "dev/universal/imp/impressora.asm"       ;; Funções de manipulação de impressora
+include "dev/universal/imp/imp.asm"              ;; Funções de manipulação de impressora
 include "dev/universal/COM/serial.asm"           ;; Funções para manipulação de portas seriais em modo protegido
 include "arch/x86/CMOS/cmos.asm"                 ;; Funções para manipulação de data e hora  
 include "dev/dev.asm"                            ;; Funções de gerenciamento e abstração de Hardware do Hexagon®
