@@ -196,6 +196,19 @@ Hexagon.Dev.Universal.Disco.Controle Hexagon.Disco.Controle
 
 ;;************************************************************************************  
 
+;; Para os discos em uso no sistema
+;;
+;; Entrada e saída: vazio
+
+Hexagon.Kernel.Dev.x86.Disco.Disco.pararDisco:
+
+    call Hexagon.Kernel.Dev.x86.Disco.Disco.reiniciarDisco
+
+    ret
+
+
+;;************************************************************************************
+
 ;; Obtêm da MBR (Master Boot Record) informações úteis a respeito do disco
 ;;
 ;; Saída:

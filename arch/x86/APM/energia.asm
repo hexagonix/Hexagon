@@ -134,6 +134,8 @@ match =SIM, VERBOSE
 
 }
 
+    call Hexagon.Kernel.Dev.x86.Disco.Disco.pararDisco ;; Primeiro, vamos parar os discos
+
 ;;*********************************************************************
 ;;
 ;; Esta função pode retornar códigos de erro, os quais se seguem:

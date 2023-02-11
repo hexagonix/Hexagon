@@ -307,7 +307,7 @@ Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon:
 
     push esi
 
-    cmp byte[Hexagon.API.Controle.chamadaSistema], 01h
+    cmp byte[Hexagon.Syscall.Controle.chamadaSistema], 01h
     je .processoUsuario
 
 .mensagemHexagon:
@@ -366,7 +366,7 @@ Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon:
 
     push esi
 
-    cmp byte[Hexagon.API.Controle.chamadaSistema], 01h
+    cmp byte[Hexagon.Syscall.Controle.chamadaSistema], 01h
     je .serialProcessoUsuario
 
 .serialMensagemHexagon:

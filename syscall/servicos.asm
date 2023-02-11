@@ -60,7 +60,7 @@
 Hexagon.Int:
 
 .interrupcaoHexagon  = 69h ;; Interrupção do Hexagon®
-.interrupcaoHexagon2 = 88h ;; Interrupção do Hexagon® 
+.interrupcaoHXUnix   = 80h ;; Interrupção do Hexagon® para funções Unix-like
 .interrupcaoTimer    = 08h ;; Interrupção reservada ao timer
 .interrupcaoTeclado  = 09h ;; Interrupção reservada ao teclado
 .interrupcaoMouse    = 74h ;; Interrupção reservada ao dispositivo apontador
@@ -94,21 +94,21 @@ instalarInterrupcoes:
 
 ;; Instalar o manipulador de chamadas do Hexagon®
 
-    mov esi, Hexagon.API.API.manipuladorHexagon   ;; Serviços do Hexagon®
-    mov eax, Hexagon.Int.interrupcaoHexagon ;; Número da interrupção       
+    mov esi, Hexagon.Syscall.Syscall.manipuladorHexagon ;; Serviços do Hexagon®
+    mov eax, Hexagon.Int.interrupcaoHexagon     ;; Número da interrupção       
     
     call instalarISR
 
-    mov esi, Hexagon.API.API.manipuladorHexagonV2 ;; Serviços do Hexagon®
-    mov eax, Hexagon.Int.interrupcaoHexagon2  ;; Número da interrupção       
+    mov esi, Hexagon.Syscall.Syscall.manipuladorHXUnix  ;; Serviços do Hexagon®
+    mov eax, Hexagon.Int.interrupcaoHXUnix      ;; Número da interrupção       
     
     call instalarISR
 
-    sti                           ;; Habilitar interrupções
+    sti ;; Habilitar interrupções
     
     mov dword[ordemKernel], ordemKernelDesativada
 
-    ret                           ;; Tudo pronto
+    ret ;; Tudo pronto
 
 ;;************************************************************************************
 

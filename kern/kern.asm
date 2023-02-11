@@ -77,9 +77,10 @@ include "kern/versao.asm"                        ;; Contém informações de ver
 
 ;; Serviços do Hexagon®
 
-include "API/api.asm"                            ;; Manipulador de interrupção do Hexagon®
+include "syscall/syscall.asm"                    ;; Manipulador de interrupção do Hexagon®
+include "syscall/systab.asm"                     ;; Tabela com as chamadas de sistema
 include "libkern/graficos.asm"                   ;; Funções para gráficos do Hexagon®
-include "API/servicos.asm"                       ;; Rotinas de interrupção e manipuladores de IRQs
+include "syscall/servicos.asm"                   ;; Rotinas de interrupção e manipuladores de IRQs
 
 ;; Usuários e outras utilidades
 

@@ -53,317 +53,11 @@
 
 ;;************************************************************************************
 ;;
-;;                    Este arquivo faz parte do Kernel Hexagon® 
-;;
-;;************************************************************************************
-
-use32
-
-;;************************************************************************************
-
-Hexagon.API.Controle:
-
-.ultimaChamada:  dd 0
-.chamadaAtual:   dd 0
-.chamadaSistema: db 0 ;; Armazena se uma chamada foi ou não realizada
-
-;;************************************************************************************
-
-;; Manipulador de interrupção do Sistema Operacional Hexagonix®
-;;
-;; Saída:
-;;
-;;  EBP = 0xABC12345 em caso de função não disponível
-;;  CF definido em caso de função não disponível
-    
-Hexagon.API.API.manipuladorHexagon:
-
-    push ebp
-    
-    mov ebp, esp
-    
-    push 0x10                  ;; Segmento do Kernel
-    pop ds
-
-    mov [.es], es
-    
-    push 0x18
-    pop es
-    
-    cld
-    
-    mov dword[.eax], eax
-    
-    add esi, dword[Hexagon.Processos.enderecoAplicativos]
-    
-    sub esi, 0x500
-    
-    add edi, dword[Hexagon.Processos.enderecoAplicativos]
-
-    sub edi, 0x500
-
-    pop eax                    ;; Limpar pilha
-    
-    mov dword[.ebp], eax
-    
-    pop eax
-    
-    mov dword[.eip], eax
-
-    pop eax
-    
-    mov dword[.cs], eax
-
-    pop eax                    ;; Bandeira
-    
-    pop eax                    ;; Chamada solicitada, armazenada na pilha
-    
-    mov dword[.parametro], eax ;; Chamada do sistema
-
-    mov dword[Hexagon.API.Controle.chamadaAtual], eax
-
-    mov eax, dword[.eax]
-
-    mov ebp, dword[ds:.parametro]
-    
-    cmp ebp, dword[.totalChamadas]
-    ja .chamadaIndisponivel
-    
-    mov byte[Hexagon.API.Controle.chamadaSistema], 01h ;; Uma chamada foi sim solicitada
-
-    sti
-    
-    call dword[Hexagon.API.API.servicosHexagon.tabela+ebp*4]
-    
-.fim:
-
-    sti
-
-    mov byte[Hexagon.API.Controle.chamadaSistema], 00h  ;; Desmarcar a solicitação de chamada de Sistema
-    
-    push eax
-
-    mov eax, dword[Hexagon.API.Controle.chamadaAtual]
-    mov dword[Hexagon.API.Controle.ultimaChamada], eax
-
-    pop eax
-
-    pushfd
-    
-    push dword[.cs]
-    push dword[.eip]
-    
-    sub esi, dword[Hexagon.Processos.enderecoAplicativos]
-
-    add esi, 0x500
-    
-    sub edi, dword[Hexagon.Processos.enderecoAplicativos]
-
-    add edi, 0x500
-
-    mov es, [.es]
-    
-    push 0x38
-    pop ds
-
-    iret
-    
-.chamadaIndisponivel:
-
-    mov ebp, 0xABC12345
-    
-    stc
-    
-    jmp .fim
-    
-.eflags:    dd 0
-.parametro: dd 0
-.eax:       dd 0
-.cs:        dd 0
-.es:        dw 0
-.eip:       dd 0
-.ebp:       dd 0
-
-.totalChamadas: dd 68
-
-;;************************************************************************************
-
-;; Manipulador de interrupção do Sistema Operacional Hexagonix®
-;;
-;; Saída:
-;;
-;;  EBP = 0xABC12345 em caso de função não disponível
-;;  CF definido em caso de função não disponível
-    
-Hexagon.API.API.manipuladorHexagonV2:
-
-    push ebp
-    
-    mov ebp, esp
-    
-    push 0x10                  ;; Segmento do Kernel
-    pop ds
-
-    mov [.es], es
-    
-    push 0x18
-    pop es
-    
-    cld
-    
-    mov dword[.eax], eax
-
-    pop eax                    ;; Limpar pilha
-    
-    mov dword[.ebp], eax
-    
-    pop eax
-    
-    mov dword[.eip], eax
-
-    pop eax
-    
-    mov dword[.cs], eax
-
-    pop eax                    ;; Bandeira
-
-    pop eax                    ;; EDI
-
-    mov dword[.regEDI], eax ;; Chamada do sistema
-
-    pop eax                    ;; ESI
-
-    mov dword[.regESI], eax ;; Chamada do sistema
-
-    pop eax                    ;; Chamada solicitada, armazenada na pilha
-    
-    mov dword[.parametro], eax ;; Chamada do sistema
-
-    mov dword[Hexagon.API.Controle.chamadaAtual], eax
-
-    mov eax, dword[.eax]
-    mov edi, dword[.regEDI]
-    mov esi, dword[.regESI]
-
-    mov ebp, dword[ds:.parametro]
-    
-    cmp ebp, dword[.totalChamadas]
-    ja .chamadaIndisponivel
-    
-    mov byte[Hexagon.API.Controle.chamadaSistema], 01h ;; Uma chamada foi sim solicitada
-
-    sti
-    
-    call dword[Hexagon.API.API.servicosHexagon.tabela+ebp*4]
-    
-.fim:
-
-    sti
-
-    mov byte[Hexagon.API.Controle.chamadaSistema], 00h  ;; Desmarcar a solicitação de chamada de Sistema
-    
-    push eax
-
-    mov eax, dword[Hexagon.API.Controle.chamadaAtual]
-    mov dword[Hexagon.API.Controle.ultimaChamada], eax
-
-    pop eax
-
-    pushfd
-    
-    push dword[.cs]
-    push dword[.eip]
-
-    mov es, [.es]
-    
-    push 0x38
-    pop ds
-
-    iret
-    
-.chamadaIndisponivel:
-
-    mov ebp, 0xABC12345
-    
-    stc
-    
-    jmp .fim
-    
-.eflags:    dd 0
-.parametro: dd 0
-.regESI:    dd 0
-.regEDI:    dd 0
-.eax:       dd 0
-.cs:        dd 0
-.es:        dw 0
-.eip:       dd 0
-.ebp:       dd 0
-
-.totalChamadas: dd 68
-
-;;************************************************************************************
-
-Hexagon.Kernel.API.API.desenharBloco:
-
-    sub esi, dword[Hexagon.Processos.enderecoAplicativos]
-    add esi, 0x500
-    
-    sub edi, dword[Hexagon.Processos.enderecoAplicativos]
-    add edi, 0x500
-
-    call Hexagon.Kernel.Lib.Graficos.desenharBloco
-
-    add esi, dword[Hexagon.Processos.enderecoAplicativos]
-    sub esi, 0x500
-    
-    add edi, dword[Hexagon.Processos.enderecoAplicativos]
-    sub edi, 0x500
-    
-    ret
-
-;;************************************************************************************
-    
-Hexagon.Kernel.API.API.Nulo:    
-    
-    mov ebp, 0xABC12345
-    
-    stc
-    
-    ret 
-
-;;************************************************************************************
-   
-Hexagon.Kernel.API.API.intalarInterrupcao:
-
-    cli
-    
-    call instalarISR
-    
-    ret
-
-;;************************************************************************************
-    
-Hexagon.Kernel.API.API.criarNovoProcesso:
-
-    push dword[Hexagon.API.API.manipuladorHexagon.eip]
-    push dword[Hexagon.API.API.manipuladorHexagon.cs]
-    
-    call Hexagon.Kernel.Kernel.Proc.criarProcesso
-    
-    pop dword[Hexagon.API.API.manipuladorHexagon.cs]
-    pop dword[Hexagon.API.API.manipuladorHexagon.eip]
-    
-    ret
-
-;;************************************************************************************
-
-;;************************************************************************************
-;;
 ;; Chamadas de sistema do Hexagon®
 ;;
 ;;************************************************************************************
 
-Hexagon.API.API.servicosHexagon:
+Hexagon.Syscall.Syscall.servicosHexagon:
 
 .tabela:
 
@@ -474,5 +168,28 @@ Hexagon.API.API.servicosHexagon:
 
     dd Hexagon.Kernel.Lib.Relogio.retornarData                         ;; 67
     dd Hexagon.Kernel.Lib.Relogio.retornarHora                         ;; 68
- 
+
+.tabelaUnix:
+
+;; TODO:
+
+;hx.malloc             = 1
+;hx.mfree              = 2
+;hx.spawn              = 3
+;hx.exit               = 4
+;hx.getpid             = 5
+;hx.open               = 9
+;hx.write              = 10
+;hx.close              = 11
+;hx.creat              = 13
+;hx.unlink             = 14
+;hx.indir              = 15
+;hx.syslock            = 18
+;hx.sysunlock          = 19
+;hx.uname              = 22
+;hx.sleep              = 25
+;hx.putc               = 29
+;hx.date               = 67
+;hx.time               = 68
+
 ;;************************************************************************************
