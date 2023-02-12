@@ -1,0 +1,258 @@
+;;************************************************************************************
+;;
+;;    
+;;        %#@$%    &@$%$                  Kernel Hexagon®
+;;        #$@$@    #@#@$
+;;        @#@$%    %#$#%
+;;        @#$@$    #@#$@
+;;        #@#$$#$#%!@#@#     Copyright © 2015-2023 Felipe Miguel Nery Lunkes
+;;        @#@%!@&$#&$#@#             Todos os direitos reservados
+;;        !@$%#    @&$%#
+;;        @$#!%    #&*@&
+;;        $#$#%    &%$#@          Licenciado sob licença BSD-3-Clause
+;;        @#!$$    !#@#@
+;;
+;;
+;;************************************************************************************
+;;
+;; Este arquivo é licenciado sob licença BSD-3-Clause. Observe o arquivo de licença 
+;; disponível no repositório para mais informações sobre seus direitos e deveres ao 
+;; utilizar qualquer trecho deste arquivo.
+;;
+;; BSD 3-Clause License
+;;
+;; Copyright (c) 2015-2023, Felipe Miguel Nery Lunkes
+;; All rights reserved.
+;; 
+;; Redistribution and use in source and binary forms, with or without
+;; modification, are permitted provided that the following conditions are met:
+;; 
+;; 1. Redistributions of source code must retain the above copyright notice, this
+;;    list of conditions and the following disclaimer.
+;;
+;; 2. Redistributions in binary form must reproduce the above copyright notice,
+;;    this list of conditions and the following disclaimer in the documentation
+;;    and/or other materials provided with the distribution.
+;;
+;; 3. Neither the name of the copyright holder nor the names of its
+;;    contributors may be used to endorse or promote products derived from
+;;    this software without specific prior written permission.
+;; 
+;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+;; DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+;; FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+;; DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+;; SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+;; CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+;; OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;;
+;; $HexagonixOS$
+                                                                 
+;;************************************************************************************
+;;
+;;                    Este arquivo faz parte do Kernel Hexagon® 
+;;
+;;************************************************************************************
+
+use32
+
+;;*********************************************************************
+;;
+;;                  Implementação APM do Hexagon®
+;;
+;;          Copyright © 2016-2023 Felipe Miguel Nery Lunkes
+;;
+;;*********************************************************************
+
+;;************************************************************************************
+
+Hexagon.Arch.i386.APM:
+
+.status: db 0
+
+;;************************************************************************************
+
+;; Reiniciar o computador
+
+Hexagon.Kernel.Arch.i386.APM.Energia.reiniciarPC:
+
+match =SIM, VERBOSE
+{
+
+    mov esi, Hexagon.Verbose.APM.servicoAPM
+    mov ebx, Hexagon.Dmesg.Prioridades.p5 
+
+    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+
+    mov esi, Hexagon.Verbose.APM.reinicioAPM
+    mov ebx, Hexagon.Dmesg.Prioridades.p5 
+
+    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+
+}
+
+.aguardarLoop:
+
+    in al, 0x64     ;; 0x64 é o registrador de estado
+    
+    bt ax, 1        ;; Checar segundo bit até se tornar 0
+    jnc .OK
+    
+    jmp .aguardarLoop
+    
+.OK:
+
+    mov al, 0xfe
+    
+    out 0x64, al
+
+    cli
+    
+    jmp $
+    
+    ret
+
+;;************************************************************************************
+
+Hexagon.Kernel.Arch.i386.APM.Energia.desligarPC:
+
+match =SIM, VERBOSE
+{
+
+    mov esi, Hexagon.Verbose.APM.servicoAPM
+    mov ebx, Hexagon.Dmesg.Prioridades.p5 
+
+    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+
+    mov esi, Hexagon.Verbose.APM.desligamentoAPM
+    mov ebx, Hexagon.Dmesg.Prioridades.p5 
+
+    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+
+}
+
+    call Hexagon.Kernel.Dev.i386.Disco.Disco.pararDisco ;; Primeiro, vamos parar os discos
+
+;;*********************************************************************
+;;
+;; Esta função pode retornar códigos de erro, os quais se seguem:
+;;
+;;
+;; Retorno em AX - código de erro:
+;;
+;; 0 = Falha na instalação do Driver
+;; 1 = Falha na conexão de interface de Modo Real
+;; 2 = Driver APM versão 1.2 não suportado
+;; 3 = Falha ao alterar o status para "off"
+;;
+;;*********************************************************************
+
+    push bx
+    push cx
+
+    mov ax, 5300h       ;; Função de checagem da instalação
+    mov bx, 0           ;; O ID do dispositivo (APM BIOS)
+    
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h           ;; Chamar interrupção APM
+    
+    jc APM_falha_instalacao
+
+    mov ax, 5301h       ;; Função de interface de conexão em modo real
+    mov bx, 0           ;; O ID do dispositivo (APM BIOS)
+    
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h           ;; Chamar interrupção APM
+    
+    jc APM_falha_conexao
+
+    mov ax, 530Eh       ;; Função de seleção de versão do Driver
+    mov bx, 0           ;; O ID do dispositivo (APM BIOS)
+    mov cx, 0102h       ;; Selecionar APM versão 1.2
+                        ;; A funcionalidade está presente após a versão 1.2
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h           ;; Chamar interrupção APM
+    
+    jc APM_falha_selecionar_versao
+
+    mov ax, 5307h       ;; Função de definir estado
+    mov cx, 0003h       ;; Estado de desligar
+    mov bx, 0001h       ;; Todos os dispositivos tem ID 1
+    
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h           ;; Chamar interrupção APM
+    
+;; Caso o sistema não desligue de forma apropriada, serão retornados códigos de erro ao
+;; programa que chamou a função de desligamento.
+    
+APM_falha_comando:      ;; Chamado caso o comando de desligamento (código 3) não seja executado
+
+match =SIM, VERBOSE
+{
+
+    mov esi, Hexagon.Verbose.APM.erroComandoAPM
+    mov ebx, Hexagon.Dmesg.Prioridades.p5 
+
+    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+
+}
+
+    mov ax, 3
+    
+    jmp APM_desligamento_ok
+
+APM_falha_instalacao:   ;; Chamado caso ocorra falha na instalação
+
+match =SIM, VERBOSE
+{
+
+    mov esi, Hexagon.Verbose.APM.erroInstalacaoAPM
+    mov ebx, Hexagon.Dmesg.Prioridades.p5 
+
+    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+
+}
+
+    mov ax, 0
+    
+    jmp APM_desligamento_ok
+    
+APM_falha_conexao:      ;; Chamado caso ocorra falha na conexão de interface de Modo Real
+
+match =SIM, VERBOSE
+{
+
+    mov esi, Hexagon.Verbose.APM.erroConexaoAPM
+    mov ebx, Hexagon.Dmesg.Prioridades.p5 
+
+    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+
+}
+
+    mov ax, 1
+    
+    jmp APM_desligamento_ok
+    
+APM_falha_selecionar_versao: ;; Chamado quando a versão APM é inferior a 1.2
+
+    mov ax, 2
+    
+APM_desligamento_ok:    ;; Retorna a função que a chamou
+
+match =SIM, VERBOSE
+{
+
+    mov esi, Hexagon.Verbose.APM.sucessoDesligamentoAPM
+    mov ebx, Hexagon.Dmesg.Prioridades.p5 
+
+    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+
+}
+
+    pop cx
+    pop bx
+    
+    stc
+    
+    ret
+
+;;************************************************************************************

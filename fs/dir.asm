@@ -263,7 +263,7 @@ Hexagon.Kernel.FS.Dir.obterPontodeMontagem:
 
 ;; Primeiro, resgatar o volume físico montado, para EDI
 
-    mov ah, byte[Hexagon.Dev.Universal.Disco.Controle.driveAtual]
+    mov ah, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
     
     mov dl, 01h                 ;; Classe de dispositivo de armazenamento
     

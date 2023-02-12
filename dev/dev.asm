@@ -156,7 +156,7 @@ Hexagon.Kernel.Dev.Dev.fechar:
 
     pop ebx
     
-    call Hexagon.Kernel.Dev.Universal.Som.Som.desligarSom
+    call Hexagon.Kernel.Dev.Gen.Som.Som.desligarSom
 
     jmp .finalizar
     
@@ -222,7 +222,7 @@ Hexagon.Kernel.Dev.Dev.escrever:
     pop esi
     pop eax
     
-    call Hexagon.Kernel.Dev.Universal.COM.Serial.enviarSerial
+    call Hexagon.Kernel.Dev.Gen.COM.Serial.enviarSerial
     
     jc .erro
     
@@ -235,7 +235,7 @@ Hexagon.Kernel.Dev.Dev.escrever:
     pop esi
     pop eax
     
-    call Hexagon.Kernel.Dev.Universal.Impressora.Impressora.enviarImpressora
+    call Hexagon.Kernel.Dev.Gen.Impressora.Impressora.enviarImpressora
     
     jc .erro
     
@@ -259,7 +259,7 @@ Hexagon.Kernel.Dev.Dev.escrever:
 
 .au0:
 
-    call Hexagon.Kernel.Dev.Universal.Som.Som.emitirSom
+    call Hexagon.Kernel.Dev.Gen.Som.Som.emitirSom
     
     ret
     
@@ -370,7 +370,7 @@ Hexagon.Kernel.Dev.Dev.abrir:
 
     pop eax
 
-    mov byte[Hexagon.Dev.Universal.Disco.Controle.driveAtual], ah
+    mov byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual], ah
 
     call Hexagon.Kernel.FS.VFS.definirSistemaArquivos
     
@@ -408,7 +408,7 @@ Hexagon.Kernel.Dev.Dev.abrir:
     
     mov word[portaSerialAtual], bx
     
-    call Hexagon.Kernel.Dev.Universal.COM.Serial.iniciarSerial
+    call Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarSerial
     
     jc .erroAbertura
     
@@ -424,7 +424,7 @@ Hexagon.Kernel.Dev.Dev.abrir:
     
     mov word[portaParalelaAtual], bx
     
-    call Hexagon.Kernel.Dev.Universal.Impressora.Impressora.iniciarImpressora
+    call Hexagon.Kernel.Dev.Gen.Impressora.Impressora.iniciarImpressora
     
     jc .erroAbertura
     
@@ -979,5 +979,5 @@ Hexagon.Kernel.Dev.Dev.paraDispositivo:
 
 ;; Incluir os códigos de dispositivos dependentes da arquitetura
 
-include "x86/x86.asm"
-;; include "x86_64/x86_64.asm"
+include "i386/i386.asm"
+;; include "amd64/amd64.asm"

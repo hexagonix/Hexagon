@@ -63,11 +63,11 @@ use32
 
 Hexagon.Kernel.Lib.Relogio.retornarData:                      
 
-    movzx eax, [Hexagon.Arch.x86.CMOS.dia]
-    movzx ebx, [Hexagon.Arch.x86.CMOS.mes]
-    movzx ecx, [Hexagon.Arch.x86.CMOS.seculo]
-    movzx edx, [Hexagon.Arch.x86.CMOS.ano]
-    movzx esi, [Hexagon.Arch.x86.CMOS.diaSemana]
+    movzx eax, [Hexagon.Arch.i386.CMOS.dia]
+    movzx ebx, [Hexagon.Arch.i386.CMOS.mes]
+    movzx ecx, [Hexagon.Arch.i386.CMOS.seculo]
+    movzx edx, [Hexagon.Arch.i386.CMOS.ano]
+    movzx esi, [Hexagon.Arch.i386.CMOS.diaSemana]
 
     ret
 
@@ -75,8 +75,8 @@ Hexagon.Kernel.Lib.Relogio.retornarData:
 
 Hexagon.Kernel.Lib.Relogio.retornarHora:
 
-    movzx eax, [Hexagon.Arch.x86.CMOS.hora]
-    movzx ebx, [Hexagon.Arch.x86.CMOS.minuto]
-    movzx ecx, [Hexagon.Arch.x86.CMOS.segundo]
+    movzx eax, [Hexagon.Arch.i386.CMOS.hora]
+    movzx ebx, [Hexagon.Arch.i386.CMOS.minuto]
+    movzx ecx, [Hexagon.Arch.i386.CMOS.segundo]
 
     ret

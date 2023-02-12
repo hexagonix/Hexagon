@@ -115,7 +115,7 @@ cabecalhoHexagon:
     
 ;; Irá armazenar o volume onde o sistema foi iniciado (não pode ser alterado)
 
-    mov byte[Hexagon.Dev.Universal.Disco.Controle.driveBoot], bl
+    mov byte[Hexagon.Dev.Gen.Disco.Controle.driveBoot], bl
 
 ;; Salvar o endereço do BPB (BIOS Parameter Block) do volume utilizado para a inicialização 
 
@@ -134,11 +134,11 @@ cabecalhoHexagon:
 
 ;; Habilitar A20, necessário para endereçamento de 4 GB de memória RAM e para entrar em modo protegido
     
-    call Hexagon.Kernel.Arch.x86.Procx86.Procx86.ativarA20        ;; Ativar A20, necessário para o modo protegido
+    call Hexagon.Kernel.Arch.i386.Procx86.Procx86.ativarA20        ;; Ativar A20, necessário para o modo protegido
 
-    call Hexagon.Kernel.Arch.x86.Memx86.Memoria.obterMemoriaTotal ;; Obtem o total de memória instalada
+    call Hexagon.Kernel.Arch.i386.Memx86.Memoria.obterMemoriaTotal ;; Obtem o total de memória instalada
         
-    call Hexagon.Kernel.Arch.x86.Procx86.Procx86.irPara32         ;; Configurar modo protegido 32 bits
+    call Hexagon.Kernel.Arch.i386.Procx86.Procx86.irPara32         ;; Configurar modo protegido 32 bits
  
 ;; Agora o código de modo protegido será executado (já estamos em 32 bits!)
 

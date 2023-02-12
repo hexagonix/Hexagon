@@ -101,15 +101,15 @@ Hexagon.Kernel.Kernel.Panico.panico:
 
     kprint Hexagon.Panico.cabecalhoPanico
 
-    logHexagon Hexagon.Panico.cabecalhoPanico, Hexagon.Relatorio.Prioridades.p4
+    logHexagon Hexagon.Panico.cabecalhoPanico, Hexagon.Dmesg.Prioridades.p4
 
     pop esi
     
-    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
+    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
 
-    mov ebx, Hexagon.Relatorio.Prioridades.p4
+    mov ebx, Hexagon.Dmesg.Prioridades.p4
 
-    call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
+    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
 
     kprint Hexagon.Panico.erroReiniciar
     
@@ -121,21 +121,21 @@ Hexagon.Kernel.Kernel.Panico.panico:
 
     kprint Hexagon.Panico.cabecalhoOops
 
-    logHexagon Hexagon.Panico.cabecalhoOops, Hexagon.Relatorio.Prioridades.p4
+    logHexagon Hexagon.Panico.cabecalhoOops, Hexagon.Dmesg.Prioridades.p4
 
-    call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
+    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
 
     pop esi
     
-    call Hexagon.Kernel.Dev.Universal.Console.Console.imprimirString
+    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
 
-    mov ebx, Hexagon.Relatorio.Prioridades.p4
+    mov ebx, Hexagon.Dmesg.Prioridades.p4
 
-    call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
+    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
 
     kprint Hexagon.Panico.erroNaoFatal
     
-    call Hexagon.Kernel.Dev.Universal.Teclado.Teclado.aguardarTeclado
+    call Hexagon.Kernel.Dev.Gen.Teclado.Teclado.aguardarTeclado
     
     ret
     
@@ -163,13 +163,13 @@ Hexagon.Kernel.Kernel.Panico.prepararPanico:
     mov eax, 0xFFFFFF  ;; BRANCO_ANDROMEDA
     mov ebx, 0x4682B4  ;; AZUL_METALICO
     
-    call Hexagon.Kernel.Dev.Universal.Console.Console.definirCorTexto
+    call Hexagon.Kernel.Dev.Gen.Console.Console.definirCorTexto
     
-    call Hexagon.Kernel.Dev.Universal.Console.Console.limparConsole    ;; Limpar saída de vídeo padrão
+    call Hexagon.Kernel.Dev.Gen.Console.Console.limparConsole    ;; Limpar saída de vídeo padrão
     
     mov dx, 0
     
-    call Hexagon.Kernel.Dev.Universal.Console.Console.posicionarCursor
+    call Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor
 
     ret                ;; Retornar à rotina principal
                

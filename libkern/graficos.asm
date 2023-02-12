@@ -434,6 +434,6 @@ Hexagon.Kernel.Lib.Graficos.configurarVideo:
 
     mov eax, 01h
     
-    call Hexagon.Kernel.Dev.Universal.Console.Console.definirResolucao
+    call Hexagon.Kernel.Dev.Gen.Console.Console.definirResolucao
     
     ret             

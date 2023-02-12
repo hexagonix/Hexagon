@@ -50,87 +50,115 @@
 ;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 ;; $HexagonixOS$
+                                                                  
+;;************************************************************************************
+;;
+;;                    Este arquivo faz parte do Kernel Hexagon® 
+;;
+;;************************************************************************************
 
-;; Aqui temos alguns macros úteis para o Hexagon
+use32
 
-macro logHexagon mensagem, prioridade 
-{
+;;************************************************************************************
 
-    mov esi, mensagem
-    mov ebx, prioridade
+;; Variáveis onde os dados obtidos do CMOS serão armazenados
 
-    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+Hexagon.Arch.i386.CMOS:
 
-}
+.seculo     db 0
+.ano        db 0
+.mes        db 0
+.dia        db 0
+.hora       db 0
+.minuto     db 0
+.segundo    db 0
+.diaSemana  db 0
 
-macro kprint string
-{
+;;************************************************************************************
 
-    mov esi, string 
+;; Essa função é solicitada pelo manipulador do timer a cada intervalo de tempo, mantendo
+;; o relógio em tempo real do Hexagon® atualizado.
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
+Hexagon.Kernel.Arch.i386.CMOS.CMOS.atualizarDadosCMOS:
+
+    push ax
+
+    mov al, 0x00         ;; Obter o byte de segundos
+        
+    out 0x70, al
+       
+    in al, 0x71
+       
+    mov [Hexagon.Arch.i386.CMOS.segundo], al    ;; Armazenar essa informação
+
+    mov al, 0x02         ;; Obter o byte de minutos
+       
+    out 0x70, al
+       
+    in al, 0x71
+      
+    mov [Hexagon.Arch.i386.CMOS.minuto], al
+
+    mov al, 0x04         ;; Obter o byte de horas
+       
+    out 0x70, al
+       
+    in al, 0x71
+       
+    mov [Hexagon.Arch.i386.CMOS.hora], al
+
+    mov al, 0x06         ;; Obter o byte de dia da semana
+       
+    out 0x70, al
+       
+    in al, 0x71
+       
+    mov [Hexagon.Arch.i386.CMOS.diaSemana], al
+
+    mov al, 0x07         ;; Obter o byte de dia
+        
+    out 0x70, al
+        
+    in al, 0x71
+        
+    mov [Hexagon.Arch.i386.CMOS.dia], al
+
+    mov al, 0x08         ;; Obter o byte de mês 
+       
+    out 0x70, al
+       
+    in al, 0x71
+       
+    mov [Hexagon.Arch.i386.CMOS.mes], al
+
+    mov al, 0x09         ;; Obter o byte de ano
+       
+    out 0x70, al
+       
+    in al, 0x71
+       
+    mov [Hexagon.Arch.i386.CMOS.ano], al
+
+    mov al, 0x32         ;; Obter o byte de século
+        
+    out 0x70, al
+        
+    in al, 0x71
+        
+    mov [Hexagon.Arch.i386.CMOS.seculo], al
+
+    pop ax
+        
+    ret
+
+;;************************************************************************************
+
+;; Chamado por instâncias do Hexagon® para obtenção direta, independente de atualização
+;; por timer. Função com nome mantido para garantir compatibilidade com o código fonte
+
+Hexagon.Kernel.Arch.i386.CMOS.CMOS.obterDadosCMOS:
+
+    call Hexagon.Kernel.Arch.i386.CMOS.CMOS.atualizarDadosCMOS
     
-}
+    ret
 
-;;************************************************************************************
-
-;; Agora, função para codificação de data de build
-
-;; O código abaixo extrai e cria strings com informações sobre a build do software
-
-__tempoatual            = %t
-__quadvalorano          = (__tempoatual+31536000)/126230400
-__quadrestoano          = (__tempoatual+31536000)-(126230400*__quadvalorano)
-__quadsecaoano          = __quadrestoano/31536000
-__ano                   = 1969+(__quadvalorano*4)+__quadsecaoano-(__quadsecaoano shr 2)
-__anobissexto           = __quadsecaoano/3
-__segundosano           = __quadrestoano-31536000*(__quadsecaoano-__quadsecaoano/4)
-__diaano                = __segundosano/86400
-__diaanotemp            = __diaano
-
-if (__diaanotemp>=(59+__anobissexto))
-
-  __diaanotemp  = __diaanotemp+3-__anobissexto
-
-end if
-
-if (__diaanotemp>=123)
-
-  __diaanotemp = __diaanotemp+1
-
-end if
-
-if (__diaanotemp>=185)
-
-  __diaanotemp = __diaanotemp+1
-
-end if
-
-if (__diaanotemp>=278)
-
-  __diaanotemp = __diaanotemp+1
-
-end if
-
-if (__diaanotemp>=340)
-
-  __diaanotemp = __diaanotemp+1
-
-end if
-
-__mes          = __diaanotemp/31+1
-__dia          = __diaanotemp-__mes*31+32
-__segundosdia  = __segundosano-__diaano*86400
-__hora         = __segundosdia/3600
-__horasegundos = __segundosdia-__hora*3600
-__minuto       = __horasegundos/60
-__segundo      = __horasegundos-__minuto*60
-
-__stringano     equ (__ano/1000+'0'),((__ano mod 1000)/100+'0'),((__ano mod 100)/10+'0'),((__ano mod 10)+'0')
-__stringmes     equ (__mes/10+'0'),((__mes mod 10)+'0')
-__stringdia     equ (__dia/10+'0'),((__dia mod 10)+'0')
-__stringhora    equ (__hora/10+'0'),((__hora mod 10)+'0')
-__stringminuto  equ (__minuto/10+'0'),((__minuto mod 10)+'0')
-__stringsegundo equ (__segundo/10+'0'),((__segundo mod 10)+'0')
-
-;;************************************************************************************

@@ -196,7 +196,7 @@ Hexagon.Kernel.Kernel.Proc.iniciarEscalonador:
 
     mov dword[Hexagon.Processos.contagemProcessos], 0
 
-    logHexagon Hexagon.Verbose.escalonador, Hexagon.Relatorio.Prioridades.p5
+    logHexagon Hexagon.Verbose.escalonador, Hexagon.Dmesg.Prioridades.p5
 
 ;; Agora, uma função para iniciar os PBCs
 ;; Essa função pode ser executada, mas o uso dos novos BCPs ainda estão em desenvolvimento
@@ -240,9 +240,9 @@ match =SIM, VERBOSE
 {
 
     mov esi, Hexagon.Verbose.Servicos.matarProcesso
-    mov ebx, Hexagon.Relatorio.Prioridades.p5 
+    mov ebx, Hexagon.Dmesg.Prioridades.p5 
 
-    call Hexagon.Kernel.Kernel.Relatorio.criarMensagemHexagon
+    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
     
 }
 
@@ -257,13 +257,13 @@ match =SIM, VERBOSE
     mov eax, dword[Hexagon.Graficos.corFonte]
     mov ebx, dword[Hexagon.Graficos.corFundo]
     
-    call Hexagon.Kernel.Dev.Universal.Console.Console.definirCorTexto
+    call Hexagon.Kernel.Dev.Gen.Console.Console.definirCorTexto
 
     call Hexagon.Kernel.Lib.Graficos.atualizarTela
     
     call Hexagon.Kernel.Lib.Graficos.usarBufferVideo1
     
-    call Hexagon.Kernel.Dev.Universal.Console.Console.rolarParaBaixo
+    call Hexagon.Kernel.Dev.Gen.Console.Console.rolarParaBaixo
     
     mov al, 0x20
     
@@ -443,7 +443,7 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcesso:
     
     mov eax, ebx
     
-    call Hexagon.Kernel.Arch.Universal.Memoria.confirmarUsoMemoria
+    call Hexagon.Kernel.Arch.Gen.Memoria.confirmarUsoMemoria
     
     pop ebx
     pop eax
@@ -679,7 +679,7 @@ Hexagon.Kernel.Kernel.Proc.removerProcesso:
     
     mov eax, ebx
     
-    call Hexagon.Kernel.Arch.Universal.Memoria.liberarUsoMemoria
+    call Hexagon.Kernel.Arch.Gen.Memoria.liberarUsoMemoria
     
     pop ebx
     pop eax
