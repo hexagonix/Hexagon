@@ -1,23 +1,37 @@
 ;;************************************************************************************
 ;;
-;;    
-;;        %#@$%    &@$%$                  Kernel Hexagon®
-;;        #$@$@    #@#@$
-;;        @#@$%    %#$#%
-;;        @#$@$    #@#$@
-;;        #@#$$#$#%!@#@#     Copyright © 2015-2023 Felipe Miguel Nery Lunkes
-;;        @#@%!@&$#&$#@#             Todos os direitos reservados
-;;        !@$%#    @&$%#
-;;        @$#!%    #&*@&
-;;        $#$#%    &%$#@          Licenciado sob licença BSD-3-Clause
-;;        @#!$$    !#@#@
+;; 88       88
+;; 88       88
+;; 88       88  ,adPPPba, 8b,     ,d8 ,adPPPPba,  ,adPPPb,d8  ,adPPPba,    ,dPPPba,
+;; 88PPPPPPP88 a8P     88  `P8, ,8P'  ""     `P8 a8"    `P88 a8"     "8a 88P'   `"88
+;; 88       88 8PP"""""""    )888(    ,adPPPPP88 8b       88 8b       d8 88       88
+;; 88       88 '8b,   ,aa  ,d8" "8b,  88,    ,88 "8a,   ,d88 "8a,   ,a8" 88       88
+;; 88       88  `"Pbbd8"' 8P'     `P8 `"8bbdP"P8  `"PbbdP"P8  `"PbbdP"'  88       88
+;;                                                aa,    ,88
+;;                                                 "P8bbdP"
 ;;
+;;                         Kernel Hexagon® - Hexagon® kernel         
+;;
+;;                  Copyright © 2015-2023 Felipe Miguel Nery Lunkes
+;;                Todos os direitos reservados - All rights reserved.
 ;;
 ;;************************************************************************************
 ;;
-;; Este arquivo é licenciado sob licença BSD-3-Clause. Observe o arquivo de licença 
-;; disponível no repositório para mais informações sobre seus direitos e deveres ao 
-;; utilizar qualquer trecho deste arquivo.
+;; Português:
+;;
+;; O Hexagon, Hexagonix e seus componentes são licenciados sob licença BSD-3-Clause.
+;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório 
+;; para obter mais informações sobre seus direitos e obrigações ao utilizar e reutilizar
+;; o código deste ou de outros arquivos.
+;;
+;; English:
+;;
+;; The Hexagon, the Hexagonix and its components are licensed under a BSD-3-Clause license.
+;; Read below the license that governs this file and check each repository's license for
+;; obtain more information about your rights and obligations when using and reusing
+;; the code of this or other files.
+;;
+;;************************************************************************************
 ;;
 ;; BSD 3-Clause License
 ;;
@@ -101,7 +115,7 @@ include "arch/i386/timer/timer.asm"        ;; Funções para manipulação de ti
 include "dev/i386/disco/disco.asm"         ;; Funções para ler e escrever em discos rígidos do Hexagon®
 include "fs/vfs.asm"                       ;; Sistema de arquivos virtual (VFS) para Hexagon®
 include "dev/gen/mouse/mouse.asm"          ;; Funções para mouse PS/2 do Hexagon®
-include "dev/gen/imp/imp.asm"              ;; Funções de manipulação de impressora
+include "dev/gen/lpt/lpt.asm"              ;; Funções de manipulação de impressora
 include "dev/gen/COM/serial.asm"           ;; Funções para manipulação de portas seriais em modo protegido
 include "arch/i386/CMOS/cmos.asm"          ;; Funções para manipulação de data e hora  
 include "dev/dev.asm"                      ;; Funções de gerenciamento e abstração de Hardware do Hexagon®

@@ -1,23 +1,37 @@
 ;;************************************************************************************
 ;;
-;;    
-;;        %#@$%    &@$%$                  Kernel Hexagon®
-;;        #$@$@    #@#@$
-;;        @#@$%    %#$#%
-;;        @#$@$    #@#$@
-;;        #@#$$#$#%!@#@#     Copyright © 2015-2023 Felipe Miguel Nery Lunkes
-;;        @#@%!@&$#&$#@#             Todos os direitos reservados
-;;        !@$%#    @&$%#
-;;        @$#!%    #&*@&
-;;        $#$#%    &%$#@          Licenciado sob licença BSD-3-Clause
-;;        @#!$$    !#@#@
+;; 88       88
+;; 88       88
+;; 88       88  ,adPPPba, 8b,     ,d8 ,adPPPPba,  ,adPPPb,d8  ,adPPPba,    ,dPPPba,
+;; 88PPPPPPP88 a8P     88  `P8, ,8P'  ""     `P8 a8"    `P88 a8"     "8a 88P'   `"88
+;; 88       88 8PP"""""""    )888(    ,adPPPPP88 8b       88 8b       d8 88       88
+;; 88       88 '8b,   ,aa  ,d8" "8b,  88,    ,88 "8a,   ,d88 "8a,   ,a8" 88       88
+;; 88       88  `"Pbbd8"' 8P'     `P8 `"8bbdP"P8  `"PbbdP"P8  `"PbbdP"'  88       88
+;;                                                aa,    ,88
+;;                                                 "P8bbdP"
 ;;
+;;                         Kernel Hexagon® - Hexagon® kernel         
+;;
+;;                  Copyright © 2015-2023 Felipe Miguel Nery Lunkes
+;;                Todos os direitos reservados - All rights reserved.
 ;;
 ;;************************************************************************************
 ;;
-;; Este arquivo é licenciado sob licença BSD-3-Clause. Observe o arquivo de licença 
-;; disponível no repositório para mais informações sobre seus direitos e deveres ao 
-;; utilizar qualquer trecho deste arquivo.
+;; Português:
+;;
+;; O Hexagon, Hexagonix e seus componentes são licenciados sob licença BSD-3-Clause.
+;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório 
+;; para obter mais informações sobre seus direitos e obrigações ao utilizar e reutilizar
+;; o código deste ou de outros arquivos.
+;;
+;; English:
+;;
+;; The Hexagon, the Hexagonix and its components are licensed under a BSD-3-Clause license.
+;; Read below the license that governs this file and check each repository's license for
+;; obtain more information about your rights and obligations when using and reusing
+;; the code of this or other files.
+;;
+;;************************************************************************************
 ;;
 ;; BSD 3-Clause License
 ;;
@@ -61,13 +75,13 @@
 
 Hexagon.Arquitetura.suporte = 1 ;; Arquitetura desta imagem
 
-Hexagon.Versao.definicao equ "1.3.1"
+Hexagon.Versao.definicao equ "1.3.2"
 
 Hexagon.Versao:
 
 .numeroVersao     = 1   ;; Número principal de versão do Hexagon
 .numeroSubversao  = 3   ;; Número de subversão (secundária) do Hexagon
-.caractereRevisao = "1" ;; Adicionar caractere de revisão, caso necessário (não número)
+.caractereRevisao = "2" ;; Adicionar caractere de revisão, caso necessário (não número)
 
 .nomeKernel:      db "Hexagon(R)", 0 ;; Nome fornecido ao espaço de usuário
 .build:           db __stringdia, "/", __stringmes, "/", __stringano, " "
