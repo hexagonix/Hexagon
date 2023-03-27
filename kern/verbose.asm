@@ -84,7 +84,7 @@ match =SIM, VERBOSE {
 Hexagon.Verbose:
 
 .Hexagon:           db "Welcome to Hexagon(R)", 10
-                    db "Copyright (C) 2016-", __stringano, " Felipe Miguel Nery Lunkes", 10
+                    db "Copyright (C) 2015-", __stringano, " Felipe Miguel Nery Lunkes", 10
                     db "All rights reserved.", 10, 10, 0
 .versao:            db "Hexagon(R) kernel version: ", Hexagon.Versao.definicao, 0
 .travando:          db "Enabling user and security guidelines...", 0

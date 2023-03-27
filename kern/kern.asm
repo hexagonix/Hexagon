@@ -75,107 +75,110 @@ use32
 
 ;; Aqui vamos incluir macros para facilitar a organização e modificação do código
 
-include "libkern/macros.s"                       ;; Macros
+include "libkern/macros.s"                 ;; Macros
 
 align 4
 
 ;;************************************************************************************
 ;;
-;; Arquivos e funções que compõem o Kernel Hexagon®
+;; Arquivos que compõem o Kernel Hexagon®
 ;;
 ;;************************************************************************************
 
 ;; Versão do Hexagon®
 
-include "kern/versao.asm"                        ;; Contém informações de versão do Hexagon®
+include "kern/versao.asm"             ;; Contém informações de versão do Hexagon®
 
 ;; Serviços do Hexagon®
 
-include "kern/syscall.asm"                 ;; Manipulador de interrupção do Hexagon®
-include "kern/systab.asm"                  ;; Tabela com as chamadas de sistema
-include "libkern/graficos.asm"             ;; Funções para gráficos do Hexagon®
-include "kern/servicos.asm"                ;; Rotinas de interrupção e manipuladores de IRQs
+include "kern/syscall.asm"            ;; Manipulador de interrupção do Hexagon®
+include "kern/systab.asm"             ;; Tabela com as chamadas de sistema
+include "libkern/graficos.asm"        ;; Funções para gráficos do Hexagon®
+include "kern/servicos.asm"           ;; Rotinas de interrupção e manipuladores de IRQs
 
 ;; Usuários e outras utilidades
 
-include "kern/dmesg.asm"                   ;; Funções para manipulação de mensagens do Kernel
-include "kern/panico.asm"                  ;; Funções para exibição e identificação de erros do Hexagon®  
-include "kern/usuarios.asm"                ;; Funções de gerenciamento de permissões e usuários
+include "kern/dmesg.asm"              ;; Funções para manipulação de mensagens do Kernel
+include "kern/panico.asm"             ;; Funções para exibição e identificação de erros do Hexagon®  
+include "kern/usuarios.asm"           ;; Funções de gerenciamento de permissões e usuários
 
 ;; Gerenciamento de Dispositivos do Hexagon®
 
-include "dev/gen/teclado/teclado.asm"      ;; Funções necessárias para o uso do teclado
-include "arch/i386/procx86/procx86.asm"    ;; IDT, GDT e procedimentos para definir modo real e protegido
-include "arch/i386/BIOS/BIOS.asm"          ;; Interrupções do BIOS em modo real
-include "dev/gen/console/console.asm"      ;; Funções de gerenciamento de vídeo do Hexagon®
-include "arch/i386/APM/apm.asm"            ;; Implementação APM do Hexagon®
-include "dev/gen/snd/som.asm"              ;; Funções para controle de som do Hexagon®
-include "dev/gen/PS2/PS2.asm"              ;; Funções para controle de portas PS/2 do Hexagon®
-include "arch/i386/timer/timer.asm"        ;; Funções para manipulação de timer do Hexagon®   
-include "dev/i386/disco/disco.asm"         ;; Funções para ler e escrever em discos rígidos do Hexagon®
-include "fs/vfs.asm"                       ;; Sistema de arquivos virtual (VFS) para Hexagon®
-include "dev/gen/mouse/mouse.asm"          ;; Funções para mouse PS/2 do Hexagon®
-include "dev/gen/lpt/lpt.asm"              ;; Funções de manipulação de impressora
-include "dev/gen/COM/serial.asm"           ;; Funções para manipulação de portas seriais em modo protegido
-include "arch/i386/CMOS/cmos.asm"          ;; Funções para manipulação de data e hora  
-include "dev/dev.asm"                      ;; Funções de gerenciamento e abstração de Hardware do Hexagon®
-include "arch/gen/memoria.asm"             ;; Funções para gerenciamento de memória do Hexagon® 
-include "arch/i386/memx86/memoria.asm"     ;; Diagnóstico de memória instalada no dispositivo
+include "dev/gen/teclado/teclado.asm" ;; Funções necessárias para o uso do teclado
+include "arch/i386/proc/proc.asm"     ;; IDT, GDT e procedimentos para definir modo real e protegido
+include "arch/i386/BIOS/BIOS.asm"     ;; Interrupções do BIOS em modo real
+include "dev/gen/console/console.asm" ;; Funções de gerenciamento de vídeo do Hexagon®
+include "arch/i386/APM/apm.asm"       ;; Implementação APM do Hexagon®
+include "dev/gen/snd/som.asm"         ;; Funções para controle de som do Hexagon®
+include "dev/gen/PS2/PS2.asm"         ;; Funções para controle de portas PS/2 do Hexagon®
+include "arch/i386/timer/timer.asm"   ;; Funções para manipulação de timer do Hexagon®   
+include "dev/i386/disco/disco.asm"    ;; Funções para ler e escrever em discos rígidos do Hexagon®
+include "fs/vfs.asm"                  ;; Sistema de arquivos virtual (VFS) para Hexagon®
+include "dev/gen/mouse/mouse.asm"     ;; Funções para mouse PS/2 do Hexagon®
+include "dev/gen/lpt/lpt.asm"         ;; Funções de manipulação de impressora
+include "dev/gen/COM/serial.asm"      ;; Funções para manipulação de portas seriais em modo protegido
+include "arch/i386/CMOS/cmos.asm"     ;; Funções para manipulação de data e hora  
+include "dev/dev.asm"                 ;; Funções de gerenciamento e abstração de Hardware do Hexagon®
+include "arch/gen/mm.asm"             ;; Funções para gerenciamento de memória do Hexagon® 
+include "arch/i386/mm/mm.asm"         ;; Funções para gerenciamento de memória dependentes de arquitetura
 
 ;; Processos, modelo de processo e de imagens executáveis
 
-include "kern/proc.asm"                    ;; Funções para a manipulação de processos
-include "libkern/HAPP.asm"                 ;; Funções para tratamento de imagens HAPP
+include "kern/proc.asm"               ;; Funções para a manipulação de processos
+include "libkern/HAPP.asm"            ;; Funções para tratamento de imagens HAPP
 
 ;; Sistemas de arquivos suportados pelo Hexagon®
 
-include "fs/FAT16/fat16.asm"               ;; Rotinas para manipulação de arquivos no sistema de arquivos FAT16
+include "fs/FAT16/fat16.asm"          ;; Rotinas para manipulação de arquivos no sistema de arquivos FAT16
 
 ;; Bibliotecas do Hexagon®
 
-include "libkern/string.asm"               ;; Funções para manipulação de String
-include "libkern/num.asm"                  ;; Funções de geração e alimentação de números aleatórios
-include "libkern/relogio.asm"              ;; Interface de relógio em tempo real
+include "libkern/string.asm"          ;; Funções para manipulação de String
+include "libkern/num.asm"             ;; Funções de geração e alimentação de números aleatórios
+include "libkern/relogio.asm"         ;; Interface de relógio em tempo real
 
 ;; Aqui temos um stub que previne a execução da imagem do Hexagon® diretamente pelo usuário, o que poderia
 ;; causar problemas visto a natureza da imagem (ser um Kernel, não um processo comum)
 
-include "libkern/stubHAPP.asm"             ;; Stub para prevenir execução acidental da imagem do Hexagon®
+include "libkern/stubHAPP.asm"        ;; Stub para prevenir execução acidental da imagem do Hexagon®
 
 ;; Fonte padrão do Sistema
 
-include "libkern/fonte.asm"                ;; Fontes e serviços de texto para modo gráfico do Hexagon®
+include "libkern/fonte.asm"           ;; Fontes e serviços de texto para modo gráfico do Hexagon®
 
 ;; Mensagens do Hexagon® para verbose, caso seja desejado o suporte a verbose. Em caso negativo, o
 ;; arquivo estará em branco
 
-include "kern/verbose.asm"                 ;; Contém as mensagens para verbose exclusivas do Hexagon®
+include "kern/verbose.asm"            ;; Contém as mensagens para verbose exclusivas do Hexagon®
 
 ;; Aqui temos as variáveis, constantes e funções para interpretar parâmetros passados pelo HBoot
 
-include "kern/parametros.asm"              ;; Código de análise e processamento de parâmetros
+include "kern/parametros.asm"         ;; Código de análise e processamento de parâmetros
 
 ;;************************************************************************************
 
 ;; Ponto de entrada do Hexagon® - Inicialização do kernel
 
-Hexagon.init:                   ;; Agora as estruturas do Kernel serão inicializadas
+;; Aqui será realizada a configuração inicial do ambiente do kernel
+
+Hexagon.init: 
 
 ;; Primeiramente os registradores de segmento e da pilha serão configurados
 
     mov ax, 0x10
     mov ds, ax
-    mov ax, 0x18                ;; ES com base em 0
+    mov ax, 0x18     ;; ES com base em 0
     mov ss, ax
     mov fs, ax
     mov gs, ax
     mov es, ax  
-    mov esp, 0x10000            ;; Definir ponteiro de pilha
+    mov esp, 0x10000 ;; Definir ponteiro de pilha
 
     cli
 
 ;; Aqui começa o processo de autoconfiguração do kernel, incluindo a enumeração e inicialização
-;; dos dispostivos compatíveis presentes
+;; dos dispostivos compatíveis presentes. As tabelas e estruturas de controle do Hexagon também
+;; serão inicializadas aqui
 
 Hexagon.Autoconfig:
 
@@ -327,7 +330,7 @@ Hexagon.Autoconfig:
 
 ;;************************************************************************************
 
-Hexagon.iniciarComponentes:
+Hexagon.iniciarModoUsario:
 
     logHexagon Hexagon.Verbose.modoUsuario, Hexagon.Dmesg.Prioridades.p5
 
@@ -340,7 +343,7 @@ Hexagon.iniciarComponentes:
 
     logHexagon Hexagon.Verbose.init, Hexagon.Dmesg.Prioridades.p5 
 
-    mov esi, initHexagon
+    mov esi, Hexagon.Init.Const.initHexagon
 
     call Hexagon.Kernel.FS.VFS.arquivoExiste
 
@@ -348,8 +351,8 @@ Hexagon.iniciarComponentes:
 
     logHexagon Hexagon.Verbose.initEncontrado, Hexagon.Dmesg.Prioridades.p5
 
-    mov eax, 0                 ;; Não fornecer argumentos
-    mov esi, initHexagon       ;; Nome do arquivo
+    mov eax, 0                              ;; Não fornecer argumentos
+    mov esi, Hexagon.Init.Const.initHexagon ;; Nome do arquivo
     
     clc
     
@@ -359,14 +362,14 @@ Hexagon.iniciarComponentes:
 
     jnc .fimInit
 
-.initNaoEncontrado:            ;; O init não pôde ser localizado
+.initNaoEncontrado: ;; O init não pôde ser localizado
     
 ;; Por enquanto, o Hexagon tentará carregar o shell padrão do sistema
 
     logHexagon Hexagon.Verbose.initNaoEncontrado, Hexagon.Dmesg.Prioridades.p5
 
-    mov eax, 0                 ;; Não fornecer argumentos
-    mov esi, shellHexagon      ;; Nome do arquivo
+    mov eax, 0                               ;; Não fornecer argumentos
+    mov esi, Hexagon.Init.Const.shellHexagon ;; Nome do arquivo
     
     clc
     
@@ -374,9 +377,9 @@ Hexagon.iniciarComponentes:
 
     jnc .fimShell
     
-.fimInit:                      ;; Imprimir mensagem e finalizar o sistema
+.fimInit: ;; Imprimir mensagem e finalizar o sistema
 
-    mov esi, semInit
+    mov esi, Hexagon.Init.Const.semInit
     
     mov eax, 1
 
@@ -384,44 +387,37 @@ Hexagon.iniciarComponentes:
 
 .fimShell:
 
-    mov esi, shellFinalizado
+    mov esi, Hexagon.Init.Const.shellFinalizado
     
     mov eax, 1
 
     call Hexagon.Kernel.Kernel.Panico.panico ;; Solicitar montagem de tela de erro
     
 ;;************************************************************************************
-     
-initHexagon:          db "init", 0 ;; Nome de arquivo do init
-shellHexagon:         db "sh", 0   ;; Nome do shell padrão
+
+Hexagon.Init.Const:
+
+.initHexagon:          db "init", 0 ;; Nome da imagem em disco do init
+.shellHexagon:         db "sh", 0   ;; Nome do shell padrão
            
-semInit:              db "A critical component (init) was not found on the boot volume.", 10, 10
-                      db "Make sure the 'init' file or equivalent is present on the system volume.", 10
-                      db "If not present, use the original installation media to correct this problem.", 10, 10, 0
+.semInit:              db "A critical component (init) was not found on the boot volume.", 10, 10
+                       db "Make sure the 'init' file or equivalent is present on the system volume.", 10
+                       db "If not present, use the original installation media to correct this problem.", 10, 10, 0
          
-componenteFinalizado: db "A critical component (init) terminated unexpectedly.", 10, 10
-                      db "Some unexpected error caused a system component to terminate.", 10
-                      db "This problem prevents the system from running properly and to avoid any", 10
-                      db "more serious problem or the loss of your data, the system has halted.", 10, 0
+.componenteFinalizado: db "A critical component (init) terminated unexpectedly.", 10, 10
+                       db "Some unexpected error caused a system component to terminate.", 10
+                       db "This problem prevents the system from running properly and to avoid any more serious problem or the", 10
+                       db "loss of your data, the system has halted.", 10, 0
 
-;;************************************************************************************
-;;
-;; AVISO! Esta porção de código pode ser removida com o tempo.
-;; 
-;; - Futuramente, o sistema não poderá ser utilizado sem o carregamento de init.
-;; - Por enquanto, ao não localizar o init, o Hexagon tentará carregar o shell.
-;;
-;;************************************************************************************
-
-semShell:             db "O shell padrao (/sh) nao foi localizado neste volume.", 10, 10
-                      db "Certifique-se que o shell padrao esteja presente no volume do sistema e tente novamente.", 10
-                      db "Caso nao esteja presente, utilize o disco de instalacao original para corrigir este problema.", 10, 10, 0
+.semShell:             db "The default shell (/sh) was not found on this volume.", 10, 10
+                       db "Make sure the default shell is present on the system volume and try again.", 10
+                       db "If not present, use the installation disc to correct this problem.", 10, 10, 0
          
-shellFinalizado:      db "O shell do sistema foi finalizado de forma inesperada.", 10, 10
-                      db 10, "Algum erro inesperado fez com que o shell do sistema fosse finalizado.", 10
-                      db "Este pequeno problema impede a execucao do sistema de maneira adequada e, para evitar qualquer", 10
-                      db "problema mais grave ou a perda de seus dados, o sistema foi finalizado.", 10, 0
-                     
+.shellFinalizado:      db "The shell terminated unexpectedly.", 10, 10
+                       db "Some unexpected error caused the shell to terminate.", 10
+                       db "This problem prevents the system from running properly and to avoid any more serious problem or the", 10
+                       db "loss of your data, the system has halted.", 10, 0
+            
 ;;************************************************************************************
 
 Hexagon.FimCodigo:
