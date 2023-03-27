@@ -108,7 +108,7 @@ include "dev/gen/teclado/teclado.asm"      ;; Funções necessárias para o uso 
 include "arch/i386/procx86/procx86.asm"    ;; IDT, GDT e procedimentos para definir modo real e protegido
 include "arch/i386/BIOS/BIOS.asm"          ;; Interrupções do BIOS em modo real
 include "dev/gen/console/console.asm"      ;; Funções de gerenciamento de vídeo do Hexagon®
-include "arch/i386/APM/energia.asm"        ;; Implementação APM do Hexagon®
+include "arch/i386/APM/apm.asm"            ;; Implementação APM do Hexagon®
 include "dev/gen/snd/som.asm"              ;; Funções para controle de som do Hexagon®
 include "dev/gen/PS2/PS2.asm"              ;; Funções para controle de portas PS/2 do Hexagon®
 include "arch/i386/timer/timer.asm"        ;; Funções para manipulação de timer do Hexagon®   
@@ -140,7 +140,7 @@ include "libkern/relogio.asm"              ;; Interface de relógio em tempo rea
 ;; Aqui temos um stub que previne a execução da imagem do Hexagon® diretamente pelo usuário, o que poderia
 ;; causar problemas visto a natureza da imagem (ser um Kernel, não um processo comum)
 
-include "libkern/stubHAPP.asm"             ;; Stub para prevenir execução acidental da imagem
+include "libkern/stubHAPP.asm"             ;; Stub para prevenir execução acidental da imagem do Hexagon®
 
 ;; Fonte padrão do Sistema
 
@@ -174,7 +174,10 @@ Hexagon.init:                   ;; Agora as estruturas do Kernel serão iniciali
 
     cli
 
-;; Agora os serviços e estruturas do Kernel serão inicializados
+;; Aqui começa o processo de autoconfiguração do kernel, incluindo a enumeração e inicialização
+;; dos dispostivos compatíveis presentes
+
+Hexagon.Autoconfig:
 
     call Hexagon.Kernel.Arch.i386.Procx86.Procx86.identificarProcessador ;; Identifica o processador instalado
     
@@ -324,7 +327,7 @@ Hexagon.init:                   ;; Agora as estruturas do Kernel serão iniciali
 
 ;;************************************************************************************
 
-iniciarComponentes:
+Hexagon.iniciarComponentes:
 
     logHexagon Hexagon.Verbose.modoUsuario, Hexagon.Dmesg.Prioridades.p5
 

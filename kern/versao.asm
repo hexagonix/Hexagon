@@ -75,13 +75,13 @@
 
 Hexagon.Arquitetura.suporte = 1 ;; Arquitetura desta imagem
 
-Hexagon.Versao.definicao equ "1.3.2"
+Hexagon.Versao.definicao equ "1.3.3"
 
 Hexagon.Versao:
 
 .numeroVersao     = 1   ;; Número principal de versão do Hexagon
 .numeroSubversao  = 3   ;; Número de subversão (secundária) do Hexagon
-.caractereRevisao = "2" ;; Adicionar caractere de revisão, caso necessário (não número)
+.caractereRevisao = "3" ;; Adicionar caractere de revisão, caso necessário (não número)
 
 .nomeKernel:      db "Hexagon(R)", 0 ;; Nome fornecido ao espaço de usuário
 .build:           db __stringdia, "/", __stringmes, "/", __stringano, " "

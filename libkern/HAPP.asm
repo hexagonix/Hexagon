@@ -280,7 +280,7 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
 ;; Se chegamos até aqui, temos o cabeçalho no arquivo, devemos checar o restante dos campos,
 ;; como as versões mínimas do Kernel necessárias para a execução, bem como a arquitetura
 
-;; Vamos checar se a arquitetura da imagem é a mesma do Sistema
+;; Vamos checar se a arquitetura da imagem é a mesma do Hexagon
 
     cmp byte[edi+4], Hexagon.Arquitetura.suporte ;; Arquitetura suportada
     jne .cabecalhoInvalido
@@ -291,16 +291,16 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
 ;; Pronto, agora vamos chegar as versões do Kernel necessárias como dependências da imagem
 
     cmp byte[edi+5], Hexagon.Versao.numeroVersao ;; Versão declarada do Kernel
-    jg .cabecalhoInvalido ;; A imagem requer uma versão do Andromeda superior a essa
+    jg .cabecalhoInvalido ;; A imagem requer uma versão do Hexagon superior a essa
 
     cmp byte[edi+5], Hexagon.Versao.numeroVersao ;; Versão declarada do Kernel
-    jl .cabecalhoValido ;; A imagem requer uma versão do Andromeda superior a essa
+    jl .cabecalhoValido ;; A imagem requer uma versão do Hexagon superior a essa
 
     mov ah, byte[edi+5]
     mov byte[Hexagon.Imagem.Executavel.HAPP.versaoMinima], ah
 
     cmp byte[edi+6], Hexagon.Versao.numeroSubversao ;; Subversão declarada do Kernel
-    jg .cabecalhoInvalido ;; A imagem requer uma versão do Andromeda superior a essa
+    jg .cabecalhoInvalido ;; A imagem requer uma versão do Hexagon superior a essa
 
 .cabecalhoValido:
 
