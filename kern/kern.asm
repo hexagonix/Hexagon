@@ -330,7 +330,7 @@ Hexagon.Autoconfig:
 
 ;;************************************************************************************
 
-Hexagon.iniciarModoUsario:
+Hexagon.iniciarModoUsuario:
 
     logHexagon Hexagon.Verbose.modoUsuario, Hexagon.Dmesg.Prioridades.p5
 
