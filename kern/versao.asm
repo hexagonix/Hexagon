@@ -83,7 +83,7 @@ Hexagon.Versao:
 .numeroSubversao  = 3   ;; Número de subversão (secundária) do Hexagon
 .caractereRevisao = "4" ;; Adicionar caractere de revisão, caso necessário, entre aspas (funciona como caractere)
 
-.nomeKernel:      db "Hexagon(R)", 0 ;; Nome fornecido ao espaço de usuário
+.nomeKernel:      db "Hexagon", 0 ;; Nome fornecido ao espaço de usuário
 .build:           db __stringdia, "/", __stringmes, "/", __stringano, " "
                   db __stringhora, ":", __stringminuto, ":", __stringsegundo, " GMT", 0
 
