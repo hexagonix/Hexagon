@@ -457,7 +457,7 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcesso:
     
     mov eax, ebx
     
-    call Hexagon.Kernel.Arch.Gen.Memoria.confirmarUsoMemoria
+    call Hexagon.Kernel.Arch.Gen.Mm.confirmarUsoMemoria
     
     pop ebx
     pop eax
@@ -693,7 +693,7 @@ Hexagon.Kernel.Kernel.Proc.removerProcesso:
     
     mov eax, ebx
     
-    call Hexagon.Kernel.Arch.Gen.Memoria.liberarUsoMemoria
+    call Hexagon.Kernel.Arch.Gen.Mm.liberarUsoMemoria
     
     pop ebx
     pop eax

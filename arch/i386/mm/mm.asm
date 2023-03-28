@@ -77,7 +77,7 @@ use16
 
 ;; Obtem a quantidade total de memória instalada em ambiente de modo real
 
-Hexagon.Kernel.Arch.i386.Memx86.Memoria.obterMemoriaTotal:
+Hexagon.Kernel.Arch.i386.Mm.Mm.obterMemoriaTotal:
 
     push edx
     push ecx

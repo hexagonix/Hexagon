@@ -78,12 +78,12 @@ Hexagon.Syscall.Syscall.servicosHexagon:
 ;; Gerenciamento de memória e processos
 
     dd Hexagon.Kernel.API.API.Nulo                                     ;; 0 - função nula, apenas retorna
-    dd Hexagon.Kernel.Arch.Gen.Memoria.alocarMemoria             ;; 1
-    dd Hexagon.Kernel.Arch.Gen.Memoria.liberarMemoria            ;; 2
+    dd Hexagon.Kernel.Arch.Gen.Mm.alocarMemoria                        ;; 1
+    dd Hexagon.Kernel.Arch.Gen.Mm.liberarMemoria                       ;; 2
     dd Hexagon.Kernel.API.API.criarNovoProcesso                        ;; 3
     dd Hexagon.Kernel.Kernel.Proc.encerrarProcesso                     ;; 4
     dd Hexagon.Kernel.Kernel.Proc.obterPID                             ;; 5
-    dd Hexagon.Kernel.Arch.Gen.Memoria.usoMemoria                ;; 6
+    dd Hexagon.Kernel.Arch.Gen.Mm.usoMemoria                           ;; 6
     dd Hexagon.Kernel.Kernel.Proc.obterListaProcessos                  ;; 7
     dd Hexagon.Kernel.Kernel.Proc.obterCodigoErro                      ;; 8
 

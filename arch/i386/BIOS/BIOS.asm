@@ -97,7 +97,7 @@ use32
     push eax
     push edx
     
-    call Hexagon.Kernel.Arch.i386.Procx86.Procx86.irPara16 ;; Ir para o modo real para solicitar os serviços BIOS
+    call Hexagon.Kernel.Arch.i386.CPU.CPU.irPara16 ;; Ir para o modo real para solicitar os serviços BIOS
     
 use16
 
@@ -110,7 +110,7 @@ use16
     
     int 10h
     
-    call Hexagon.Kernel.Arch.i386.Procx86.Procx86.irPara32 ;; Voltar para o modo protegido, para a segurança!
+    call Hexagon.Kernel.Arch.i386.CPU.CPU.irPara32 ;; Voltar para o modo protegido, para a segurança!
     
 use32
 
@@ -153,7 +153,7 @@ use32
     push eax
     push edx
     
-    call Hexagon.Kernel.Arch.i386.Procx86.Procx86.irPara16
+    call Hexagon.Kernel.Arch.i386.CPU.CPU.irPara16
     
 use16
 
@@ -173,7 +173,7 @@ use16
     mov word[Hexagon.Arch.i386.BIOS.registradorFlags], ax ;; Salvar flags (para checagem de erros)
     mov word[Hexagon.Arch.i386.BIOS.registradorAX], ax
     
-    call Hexagon.Kernel.Arch.i386.Procx86.Procx86.irPara32
+    call Hexagon.Kernel.Arch.i386.CPU.CPU.irPara32
     
 use32
 
@@ -228,7 +228,7 @@ use32
     push eax
     push edx
     
-    call Hexagon.Kernel.Arch.i386.Procx86.Procx86.irPara16
+    call Hexagon.Kernel.Arch.i386.CPU.CPU.irPara16
     
 use16
 
@@ -241,7 +241,7 @@ use16
     
     int 15h
     
-    call Hexagon.Kernel.Arch.i386.Procx86.Procx86.irPara32
+    call Hexagon.Kernel.Arch.i386.CPU.CPU.irPara32
     
 use32
 

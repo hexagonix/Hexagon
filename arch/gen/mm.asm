@@ -125,7 +125,7 @@ Hexagon.Memoria.Alocador Hexagon.Arch.Gen.Memoria.Alocador Hexagon.Arch.Gen.Memo
 ;; EDX - Memória reservada ao Hexagon®, em bytes
 ;; ESI - Memória total alocada (reservado+processos), em kbytes
 
-Hexagon.Kernel.Arch.Gen.Memoria.usoMemoria:
+Hexagon.Kernel.Arch.Gen.Mm.usoMemoria:
 
     push ds
     pop es
@@ -177,7 +177,7 @@ Hexagon.Kernel.Arch.Gen.Memoria.usoMemoria:
 ;;
 ;; EAX - Quantidade de memória à ser utilizada 
 
-Hexagon.Kernel.Arch.Gen.Memoria.confirmarUsoMemoria:
+Hexagon.Kernel.Arch.Gen.Mm.confirmarUsoMemoria:
 
     add dword[Hexagon.Memoria.memoriaUsada], eax
     
@@ -191,7 +191,7 @@ Hexagon.Kernel.Arch.Gen.Memoria.confirmarUsoMemoria:
 ;;
 ;; EAX - Quantidade de memória à ser liberada
 
-Hexagon.Kernel.Arch.Gen.Memoria.liberarUsoMemoria:
+Hexagon.Kernel.Arch.Gen.Mm.liberarUsoMemoria:
 
     sub dword[Hexagon.Memoria.memoriaUsada], eax
     
@@ -199,7 +199,7 @@ Hexagon.Kernel.Arch.Gen.Memoria.liberarUsoMemoria:
     
 ;;************************************************************************************  
 
-Hexagon.Kernel.Arch.Gen.Memoria.iniciarMemoria:
+Hexagon.Kernel.Arch.Gen.Mm.iniciarMemoria:
 
 ;; Primeiramente, o endereço inicial para a alocação de processos e dados se dará após os 16 Mb
 ;; reservados para o Kernel e estruturas dele
@@ -213,14 +213,14 @@ Hexagon.Kernel.Arch.Gen.Memoria.iniciarMemoria:
     
     sub ecx, [Hexagon.Memoria.enderecoInicial]
     
-    call Hexagon.Kernel.Arch.Gen.Memoria.configurarMemoria                   ;; Iniciar o manipulador de memória
+    call Hexagon.Kernel.Arch.Gen.Mm.configurarMemoria                   ;; Iniciar o manipulador de memória
 
 ;; Agora, o espaço reservado para os processos será definido, utilizando o padrão estabelecido
 ;; Hexagon.Memoria.Alocador.reservadoInicial
 
     mov ebx, [Hexagon.Memoria.Alocador.reservadoProcessos]
 
-    call Hexagon.Kernel.Arch.Gen.Memoria.alocarMemoria                       ;; Alocar memória para os processos
+    call Hexagon.Kernel.Arch.Gen.Mm.alocarMemoria                       ;; Alocar memória para os processos
 
     call Hexagon.Kernel.Kernel.Proc.configurarAlocacaoProcessos ;; Salvar o endereço usado para a alocação
     
@@ -235,7 +235,7 @@ Hexagon.Kernel.Arch.Gen.Memoria.iniciarMemoria:
 ;; EBX - Início da memória livre
 ;; ECX - Tamanho total da memória livre
 
-Hexagon.Kernel.Arch.Gen.Memoria.configurarMemoria:
+Hexagon.Kernel.Arch.Gen.Mm.configurarMemoria:
 
     push ecx
 
@@ -273,7 +273,7 @@ Hexagon.Kernel.Arch.Gen.Memoria.configurarMemoria:
 ;; EAX - 0 se falha
 ;; EBX - Ponteiro para a memória alocada, se sucesso                  
 
-Hexagon.Kernel.Arch.Gen.Memoria.alocarMemoria:
+Hexagon.Kernel.Arch.Gen.Mm.alocarMemoria:
 
     push ecx
     push edx
@@ -510,7 +510,7 @@ Hexagon.Kernel.Arch.Gen.Memoria.alocarMemoria:
 ;; EBX - Ponteiro para a memória previamente alocada
 ;; ECX - Tamanho da memória alocada anteriormente, em bytes
 
-Hexagon.Kernel.Arch.Gen.Memoria.liberarMemoria:
+Hexagon.Kernel.Arch.Gen.Mm.liberarMemoria:
 
     push eax
     push ebx
@@ -732,7 +732,7 @@ dilatarEspacoMemoria:
 
     push ecx
 
-    call Hexagon.Kernel.Arch.Gen.Memoria.alocarMemoria
+    call Hexagon.Kernel.Arch.Gen.Mm.alocarMemoria
 
     pop ecx
 

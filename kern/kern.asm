@@ -105,7 +105,7 @@ include "kern/usuarios.asm"           ;; Funções de gerenciamento de permissõ
 ;; Gerenciamento de Dispositivos do Hexagon®
 
 include "dev/gen/teclado/teclado.asm" ;; Funções necessárias para o uso do teclado
-include "arch/i386/proc/proc.asm"     ;; IDT, GDT e procedimentos para definir modo real e protegido
+include "arch/i386/cpu/cpu.asm"       ;; IDT, GDT e procedimentos para definir modo real e protegido
 include "arch/i386/BIOS/BIOS.asm"     ;; Interrupções do BIOS em modo real
 include "dev/gen/console/console.asm" ;; Funções de gerenciamento de vídeo do Hexagon®
 include "arch/i386/APM/apm.asm"       ;; Implementação APM do Hexagon®
@@ -182,11 +182,11 @@ Hexagon.init:
 
 Hexagon.Autoconfig:
 
-    call Hexagon.Kernel.Arch.i386.Procx86.Procx86.identificarProcessador ;; Identifica o processador instalado
+    call Hexagon.Kernel.Arch.i386.CPU.CPU.identificarProcessador ;; Identifica o processador instalado
     
-    call Hexagon.Kernel.Arch.i386.Procx86.Procx86.configurarProcessador ;; Configura a operação do processador
+    call Hexagon.Kernel.Arch.i386.CPU.CPU.configurarProcessador ;; Configura a operação do processador
 
-    call Hexagon.Kernel.Arch.Gen.Memoria.iniciarMemoria ;; Inicia o alocador de memória do Hexagon®
+    call Hexagon.Kernel.Arch.Gen.Mm.iniciarMemoria ;; Inicia o alocador de memória do Hexagon®
 
     call Hexagon.Kernel.Dev.Gen.Teclado.Teclado.iniciarTeclado ;; Iniciar o serviço de teclado do Hexagon®
 
@@ -220,7 +220,7 @@ Hexagon.Autoconfig:
 
     kprint Hexagon.Verbose.memoriaTotal
 
-    call Hexagon.Kernel.Arch.Gen.Memoria.usoMemoria
+    call Hexagon.Kernel.Arch.Gen.Mm.usoMemoria
 
     mov eax, ecx
 
@@ -228,7 +228,7 @@ Hexagon.Autoconfig:
 
     kprint Hexagon.Verbose.megabytes
 
-    call Hexagon.Kernel.Arch.Gen.Memoria.usoMemoria
+    call Hexagon.Kernel.Arch.Gen.Mm.usoMemoria
 
     mov eax, ebx
 

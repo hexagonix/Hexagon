@@ -328,7 +328,7 @@ Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon:
 
     mov esi, Hexagon.Dmesg.identificadorHexagon
     
-    call mensagemHexagonParaSerial
+    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
 
@@ -338,7 +338,7 @@ Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon:
 
     mov esi, Hexagon.Dmesg.identificadorUsuarioInicial
     
-    call mensagemHexagonParaSerial
+    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
 
@@ -348,13 +348,13 @@ Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon:
 
     call Hexagon.Kernel.Lib.String.paraString ;; Transformar em uma string
     
-    call mensagemHexagonParaSerial
+    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
 
     mov esi, Hexagon.Dmesg.identificadorUsuarioFinal
     
-    call mensagemHexagonParaSerial
+    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
 
@@ -364,13 +364,13 @@ Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon:
 
     pop esi
 
-    call mensagemHexagonParaSerial
+    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
 
     mov esi, Hexagon.Dmesg.novaLinha
 
-    call mensagemHexagonParaSerial
+    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
 
@@ -387,7 +387,7 @@ Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon:
 
     mov esi, Hexagon.Dmesg.identificadorHexagon
     
-    call mensagemHexagonParaSerial
+    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
     jmp .serialMensagemRecebida
 
@@ -395,7 +395,7 @@ Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon:
 
     mov esi, Hexagon.Dmesg.identificadorUsuarioInicial
     
-    call mensagemHexagonParaSerial
+    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
 ;; O PID do processo será exibido na tela
 
@@ -403,21 +403,21 @@ Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon:
 
     call Hexagon.Kernel.Lib.String.paraString ;; Transformar em uma string
 
-    call mensagemHexagonParaSerial
+    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
     mov esi, Hexagon.Dmesg.identificadorUsuarioFinal
     
-    call mensagemHexagonParaSerial
+    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
 .serialMensagemRecebida:
 
     pop esi
 
-    call mensagemHexagonParaSerial
+    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
     mov esi, Hexagon.Dmesg.novaLinha
 
-    call mensagemHexagonParaSerial
+    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
     ret
 
@@ -431,7 +431,7 @@ Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon:
 ;;
 ;; ESI - Mensagem completa a ser exibida
 
-mensagemHexagonParaSerial:
+Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial:
 
     push esi ;; Primeiro, salvar a mensagem já presente em ESI para uso futuro em
              ;; Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon

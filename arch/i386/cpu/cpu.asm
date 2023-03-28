@@ -91,7 +91,7 @@ struc Hexagon.Arch.i386.Regs
 
 ;; Comuta o processador para o modo protegido 32 bits
 
-Hexagon.Kernel.Arch.i386.Procx86.Procx86.irPara32:
+Hexagon.Kernel.Arch.i386.CPU.CPU.irPara32:
 
 use16   
                 
@@ -124,19 +124,19 @@ use32
 
 ;; Comuta o processador de volta ao modo real
 
-Hexagon.Kernel.Arch.i386.Procx86.Procx86.irPara16:               
+Hexagon.Kernel.Arch.i386.CPU.CPU.irPara16:               
     
     cli                      ;; Limpar interrupções
     
     pop edx                  ;; Salvar local de retorno em EDX
     
-    jmp 0x20:Hexagon.Kernel.Arch.i386.Procx86.Procx86.modoProtegido16 ;; Carregar CS com seletor 0x20
+    jmp 0x20:Hexagon.Kernel.Arch.i386.CPU.CPU.modoProtegido16 ;; Carregar CS com seletor 0x20
 
 ;; Para ir ao modo real 16 bits, temos de passar pelo modo protegido 16 bits
 
 use16               
 
-Hexagon.Kernel.Arch.i386.Procx86.Procx86.modoProtegido16:
+Hexagon.Kernel.Arch.i386.CPU.CPU.modoProtegido16:
 
     mov ax, 0x28        ;; 0x28 é o seletor de modo protegido 16-bit
     mov ss, ax  
@@ -146,9 +146,9 @@ Hexagon.Kernel.Arch.i386.Procx86.Procx86.modoProtegido16:
     and eax, 0xfffffffe ;; Limpar bit de ativação do modo protegido em cr0
     mov cr0, eax        ;; Desativar modo 32 bits
 
-    jmp 0x50:Hexagon.Kernel.Arch.i386.Procx86.Procx86.modoReal   ;; Carregar CS e IP
+    jmp 0x50:Hexagon.Kernel.Arch.i386.CPU.CPU.modoReal   ;; Carregar CS e IP
 
-Hexagon.Kernel.Arch.i386.Procx86.Procx86.modoReal:
+Hexagon.Kernel.Arch.i386.CPU.CPU.modoReal:
 
 ;; Carregar registradores de segmento com valores de 16 bits
 
@@ -178,7 +178,7 @@ Hexagon.Kernel.Arch.i386.Procx86.Procx86.modoReal:
 
 ;;************************************************************************************
         
-Hexagon.Kernel.Arch.i386.Procx86.Procx86.ativarA20:  
+Hexagon.Kernel.Arch.i386.CPU.CPU.ativarA20:  
 
 match =A20NAOSEGURO, A20
 {
@@ -217,7 +217,7 @@ match =A20NAOSEGURO, A20
         
 use32                   
 
-Hexagon.Kernel.Arch.i386.Procx86.Procx86.configurarProcessador:
+Hexagon.Kernel.Arch.i386.CPU.CPU.configurarProcessador:
 
 ;; Habilitar SSE
     
@@ -243,7 +243,7 @@ Hexagon.Kernel.Arch.i386.Procx86.Procx86.configurarProcessador:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Arch.i386.Procx86.Procx86.identificarProcessador:
+Hexagon.Kernel.Arch.i386.CPU.CPU.identificarProcessador:
  
     mov esi, codigoDispositivos.proc0
 

@@ -231,7 +231,7 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
     push eax ;; Aqui temos o tamanho
     push esi
 
-    call Hexagon.Kernel.Arch.Gen.Memoria.confirmarUsoMemoria ;; Vamos aqui confirmar o uso de memória
+    call Hexagon.Kernel.Arch.Gen.Mm.confirmarUsoMemoria ;; Vamos aqui confirmar o uso de memória
 
     pop esi
     pop eax
@@ -364,7 +364,7 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
     mov ebx, dword[Hexagon.Processos.tamanhoUltimoPrograma]
     sub dword[Hexagon.Processos.enderecoAplicativos], ebx
 
-    call Hexagon.Kernel.Arch.Gen.Memoria.liberarUsoMemoria ;; Vamos liberar a memória
+    call Hexagon.Kernel.Arch.Gen.Mm.liberarUsoMemoria ;; Vamos liberar a memória
 
     ret
 
