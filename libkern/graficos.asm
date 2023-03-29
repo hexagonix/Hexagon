@@ -75,18 +75,20 @@ use32
 
 ;;************************************************************************************
 
+Hexagon.Graficos.Cores.Padrao:
+
+.COR_FUNDO_PADRAO = 0x00000000
+.COR_FONTE_PADRAO = 0xFFFFFFFF
+
 Hexagon.Graficos:
 
-.corFundoPadrao  = PRETO_ANDROMEDA
-.corFontePadrao  = BRANCO_ANDROMEDA
+.corFundoPadrao  = Hexagon.Graficos.Cores.Padrao.COR_FUNDO_PADRAO
+.corFontePadrao  = Hexagon.Graficos.Cores.Padrao.COR_FONTE_PADRAO
 .corFundo:       dd .corFundoPadrao
 .corFonte:       dd .corFontePadrao
 .bytesPorLinha:  dd 0
 .corFonteTema:   dd 0
 .corFundoTema:   dd 0
-
-PRETO_ANDROMEDA  = 0x00000000
-BRANCO_ANDROMEDA = 0xFFFFFFFF
 
 ;;************************************************************************************
 
