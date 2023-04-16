@@ -113,7 +113,7 @@
 
 use32
 
-align 32
+align 4
 
 ;;************************************************************************************
 
@@ -171,8 +171,6 @@ tabelaProcessos: times 13 * Hexagon.Processos.limiteProcessos db ' ' ;; Cria uma
 tabelaPilha: times 13 * Hexagon.Processos.limiteProcessos     db 0   ;; Armazenará o nome dos processos na pilha
 
 ;;************************************************************************************
-
-align 32 
 
 ;; Destravar a pilha de processos, permitindo o fechamento do aplicativo pelo usuário
 

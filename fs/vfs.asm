@@ -77,8 +77,6 @@ use32
 
 ;; Códigos dos Sistemas de Arquivo suportados
 
-align 32
-
 ;; Códigos para os principais Sistemas de Arquivos, suportados ou não
 
 Hexagon.VFS.FS:

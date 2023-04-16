@@ -142,17 +142,7 @@ use32
 
 ;; Estruturas de uso exclusivo para manipulação global de volumes
 
-Hexagon.Disco:
-
-.codigoOperacao:   db 0
-.erroDisco:        db "O Hexagon(R) nao conseguiu acessar o disco solicitado.", 10, 10
-                   db 10, 10, "Um erro desconhecido impediu o Hexagon(R) de acessar o disco de maneira adequada.", 10
-                   db "Para prevenir perda de dados, o Sistema foi finalizado.", 10
-                   db "Este problema pode ser pontual. E nao se preocupe, seus dados estao intactos.", 10
-                   db "Se algo de errado aconteceu, por favor utilize o disco de instalacao do Sistema para", 10
-                   db "corrigir possiveis erros no disco.", 10, 10, 0
-
-struc Hexagon.Disco.Geral
+struc Hexagon.Dev.Gen.Disco.Geral
 {
 
 .semErro          = 00h
@@ -179,7 +169,7 @@ struc Hexagon.Disco.Geral
 
 }
 
-struc Hexagon.Disco.HD
+struc Hexagon.Dev.Gen.Disco.HD
 {
 
 .semErro          = 00h
@@ -194,7 +184,7 @@ struc Hexagon.Disco.HD
 
 }
 
-struc Hexagon.Disco.Controle
+struc Hexagon.Dev.Gen.Disco.Controle
 {
 
 .driveAtual: db 0
@@ -202,13 +192,17 @@ struc Hexagon.Disco.Controle
 
 }
 
-;; Criar instâncias das estruturas, com os nomes adequados que indiquem sua localização
+Hexagon.Dev.Gen.Disco.Codigos  Hexagon.Dev.Gen.Disco.Geral
+Hexagon.Dev.Gen.Disco.HD.IO    Hexagon.Dev.Gen.Disco.HD
+Hexagon.Dev.Gen.Disco.Controle Hexagon.Dev.Gen.Disco.Controle
 
-Hexagon.Dev.Gen.Disco.Codigos  Hexagon.Disco.Geral
-Hexagon.Dev.Gen.Disco.HD.IO    Hexagon.Disco.HD
-Hexagon.Dev.Gen.Disco.Controle Hexagon.Disco.Controle
+Hexagon.Dev.Gen.Disco:
+
+.codigoOperacao:   db 0
 
 ;;************************************************************************************  
+
+align 4
 
 ;; Para os discos em uso no sistema
 ;;
@@ -222,6 +216,8 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.pararDisco:
 
 
 ;;************************************************************************************
+
+;; Criar instâncias das estruturas, com os nomes adequados que indiquem sua localização
 
 ;; Obtêm da MBR (Master Boot Record) informações úteis a respeito do disco
 ;;
@@ -449,7 +445,7 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores:
     
 .errosGerais:
 
-    mov esi, Hexagon.Disco.erroDisco
+    mov esi, Hexagon.Verbose.Disco.erroDisco
     
     mov eax, 1
     
@@ -462,7 +458,7 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores:
     
     call Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos
     
-    mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.semMidia
+    mov byte[Hexagon.Dev.Gen.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.semMidia
 
     stc
     
@@ -470,14 +466,14 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores:
 
 .semErro:
 
-    mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.semErro
+    mov byte[Hexagon.Dev.Gen.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.semErro
 
 .finalizar:
 
     pop esi
     pop eax
     
-    movzx ebx, byte[Hexagon.Disco.codigoOperacao] ;; Fornecer em EBX o código de retorno da operação
+    movzx ebx, byte[Hexagon.Dev.Gen.Disco.codigoOperacao] ;; Fornecer em EBX o código de retorno da operação
 
     ret
 
@@ -572,7 +568,7 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores:
 
     stc
 
-    mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.protegidoEscrita
+    mov byte[Hexagon.Dev.Gen.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.protegidoEscrita
 
     ret 
     
@@ -580,7 +576,7 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores:
 
     stc
 
-    mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.discoNaoPronto
+    mov byte[Hexagon.Dev.Gen.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.discoNaoPronto
 
     ret 
 
@@ -588,7 +584,7 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores:
 
     stc
 
-    mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.discoEmUso
+    mov byte[Hexagon.Dev.Gen.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.discoEmUso
 
     ret
 
@@ -596,13 +592,13 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores:
 
     stc
   
-    mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.falhaOperacao
+    mov byte[Hexagon.Dev.Gen.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.falhaOperacao
 
     ret
     
 .errosGerais:
 
-    mov esi, Hexagon.Disco.erroDisco
+    mov esi, Hexagon.Verbose.Disco.erroDisco
     
     mov eax, 1
     
@@ -615,7 +611,7 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores:
     
     call Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos
     
-    mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.semMidia
+    mov byte[Hexagon.Dev.Gen.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.semMidia
 
     stc
     
@@ -623,14 +619,14 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores:
 
 .semErro:
 
-    mov byte[Hexagon.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.semErro
+    mov byte[Hexagon.Dev.Gen.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.semErro
 
 .finalizar:
 
     pop esi
     pop eax
     
-    movzx ebx, byte[Hexagon.Disco.codigoOperacao] ;; Fornecer em EBX o código de retorno da operação
+    movzx ebx, byte[Hexagon.Dev.Gen.Disco.codigoOperacao] ;; Fornecer em EBX o código de retorno da operação
 
     ret
 

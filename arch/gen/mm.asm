@@ -115,6 +115,8 @@ Hexagon.Memoria.Alocador Hexagon.Arch.Gen.Memoria.Alocador Hexagon.Arch.Gen.Memo
 
 ;;************************************************************************************
 
+align 4
+
 ;; Retorna a quantidade de memória utilizada pelos processos
 ;;
 ;; Saída:

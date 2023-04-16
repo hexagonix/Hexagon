@@ -79,6 +79,8 @@
 
 use32
 
+align 4
+
 match =SIM, VERBOSE {
     
 Hexagon.Verbose:
@@ -128,6 +130,12 @@ Hexagon.Verbose.Servicos:
 
 Hexagon.Verbose.Disco:
 
+.erroDisco:             db "Hexagon was unable to access the requested disk.", 10, 10
+                        db 10, 10, "An unknown error prevented Hexagon from accessing the disk properly.", 10
+                        db "To prevent data loss, system has been terminated.", 10
+                        db "This problem could be one-off. And don't worry, your data is intact.", 10
+                        db "If something went wrong, please use the system installation disk for correct possible", 10
+                        db "disk errors.", 10, 10, 0
 .erroLerMBR:            db "Error reading volume MBR.", 0
 .erroLerBPB:            db "Error trying to read volume BPB.", 0
 .erroReiniciarDisco:    db "Error requesting disk restart.", 0
@@ -140,4 +148,24 @@ Hexagon.Verbose.Disco:
 .erroEscrita:           db "Error writing to volume.", 0
 .erroGeralEscrita:      db "General error when trying to write sectors to the volume.", 0
 
+Hexagon.Verbose.Init:
+
+.semInit:              db "A critical component (init) was not found on the boot volume.", 10, 10
+                       db "Make sure the 'init' file or equivalent is present on the system volume.", 10
+                       db "If not present, use the original installation media to correct this problem.", 10, 10, 0
+         
+.componenteFinalizado: db "A critical component (init) terminated unexpectedly.", 10, 10
+                       db "Some unexpected error caused a system component to terminate.", 10
+                       db "This problem prevents the system from running properly and to avoid any more serious problem or the", 10
+                       db "loss of your data, the system has halted.", 10, 0
+
+.semShell:             db "The default shell (/sh) was not found on this volume.", 10, 10
+                       db "Make sure the default shell is present on the system volume and try again.", 10
+                       db "If not present, use the installation disc to correct this problem.", 10, 10, 0
+         
+.shellFinalizado:      db "The shell terminated unexpectedly.", 10, 10
+                       db "Some unexpected error caused the shell to terminate.", 10
+                       db "This problem prevents the system from running properly and to avoid any more serious problem or the", 10
+                       db "loss of your data, the system has halted.", 10, 0
+            
 }

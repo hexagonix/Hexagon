@@ -73,11 +73,11 @@
 
 use32
 
+align 4
+
 ;; Aqui vamos incluir macros para facilitar a organização e modificação do código
 
 include "libkern/macros.s"                 ;; Macros
-
-align 4
 
 ;;************************************************************************************
 ;;
@@ -104,6 +104,9 @@ include "kern/usuarios.asm"           ;; Funções de gerenciamento de permissõ
 
 ;; Gerenciamento de Dispositivos do Hexagon®
 
+include "arch/gen/mm.asm"             ;; Funções para gerenciamento de memória do Hexagon® 
+include "arch/i386/mm/mm.asm"         ;; Funções para gerenciamento de memória dependentes de arquitetura
+include "dev/i386/disco/disco.asm"    ;; Funções para ler e escrever em discos rígidos do Hexagon®
 include "dev/gen/teclado/teclado.asm" ;; Funções necessárias para o uso do teclado
 include "arch/i386/cpu/cpu.asm"       ;; IDT, GDT e procedimentos para definir modo real e protegido
 include "arch/i386/BIOS/BIOS.asm"     ;; Interrupções do BIOS em modo real
@@ -112,15 +115,12 @@ include "arch/i386/APM/apm.asm"       ;; Implementação APM do Hexagon®
 include "dev/gen/snd/som.asm"         ;; Funções para controle de som do Hexagon®
 include "dev/gen/PS2/PS2.asm"         ;; Funções para controle de portas PS/2 do Hexagon®
 include "arch/i386/timer/timer.asm"   ;; Funções para manipulação de timer do Hexagon®   
-include "dev/i386/disco/disco.asm"    ;; Funções para ler e escrever em discos rígidos do Hexagon®
 include "fs/vfs.asm"                  ;; Sistema de arquivos virtual (VFS) para Hexagon®
 include "dev/gen/mouse/mouse.asm"     ;; Funções para mouse PS/2 do Hexagon®
 include "dev/gen/lpt/lpt.asm"         ;; Funções de manipulação de impressora
 include "dev/gen/COM/serial.asm"      ;; Funções para manipulação de portas seriais em modo protegido
 include "arch/i386/CMOS/cmos.asm"     ;; Funções para manipulação de data e hora  
 include "dev/dev.asm"                 ;; Funções de gerenciamento e abstração de Hardware do Hexagon®
-include "arch/gen/mm.asm"             ;; Funções para gerenciamento de memória do Hexagon® 
-include "arch/i386/mm/mm.asm"         ;; Funções para gerenciamento de memória dependentes de arquitetura
 
 ;; Processos, modelo de processo e de imagens executáveis
 
@@ -133,7 +133,7 @@ include "fs/FAT16/fat16.asm"          ;; Rotinas para manipulação de arquivos 
 
 ;; Bibliotecas do Hexagon®
 
-include "libkern/string.asm"          ;; Funções para manipulação de String
+include "libkern/string.asm"          ;; Funções para manipulação de caracteres
 include "libkern/num.asm"             ;; Funções de geração e alimentação de números aleatórios
 include "libkern/relogio.asm"         ;; Interface de relógio em tempo real
 
@@ -379,7 +379,7 @@ Hexagon.iniciarModoUsuario:
     
 .fimInit: ;; Imprimir mensagem e finalizar o sistema
 
-    mov esi, Hexagon.Init.Const.semInit
+    mov esi, Hexagon.Verbose.Init.semInit
     
     mov eax, 1
 
@@ -387,7 +387,7 @@ Hexagon.iniciarModoUsuario:
 
 .fimShell:
 
-    mov esi, Hexagon.Init.Const.shellFinalizado
+    mov esi, Hexagon.Verbose.Init.shellFinalizado
     
     mov eax, 1
 
@@ -400,24 +400,6 @@ Hexagon.Init.Const:
 .initHexagon:          db "init", 0 ;; Nome da imagem em disco do init
 .shellHexagon:         db "sh", 0   ;; Nome do shell padrão
            
-.semInit:              db "A critical component (init) was not found on the boot volume.", 10, 10
-                       db "Make sure the 'init' file or equivalent is present on the system volume.", 10
-                       db "If not present, use the original installation media to correct this problem.", 10, 10, 0
-         
-.componenteFinalizado: db "A critical component (init) terminated unexpectedly.", 10, 10
-                       db "Some unexpected error caused a system component to terminate.", 10
-                       db "This problem prevents the system from running properly and to avoid any more serious problem or the", 10
-                       db "loss of your data, the system has halted.", 10, 0
-
-.semShell:             db "The default shell (/sh) was not found on this volume.", 10, 10
-                       db "Make sure the default shell is present on the system volume and try again.", 10
-                       db "If not present, use the installation disc to correct this problem.", 10, 10, 0
-         
-.shellFinalizado:      db "The shell terminated unexpectedly.", 10, 10
-                       db "Some unexpected error caused the shell to terminate.", 10
-                       db "This problem prevents the system from running properly and to avoid any more serious problem or the", 10
-                       db "loss of your data, the system has halted.", 10, 0
-            
 ;;************************************************************************************
 
 Hexagon.FimCodigo:
