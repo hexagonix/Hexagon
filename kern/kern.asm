@@ -107,10 +107,10 @@ include "kern/usuarios.asm"           ;; Funções de gerenciamento de permissõ
 include "arch/gen/mm.asm"             ;; Funções para gerenciamento de memória do Hexagon® 
 include "arch/i386/mm/mm.asm"         ;; Funções para gerenciamento de memória dependentes de arquitetura
 include "dev/i386/disco/disco.asm"    ;; Funções para ler e escrever em discos rígidos do Hexagon®
+include "dev/gen/console/console.asm" ;; Funções de gerenciamento de vídeo do Hexagon®
 include "dev/gen/teclado/teclado.asm" ;; Funções necessárias para o uso do teclado
 include "arch/i386/cpu/cpu.asm"       ;; IDT, GDT e procedimentos para definir modo real e protegido
 include "arch/i386/BIOS/BIOS.asm"     ;; Interrupções do BIOS em modo real
-include "dev/gen/console/console.asm" ;; Funções de gerenciamento de vídeo do Hexagon®
 include "arch/i386/APM/apm.asm"       ;; Implementação APM do Hexagon®
 include "dev/gen/snd/som.asm"         ;; Funções para controle de som do Hexagon®
 include "dev/gen/PS2/PS2.asm"         ;; Funções para controle de portas PS/2 do Hexagon®
