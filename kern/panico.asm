@@ -77,11 +77,16 @@ use32
 
 Hexagon.Panico:
 
-.cabecalhoPanico:  db 10, 10, "Kernel Panic: ", 0   
-.cabecalhoOops:    db 10, 10, "Kernel Oops: ", 0     
-.erroReiniciar:    db "Restart your computer to continue.", 0  
-.erroNaoFatal:     db "Press any key to continue...", 0
-.erroDesconhecido: db 10, 10, "The severity of the error was not provided or is unknown by the Hexagon.", 10, 10, 0         
+.cabecalhoPanico:
+db 10, 10, "Kernel Panic: ", 0   
+.cabecalhoOops:
+db 10, 10, "Kernel Oops: ", 0     
+.erroReiniciar:
+db "Restart your computer to continue.", 0  
+.erroNaoFatal:
+db "Press any key to continue...", 0
+.erroDesconhecido:
+db 10, 10, "The severity of the error was not provided or is unknown by the Hexagon.", 10, 10, 0         
     
 ;;************************************************************************************
 

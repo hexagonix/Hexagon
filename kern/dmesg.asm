@@ -77,12 +77,17 @@ use32
 
 Hexagon.Dmesg:
 
-.dataInicio:                  db "System initialization: ", 0
-.infoData:                    db " [CMOS]", 0
-.identificadorHexagon:        db "[Hexagon] ", 0
-.identificadorUsuarioInicial: db "[PID: ", 0
-.identificadorUsuarioFinal:   db "] ", 0
-.novaLinha:                   db 10, 0
+.dataInicio:
+db "System initialization: ", 0
+.infoData:
+db " [CMOS]", 0
+.identificadorHexagon:
+db "[Hexagon] ", 0
+.identificadorUsuarioInicial:
+db "[PID: ", 0
+.identificadorUsuarioFinal:
+db "] ", 0
+.novaLinha: db 10, 0
 
 Hexagon.Dmesg.Prioridades:
 

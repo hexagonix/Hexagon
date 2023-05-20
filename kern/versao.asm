@@ -75,7 +75,7 @@
 
 Hexagon.Arquitetura.suporte = 1 ;; Arquitetura desta imagem
 
-Hexagon.Versao.definicao equ "1.3.7-beta"
+Hexagon.Versao.definicao equ "1.3.7-gama"
 
 Hexagon.Versao:
 
