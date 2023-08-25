@@ -1451,7 +1451,7 @@ db 0
 
 Hexagon.Kernel.FS.FAT16.iniciarVolumeFAT16B:
     
-;; Obter informações da BPB e armazenarem estruturas do Sistema
+;; Obter informações da BPB e armazenarem estruturas do sistema
     
     call Hexagon.Kernel.Dev.i386.Disco.Disco.lerBPB
 

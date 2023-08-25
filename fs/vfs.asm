@@ -371,6 +371,8 @@ Hexagon.Kernel.FS.VFS.definirSistemaArquivos:
     mov byte [Hexagon.Dev.Gen.Disco.Controle.driveAtual], dl
     
     call Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos
+
+    stc
     
 .finalizar:
 
@@ -393,6 +395,8 @@ Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos:
     cmp ah, Hexagon.VFS.FS.FAT16B
     je .iniciarFAT16B
     
+    clc
+
     ret
 
 .volumeAusente:
@@ -404,6 +408,8 @@ Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos:
     
     cmp ah, Hexagon.VFS.FS.FAT16B
     je .volumeDesconectadoFAT16B
+
+    stc
     
     ret
 

@@ -387,6 +387,8 @@ Hexagon.Kernel.Dev.Dev.abrir:
     mov byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual], ah
 
     call Hexagon.Kernel.FS.VFS.definirSistemaArquivos
+
+    jc .erroNaoEncontrado
     
     call Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos
 
@@ -402,7 +404,7 @@ Hexagon.Kernel.Dev.Dev.abrir:
 
     mov eax, dword[Hexagon.Dev.Controle.classeDispositivo]
 
-    jmp .armazenamentoFim
+    jmp .retorno
 
 .armazenamentoPermissaoNegada:
 
@@ -412,10 +414,25 @@ Hexagon.Kernel.Dev.Dev.abrir:
 
     stc
 
-.armazenamentoFim:
+    jmp .retorno
 
-    ret
+.erroNaoEncontrado:
     
+    mov byte[Hexagon.Dev.Controle.aberto], 0
+    mov eax, 06h ;; Dispositivo não encontrado
+
+    jmp .retorno
+
+.erroAbertura:
+
+;; O código de erro para operações de disco já está em EBX, em caso de chamada
+;; para abertura de um volume
+
+    mov byte[Hexagon.Dev.Controle.aberto], 0
+    mov eax, dword[Hexagon.Dev.Controle.classeDispositivo]
+
+    jmp .retorno
+
 .portasSeriais:
 
     pop bx
@@ -430,7 +447,7 @@ Hexagon.Kernel.Dev.Dev.abrir:
     
     mov eax, dword[Hexagon.Dev.Controle.classeDispositivo]
         
-    ret
+    jmp .retorno
 
 .portasParalelas:
 
@@ -446,7 +463,7 @@ Hexagon.Kernel.Dev.Dev.abrir:
     
     mov eax, dword[Hexagon.Dev.Controle.classeDispositivo]
         
-    ret
+    jmp .retorno
 
 .saida:
 
@@ -466,19 +483,19 @@ Hexagon.Kernel.Dev.Dev.abrir:
     cmp bx, [codigoDispositivos.au0]
     je .au0
     
-    ret
+    jmp .retorno
 
 .vd0: ;; Console principal
 
     call Hexagon.Kernel.Lib.Graficos.usarBufferVideo1
     
-    ret
+    jmp .retorno
     
 .vd1: ;; Primeiro console virtual
 
     call Hexagon.Kernel.Lib.Graficos.usarBufferVideo2
     
-    ret
+    jmp .retorno
     
 .vd2: ;; Despejo de dados do Kernel
 
@@ -486,11 +503,11 @@ Hexagon.Kernel.Dev.Dev.abrir:
     
     call Hexagon.Kernel.Lib.Graficos.atualizarTela
     
-    ret
+    jmp .retorno
 
 .au0: ;; Alto-falante interno do computador
     
-    ret
+    jmp .retorno
     
 .processadores:
 
@@ -500,19 +517,7 @@ Hexagon.Kernel.Dev.Dev.abrir:
     
     mov esi, codigoDispositivos.proc0
         
-    ret 
-
-.erroAbertura:
-
-;; O código de erro para operações de disco já está em EBX, em caso de chamada
-;; para abertura de um volume
-
-    mov byte[Hexagon.Dev.Controle.aberto], 0
-    mov eax, dword[Hexagon.Dev.Controle.classeDispositivo]
-    
-    stc
-    
-    ret
+    jmp .retorno 
 
 .arquivo:
 
@@ -522,8 +527,12 @@ Hexagon.Kernel.Dev.Dev.abrir:
     
     call Hexagon.Kernel.FS.VFS.carregarArquivo
     
-    ret
+    jmp .retorno
     
+.retorno:
+
+    ret
+
 ;;************************************************************************************
 
 ;; Converter um nome de dispositivo segundo convenção para um número ou endereço.
