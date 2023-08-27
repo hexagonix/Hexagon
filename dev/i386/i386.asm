@@ -71,6 +71,8 @@
 ;;
 ;;************************************************************************************
 
+use32
+
 ;; Os códigos à seguir são dependentes de arquitetura
 
 codigoDispositivos:

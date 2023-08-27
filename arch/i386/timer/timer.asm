@@ -73,8 +73,6 @@
 
 use32
 
-;;************************************************************************************
-
 ;; Inicializa o timer, utilizando os parâmetros apropriados
 
 Hexagon.Kernel.Arch.i386.Timer.Timer.iniciarTimer:

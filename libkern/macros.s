@@ -65,6 +65,8 @@
 ;;
 ;; $HexagonixOS$
 
+use32
+
 ;; Aqui temos alguns macros úteis para o Hexagon
 
 macro logHexagon mensagem, prioridade 

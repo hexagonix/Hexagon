@@ -71,6 +71,8 @@
 ;;
 ;;************************************************************************************
 
+use32
+
 Hexagon.Int:
 
 .interrupcaoHexagon  = 69h ;; Interrupção do Hexagon®
@@ -80,8 +82,6 @@ Hexagon.Int:
 .interrupcaoMouse    = 74h ;; Interrupção reservada ao dispositivo apontador
 
 ;;************************************************************************************
-
-use32
 
 ;; Instala as rotinas de interrupção do Hexagon® (ISR - Interrupt Service Routine)
 

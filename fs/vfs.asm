@@ -73,8 +73,6 @@
 
 use32
 
-;;************************************************************************************
-
 ;; Códigos dos Sistemas de Arquivo suportados
 
 ;; Códigos para os principais Sistemas de Arquivos, suportados ou não

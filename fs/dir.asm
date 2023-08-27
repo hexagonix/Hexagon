@@ -73,8 +73,6 @@
 
 use32
 
-;;************************************************************************************
-
 ;; Variáveis, contantes e estruturas necessárias para o gerenciamento de 
 ;; diretórios do Sistema de Arquivos Virtual
 

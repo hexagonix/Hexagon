@@ -73,8 +73,6 @@
 
 use32
 
-;;************************************************************************************
-
 Hexagon.Arch.Gen.Memoria.memoriaReservadaHexagon = 16777216
 
 struc Hexagon.Arch.Gen.Memoria enderecoInicial

@@ -73,8 +73,6 @@
 
 use32
 
-;;************************************************************************************
-
 Hexagon.Kernel.Lib.Relogio.retornarData:                      
 
     movzx eax, [Hexagon.Arch.i386.CMOS.dia]

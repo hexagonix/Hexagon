@@ -65,6 +65,8 @@
 ;;
 ;; $HexagonixOS$
 
+use32
+
 ;; Arquitetura do Hexagon® 
 ;;
 ;; A arquitetura pode ser:

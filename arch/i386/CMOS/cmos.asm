@@ -73,8 +73,6 @@
 
 use32
 
-;;************************************************************************************
-
 ;; Variáveis onde os dados obtidos do CMOS serão armazenados
 
 Hexagon.Arch.i386.CMOS:

@@ -71,6 +71,8 @@
 ;;
 ;;************************************************************************************
 
+use32
+
 Hexagon.Teclado.Codigo: ;; Keycodes
 
 .ESC       = 01h
@@ -104,8 +106,6 @@ Hexagon.Teclado.Codigo: ;; Keycodes
 .insert    = 0x5B
 
 ;;************************************************************************************
-
-use32
 
 ;; Inicializar o teclado, configurando os LEDS, taxa de repetição e delay
 

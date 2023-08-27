@@ -65,6 +65,8 @@
 ;;
 ;; $HexagonixOS$
 
+use32 
+
 ;; Gerar número aleatório
 ;;
 ;; Entrada:
