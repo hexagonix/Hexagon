@@ -77,7 +77,7 @@ use32
 
 Hexagon.Arquitetura.suporte = 1 ;; Arquitetura desta imagem
 
-Hexagon.Versao.definicao equ "1.3.8-gamma"
+Hexagon.Versao.definicao equ "1.3.8"
 
 Hexagon.Versao:
 
