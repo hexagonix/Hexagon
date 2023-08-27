@@ -86,11 +86,11 @@ match =SIM, VERBOSE {
 Hexagon.Verbose:
 
 .Hexagon:
-db "Welcome to Hexagon(R)", 10
+db "Welcome to Hexagon", 10
 db "Copyright (C) 2015-", __stringano, " Felipe Miguel Nery Lunkes", 10
 db "All rights reserved.", 10, 10, 0
 .versao:
-db "Hexagon(R) kernel version: ", Hexagon.Versao.definicao, 0
+db "Hexagon kernel version: ", Hexagon.Versao.definicao, 0
 .travando:
 db "Enabling user and security guidelines...", 0
 .timer:
@@ -155,7 +155,7 @@ db "There was an error connecting to the power management service.", 0
 .sucessoDesligamentoAPM:
 db "Success in requesting the power management system.", 0
 .erroInstalacaoAPM:
-db "Error installing Hexagon(R) power management service.", 0
+db "Error installing Hexagon power management service.", 0
 
 Hexagon.Verbose.Servicos:
 

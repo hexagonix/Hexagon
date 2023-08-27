@@ -77,7 +77,7 @@ use32
 
 Hexagon.Arquitetura.suporte = 1 ;; Arquitetura desta imagem
 
-Hexagon.Versao.definicao equ "1.3.8-beta"
+Hexagon.Versao.definicao equ "1.3.8-gamma"
 
 Hexagon.Versao:
 
@@ -92,18 +92,18 @@ Hexagon.Versao:
 Hexagon.Info:
 
 .sobreHexagon:    db 10, 10
-                  db "Hexagon(R) kernel version ", Hexagon.Versao.definicao, 10
+                  db "Hexagon kernel version ", Hexagon.Versao.definicao, 10
                   db "Copyright (C) 2015-", __stringano, " Felipe Miguel Nery Lunkes", 10
                   db "All rights reserved.", 0
 
 ;;************************************************************************************
 
-;; Retorna para os aplicativos solicitantes os número de versão e subversão do Sistema
+;; Retorna para os aplicativos solicitantes os número de versão e subversão do Hexagon
 ;;
 ;; Saída:
 ;; 
-;; EAX - Número da versão do Sistema
-;; EBX - Número da subversão do Sistema
+;; EAX - Número da versão do Hexagon
+;; EBX - Número da subversão do Hexagon
 ;; CH  - Revisão
 ;; EDX - Arquitetura
 ;; ESI - String de nome do kernel
