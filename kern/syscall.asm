@@ -104,7 +104,7 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
     
     mov ebp, esp
     
-    push 0x10                  ;; Segmento do Kernel
+    push 0x10 ;; Segmento do Kernel
     pop ds
 
     mov [Hexagon.Syscall.Controle.es], es
@@ -124,7 +124,7 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
 
     sub edi, 0x500
 
-    pop eax                    ;; Limpar pilha
+    pop eax ;; Limpar pilha
     
     mov dword[Hexagon.Syscall.Controle.ebp], eax
     
@@ -136,9 +136,9 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
     
     mov dword[Hexagon.Syscall.Controle.cs], eax
 
-    pop eax                    ;; Bandeira
+    pop eax ;; Bandeira
     
-    pop eax                    ;; Chamada solicitada, armazenada na pilha
+    pop eax ;; Chamada solicitada, armazenada na pilha
     
     mov dword[Hexagon.Syscall.Controle.parametro], eax ;; Chamada do sistema
 
@@ -198,8 +198,6 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
     
     jmp .fim
     
-
-
 ;;************************************************************************************
 
 ;; Manipulador de interrupção para funções Unix-like
@@ -215,7 +213,7 @@ Hexagon.Syscall.Syscall.manipuladorHXUnix:
     
     mov ebp, esp
     
-    push 0x10                  ;; Segmento do Kernel
+    push 0x10 ;; Segmento do Kernel
     pop ds
 
     mov [Hexagon.Syscall.Controle.es], es
@@ -235,7 +233,7 @@ Hexagon.Syscall.Syscall.manipuladorHXUnix:
 
     sub edi, 0x500
 
-    pop eax                    ;; Limpar pilha
+    pop eax ;; Limpar pilha
     
     mov dword[Hexagon.Syscall.Controle.ebp], eax
     
@@ -247,9 +245,9 @@ Hexagon.Syscall.Syscall.manipuladorHXUnix:
     
     mov dword[Hexagon.Syscall.Controle.cs], eax
 
-    pop eax                    ;; Bandeira
+    pop eax ;; Bandeira
     
-    pop eax                    ;; Chamada solicitada, armazenada na pilha
+    pop eax ;; Chamada solicitada, armazenada na pilha
     
     mov dword[Hexagon.Syscall.Controle.parametro], eax ;; Chamada do sistema
 
