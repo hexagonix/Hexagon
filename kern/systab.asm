@@ -114,46 +114,46 @@ Hexagon.Syscall.Syscall.servicosHexagon:
     dd Hexagon.Kernel.Kernel.Versao.retornarVersao                     ;; 22
     dd Hexagon.Kernel.Lib.Num.obterAleatorio                           ;; 23
     dd Hexagon.Kernel.Lib.Num.alimentarAleatorios                      ;; 24
-    dd Hexagon.Kernel.Arch.i386.Timer.Timer.causarAtraso                ;; 25
+    dd Hexagon.Kernel.Arch.i386.Timer.Timer.causarAtraso               ;; 25
     dd Hexagon.Kernel.API.API.intalarInterrupcao                       ;; 26
 
 ;; Gerenciamento de energia do Hexagon®
 
-    dd Hexagon.Kernel.Arch.i386.APM.Energia.reiniciarPC                 ;; 27
-    dd Hexagon.Kernel.Arch.i386.APM.Energia.desligarPC                  ;; 28
+    dd Hexagon.Kernel.Arch.i386.APM.Energia.reiniciarPC                ;; 27
+    dd Hexagon.Kernel.Arch.i386.APM.Energia.desligarPC                 ;; 28
 
 ;; Funções de saída em vídeo e gráficos do Hexagon®
 
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.imprimir           ;; 29
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.limparConsole      ;; 30
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha        ;; 31
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.imprimir                 ;; 29
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.limparConsole            ;; 30
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha              ;; 31
     dd Hexagon.Kernel.API.API.Nulo                                     ;; 32
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.rolarParaBaixo     ;; 33
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor   ;; 34
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.rolarParaBaixo           ;; 33
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor         ;; 34
     dd Hexagon.Kernel.Lib.Graficos.colocarPixel                        ;; 35
     dd Hexagon.Kernel.API.API.desenharBloco                            ;; 36
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere  ;; 37
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.definirCorTexto    ;; 38
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.obterCorTexto      ;; 39
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.obterInfoVideo     ;; 40
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere        ;; 37
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.definirCorTexto          ;; 38
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.obterCorTexto            ;; 39
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.obterInfoVideo           ;; 40
     dd Hexagon.Kernel.Lib.Graficos.atualizarTela                       ;; 41
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.definirResolucao   ;; 42
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.obterResolucao     ;; 43
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.obterCursor        ;; 44
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.definirResolucao         ;; 42
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.obterResolucao           ;; 43
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.obterCursor              ;; 44
 
 ;; Serviços de entrada por teclado do Hexagon®
 
-    dd Hexagon.Kernel.Dev.Gen.Teclado.Teclado.aguardarTeclado    ;; 45
-    dd Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterString        ;; 46
-    dd Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterEstadoTeclas  ;; 47
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.alterarFonte       ;; 48
-    dd Hexagon.Kernel.Dev.Gen.Teclado.Teclado.alterarLeiaute     ;; 49    
+    dd Hexagon.Kernel.Dev.Gen.Teclado.Teclado.aguardarTeclado          ;; 45
+    dd Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterString              ;; 46
+    dd Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterEstadoTeclas        ;; 47
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.alterarFonte             ;; 48
+    dd Hexagon.Kernel.Dev.Gen.Teclado.Teclado.alterarLeiaute           ;; 49    
 
 ;; Serviços de entrada de mouse PS/2 do Hexagon®
 
-    dd Hexagon.Kernel.Dev.Gen.Mouse.Mouse.aguardarMouse          ;; 50
-    dd Hexagon.Kernel.Dev.Gen.Mouse.Mouse.obterDoMouse           ;; 51
-    dd Hexagon.Kernel.Dev.Gen.Mouse.Mouse.configurarMouse        ;; 52
+    dd Hexagon.Kernel.Dev.Gen.Mouse.Mouse.aguardarMouse                ;; 50
+    dd Hexagon.Kernel.Dev.Gen.Mouse.Mouse.obterDoMouse                 ;; 51
+    dd Hexagon.Kernel.Dev.Gen.Mouse.Mouse.configurarMouse              ;; 52
 
 ;; Serviços de manipulação de dados do Hexagon®
 
@@ -171,12 +171,12 @@ Hexagon.Syscall.Syscall.servicosHexagon:
 
 ;; Serviços de saída por som do Hexagon®
 
-    dd Hexagon.Kernel.Dev.Gen.Som.Som.emitirSom                  ;; 64
-    dd Hexagon.Kernel.Dev.Gen.Som.Som.desligarSom                ;; 65
+    dd Hexagon.Kernel.Dev.Gen.Som.Som.emitirSom                        ;; 64
+    dd Hexagon.Kernel.Dev.Gen.Som.Som.desligarSom                      ;; 65
 
 ;; Serviço de mensagens do Hexagon®
 
-    dd Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon            ;; 66
+    dd Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon                ;; 66
 
 ;; Serviço de relógio em tempo real do Hexagon®
 
