@@ -10,9 +10,9 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                         Kernel Hexagon® - Hexagon® kernel         
+;;                          Kernel Hexagon - Hexagon kernel         
 ;;
-;;                  Copyright © 2015-2023 Felipe Miguel Nery Lunkes
+;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
 ;;
 ;;************************************************************************************
@@ -67,19 +67,19 @@
                                                                   
 ;;************************************************************************************
 ;;
-;;                    Este arquivo faz parte do Kernel Hexagon® 
+;;                     Este arquivo faz parte do kernel Hexagon 
 ;;
 ;;************************************************************************************
 
 ;;************************************************************************************
 ;;
-;;     Controle de usuários e políticas de segurança e acesso do Kernel Hexagon®
+;;     Controle de usuários e políticas de segurança e acesso do Kernel Hexagon
 ;;
 ;; Este arquivo contém todas as funções de manipulação de usuários, assim como as variáveis
 ;; relacionadas à estas tarefas. Também contém variáveis de controle de acesso por parte de
-;; usuários e sinalizadores de solicitações realizadas pelo Hexagon®, além de definições e
+;; usuários e sinalizadores de solicitações realizadas pelo Hexagon, além de definições e
 ;; padronização de códigos para políticas de segurança. Este é o núcleo de segurança e 
-;; proteção de sistema do Hexagon®.
+;; proteção de sistema do Hexagon.
 ;;
 ;;************************************************************************************
 
@@ -264,7 +264,7 @@ execucao: db 0
 ;; raiz (root), permitindo a realização de tarefas com prerrogativas. Entretanto, permite o
 ;; acesso a dados e funções não expostas ou permitidas ao usuário raiz.
 
-ordemKernelDesativada = 00h ;; Evidencia que a chamada não foi realizada pelo Hexagon®
+ordemKernelDesativada = 00h ;; Evidencia que a chamada não foi realizada pelo Hexagon
 ordemKernelExecutar   = 01h ;; Este sinalizador é compatível com o usuário raiz (root)
 ordemKernelNegar      = 02h ;; Nega a execução de *QUALQUER* função compatível solicitada
 ordemKernelDebug      = 04h ;; Usada para depuração de funções compatíveis

@@ -10,9 +10,9 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                         Kernel Hexagon® - Hexagon® kernel         
+;;                          Kernel Hexagon - Hexagon kernel         
 ;;
-;;                  Copyright © 2015-2023 Felipe Miguel Nery Lunkes
+;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
 ;;
 ;;************************************************************************************
@@ -64,14 +64,14 @@
 ;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 ;; $HexagonixOS$
-                                                                
+                                                                  
 ;;************************************************************************************
 ;;
-;;                    Este arquivo faz parte do Kernel Hexagon® 
+;;                     Este arquivo faz parte do kernel Hexagon 
 ;;
 ;;************************************************************************************
 
-;; As mensagens só serão adicionadas ao Hexagon® em caso de ativação da verbose em
+;; As mensagens só serão adicionadas ao Hexagon em caso de ativação da verbose em
 ;; tempo de montagem. Se o símbolo não for definido, o Kernel não terá suporte a 
 ;; verbose direta, mas continuará com a função para o mecanismo de mensagem. 
 

@@ -10,9 +10,9 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                         Kernel Hexagon® - Hexagon® kernel         
+;;                          Kernel Hexagon - Hexagon kernel         
 ;;
-;;                  Copyright © 2015-2023 Felipe Miguel Nery Lunkes
+;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
 ;;
 ;;************************************************************************************
@@ -67,7 +67,7 @@
                                                                   
 ;;************************************************************************************
 ;;
-;;                    Este arquivo faz parte do Kernel Hexagon® 
+;;                     Este arquivo faz parte do kernel Hexagon 
 ;;
 ;;************************************************************************************
 
@@ -302,7 +302,7 @@ Hexagon.Kernel.Kernel.Dmesg.horaParaRelatorio:
 ;;************************************************************************************
 
 ;; Essa função é responsável por receber e exibir uma mensagem originada no próprio
-;; Hexagon® ou como um alerta relevante de daemons ou aplicativos
+;; Hexagon ou como um alerta relevante de daemons ou aplicativos
 
 ;; Entrada:
 ;;

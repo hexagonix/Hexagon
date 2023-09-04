@@ -10,9 +10,9 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                         Kernel Hexagon® - Hexagon® kernel         
+;;                          Kernel Hexagon - Hexagon kernel         
 ;;
-;;                  Copyright © 2015-2023 Felipe Miguel Nery Lunkes
+;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
 ;;
 ;;************************************************************************************
@@ -64,16 +64,16 @@
 ;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 ;; $HexagonixOS$
-                                                                 
+                                                                  
 ;;************************************************************************************
 ;;
-;;                    Este arquivo faz parte do Kernel Hexagon® 
+;;                     Este arquivo faz parte do kernel Hexagon 
 ;;
 ;;************************************************************************************
 
 ;;************************************************************************************
 ;;
-;;                Controle e execução de processos do Kernel Hexagon® 
+;;                Controle e execução de processos do Kernel Hexagon
 ;;
 ;; Aqui existem rotinas para a alocação de memória para um novo processo, o
 ;; carregamento de uma imagem executável válida, sua interpretação, sua execução
@@ -83,7 +83,7 @@
 
 ;;************************************************************************************
 ;;
-;;          Códigos de retorno (erro) do Gerenciador de Processos do Hexagon®
+;;          Códigos de retorno (erro) do Gerenciador de Processos do Hexagon
 ;;
 ;;                           Interface padronizada de retorno 
 ;;
@@ -101,13 +101,13 @@
 
 ;;************************************************************************************
 ;;
-;;    Este módulo faz chamadas a funções de gerenciamento de memória do Hexagon®
+;;    Este módulo faz chamadas a funções de gerenciamento de memória do Hexagon
 ;;
 ;;************************************************************************************
 
 ;;************************************************************************************
 ;;
-;;                         Controle de Processos do Hexagon®
+;;                         Controle de Processos do Hexagon
 ;;
 ;;************************************************************************************
 
@@ -148,7 +148,7 @@ Hexagon.Processos Hexagon.Gerenciamento.Tarefas 20 ;; 21 processos por enquanto
 
 ;;************************************************************************************
 ;;
-;;                      Bloco de Controle de Processo do Hexagon®
+;;                      Bloco de Controle de Processo do Hexagon
 ;;
 ;;************************************************************************************
 
@@ -162,7 +162,7 @@ BCP.tamanho: times Hexagon.Processos.limiteProcessos dd 0   ;; Bloco de mapeamen
 
 ;;************************************************************************************
 ;;
-;;                       Tabela de Processos do Hexagon®
+;;                         Tabela de Processos do Hexagon
 ;;
 ;;************************************************************************************
 
@@ -220,7 +220,7 @@ Hexagon.Kernel.Kernel.Proc.iniciarEscalonador:
 ;;************************************************************************************
 
 ;; Agora o espaço de memória alocado para os processos será salvo na estrutura de controle
-;; do escalonador de processos do Hexagon®
+;; do escalonador de processos do Hexagon
 
 Hexagon.Kernel.Kernel.Proc.configurarAlocacaoProcessos:
 
@@ -291,7 +291,7 @@ match =SIM, VERBOSE
     
 ;;************************************************************************************
     
-;; Configura um novo processo Hexagon® para execução imediata
+;; Configura um novo processo Hexagon para execução imediata
 ;;
 ;; Entrada:
 ;; 

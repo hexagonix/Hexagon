@@ -10,9 +10,9 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                         Kernel Hexagon® - Hexagon® kernel         
+;;                          Kernel Hexagon - Hexagon kernel         
 ;;
-;;                  Copyright © 2015-2023 Felipe Miguel Nery Lunkes
+;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
 ;;
 ;;************************************************************************************
@@ -67,7 +67,7 @@
                                                                   
 ;;************************************************************************************
 ;;
-;;                    Este arquivo faz parte do Kernel Hexagon® 
+;;                     Este arquivo faz parte do kernel Hexagon 
 ;;
 ;;************************************************************************************
 
@@ -78,12 +78,12 @@ use32
 ;;       Informações relevantes para o entendimento do Sistema de Arquivos FAT
 ;;                              (especificamente FAT16B)
 ;;
-;;                           FAT16B para Hexagon® versão 1.2
+;;                           FAT16B para Hexagon versão 1.2
 ;;
 ;; - Cada entrada no diretório raiz tem 32 bytes de tamanho:
 ;;   - 11 destes, iniciais, reservam o nome do arquivo. Caso o primeiro caractere 
 ;;     tenha sido trocado por espaço (' '), ele foi "deletado", e não deve ser exibido
-;;     manipulado pelo Sistema de Arquivos ou pelo próprio Hexagon®.
+;;     manipulado pelo Sistema de Arquivos ou pelo próprio Hexagon.
 ;; - O cluster inicial de um arquivo é adicionado no entrada no diretório raiz. Ao ler
 ;;   o conteúdo do cluster indicado, temos a localização do próximo cluster na cadeia. 
 ;;   Tanto o valor inicial como o obtido devem ser utilizados para o cálculo físico do
@@ -96,9 +96,9 @@ use32
 ;;   cluster, o próximo pode ser obtido. Caso o valor do cluster seja 0xFFF8, não se trata 
 ;;   de um número de cluster na cadeia, mas sim que este é o último cluster na cadeia e a
 ;;   leitura já pode ser finalizada.
-;; - Alguns atributos são verificados por essa versão do driver FAT16B do Hexagon®. São 
+;; - Alguns atributos são verificados por essa versão do driver FAT16B do Hexagon. São 
 ;;   lidas informações que indicariam a presença de um subdiretório ou rótulo do volume. Por
-;;   hora, essas informações não são usadas. Entretanto, código para a manipulação de
+;;   ora, essas informações não são usadas. Entretanto, código para a manipulação de
 ;;   diretórios já está sendo escrito, e um dia essa função será incorporada.
 ;; - Para facilitar o desenvolvimento, as estruturas e variáveis padrão para sistemas do tipo
 ;;   FAT estão declaradas no corpo do Sistema de Arquivos Virtual, e são instanciadas aqui, 
@@ -107,7 +107,7 @@ use32
 ;;   utilizadas as constantes associadas com a instância, como atributos de entrada e valores
 ;;   encontrados nas entradas. Apenas valores de 0 e 1 podem ser utilizados em operações 
 ;;   lógicas. O resto dos valores devem vir das contantes e dados identificados já com seu
-;;   significado, como Hexagon.VFS.FAT.FAT16B.atributoDeletado, por exemplo, inidicando o
+;;   significado, como Hexagon.VFS.FAT.FAT16B.atributoDeletado, por exemplo, indicando o
 ;;   código do caractere inicial que indica que o arquivo foi excluído (espaço).
 ;;
 ;;************************************************************************************

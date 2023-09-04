@@ -10,9 +10,9 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                         Kernel Hexagon® - Hexagon® kernel         
+;;                          Kernel Hexagon - Hexagon kernel         
 ;;
-;;                  Copyright © 2015-2023 Felipe Miguel Nery Lunkes
+;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
 ;;
 ;;************************************************************************************
@@ -67,14 +67,14 @@
                                                                   
 ;;************************************************************************************
 ;;
-;;                    Este arquivo faz parte do Kernel Hexagon® 
+;;                     Este arquivo faz parte do kernel Hexagon 
 ;;
 ;;************************************************************************************
 
 ;; Informações úteis para utilização do modo gráfico
-;; Implementação de modo gráfico do Sistema Operacional Hexagon®
+;; Implementação de modo gráfico do Sistema Operacional Hexagon
 
-;; A implementação de modo gráfico do Sistema Operacional Hexagon® se baseia nas
+;; A implementação de modo gráfico do Sistema Operacional Hexagon se baseia nas
 ;; especificações VESA 3.0.
 
 ;; Visualizar especificações VESA 3.0 para mais informações

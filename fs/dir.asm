@@ -10,9 +10,9 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                         Kernel Hexagon® - Hexagon® kernel         
+;;                          Kernel Hexagon - Hexagon kernel         
 ;;
-;;                  Copyright © 2015-2023 Felipe Miguel Nery Lunkes
+;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
 ;;
 ;;************************************************************************************
@@ -67,7 +67,7 @@
                                                                   
 ;;************************************************************************************
 ;;
-;;                    Este arquivo faz parte do Kernel Hexagon® 
+;;                     Este arquivo faz parte do kernel Hexagon 
 ;;
 ;;************************************************************************************
 
@@ -117,7 +117,7 @@ Hexagon.Kernel.FS.Dir.definirDiretorioAtual:
 
 ;; Agora o tamanho do caminho fornecido será validado para verificar a exigência
 
-    call Hexagon.Kernel.Lib.String.tamanhoString ;; Função do Hexagon® para verificar o tamanho de uma string
+    call Hexagon.Kernel.Lib.String.tamanhoString ;; Função do Hexagon para verificar o tamanho de uma string
 
     cmp eax, 2
     jg .continuar ;; Maior que 2 (Caractere mais null)
@@ -220,7 +220,7 @@ Hexagon.Kernel.FS.Dir.definirPontodeMontagem:
 
 ;; Agora o tamanho do caminho fornecido será validado para verificar a exigência
 
-    call Hexagon.Kernel.Lib.String.tamanhoString ;; Função do Hexagon® para verificar o tamanho de uma string
+    call Hexagon.Kernel.Lib.String.tamanhoString ;; Função do Hexagon para verificar o tamanho de uma string
 
     cmp eax, 2
     jg .continuar ;; Maior que 2 (Caractere mais null)

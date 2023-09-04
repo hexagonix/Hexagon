@@ -10,9 +10,9 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                         Kernel Hexagon® - Hexagon® kernel         
+;;                          Kernel Hexagon - Hexagon kernel         
 ;;
-;;                  Copyright © 2015-2023 Felipe Miguel Nery Lunkes
+;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
 ;;
 ;;************************************************************************************
@@ -64,12 +64,18 @@
 ;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 ;; $HexagonixOS$
+                                                                  
+;;************************************************************************************
+;;
+;;                     Este arquivo faz parte do kernel Hexagon 
+;;
+;;************************************************************************************
 
-;; Ponto de entrada do Kernel Hexagon®
+;; Ponto de entrada do Kernel Hexagon
 
 ;; Neste momento, o ambiente de operação é o modo real
 
-;; Especificações de inicialização do Hexagon®
+;; Especificações de inicialização do Hexagon
 ;;
 ;; Parâmetros que devem ser fornecidos pelo HBoot (ou gerenciador compatível):
 ;; 
@@ -80,7 +86,7 @@
 ;; CX  - Memória total reconhecida pelo HBoot
 ;; AX  - Endereço da árvore de dispositivos de 16 bits
 ;; EBP - Ponteiro para o BPB (BIOS Parameter Block)
-;; ESI - Linha de comando para o Hexagon®
+;; ESI - Linha de comando para o Hexagon
 ;; EDI - Endereço da árvore de dispositivos de 32 bits
 
 use16               
@@ -89,8 +95,8 @@ cabecalhoHexagon:
 
 .assinatura:      db "HAPP" ;; Assinatura
 .arquitetura:     db 01h    ;; Arquitetura (i386 = 01h)
-.versaoMinima:    db 00h    ;; Versão mínima do Hexagon® (não nos interessa aqui)
-.subversaoMinima: db 00h    ;; Subversão mínima do Hexagon® (não nos interessa aqui)
+.versaoMinima:    db 00h    ;; Versão mínima do Hexagon (não nos interessa aqui)
+.subversaoMinima: db 00h    ;; Subversão mínima do Hexagon (não nos interessa aqui)
 .pontoEntrada:    dd Hexagon.Kernel.Lib.HAPP.execucaoIndevida ;; Offset do ponto de entrada
 .tipoExecutavel:  db 01h    ;; Esta é uma imagem executável
 .reservado0:      dd 0      ;; Reservado (Dword)
@@ -125,7 +131,7 @@ cabecalhoHexagon:
 ;; ao disco utilizado na inicialização. Futuros dados poderão ser salvos do modo real para
 ;; uso no ambiente protegido. Os dados de inicialização são disponibilizados pelo HBoot, como
 ;; valores brutos ou como endereços para estruturas com parâmetros que devem ser processados
-;; no ambiente protegido do Hexagon®
+;; no ambiente protegido do Hexagon
     
 ;; Irá armazenar o volume onde o sistema foi iniciado (não pode ser alterado)
 
@@ -135,7 +141,7 @@ cabecalhoHexagon:
 
     mov dword[Hexagon.Memoria.enderecoBPB], ebp
     
-;; Armazenar o tamanho da memória RAM disponível, fornecido pelo Carregador de Inicialização do Hexagon®
+;; Armazenar o tamanho da memória RAM disponível, fornecido pelo Carregador de Inicialização do Hexagon
     
     mov word[Hexagon.Memoria.memoriaCMOS], cx 
 
@@ -144,7 +150,7 @@ cabecalhoHexagon:
     mov dword[Hexagon.Boot.Parametros.linhaComando], esi
 
 ;; Agora vamos arrumar a casa para entrar em modo protegido e ir para o ponto de entrada de fato do
-;; Hexagon®, iniciando de fato o kernel
+;; Hexagon, iniciando de fato o kernel
 
 ;; Habilitar A20, necessário para endereçamento de 4 GB de memória RAM e para entrar em modo protegido
     
@@ -158,6 +164,6 @@ cabecalhoHexagon:
 
 use32 
 
-    jmp Hexagon.init  ;; Vamos agora para o ponto de entrada do Hexagon® em modo protegido
+    jmp Hexagon.init  ;; Vamos agora para o ponto de entrada do Hexagon em modo protegido
 
 include "kern.asm"  ;; Incluir o restante do Kernel, em ambiente de modo protegido

@@ -10,9 +10,9 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                         Kernel Hexagon® - Hexagon® kernel         
+;;                          Kernel Hexagon - Hexagon kernel         
 ;;
-;;                  Copyright © 2015-2023 Felipe Miguel Nery Lunkes
+;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
 ;;
 ;;************************************************************************************
@@ -67,7 +67,7 @@
                                                                   
 ;;************************************************************************************
 ;;
-;;                    Este arquivo faz parte do Kernel Hexagon® 
+;;                     Este arquivo faz parte do kernel Hexagon 
 ;;
 ;;************************************************************************************
 
@@ -101,7 +101,7 @@ struc Hexagon.Arch.Gen.Memoria.Alocador tamanhoEspacoProcessos
 
 ;; Criar instâncias das estruturas, com os nomes adequados que indiquem sua localização
 ;;
-;; Atualmente, 16 Mb reservados para o Hexagon® e suas estruturas e 16 Mb reservados para
+;; Atualmente, 16 Mb reservados para o Hexagon e suas estruturas e 16 Mb reservados para
 ;; o carregamentos de executáveis na memória. Essas informações estão disponíveis no
 ;; ato de se criar o objeto instanciado e pode ser alterado. A primeira instância determina
 ;; onde começa o espaço de memória que pode ser utilizado pelos processos, após o espaço
@@ -122,7 +122,7 @@ align 4
 ;; EAX - Quantidade de memória utilizada pelos processos na pilha
 ;; EBX - Memória total encontrada e disponível para uso, em bytes
 ;; ECX - Memória total encontrada e disponível para uso, em Mbytes (menos preciso)
-;; EDX - Memória reservada ao Hexagon®, em bytes
+;; EDX - Memória reservada ao Hexagon, em bytes
 ;; ESI - Memória total alocada (reservado+processos), em kbytes
 
 Hexagon.Kernel.Arch.Gen.Mm.usoMemoria:
@@ -148,7 +148,7 @@ Hexagon.Kernel.Arch.Gen.Mm.usoMemoria:
 
 .fornecerMemoriaAlocada:
 
-;; Adicionar a memória resevada do Hexagon®
+;; Adicionar a memória resevada do Hexagon
 
     push eax 
     push ebx 

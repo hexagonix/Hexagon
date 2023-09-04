@@ -10,9 +10,9 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                         Kernel Hexagon® - Hexagon® kernel         
+;;                          Kernel Hexagon - Hexagon kernel         
 ;;
-;;                  Copyright © 2015-2023 Felipe Miguel Nery Lunkes
+;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
 ;;
 ;;************************************************************************************
@@ -64,10 +64,10 @@
 ;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 ;; $HexagonixOS$
-                                                                 
+                                                                  
 ;;************************************************************************************
 ;;
-;;                    Este arquivo faz parte do Kernel Hexagon® 
+;;                     Este arquivo faz parte do kernel Hexagon 
 ;;
 ;;************************************************************************************
 
@@ -75,22 +75,22 @@ use32
 
 ;;************************************************************************************
 
-;; Este módulo do Hexagon® é responsável por carregar, obter informações do arquivo
+;; Este módulo do Hexagon é responsável por carregar, obter informações do arquivo
 ;; carregado e determinar se o formato corresponde à especificação HAPP. Em caso 
 ;; afirmativo, deve extrair do cabeçalho da imagem informações necessárias para
 ;; configurar o ambiente de execução e iniciar o processo à partir do ponto de entrada.
 ;; As funções abaixo são responsáveis apenas pela avaliação da imagem, enquanto a 
 ;; manipulação e execução do processo ficam a cargo do gerenciador e escalonador de 
-;; processos. As dependências de versão do Hexagon® também são checadas aqui. Este
+;; processos. As dependências de versão do Hexagon também são checadas aqui. Este
 ;; arquivo também tem a estrutura de manipulação de imagens HAPP que são utilizadas em
 ;; outras áreas do kernel.
 
 ;;************************************************************************************
 
-;; Documentação da imagem HAPP para Hexagon®
+;; Documentação da imagem HAPP para Hexagon
 ;;
 ;; Um arquivo no formato HAPP contêm uma imagem binária executável desenvolvida para ser
-;; carregada e executada sobre o Hexagon®. Essa imagem deve apresentar um cabeçalho, que
+;; carregada e executada sobre o Hexagon. Essa imagem deve apresentar um cabeçalho, que
 ;; declara uma série de informações que serão utilizadas pelo kernel para o carregamento,
 ;; resolução de dependências e execução correta. 
 ;;
@@ -100,8 +100,8 @@ use32
 ;;
 ;; #1       Assinatura HAPP                    4 bytes                "HAPP" 
 ;; #2       Arquitetura de destino da imagem   1 byte                 i386 = 01h
-;; #3       Versão mínima do Hexagon®          1 byte                 0 para qualquer ou número correspondente
-;; #4       Subversão mínima do Hexagon®       1 byte                 0 para qualquer ou número correspondente
+;; #3       Versão mínima do Hexagon           1 byte                 0 para qualquer ou número correspondente
+;; #4       Subversão mínima do Hexagon        1 byte                 0 para qualquer ou número correspondente
 ;; #5       Ponto de entrada (offset)          1 dword                Offset do ponto de entrada dentro da imagem
 ;; #6       Tipo da imagem                     1 byte                 Imagem executável estática = 01h
 ;; #7       Campo reservado                    1 dword                Reservado para uso do Sistema
@@ -183,8 +183,8 @@ struc Hexagon.Gerenciamento.Imagem.HAPP
 .codigoErro:             dd 0 ;; Código de erro emitido pelo último processo
 .arquiteturaImagem:      db 0 ;; Arquitetura da imagem
 .imagemIncompativel:     db 0 ;; Imagem incompatível?
-.versaoMinima:           db 0 ;; Versão mínima do Hexagon® necessária a execução (dependência)
-.subVersaoMinima:        db 0 ;; Subversão (ou revisão) do Hexagon® necessária a execução (dependência)
+.versaoMinima:           db 0 ;; Versão mínima do Hexagon necessária a execução (dependência)
+.subVersaoMinima:        db 0 ;; Subversão (ou revisão) do Hexagon necessária a execução (dependência)
 .entradaHAPP:            dd 0 ;; Endereço de entrada do código da imagem
 .tipoImagem:             db 0 ;; Tipo executável da imagem
 .saidaHAPP:              dd 0 ;; Código de saída do código da imagem (futuro)

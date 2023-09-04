@@ -10,9 +10,9 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                         Kernel Hexagon® - Hexagon® kernel         
+;;                          Kernel Hexagon - Hexagon kernel         
 ;;
-;;                  Copyright © 2015-2023 Felipe Miguel Nery Lunkes
+;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
 ;;
 ;;************************************************************************************
@@ -64,10 +64,10 @@
 ;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 ;; $HexagonixOS$
-                                                                
+                                                                  
 ;;************************************************************************************
 ;;
-;;                    Este arquivo faz parte do Kernel Hexagon® 
+;;                     Este arquivo faz parte do kernel Hexagon 
 ;;
 ;;************************************************************************************
 
@@ -75,15 +75,15 @@ use32
 
 Hexagon.Int:
 
-.interrupcaoHexagon  = 69h ;; Interrupção do Hexagon®
-.interrupcaoHXUnix   = 80h ;; Interrupção do Hexagon® para funções Unix-like
+.interrupcaoHexagon  = 69h ;; Interrupção do Hexagon
+.interrupcaoHXUnix   = 80h ;; Interrupção do Hexagon para funções Unix-like
 .interrupcaoTimer    = 08h ;; Interrupção reservada ao timer
 .interrupcaoTeclado  = 09h ;; Interrupção reservada ao teclado
 .interrupcaoMouse    = 74h ;; Interrupção reservada ao dispositivo apontador
 
 ;;************************************************************************************
 
-;; Instala as rotinas de interrupção do Hexagon® (ISR - Interrupt Service Routine)
+;; Instala as rotinas de interrupção do Hexagon (ISR - Interrupt Service Routine)
 
 instalarInterrupcoes:
 
@@ -106,14 +106,14 @@ instalarInterrupcoes:
     
     call instalarISR
 
-;; Instalar o manipulador de chamadas do Hexagon®
+;; Instalar o manipulador de chamadas do Hexagon
 
-    mov esi, Hexagon.Syscall.Syscall.manipuladorHexagon ;; Serviços do Hexagon®
+    mov esi, Hexagon.Syscall.Syscall.manipuladorHexagon ;; Serviços do Hexagon
     mov eax, Hexagon.Int.interrupcaoHexagon     ;; Número da interrupção       
     
     call instalarISR
 
-    mov esi, Hexagon.Syscall.Syscall.manipuladorHXUnix  ;; Serviços do Hexagon®
+    mov esi, Hexagon.Syscall.Syscall.manipuladorHXUnix  ;; Serviços do Hexagon
     mov eax, Hexagon.Int.interrupcaoHXUnix      ;; Número da interrupção       
     
     call instalarISR
@@ -646,15 +646,15 @@ instalarISR:
     push ebp
 
 ;; Primeiramente vamos verificar se o pedido de instalação de interrupção partiu
-;; do Hexagon®, observando a variável que registra essas solicitações previlegiadas.
+;; do Hexagon, observando a variável que registra essas solicitações previlegiadas.
 
     cmp dword[ordemKernel], ordemKernelExecutar ;; Caso sim, ignorar medidas de discriminação
     je .instalar
 
 ;; Caso a solicitação tenha partido do usuário ou aplicativo, verificar se os valores
-;; passados poderiam sobrescrever as interrupções instaladas previamente pelo Hexagon®
+;; passados poderiam sobrescrever as interrupções instaladas previamente pelo Hexagon
 
-    cmp eax, Hexagon.Int.interrupcaoHexagon ;; Tentativa de substituir a chamada do Hexagon®
+    cmp eax, Hexagon.Int.interrupcaoHexagon ;; Tentativa de substituir a chamada do Hexagon
     je .negar                               ;; Negar instalação
 
     cmp eax, Hexagon.Int.interrupcaoTimer   ;; Tentativa de alterar a interrupção de timer
