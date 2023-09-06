@@ -10,7 +10,7 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                          Kernel Hexagon - Hexagon kernel         
+;;                          Kernel Hexagon - Hexagon kernel
 ;;
 ;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
@@ -20,7 +20,7 @@
 ;; Português:
 ;;
 ;; O Hexagon, Hexagonix e seus componentes são licenciados sob licença BSD-3-Clause.
-;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório 
+;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório
 ;; para obter mais informações sobre seus direitos e obrigações ao utilizar e reutilizar
 ;; o código deste ou de outros arquivos.
 ;;
@@ -37,10 +37,10 @@
 ;;
 ;; Copyright (c) 2015-2023, Felipe Miguel Nery Lunkes
 ;; All rights reserved.
-;; 
+;;
 ;; Redistribution and use in source and binary forms, with or without
 ;; modification, are permitted provided that the following conditions are met:
-;; 
+;;
 ;; 1. Redistributions of source code must retain the above copyright notice, this
 ;;    list of conditions and the following disclaimer.
 ;;
@@ -51,7 +51,7 @@
 ;; 3. Neither the name of the copyright holder nor the names of its
 ;;    contributors may be used to endorse or promote products derived from
 ;;    this software without specific prior written permission.
-;; 
+;;
 ;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 ;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 ;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -64,10 +64,10 @@
 ;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 ;; $HexagonixOS$
-                                                                  
+
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon 
+;;                     Este arquivo faz parte do kernel Hexagon
 ;;
 ;;************************************************************************************
 
@@ -97,12 +97,12 @@ match =SIM, VERBOSE
 {
 
     mov esi, Hexagon.Verbose.APM.servicoAPM
-    mov ebx, Hexagon.Dmesg.Prioridades.p5 
+    mov ebx, Hexagon.Dmesg.Prioridades.p5
 
     call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
 
     mov esi, Hexagon.Verbose.APM.reinicioAPM
-    mov ebx, Hexagon.Dmesg.Prioridades.p5 
+    mov ebx, Hexagon.Dmesg.Prioridades.p5
 
     call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
 
@@ -111,22 +111,22 @@ match =SIM, VERBOSE
 .aguardarLoop:
 
     in al, 0x64     ;; 0x64 é o registrador de estado
-    
+
     bt ax, 1        ;; Checar segundo bit até se tornar 0
     jnc .OK
-    
+
     jmp .aguardarLoop
-    
+
 .OK:
 
     mov al, 0xfe
-    
+
     out 0x64, al
 
     cli
-    
+
     jmp $
-    
+
     ret
 
 ;;************************************************************************************
@@ -137,12 +137,12 @@ match =SIM, VERBOSE
 {
 
     mov esi, Hexagon.Verbose.APM.servicoAPM
-    mov ebx, Hexagon.Dmesg.Prioridades.p5 
+    mov ebx, Hexagon.Dmesg.Prioridades.p5
 
     call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
 
     mov esi, Hexagon.Verbose.APM.desligamentoAPM
-    mov ebx, Hexagon.Dmesg.Prioridades.p5 
+    mov ebx, Hexagon.Dmesg.Prioridades.p5
 
     call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
 
@@ -169,16 +169,16 @@ match =SIM, VERBOSE
 
     mov ax, 5300h       ;; Função de checagem da instalação
     mov bx, 0           ;; O ID do dispositivo (APM BIOS)
-    
+
     call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h           ;; Chamar interrupção APM
-    
+
     jc APM_falha_instalacao
 
     mov ax, 5301h       ;; Função de interface de conexão em modo real
     mov bx, 0           ;; O ID do dispositivo (APM BIOS)
-    
+
     call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h           ;; Chamar interrupção APM
-    
+
     jc APM_falha_conexao
 
     mov ax, 530Eh       ;; Função de seleção de versão do Driver
@@ -186,32 +186,32 @@ match =SIM, VERBOSE
     mov cx, 0102h       ;; Selecionar APM versão 1.2
                         ;; A funcionalidade está presente após a versão 1.2
     call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h           ;; Chamar interrupção APM
-    
+
     jc APM_falha_selecionar_versao
 
     mov ax, 5307h       ;; Função de definir estado
     mov cx, 0003h       ;; Estado de desligar
     mov bx, 0001h       ;; Todos os dispositivos tem ID 1
-    
+
     call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h           ;; Chamar interrupção APM
-    
+
 ;; Caso o sistema não desligue de forma apropriada, serão retornados códigos de erro ao
 ;; programa que chamou a função de desligamento.
-    
+
 APM_falha_comando:      ;; Chamado caso o comando de desligamento (código 3) não seja executado
 
 match =SIM, VERBOSE
 {
 
     mov esi, Hexagon.Verbose.APM.erroComandoAPM
-    mov ebx, Hexagon.Dmesg.Prioridades.p5 
+    mov ebx, Hexagon.Dmesg.Prioridades.p5
 
     call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
 
 }
 
     mov ax, 3
-    
+
     jmp APM_desligamento_ok
 
 APM_falha_instalacao:   ;; Chamado caso ocorra falha na instalação
@@ -220,43 +220,43 @@ match =SIM, VERBOSE
 {
 
     mov esi, Hexagon.Verbose.APM.erroInstalacaoAPM
-    mov ebx, Hexagon.Dmesg.Prioridades.p5 
+    mov ebx, Hexagon.Dmesg.Prioridades.p5
 
     call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
 
 }
 
     mov ax, 0
-    
+
     jmp APM_desligamento_ok
-    
+
 APM_falha_conexao:      ;; Chamado caso ocorra falha na conexão de interface de Modo Real
 
 match =SIM, VERBOSE
 {
 
     mov esi, Hexagon.Verbose.APM.erroConexaoAPM
-    mov ebx, Hexagon.Dmesg.Prioridades.p5 
+    mov ebx, Hexagon.Dmesg.Prioridades.p5
 
     call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
 
 }
 
     mov ax, 1
-    
+
     jmp APM_desligamento_ok
-    
+
 APM_falha_selecionar_versao: ;; Chamado quando a versão APM é inferior a 1.2
 
     mov ax, 2
-    
+
 APM_desligamento_ok:    ;; Retorna a função que a chamou
 
 match =SIM, VERBOSE
 {
 
     mov esi, Hexagon.Verbose.APM.sucessoDesligamentoAPM
-    mov ebx, Hexagon.Dmesg.Prioridades.p5 
+    mov ebx, Hexagon.Dmesg.Prioridades.p5
 
     call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
 
@@ -264,9 +264,9 @@ match =SIM, VERBOSE
 
     pop cx
     pop bx
-    
+
     stc
-    
+
     ret
 
 ;;************************************************************************************

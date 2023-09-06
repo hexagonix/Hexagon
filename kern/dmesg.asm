@@ -10,7 +10,7 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                          Kernel Hexagon - Hexagon kernel         
+;;                          Kernel Hexagon - Hexagon kernel
 ;;
 ;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
@@ -20,7 +20,7 @@
 ;; Português:
 ;;
 ;; O Hexagon, Hexagonix e seus componentes são licenciados sob licença BSD-3-Clause.
-;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório 
+;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório
 ;; para obter mais informações sobre seus direitos e obrigações ao utilizar e reutilizar
 ;; o código deste ou de outros arquivos.
 ;;
@@ -37,10 +37,10 @@
 ;;
 ;; Copyright (c) 2015-2023, Felipe Miguel Nery Lunkes
 ;; All rights reserved.
-;; 
+;;
 ;; Redistribution and use in source and binary forms, with or without
 ;; modification, are permitted provided that the following conditions are met:
-;; 
+;;
 ;; 1. Redistributions of source code must retain the above copyright notice, this
 ;;    list of conditions and the following disclaimer.
 ;;
@@ -51,7 +51,7 @@
 ;; 3. Neither the name of the copyright holder nor the names of its
 ;;    contributors may be used to endorse or promote products derived from
 ;;    this software without specific prior written permission.
-;; 
+;;
 ;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 ;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 ;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -64,10 +64,10 @@
 ;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 ;; $HexagonixOS$
-                                                                  
+
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon 
+;;                     Este arquivo faz parte do kernel Hexagon
 ;;
 ;;************************************************************************************
 
@@ -114,19 +114,19 @@ Hexagon.Dmesg.Prioridades:
 Hexagon.Kernel.Kernel.Dmesg.iniciarRelatorio:
 
     call Hexagon.Kernel.Lib.Graficos.usarBufferKernel
-    
+
     mov esi, Hexagon.Info.sobreHexagon
-    
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
-    
+
     call Hexagon.Kernel.Kernel.Dmesg.dataParaRelatorio
-    
+
     call Hexagon.Kernel.Kernel.Dmesg.horaParaRelatorio
-    
+
     call Hexagon.Kernel.Lib.Graficos.usarBufferVideo1
-    
+
     ret
-    
+
 ;;************************************************************************************
 
 ;; Esta função permite adicionar uma mensagem no relatório do Kernel
@@ -134,11 +134,11 @@ Hexagon.Kernel.Kernel.Dmesg.iniciarRelatorio:
 Hexagon.Kernel.Kernel.Dmesg.adicionarMensagem:
 
     call Hexagon.Kernel.Lib.Graficos.usarBufferKernel
-    
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
-    
+
     call Hexagon.Kernel.Lib.Graficos.usarBufferVideo1
-    
+
     ret
 
 ;;************************************************************************************
@@ -150,79 +150,79 @@ Hexagon.Kernel.Kernel.Dmesg.dataParaRelatorio:
     push esi
 
     mov esi, Hexagon.Dmesg.dataInicio
-    
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
-                                     
-    call Hexagon.Kernel.Arch.i386.CMOS.CMOS.obterDadosCMOS                         
 
-    mov al, [Hexagon.Arch.i386.CMOS.dia]   
-                         
+    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
+
+    call Hexagon.Kernel.Arch.i386.CMOS.CMOS.obterDadosCMOS
+
+    mov al, [Hexagon.Arch.i386.CMOS.dia]
+
     call BCDParaASCII
-    
+
     push eax
-        
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
-    
+
     pop eax
-    
+
     mov al, ah
-    
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
-    
+
     mov al, '/'
-   
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
 
     mov al, [Hexagon.Arch.i386.CMOS.mes]
-    
+
     call BCDParaASCII
-    
+
     push eax
-      
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
-    
+
     pop eax
-    
+
     mov al, ah
-    
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
 
     mov al, '/'
-   
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
-   
+
     mov al, [Hexagon.Arch.i386.CMOS.seculo]
-   
+
     call BCDParaASCII
-   
+
     push eax
-   
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
-   
+
     pop eax
-   
+
     mov al, ah
-   
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
-   
+
     mov al, [Hexagon.Arch.i386.CMOS.ano]
-   
+
     call BCDParaASCII
-   
+
     push eax
-   
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
-   
+
     pop eax
-   
+
     mov al, ah
-   
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
-   
-    pop esi   
-    pop ebx   
+
+    pop esi
+    pop ebx
     pop eax
-       
+
     ret
 
 ;;************************************************************************************
@@ -234,69 +234,69 @@ Hexagon.Kernel.Kernel.Dmesg.horaParaRelatorio:
     push esi
 
     mov al, ' '
-    
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
-                                     
-    call Hexagon.Kernel.Arch.i386.CMOS.CMOS.obterDadosCMOS                         
 
-    mov al, [Hexagon.Arch.i386.CMOS.hora]   
-                         
+    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+
+    call Hexagon.Kernel.Arch.i386.CMOS.CMOS.obterDadosCMOS
+
+    mov al, [Hexagon.Arch.i386.CMOS.hora]
+
     call BCDParaASCII
-    
+
     push eax
-    
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
-    
+
     pop eax
-    
+
     mov al, ah
-    
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
-    
+
     mov al, ':'
-   
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
 
     mov al, [Hexagon.Arch.i386.CMOS.minuto]
-    
+
     call BCDParaASCII
-    
+
     push eax
-      
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
-    
+
     pop eax
-    
+
     mov al, ah
-    
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
 
     mov al, ':'
-   
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
-   
+
     mov al, [Hexagon.Arch.i386.CMOS.segundo]
-   
+
     call BCDParaASCII
-   
+
     push eax
-   
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
-   
+
     pop eax
-   
+
     mov al, ah
-   
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
-   
+
     mov esi, Hexagon.Dmesg.infoData
-    
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
-    
+
     pop esi
     pop ebx
     pop eax
-    
+
     ret
 
 ;;************************************************************************************
@@ -332,7 +332,7 @@ Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon:
 .mensagemHexagon:
 
     mov esi, Hexagon.Dmesg.identificadorHexagon
-    
+
     call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
@@ -342,7 +342,7 @@ Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon:
 .processoUsuario:
 
     mov esi, Hexagon.Dmesg.identificadorUsuarioInicial
-    
+
     call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
@@ -352,13 +352,13 @@ Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon:
     movzx eax, word[Hexagon.Processos.PID] ;; Obter o PID
 
     call Hexagon.Kernel.Lib.String.paraString ;; Transformar em uma string
-    
+
     call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
 
     mov esi, Hexagon.Dmesg.identificadorUsuarioFinal
-    
+
     call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
@@ -391,7 +391,7 @@ Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon:
 .serialMensagemHexagon:
 
     mov esi, Hexagon.Dmesg.identificadorHexagon
-    
+
     call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
     jmp .serialMensagemRecebida
@@ -399,7 +399,7 @@ Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon:
 .serialProcessoUsuario:
 
     mov esi, Hexagon.Dmesg.identificadorUsuarioInicial
-    
+
     call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
 ;; O PID do processo será exibido na tela
@@ -411,7 +411,7 @@ Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon:
     call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
     mov esi, Hexagon.Dmesg.identificadorUsuarioFinal
-    
+
     call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
 .serialMensagemRecebida:
@@ -440,7 +440,7 @@ Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial:
 
     push esi ;; Primeiro, salvar a mensagem já presente em ESI para uso futuro em
              ;; Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
-    
+
     mov esi, Hexagon.Dev.Dispositivos.com1
 
     call Hexagon.Kernel.Dev.Dev.abrir

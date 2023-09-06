@@ -10,7 +10,7 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                          Kernel Hexagon - Hexagon kernel         
+;;                          Kernel Hexagon - Hexagon kernel
 ;;
 ;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
@@ -20,7 +20,7 @@
 ;; Português:
 ;;
 ;; O Hexagon, Hexagonix e seus componentes são licenciados sob licença BSD-3-Clause.
-;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório 
+;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório
 ;; para obter mais informações sobre seus direitos e obrigações ao utilizar e reutilizar
 ;; o código deste ou de outros arquivos.
 ;;
@@ -37,10 +37,10 @@
 ;;
 ;; Copyright (c) 2015-2023, Felipe Miguel Nery Lunkes
 ;; All rights reserved.
-;; 
+;;
 ;; Redistribution and use in source and binary forms, with or without
 ;; modification, are permitted provided that the following conditions are met:
-;; 
+;;
 ;; 1. Redistributions of source code must retain the above copyright notice, this
 ;;    list of conditions and the following disclaimer.
 ;;
@@ -51,7 +51,7 @@
 ;; 3. Neither the name of the copyright holder nor the names of its
 ;;    contributors may be used to endorse or promote products derived from
 ;;    this software without specific prior written permission.
-;; 
+;;
 ;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 ;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 ;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -64,10 +64,10 @@
 ;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 ;; $HexagonixOS$
-                                                                  
+
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon 
+;;                     Este arquivo faz parte do kernel Hexagon
 ;;
 ;;************************************************************************************
 
@@ -78,7 +78,7 @@
 ;; Este arquivo contém todas as funções de manipulação de usuários, assim como as variáveis
 ;; relacionadas à estas tarefas. Também contém variáveis de controle de acesso por parte de
 ;; usuários e sinalizadores de solicitações realizadas pelo Hexagon, além de definições e
-;; padronização de códigos para políticas de segurança. Este é o núcleo de segurança e 
+;; padronização de códigos para políticas de segurança. Este é o núcleo de segurança e
 ;; proteção de sistema do Hexagon.
 ;;
 ;;************************************************************************************
@@ -112,43 +112,43 @@ Hexagon.Usuarios.Grupos:
 ;; ESI - Nome do usuário logado
 
 Hexagon.Kernel.Kernel.Usuarios.definirUsuario:
-    
+
     push eax
-    
+
     push esi
-    
+
     push ds
     pop es
-    
+
     call Hexagon.Kernel.Lib.String.tamanhoString
-    
+
     cmp eax, 32
     jl .nomeValido
-    
+
     stc
-    
+
     ret
-    
+
 .nomeValido:
-    
+
     mov ecx, eax
-    
+
     inc ecx
-    
+
 ;; Copiar o nome do usuário
-    
+
     mov edi, nomeUsuario
-    
+
     pop esi
 
     rep movsb       ;; Copiar (ECX) caracteres de ESI para EDI
-    
+
     pop eax
-    
+
     mov dword [IDUsuario], eax
-    
+
     mov byte[loginFeito], 01h
-    
+
     ret
 
 ;;************************************************************************************
@@ -164,14 +164,14 @@ Hexagon.Kernel.Kernel.Usuarios.obterUsuario:
 
     cmp byte[loginFeito], 00h
     je .fim
-    
+
     mov esi, nomeUsuario ;; Enviar o nome do usuário
     mov eax, [IDUsuario] ;; Enviar o ID de grupo do usuário
 
 .fim:
-    
+
     ret
-    
+
 ;;************************************************************************************
 
 Hexagon.Kernel.Kernel.Usuarios.verificarUsuario:
@@ -192,27 +192,27 @@ Hexagon.Kernel.Kernel.Usuarios.validarUsuario:
 Hexagon.Kernel.Kernel.Usuarios.verificarPermissoes:
 
     mov eax, [IDUsuario]
-    
+
     cmp eax, Hexagon.Usuarios.ID.root
     je .usuarioRaiz
-    
+
     cmp eax, Hexagon.Usuarios.ID.supervisor
     je .supervisor
-    
+
     mov eax, Hexagon.Usuarios.Grupos.padrao
-    
+
     ret
-    
+
 .usuarioRaiz:
 
     mov eax, Hexagon.Usuarios.Grupos.root
-    
+
     ret
-    
+
 .supervisor:
 
     mov eax, Hexagon.Usuarios.Grupos.supervisor
-    
+
     ret
 
 ;;************************************************************************************
@@ -248,18 +248,18 @@ execucao: db 0
 ;; Para que o Kernel possa burlar medidas de segurança que distinguam usuários ou valores de entrada
 ;; e consiga executar qualquer função nele alocada, será utilizada uma variável que indica se a ordem
 ;; de execução da função partiu do próprio Kernel ou não. Apenas as funções que fazem distinção de
-;; privilégios e também de valores de entrada devem ler/gravar nessa variável. 
+;; privilégios e também de valores de entrada devem ler/gravar nessa variável.
 ;; Os valores utilizados também são padronizados, como abaixo.
 ;;
 ;; Nome objeto                          | Código |               Tipo de acesso               |
 ;;
 ;; ordemKernelDesativada                    00h      O Kernel não está solicitando operações
 ;;                                                   que demandem acesso restrito ou análise
-;; ordemKernelExecutar                      01h           Executar a função solicitada   
+;; ordemKernelExecutar                      01h           Executar a função solicitada
 ;; ordemKernelNegar                         02h       Impedir a execução de qualquer função
 ;;                                                             até mudança de estado
 ;; ordemKernelDebug                         04h           Usar futuramente para depuração
-;; 
+;;
 ;; O sinalizador ordemKernelExecutar é análogo ao login realizado com a conta de usuário
 ;; raiz (root), permitindo a realização de tarefas com prerrogativas. Entretanto, permite o
 ;; acesso a dados e funções não expostas ou permitidas ao usuário raiz.

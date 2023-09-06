@@ -10,7 +10,7 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                          Kernel Hexagon - Hexagon kernel         
+;;                          Kernel Hexagon - Hexagon kernel
 ;;
 ;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
@@ -20,7 +20,7 @@
 ;; Português:
 ;;
 ;; O Hexagon, Hexagonix e seus componentes são licenciados sob licença BSD-3-Clause.
-;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório 
+;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório
 ;; para obter mais informações sobre seus direitos e obrigações ao utilizar e reutilizar
 ;; o código deste ou de outros arquivos.
 ;;
@@ -37,10 +37,10 @@
 ;;
 ;; Copyright (c) 2015-2023, Felipe Miguel Nery Lunkes
 ;; All rights reserved.
-;; 
+;;
 ;; Redistribution and use in source and binary forms, with or without
 ;; modification, are permitted provided that the following conditions are met:
-;; 
+;;
 ;; 1. Redistributions of source code must retain the above copyright notice, this
 ;;    list of conditions and the following disclaimer.
 ;;
@@ -51,7 +51,7 @@
 ;; 3. Neither the name of the copyright holder nor the names of its
 ;;    contributors may be used to endorse or promote products derived from
 ;;    this software without specific prior written permission.
-;; 
+;;
 ;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 ;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 ;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -64,14 +64,14 @@
 ;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 ;; $HexagonixOS$
-                                                                  
+
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon 
+;;                     Este arquivo faz parte do kernel Hexagon
 ;;
 ;;************************************************************************************
 
-struc Hexagon.Arch.i386.Regs 
+struc Hexagon.Arch.i386.Regs
 
 {
 
@@ -93,16 +93,16 @@ struc Hexagon.Arch.i386.Regs
 
 Hexagon.Kernel.Arch.i386.CPU.CPU.irPara32:
 
-use16   
-                
+use16
+
     cli
 
     pop bp          ;; Endereço de retorno
-    
+
 ;; Carregar descriptores
 
     lgdt[GDTReg]    ;; Carregar GDT
-    
+
     lidt[IDTReg]    ;; Carregar IDT
 
 ;; Agora iremos entrar em modo protegido
@@ -115,7 +115,7 @@ use16
 
     push 0x08       ;; Novo CS
     push bp         ;; Novo IP
-    
+
     retf
 
 ;;************************************************************************************
@@ -124,22 +124,22 @@ use32
 
 ;; Comuta o processador de volta ao modo real
 
-Hexagon.Kernel.Arch.i386.CPU.CPU.irPara16:               
-    
+Hexagon.Kernel.Arch.i386.CPU.CPU.irPara16:
+
     cli                      ;; Limpar interrupções
-    
+
     pop edx                  ;; Salvar local de retorno em EDX
-    
+
     jmp 0x20:Hexagon.Kernel.Arch.i386.CPU.CPU.modoProtegido16 ;; Carregar CS com seletor 0x20
 
 ;; Para ir ao modo real 16 bits, temos de passar pelo modo protegido 16 bits
 
-use16               
+use16
 
 Hexagon.Kernel.Arch.i386.CPU.CPU.modoProtegido16:
 
     mov ax, 0x28        ;; 0x28 é o seletor de modo protegido 16-bit
-    mov ss, ax  
+    mov ss, ax
     mov sp, 0x5000      ;; Pilha
 
     mov eax, cr0
@@ -159,16 +159,16 @@ Hexagon.Kernel.Arch.i386.CPU.CPU.modoReal:
     mov ax, 0
     mov es, ax
     mov sp, 0
-    
+
     cli
-    
+
     lidt[.idtR]         ;; Carregar tabela de vetores de interrupção de modo real
-    
+
     sti
-    
+
     push 0x50
     push dx             ;; Retornar para a localização presente em EDX
-    
+
     retf                ;; Iniciar modo real
 
 ;; Tabela de vetores de interrupção de modo real
@@ -177,8 +177,8 @@ Hexagon.Kernel.Arch.i386.CPU.CPU.modoReal:
         dd 0            ;; Base
 
 ;;************************************************************************************
-        
-Hexagon.Kernel.Arch.i386.CPU.CPU.ativarA20:  
+
+Hexagon.Kernel.Arch.i386.CPU.CPU.ativarA20:
 
 match =A20NAOSEGURO, A20
 {
@@ -187,16 +187,16 @@ match =A20NAOSEGURO, A20
 ;; parece gerar erros dependendo da plataforma (máquina física, KVM, etc)
 
  .testarA20:
-    
+
     mov edi, 0x112345  ;; Endereço par
     mov esi, 0x012345  ;; Endereço ímpar
     mov [esi], esi     ;; Os dois endereços apresentam valores diferentes
-    mov [edi], edi     
+    mov [edi], edi
 
-;; Se A20 não definido, os dois ponteiros apontarão para 0x012345, que contêm 0x112345 (EDI) 
+;; Se A20 não definido, os dois ponteiros apontarão para 0x012345, que contêm 0x112345 (EDI)
 
     cmpsd             ;; Comparar para ver se são equivalentes
-    
+
     jne .A20Pronto    ;; Se não, o A20 já está habilitado
 
 }
@@ -206,7 +206,7 @@ match =A20NAOSEGURO, A20
 .habilitarA20:
 
     mov ax, 0x2401  ;; Solicitar a ativação do A20
-        
+
     int 15h         ;; Interrupção do BIOS
 
 .A20Pronto:
@@ -214,37 +214,37 @@ match =A20NAOSEGURO, A20
     ret
 
 ;;************************************************************************************
-        
-use32                   
+
+use32
 
 Hexagon.Kernel.Arch.i386.CPU.CPU.configurarProcessador:
 
 ;; Habilitar SSE
-    
+
     mov eax, cr0
     or eax, 10b               ;; Monitor do coprocessador
     and ax, 1111111111111011b ;; Desativar emulação do coprocessador
     mov cr0, eax
-    
+
     mov eax, cr4
-    
+
 ;; Exceções de ponto flutuante
-    
+
     or ax, 001000000000b
     or ax, 010000000000b
     mov cr4, eax
 
-;; Agora vamos iniciar a unidade de ponto flutuante 
-    
+;; Agora vamos iniciar a unidade de ponto flutuante
+
     finit
-    fwait 
+    fwait
 
     ret
 
 ;;************************************************************************************
 
 Hexagon.Kernel.Arch.i386.CPU.CPU.identificarProcessador:
- 
+
     mov esi, codigoDispositivos.proc0
 
     mov edi, 0x80000002
@@ -254,27 +254,27 @@ Hexagon.Kernel.Arch.i386.CPU.CPU.identificarProcessador:
 .loopIdentificar:
 
     push ecx
-    
+
     mov eax, edi
-    
+
     cpuid
-    
+
     mov [esi], eax
     mov [esi+4], ebx
     mov [esi+8], ecx
     mov [esi+12], edx
 
     add esi, 16
-    
+
     inc edi
-    
+
     pop ecx
-    
-    loop .loopIdentificar   
-    
+
+    loop .loopIdentificar
+
     mov eax, 0
     mov [esi+1], eax
-    
+
     ret
 
 ;;************************************************************************************
@@ -291,81 +291,81 @@ use32
 
 align 32
 
-GDT:     
+GDT:
 
     dd 0, 0       ;; Descriptor nulo
 
-.codigoKernel: 
+.codigoKernel:
 
-    dw 0xFFFF     ;; Limite (0:15)  
+    dw 0xFFFF     ;; Limite (0:15)
     dw 0x0500     ;; Base (0:15)
-    db 0          ;; Base (16:23)   
+    db 0          ;; Base (16:23)
     db 10011010b  ;; Presente=1, Privilégio=00, Reservado=1, Executável=1, C=0, L&E=1, Acessado=0
     db 11001111b  ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
     db 0          ;; Base (24:31)
 
 ;; Descriptor de dados com base em 500h
 
-.dadosKernel: 
+.dadosKernel:
 
-    dw 0xFFFF     ;; Limite (0:15)  
+    dw 0xFFFF     ;; Limite (0:15)
     dw 0x0500     ;; Base (0:15)
-    db 0          ;; Base (16:23)   
+    db 0          ;; Base (16:23)
     db 10010010b  ;; Presente=1, Privilégio=00, Reservado=1, Executável=0, D=0, W=1, Acessado=0
     db 11001111b  ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
     db 0          ;; Base (24:31)
 
 ;; Descriptor de dados com base em 0h
 
-.linearKernel: 
+.linearKernel:
 
-    dw 0xFFFF     ;; Limite (0:15)  
+    dw 0xFFFF     ;; Limite (0:15)
     dw 0          ;; Base (0:15)
-    db 0          ;; Base (16:23)   
+    db 0          ;; Base (16:23)
     db 10010010b  ;; Presente=1, Privilégio=00, Reservado=1, Executável=0, D=0, W=1, Acessado=0
     db 11001111b  ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
     db 0          ;; Base (24:31)
 
 ;; Descriptor de código para modo protegido 16 bits
 
-.codigoMP16:     
+.codigoMP16:
 
-    dw 0xFFFF     ;; Limite (0:15)  
+    dw 0xFFFF     ;; Limite (0:15)
     dw 0x0500     ;; Base (0:15)
-    db 0          ;; Base (16:23)   
+    db 0          ;; Base (16:23)
     db 10011010b  ;; Presente=1, Privilégio=00, Reservado=1, Executável=1, C=0, L&E=1, Acessado=0
     db 0          ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
     db 0          ;; Base (24:31)
 
 ;; Descriptor de dados para modo protegido 16 bits
 
-.dadosPM16:      
+.dadosPM16:
 
-    dw 0xFFFF     ;; Limite (0:15)  
+    dw 0xFFFF     ;; Limite (0:15)
     dw 0          ;; Base (0:15)
-    db 0          ;; Base (16:23)   
+    db 0          ;; Base (16:23)
     db 10010010b  ;; Presente=1, Privilégio=00, Reservado=1, Executável=0, D=0, W=1, Acessado=0
     db 0          ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
     db 0          ;; Base (24:31)
 
 ;; Código do programa
 
-.codigoPrograma: 
+.codigoPrograma:
 
-    dw 0xFFFF     ;; Limite (0:15)  
+    dw 0xFFFF     ;; Limite (0:15)
     dw 0          ;; Base (0:15)
-    db 0          ;; Base (16:23)   
+    db 0          ;; Base (16:23)
     db 10011010b  ;; Presente=1, Privilégio=00, Reservado=1, Executável=1, C=0, L&E=1, Acessado=0
     db 11001111b  ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
     db 0          ;; Base (24:31)
 
 ;; Dados do programa
 
-.dadosPrograma: 
+.dadosPrograma:
 
-    dw 0xFFFF     ;; Limite (0:15)  
+    dw 0xFFFF     ;; Limite (0:15)
     dw 0          ;; Base (0:15)
-    db 0          ;; Base (16:23)   
+    db 0          ;; Base (16:23)
     db 10010010b  ;; Presente=1, Privilégio=00, Reservado=1, Executável=0, D=0, W=1, Acessado=0
     db 11001111b  ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
     db 0          ;; Base (24:31)
@@ -382,8 +382,8 @@ GDT:
     db 0          ;; Base
 
 terminoGDT:
-                
-GDTReg: 
+
+GDTReg:
 
 .tamanho: dw terminoGDT - GDT - 1 ;; Tamanho GDT - 1
 .local:   dd GDT+0x500            ;; Deslocamento da GDT
@@ -401,7 +401,7 @@ GDTReg:
 
 align 32
 
-IDT: times 256 dw naoManipulado, 0x0008, 0x8e00, 0 
+IDT: times 256 dw naoManipulado, 0x0008, 0x8e00, 0
 
 ;; naoManipulado: deslocamento (0:15)
 ;; 0x0008:  0x08 é um seletor
@@ -410,7 +410,7 @@ IDT: times 256 dw naoManipulado, 0x0008, 0x8e00, 0
 
 terminoIDT:
 
-IDTReg: 
+IDTReg:
 
 .tamanho: dw terminoIDT - IDT - 1  ;; Tamanho IDT - 1
 .local:   dd IDT+0x500             ;; Deslocamento da IDT
@@ -453,4 +453,4 @@ TSS:
     .gs          dd 0x10
     .ldt         dd 0
     .ldtr        dw 0
-    .mapaIO      dw 104         
+    .mapaIO      dw 104

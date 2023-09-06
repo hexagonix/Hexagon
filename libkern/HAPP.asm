@@ -10,7 +10,7 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                          Kernel Hexagon - Hexagon kernel         
+;;                          Kernel Hexagon - Hexagon kernel
 ;;
 ;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
@@ -20,7 +20,7 @@
 ;; Português:
 ;;
 ;; O Hexagon, Hexagonix e seus componentes são licenciados sob licença BSD-3-Clause.
-;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório 
+;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório
 ;; para obter mais informações sobre seus direitos e obrigações ao utilizar e reutilizar
 ;; o código deste ou de outros arquivos.
 ;;
@@ -37,10 +37,10 @@
 ;;
 ;; Copyright (c) 2015-2023, Felipe Miguel Nery Lunkes
 ;; All rights reserved.
-;; 
+;;
 ;; Redistribution and use in source and binary forms, with or without
 ;; modification, are permitted provided that the following conditions are met:
-;; 
+;;
 ;; 1. Redistributions of source code must retain the above copyright notice, this
 ;;    list of conditions and the following disclaimer.
 ;;
@@ -51,7 +51,7 @@
 ;; 3. Neither the name of the copyright holder nor the names of its
 ;;    contributors may be used to endorse or promote products derived from
 ;;    this software without specific prior written permission.
-;; 
+;;
 ;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 ;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 ;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -64,10 +64,10 @@
 ;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 ;; $HexagonixOS$
-                                                                  
+
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon 
+;;                     Este arquivo faz parte do kernel Hexagon
 ;;
 ;;************************************************************************************
 
@@ -76,11 +76,11 @@ use32
 ;;************************************************************************************
 
 ;; Este módulo do Hexagon é responsável por carregar, obter informações do arquivo
-;; carregado e determinar se o formato corresponde à especificação HAPP. Em caso 
+;; carregado e determinar se o formato corresponde à especificação HAPP. Em caso
 ;; afirmativo, deve extrair do cabeçalho da imagem informações necessárias para
 ;; configurar o ambiente de execução e iniciar o processo à partir do ponto de entrada.
-;; As funções abaixo são responsáveis apenas pela avaliação da imagem, enquanto a 
-;; manipulação e execução do processo ficam a cargo do gerenciador e escalonador de 
+;; As funções abaixo são responsáveis apenas pela avaliação da imagem, enquanto a
+;; manipulação e execução do processo ficam a cargo do gerenciador e escalonador de
 ;; processos. As dependências de versão do Hexagon também são checadas aqui. Este
 ;; arquivo também tem a estrutura de manipulação de imagens HAPP que são utilizadas em
 ;; outras áreas do kernel.
@@ -92,13 +92,13 @@ use32
 ;; Um arquivo no formato HAPP contêm uma imagem binária executável desenvolvida para ser
 ;; carregada e executada sobre o Hexagon. Essa imagem deve apresentar um cabeçalho, que
 ;; declara uma série de informações que serão utilizadas pelo kernel para o carregamento,
-;; resolução de dependências e execução correta. 
+;; resolução de dependências e execução correta.
 ;;
 ;; De acordo com a especificação HAPP2 (HAPP 2.0), os campos do cabeçalho são:
 ;;
-;; Número | Parâmetro                        | Tamanho do parâmetro | Conteúdo (fixo ou variável) 
+;; Número | Parâmetro                        | Tamanho do parâmetro | Conteúdo (fixo ou variável)
 ;;
-;; #1       Assinatura HAPP                    4 bytes                "HAPP" 
+;; #1       Assinatura HAPP                    4 bytes                "HAPP"
 ;; #2       Arquitetura de destino da imagem   1 byte                 i386 = 01h
 ;; #3       Versão mínima do Hexagon           1 byte                 0 para qualquer ou número correspondente
 ;; #4       Subversão mínima do Hexagon        1 byte                 0 para qualquer ou número correspondente
@@ -118,14 +118,14 @@ use32
 ;;
 ;; Para a especificação HAPP2 (HAPP 2.1), novos campos serão já reservados e já podem ser implementados
 ;; nas imagens de aplicativos. Os campos aumentaram para serem utilizados em futuras implementações
-;; multitarefa, que exigem o armazenamento do conteúdo dos registradores para salvar o contexto de 
+;; multitarefa, que exigem o armazenamento do conteúdo dos registradores para salvar o contexto de
 ;; execução ao trocar entre processos. O número de campos é exagerado mas garante a compatibilidade
 ;; para necessidades futuras do Sistema. As definições de cada campo já se encontram na especificação
 ;; abaixo. Existem dois campos extras, com um byte e com uma qword, para armazenamento de dados
-;; pertinentes ao processo, juntamente aos campos de #7 a #17, que estão reservados mas já serão 
+;; pertinentes ao processo, juntamente aos campos de #7 a #17, que estão reservados mas já serão
 ;; distribuídos na especificação HAPP2 (HAPP 2.2).
 ;;
-;; Número | Parâmetro                        | Tamanho do parâmetro | Conteúdo (fixo ou variável) 
+;; Número | Parâmetro                        | Tamanho do parâmetro | Conteúdo (fixo ou variável)
 ;;
 ;; #18      Registrador EAX                    1 dword                Reservado para uso do Sistema
 ;; #19      Registrador EBX                    1 dword                Reservado para uso do Sistema
@@ -161,7 +161,7 @@ use32
 ;; Solicitação de troca de contexto -> Gravação do contexto nos campos #18 a #37 no espaço do aplicativo
 ;; e na estrutura no heap do kernel (#1 a #20).
 ;;
-;; O processo conseguirá obter dados do contexto e da localização em memória, mas não conseguirá 
+;; O processo conseguirá obter dados do contexto e da localização em memória, mas não conseguirá
 ;; alterar os valores de forma a interferir no funcionamento do Sistema. Isso pode ser útil para
 ;; manipulação de dados de memória intra processo, servindo apenas de referência para o processo,
 ;; mas não para qualquer outro fim que burle a segurança da segmentação da GDT.
@@ -204,7 +204,7 @@ struc Hexagon.Gerenciamento.Imagem.HAPP
 ;;************************************************************************************
 
 ;; Será criado o "objeto" Hexagon.Imagem.Executavel.HAPP para uso pelo kernel, que será
-;; preenchido com dados da imagem nas funções abaixo e lido e manipulado também pelas 
+;; preenchido com dados da imagem nas funções abaixo e lido e manipulado também pelas
 ;; funções de gerenciamento virtual e escalonamento de processos. O escalonador obtêm
 ;; o ponto de entrada e manipula os dados do cabeçalho em memória
 
@@ -247,8 +247,8 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
     add dword[Hexagon.Processos.enderecoAplicativos], ebx ;; Somar isso ao endereço
 
     mov edi, dword[Hexagon.Processos.enderecoAplicativos] ;; Endereço final para carregamento
-    
-    sub edi, 0x500  
+
+    sub edi, 0x500
 
 ;; Vamos carregar a imagem para começar as análises
 
@@ -310,7 +310,7 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
 ;; Agora vamos obter o ponto de entrada. O Hexagon não precisa mais conhecer o ponto exato de
 ;; entrada da imagem, ele está indicado no cabeçalho HAPP. Agora, não importa mais a ordem do código,
 ;; o Hexagon encontrará o ponto de entrada (offset) relativo da imagem, caso ele esteja declarada no
-;; cabeçalho. 
+;; cabeçalho.
 
     mov eax, dword[edi+7]
     mov dword[Hexagon.Imagem.Executavel.HAPP.entradaHAPP], eax
@@ -355,8 +355,8 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
 
 .final:
 
-    pop eax 
-    pop esi 
+    pop eax
+    pop esi
 
 ;; Agora vamos limpar a área de alocação utilizada para o teste
 

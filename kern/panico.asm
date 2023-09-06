@@ -10,7 +10,7 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                          Kernel Hexagon - Hexagon kernel         
+;;                          Kernel Hexagon - Hexagon kernel
 ;;
 ;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
@@ -20,7 +20,7 @@
 ;; Português:
 ;;
 ;; O Hexagon, Hexagonix e seus componentes são licenciados sob licença BSD-3-Clause.
-;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório 
+;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório
 ;; para obter mais informações sobre seus direitos e obrigações ao utilizar e reutilizar
 ;; o código deste ou de outros arquivos.
 ;;
@@ -37,10 +37,10 @@
 ;;
 ;; Copyright (c) 2015-2023, Felipe Miguel Nery Lunkes
 ;; All rights reserved.
-;; 
+;;
 ;; Redistribution and use in source and binary forms, with or without
 ;; modification, are permitted provided that the following conditions are met:
-;; 
+;;
 ;; 1. Redistributions of source code must retain the above copyright notice, this
 ;;    list of conditions and the following disclaimer.
 ;;
@@ -51,7 +51,7 @@
 ;; 3. Neither the name of the copyright holder nor the names of its
 ;;    contributors may be used to endorse or promote products derived from
 ;;    this software without specific prior written permission.
-;; 
+;;
 ;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 ;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 ;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -64,10 +64,10 @@
 ;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 ;; $HexagonixOS$
-                                                                  
+
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon 
+;;                     Este arquivo faz parte do kernel Hexagon
 ;;
 ;;************************************************************************************
 
@@ -78,42 +78,42 @@ use32
 Hexagon.Panico:
 
 .cabecalhoPanico:
-db 10, 10, "Kernel Panic: ", 0   
+db 10, 10, "Kernel Panic: ", 0
 .cabecalhoOops:
-db 10, 10, "Kernel Oops: ", 0     
+db 10, 10, "Kernel Oops: ", 0
 .erroReiniciar:
-db "Restart your computer to continue.", 0  
+db "Restart your computer to continue.", 0
 .erroNaoFatal:
 db "Press any key to continue...", 0
 .erroDesconhecido:
-db 10, 10, "The severity of the error was not provided or is unknown by the Hexagon.", 10, 10, 0         
-    
+db 10, 10, "The severity of the error was not provided or is unknown by the Hexagon.", 10, 10, 0
+
 ;;************************************************************************************
 
-;; Exibe mensagem de erro na tela e solicita o reinício do computador 
+;; Exibe mensagem de erro na tela e solicita o reinício do computador
 ;;
 ;; Entrada:
 ;;
 ;; EAX - O erro é fatal? (0 para não e 1 para sim)
-;; ESI - Mensagem de erro complementar 
+;; ESI - Mensagem de erro complementar
 
 Hexagon.Kernel.Kernel.Panico.panico:
 
     push esi
     push eax
-    
+
     call Hexagon.Kernel.Kernel.Panico.prepararPanico
-    
+
     kprint Hexagon.Info.sobreHexagon
-    
+
     pop eax
-    
-    cmp eax, 0         ;; Caso o erro não seja fatal, o controle pode ser devolvido à função que chamou 
+
+    cmp eax, 0         ;; Caso o erro não seja fatal, o controle pode ser devolvido à função que chamou
     je .naoFatal
-    
+
     cmp eax, 1
     je .fatal
-    
+
     jmp .desconhecido
 
 .fatal:
@@ -123,7 +123,7 @@ Hexagon.Kernel.Kernel.Panico.panico:
     logHexagon Hexagon.Panico.cabecalhoPanico, Hexagon.Dmesg.Prioridades.p4
 
     pop esi
-    
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
 
     mov ebx, Hexagon.Dmesg.Prioridades.p4
@@ -131,9 +131,9 @@ Hexagon.Kernel.Kernel.Panico.panico:
     call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
 
     kprint Hexagon.Panico.erroReiniciar
-    
+
     hlt
-    
+
     jmp $
 
 .naoFatal:
@@ -145,7 +145,7 @@ Hexagon.Kernel.Kernel.Panico.panico:
     call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
 
     pop esi
-    
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
 
     mov ebx, Hexagon.Dmesg.Prioridades.p4
@@ -153,17 +153,17 @@ Hexagon.Kernel.Kernel.Panico.panico:
     call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
 
     kprint Hexagon.Panico.erroNaoFatal
-    
+
     call Hexagon.Kernel.Dev.Gen.Teclado.Teclado.aguardarTeclado
-    
+
     ret
-    
+
 .desconhecido:
 
     kprint Hexagon.Panico.erroDesconhecido
 
-    ret 
-    
+    ret
+
 ;;************************************************************************************
 
 ;; Rotina que prepara a saída de vídeo padrão para a exibição de informações em caso de
@@ -181,14 +181,13 @@ Hexagon.Kernel.Kernel.Panico.prepararPanico:
 
     mov eax, 0xFFFFFF  ;; BRANCO_ANDROMEDA
     mov ebx, 0x4682B4  ;; AZUL_METALICO
-    
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.definirCorTexto
-    
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.limparConsole    ;; Limpar saída de vídeo padrão
-    
+
     mov dx, 0
-    
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor
 
     ret                ;; Retornar à rotina principal
-               

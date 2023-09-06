@@ -10,7 +10,7 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                          Kernel Hexagon - Hexagon kernel         
+;;                          Kernel Hexagon - Hexagon kernel
 ;;
 ;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
@@ -20,7 +20,7 @@
 ;; Português:
 ;;
 ;; O Hexagon, Hexagonix e seus componentes são licenciados sob licença BSD-3-Clause.
-;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório 
+;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório
 ;; para obter mais informações sobre seus direitos e obrigações ao utilizar e reutilizar
 ;; o código deste ou de outros arquivos.
 ;;
@@ -37,10 +37,10 @@
 ;;
 ;; Copyright (c) 2015-2023, Felipe Miguel Nery Lunkes
 ;; All rights reserved.
-;; 
+;;
 ;; Redistribution and use in source and binary forms, with or without
 ;; modification, are permitted provided that the following conditions are met:
-;; 
+;;
 ;; 1. Redistributions of source code must retain the above copyright notice, this
 ;;    list of conditions and the following disclaimer.
 ;;
@@ -51,7 +51,7 @@
 ;; 3. Neither the name of the copyright holder nor the names of its
 ;;    contributors may be used to endorse or promote products derived from
 ;;    this software without specific prior written permission.
-;; 
+;;
 ;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 ;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 ;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -64,10 +64,10 @@
 ;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 ;; $HexagonixOS$
-                                                                  
+
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon 
+;;                     Este arquivo faz parte do kernel Hexagon
 ;;
 ;;************************************************************************************
 
@@ -76,30 +76,30 @@ use32
 ;; Inicializa a porta paralela, utilizando o número da porta fornecido
 
 Hexagon.Kernel.Dev.Gen.Impressora.Impressora.iniciarImpressora:
-    
+
     pusha
-    
+
 ;; Reiniciar porta através do registrador de controle (base+2)
-    
+
     mov dx, word[portaParalelaAtual]
-    
+
     add dx, 2           ;; Registro de controle (base+2)
-    
+
     in al, dx
-    
-    mov al, 00001100b   
-    
+
+    mov al, 00001100b
+
 ;; Bit 2 - Reiniciar porta
 ;; Bit 3 - Selecionar impressora
 ;; Bit 5 - Habilitar porta bi-direcional
 
     out dx, al          ;; Enviar sinal de reinício
-    
+
     popa
-        
+
     ret
 
-;;************************************************************************************  
+;;************************************************************************************
 
 Hexagon.Kernel.Dev.Gen.Impressora.Impressora.enviarImpressora: ;; Função que permite o envio de dados para serem impressos em uma impressora paralela
 
@@ -116,7 +116,7 @@ Hexagon.Kernel.Dev.Gen.Impressora.Impressora.enviarImpressora: ;; Função que p
 
 .pronto:                       ;; Se tiver acabado...
 
-    ret                        ;; Retorna ao processo que o chamou  
+    ret                        ;; Retorna ao processo que o chamou
 
 .falhaImpressora:
 
@@ -124,7 +124,7 @@ Hexagon.Kernel.Dev.Gen.Impressora.Impressora.enviarImpressora: ;; Função que p
 
     ret
 
-;;************************************************************************************  
+;;************************************************************************************
 
 ;; Enviar dados para a porta paralela onde a impressora deve estar conectada
 ;;
@@ -135,50 +135,50 @@ Hexagon.Kernel.Dev.Gen.Impressora.Impressora.enviarImpressora: ;; Função que p
 Hexagon.Kernel.Dev.Gen.Impressora.Impressora.realizarEnvioImpressora:
 
     pusha
-    
+
     push ax             ;; Salvar o byte fornecido em AL
-    
+
 ;; Reiniciar porta através do registrador de controle (base+2)
-    
+
     mov dx, word[portaParalelaAtual]
-    
+
     add dx, 2           ;; Registro de controle (base+2)
-    
+
     in al, dx
-    
-    mov al, 00001100b   
-    
+
+    mov al, 00001100b
+
 ;; Bit 2 - Reiniciar porta
 ;; Bit 3 - Selecionar impressora
 ;; Bit 5 - Habilitar porta bi-direcional
 
     out dx, al          ;; Enviar sinal de reinício
-    
+
 ;; Enviar dados para a porta via registrador de dados (base+0)
-    
+
     pop ax              ;; Restaurar dado passado em AL
-    
+
     mov dx, word[portaParalelaAtual]
-    
+
     out dx, al          ;; Enviar dados
-    
+
 ;; Enviar sinalização para registrador de controle (base+2), mostrando que os dados
 ;; estão disponíveis
-    
+
     mov dx, word [portaParalelaAtual]
-    
+
     add dx, 2
 
-    mov al, 1           
-    
+    mov al, 1
+
 ;; Bit 0 - sinal
-    
+
     out dx, al          ;; Enviar
-    
+
     popa
-    
+
     ret
 
-;;************************************************************************************  
+;;************************************************************************************
 
 portaParalelaAtual dw 0         ;; Armazena o endereço de entrada e saída do dispositivo

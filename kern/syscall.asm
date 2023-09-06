@@ -10,7 +10,7 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                          Kernel Hexagon - Hexagon kernel         
+;;                          Kernel Hexagon - Hexagon kernel
 ;;
 ;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
@@ -20,7 +20,7 @@
 ;; Português:
 ;;
 ;; O Hexagon, Hexagonix e seus componentes são licenciados sob licença BSD-3-Clause.
-;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório 
+;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório
 ;; para obter mais informações sobre seus direitos e obrigações ao utilizar e reutilizar
 ;; o código deste ou de outros arquivos.
 ;;
@@ -37,10 +37,10 @@
 ;;
 ;; Copyright (c) 2015-2023, Felipe Miguel Nery Lunkes
 ;; All rights reserved.
-;; 
+;;
 ;; Redistribution and use in source and binary forms, with or without
 ;; modification, are permitted provided that the following conditions are met:
-;; 
+;;
 ;; 1. Redistributions of source code must retain the above copyright notice, this
 ;;    list of conditions and the following disclaimer.
 ;;
@@ -51,7 +51,7 @@
 ;; 3. Neither the name of the copyright holder nor the names of its
 ;;    contributors may be used to endorse or promote products derived from
 ;;    this software without specific prior written permission.
-;; 
+;;
 ;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 ;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 ;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -64,10 +64,10 @@
 ;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 ;; $HexagonixOS$
-                                                                  
+
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon 
+;;                     Este arquivo faz parte do kernel Hexagon
 ;;
 ;;************************************************************************************
 
@@ -95,49 +95,49 @@ Hexagon.Syscall.Controle:
 ;;
 ;;  EBP = 0xABC12345 em caso de função não disponível
 ;;  CF definido em caso de função não disponível
-    
+
 Hexagon.Syscall.Syscall.manipuladorHexagon:
 
     push ebp
-    
+
     mov ebp, esp
-    
+
     push 0x10 ;; Segmento do Kernel
     pop ds
 
     mov [Hexagon.Syscall.Controle.es], es
-    
+
     push 0x18
     pop es
-    
+
     cld
-    
+
     mov dword[Hexagon.Syscall.Controle.eax], eax
-    
+
     add esi, dword[Hexagon.Processos.enderecoAplicativos]
-    
+
     sub esi, 0x500
-    
+
     add edi, dword[Hexagon.Processos.enderecoAplicativos]
 
     sub edi, 0x500
 
     pop eax ;; Limpar pilha
-    
+
     mov dword[Hexagon.Syscall.Controle.ebp], eax
-    
+
     pop eax
-    
+
     mov dword[Hexagon.Syscall.Controle.eip], eax
 
     pop eax
-    
+
     mov dword[Hexagon.Syscall.Controle.cs], eax
 
     pop eax ;; Bandeira
-    
+
     pop eax ;; Chamada solicitada, armazenada na pilha
-    
+
     mov dword[Hexagon.Syscall.Controle.parametro], eax ;; Chamada do sistema
 
     mov dword[Hexagon.Syscall.Controle.chamadaAtual], eax
@@ -145,22 +145,22 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
     mov eax, dword[Hexagon.Syscall.Controle.eax]
 
     mov ebp, dword[ds:Hexagon.Syscall.Controle.parametro]
-    
+
     cmp ebp, dword[Hexagon.Syscall.Controle.totalChamadas]
     ja .chamadaIndisponivel
-    
+
     mov byte[Hexagon.Syscall.Controle.chamadaSistema], 01h ;; Uma chamada foi sim solicitada
 
     sti
-    
+
     call dword[Hexagon.Syscall.Syscall.servicosHexagon.tabela+ebp*4]
-    
+
 .fim:
 
     sti
 
     mov byte[Hexagon.Syscall.Controle.chamadaSistema], 00h  ;; Desmarcar a solicitação de chamada de Sistema
-    
+
     push eax
 
     mov eax, dword[Hexagon.Syscall.Controle.chamadaAtual]
@@ -169,33 +169,33 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
     pop eax
 
     pushfd
-    
+
     push dword[Hexagon.Syscall.Controle.cs]
     push dword[Hexagon.Syscall.Controle.eip]
-    
+
     sub esi, dword[Hexagon.Processos.enderecoAplicativos]
 
     add esi, 0x500
-    
+
     sub edi, dword[Hexagon.Processos.enderecoAplicativos]
 
     add edi, 0x500
 
     mov es, [Hexagon.Syscall.Controle.es]
-    
+
     push 0x38
     pop ds
 
     iret
-    
+
 .chamadaIndisponivel:
 
     mov ebp, 0xABC12345
-    
+
     stc
-    
+
     jmp .fim
-    
+
 ;;************************************************************************************
 
 ;; Manipulador de interrupção para funções Unix-like
@@ -204,49 +204,49 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
 ;;
 ;;  EBP = 0xABC12345 em caso de função não disponível
 ;;  CF definido em caso de função não disponível
-    
+
 Hexagon.Syscall.Syscall.manipuladorHXUnix:
 
     push ebp
-    
+
     mov ebp, esp
-    
+
     push 0x10 ;; Segmento do Kernel
     pop ds
 
     mov [Hexagon.Syscall.Controle.es], es
-    
+
     push 0x18
     pop es
-    
+
     cld
-    
+
     mov dword[Hexagon.Syscall.Controle.eax], eax
-    
+
     add esi, dword[Hexagon.Processos.enderecoAplicativos]
-    
+
     sub esi, 0x500
-    
+
     add edi, dword[Hexagon.Processos.enderecoAplicativos]
 
     sub edi, 0x500
 
     pop eax ;; Limpar pilha
-    
+
     mov dword[Hexagon.Syscall.Controle.ebp], eax
-    
+
     pop eax
-    
+
     mov dword[Hexagon.Syscall.Controle.eip], eax
 
     pop eax
-    
+
     mov dword[Hexagon.Syscall.Controle.cs], eax
 
     pop eax ;; Bandeira
-    
+
     pop eax ;; Chamada solicitada, armazenada na pilha
-    
+
     mov dword[Hexagon.Syscall.Controle.parametro], eax ;; Chamada do sistema
 
     mov dword[Hexagon.Syscall.Controle.chamadaAtual], eax
@@ -254,22 +254,22 @@ Hexagon.Syscall.Syscall.manipuladorHXUnix:
     mov eax, dword[Hexagon.Syscall.Controle.eax]
 
     mov ebp, dword[ds:Hexagon.Syscall.Controle.parametro]
-    
+
     cmp ebp, dword[Hexagon.Syscall.Controle.totalChamadas]
     ja .chamadaIndisponivel
-    
+
     mov byte[Hexagon.Syscall.Controle.chamadaSistema], 01h ;; Uma chamada foi sim solicitada
 
     sti
-    
+
     call dword[Hexagon.Syscall.Syscall.servicosHexagon.tabelaUnix+ebp*4]
-    
+
 .fim:
 
     sti
 
     mov byte[Hexagon.Syscall.Controle.chamadaSistema], 00h  ;; Desmarcar a solicitação de chamada de Sistema
-    
+
     push eax
 
     mov eax, dword[Hexagon.Syscall.Controle.chamadaAtual]
@@ -278,31 +278,31 @@ Hexagon.Syscall.Syscall.manipuladorHXUnix:
     pop eax
 
     pushfd
-    
+
     push dword[Hexagon.Syscall.Controle.cs]
     push dword[Hexagon.Syscall.Controle.eip]
-    
+
     sub esi, dword[Hexagon.Processos.enderecoAplicativos]
 
     add esi, 0x500
-    
+
     sub edi, dword[Hexagon.Processos.enderecoAplicativos]
 
     add edi, 0x500
 
     mov es, [Hexagon.Syscall.Controle.es]
-    
+
     push 0x38
     pop ds
 
     iret
-    
+
 .chamadaIndisponivel:
 
     mov ebp, 0xABC12345
-    
+
     stc
-    
+
     jmp .fim
 
 ;;************************************************************************************
@@ -311,7 +311,7 @@ Hexagon.Kernel.API.API.desenharBloco:
 
     sub esi, dword[Hexagon.Processos.enderecoAplicativos]
     add esi, 0x500
-    
+
     sub edi, dword[Hexagon.Processos.enderecoAplicativos]
     add edi, 0x500
 
@@ -319,44 +319,44 @@ Hexagon.Kernel.API.API.desenharBloco:
 
     add esi, dword[Hexagon.Processos.enderecoAplicativos]
     sub esi, 0x500
-    
+
     add edi, dword[Hexagon.Processos.enderecoAplicativos]
     sub edi, 0x500
-    
+
     ret
 
 ;;************************************************************************************
-    
-Hexagon.Kernel.API.API.Nulo:    
-    
+
+Hexagon.Kernel.API.API.Nulo:
+
     mov ebp, 0xABC12345
-    
+
     stc
-    
-    ret 
+
+    ret
 
 ;;************************************************************************************
-   
+
 Hexagon.Kernel.API.API.intalarInterrupcao:
 
     cli
-    
+
     call instalarISR
-    
+
     ret
 
 ;;************************************************************************************
-    
+
 Hexagon.Kernel.API.API.criarNovoProcesso:
 
     push dword[Hexagon.Syscall.Controle.eip]
     push dword[Hexagon.Syscall.Controle.cs]
-    
+
     call Hexagon.Kernel.Kernel.Proc.criarProcesso
-    
+
     pop dword[Hexagon.Syscall.Controle.cs]
     pop dword[Hexagon.Syscall.Controle.eip]
-    
+
     ret
 
 ;;************************************************************************************

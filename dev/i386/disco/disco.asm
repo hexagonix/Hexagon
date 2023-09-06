@@ -10,7 +10,7 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                          Kernel Hexagon - Hexagon kernel         
+;;                          Kernel Hexagon - Hexagon kernel
 ;;
 ;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
@@ -20,7 +20,7 @@
 ;; Português:
 ;;
 ;; O Hexagon, Hexagonix e seus componentes são licenciados sob licença BSD-3-Clause.
-;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório 
+;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório
 ;; para obter mais informações sobre seus direitos e obrigações ao utilizar e reutilizar
 ;; o código deste ou de outros arquivos.
 ;;
@@ -37,10 +37,10 @@
 ;;
 ;; Copyright (c) 2015-2023, Felipe Miguel Nery Lunkes
 ;; All rights reserved.
-;; 
+;;
 ;; Redistribution and use in source and binary forms, with or without
 ;; modification, are permitted provided that the following conditions are met:
-;; 
+;;
 ;; 1. Redistributions of source code must retain the above copyright notice, this
 ;;    list of conditions and the following disclaimer.
 ;;
@@ -51,7 +51,7 @@
 ;; 3. Neither the name of the copyright holder nor the names of its
 ;;    contributors may be used to endorse or promote products derived from
 ;;    this software without specific prior written permission.
-;; 
+;;
 ;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 ;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 ;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -64,10 +64,10 @@
 ;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 ;; $HexagonixOS$
-                                                                  
+
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon 
+;;                     Este arquivo faz parte do kernel Hexagon
 ;;
 ;;************************************************************************************
 
@@ -150,7 +150,7 @@ struc Hexagon.Dev.Gen.Disco.Geral
 .enderecoInvalido = 02h
 .protegidoEscrita = 03h
 .setorInvalido    = 04h
-.falhaReiniciar   = 05h 
+.falhaReiniciar   = 05h
 .falhaAtividade   = 07h
 .falhaDMA         = 08h
 .limiteDMA        = 09h
@@ -200,7 +200,7 @@ Hexagon.Dev.Gen.Disco:
 
 .codigoOperacao:   db 0
 
-;;************************************************************************************  
+;;************************************************************************************
 
 align 4
 
@@ -228,7 +228,7 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.pararDisco:
 
 Hexagon.Kernel.Dev.i386.Disco.Disco.lerMBR:
 
-    push ds 
+    push ds
     pop es
 
 ;; Primeiro devemos carregar a MBR na memória
@@ -269,7 +269,7 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.lerMBR:
 
 Hexagon.Kernel.Dev.i386.Disco.Disco.lerBPB:
 
-    push ds 
+    push ds
     pop es
 
 ;; Primeiro devemos carregar a MBR na memória
@@ -378,7 +378,7 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.detectarDisco:
 
 .fim:
 
-    ret     
+    ret
 
 ;;************************************************************************************
 
@@ -395,7 +395,7 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.detectarDisco:
 ;; Saída:
 ;;
 ;; EBX - Código de retorno da operação de disco executada, como em Hexagon.HD.IO, acima
-                
+
 Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores:
 
     push eax
@@ -406,62 +406,62 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores:
 
     mov eax, edi
     shr eax, 4
-    
+
     add cx, ax
-    
+
     and edi, 0xf
-    
+
     mov word[.PED.segmento], cx       ;; Segmento de modo real
     mov word[.PED.deslocamento], di
-        
+
     mov esi, .PED
     mov ah, 0x42                      ;; Leitura extendida BIOS
-    
+
     call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int13h                         ;; Serviços de disco do BIOS BIOS
-    
+
     jnc .semErro
-    
+
 .verificarErro:
 
     cmp ah, Hexagon.Dev.Gen.Disco.Codigos.enderecoInvalido
     je .semMidia
-    
+
     cmp ah, Hexagon.Dev.Gen.Disco.Codigos.setorInvalido
     je .semMidia
-    
+
     cmp ah, Hexagon.Dev.Gen.Disco.Codigos.falhaAtividade
     je .semMidia
-    
+
     cmp ah, Hexagon.Dev.Gen.Disco.Codigos.falhaControlador
     je .semMidia
-    
+
     cmp al, Hexagon.Dev.Gen.Disco.Codigos.semMidia
     je .semMidia
 
     cmp al, Hexagon.Dev.Gen.Disco.Codigos.timeOut
     je .errosGerais
-    
+
     jmp .errosGerais ;; Imprimir erro e aguardar reinício
-    
+
 .errosGerais:
 
     mov esi, Hexagon.Verbose.Disco.erroDisco
-    
+
     mov eax, 1
-    
+
     call Hexagon.Kernel.Kernel.Panico.panico
-    
+
 .semMidia:
-    
+
     mov dl, byte [Hexagon.Dev.Gen.Disco.Controle.driveBoot]
     mov byte [Hexagon.Dev.Gen.Disco.Controle.driveAtual], dl
-    
+
     call Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos
-    
+
     mov byte[Hexagon.Dev.Gen.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.semMidia
 
     stc
-    
+
     jmp .finalizar
 
 .semErro:
@@ -472,13 +472,13 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores:
 
     pop esi
     pop eax
-    
+
     movzx ebx, byte[Hexagon.Dev.Gen.Disco.codigoOperacao] ;; Fornecer em EBX o código de retorno da operação
 
     ret
 
 ;; PED = Pacote de Endereço de Disco. Do termo em inglês DAP (Disk Address Packet)
-    
+
 .PED:
 .PED.tamanho:       db 16
 .PED.reservado:     db 0
@@ -508,77 +508,77 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores:
 
     push eax
     push esi
-    
+
     mov dword[.PED.totalSetores], eax ;; Total de setores para escrever
     mov dword[.PED.LBA], esi          ;; LBA
-    
+
     mov eax, edi
     shr eax, 4
-    
+
     add cx, ax
-    
+
     and edi, 0xf
-    
+
     mov word[.PED.deslocamento], di
     mov word[.PED.segmento], cx       ;; Segmento de modo real
-    
+
     mov esi, .PED
     mov ah, 0x43                      ;; Escrita extendida BIOS
     mov al, 0
 
     call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int13h                         ;; Serviços de disco BIOS
-    
+
     jnc .semErro
 
 .verificarErro:
 
     cmp ah, Hexagon.Dev.Gen.Disco.Codigos.enderecoInvalido
     je .semMidia
-    
+
     cmp ah, Hexagon.Dev.Gen.Disco.Codigos.protegidoEscrita
     je .protegidoEscrita
-    
+
     cmp ah, Hexagon.Dev.Gen.Disco.Codigos.driveNaoPronto
     je .discoNaoPronto
-    
+
     cmp ah, Hexagon.Dev.Gen.Disco.Codigos.volumeEmUso
     je .discoEmUso
-    
+
     cmp ah, Hexagon.Dev.Gen.Disco.Codigos.falhaEscrita
     je .falhaEscrita
-    
+
     cmp ah, Hexagon.Dev.Gen.Disco.Codigos.setorInvalido
     je .semMidia
-    
+
     cmp al, Hexagon.Dev.Gen.Disco.Codigos.falhaAtividade
     je .semMidia
-    
+
     cmp al, Hexagon.Dev.Gen.Disco.Codigos.falhaControlador
     je .semMidia
-    
+
     cmp al, Hexagon.Dev.Gen.Disco.Codigos.semMidia
     je .semMidia
 
     cmp al, Hexagon.Dev.Gen.Disco.Codigos.timeOut
     je .errosGerais
-    
+
     jmp .errosGerais ;; Imprimir erro e aguardar reinício
-    
+
 .protegidoEscrita:
 
     stc
 
     mov byte[Hexagon.Dev.Gen.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.protegidoEscrita
 
-    ret 
-    
+    ret
+
 .discoNaoPronto:
 
     stc
 
     mov byte[Hexagon.Dev.Gen.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.discoNaoPronto
 
-    ret 
+    ret
 
 .discoEmUso:
 
@@ -591,30 +591,30 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores:
 .falhaEscrita:
 
     stc
-  
+
     mov byte[Hexagon.Dev.Gen.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.falhaOperacao
 
     ret
-    
+
 .errosGerais:
 
     mov esi, Hexagon.Verbose.Disco.erroDisco
-    
+
     mov eax, 1
-    
+
     call Hexagon.Kernel.Kernel.Panico.panico
-    
+
 .semMidia:
-    
+
     mov dl, byte [Hexagon.Dev.Gen.Disco.Controle.driveBoot]
     mov byte [Hexagon.Dev.Gen.Disco.Controle.driveAtual], dl
-    
+
     call Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos
-    
+
     mov byte[Hexagon.Dev.Gen.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.semMidia
 
     stc
-    
+
     jmp .finalizar
 
 .semErro:
@@ -625,13 +625,13 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores:
 
     pop esi
     pop eax
-    
+
     movzx ebx, byte[Hexagon.Dev.Gen.Disco.codigoOperacao] ;; Fornecer em EBX o código de retorno da operação
 
     ret
 
 ;; PED = Pacote de Endereço de Disco. Do termo em inglês DAP (Disk Address Packet)
-    
+
 .PED:
 .PED.tamanho:       db 16
 .PED.reservado:     db 0
@@ -640,10 +640,10 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores:
 .PED.segmento:      dw 0
 .PED.LBA:           dd 0
                     dd 0
-                    
+
 ;;************************************************************************************
 
-;; Testa um determinado volume para verificar sua presença. Caso não esteja presente, 
+;; Testa um determinado volume para verificar sua presença. Caso não esteja presente,
 ;; um erro será definido, conforme Hexagon.HD.IO
 
 Hexagon.Kernel.Dev.i386.Disco.Disco.testarVolume:
@@ -653,7 +653,7 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.testarVolume:
     mov cx, 0x50                    ;; Segmento
     mov edi, Hexagon.CacheDisco+20000   ;; Deslocamento
     mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
-    
+
     call Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores
 
     ret

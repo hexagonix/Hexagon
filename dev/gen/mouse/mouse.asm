@@ -10,7 +10,7 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                          Kernel Hexagon - Hexagon kernel         
+;;                          Kernel Hexagon - Hexagon kernel
 ;;
 ;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
@@ -20,7 +20,7 @@
 ;; Português:
 ;;
 ;; O Hexagon, Hexagonix e seus componentes são licenciados sob licença BSD-3-Clause.
-;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório 
+;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório
 ;; para obter mais informações sobre seus direitos e obrigações ao utilizar e reutilizar
 ;; o código deste ou de outros arquivos.
 ;;
@@ -37,10 +37,10 @@
 ;;
 ;; Copyright (c) 2015-2023, Felipe Miguel Nery Lunkes
 ;; All rights reserved.
-;; 
+;;
 ;; Redistribution and use in source and binary forms, with or without
 ;; modification, are permitted provided that the following conditions are met:
-;; 
+;;
 ;; 1. Redistributions of source code must retain the above copyright notice, this
 ;;    list of conditions and the following disclaimer.
 ;;
@@ -51,7 +51,7 @@
 ;; 3. Neither the name of the copyright holder nor the names of its
 ;;    contributors may be used to endorse or promote products derived from
 ;;    this software without specific prior written permission.
-;; 
+;;
 ;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 ;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 ;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -64,10 +64,10 @@
 ;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 ;; $HexagonixOS$
-                                                                  
+
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon 
+;;                     Este arquivo faz parte do kernel Hexagon
 ;;
 ;;************************************************************************************
 
@@ -85,85 +85,85 @@ Hexagon.Mouse:
 Hexagon.Kernel.Dev.Gen.Mouse.Mouse.iniciarMouse:
 
     push eax
-    
+
 ;; Habilitar IRQ para o mouse
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2 ;; Esperar se PS/2 estiver ocupado
-    
+
     mov al, 0x20            ;; Obter bit de status Compaq
-    
+
     out 0x64, al            ;; 0x64 é o registrador de estado
-    
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2 
-    
+
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
+
     in al, 0x60
-    
+
     or al, 2                ;; Definir segundo bit para 1 pra habilitar IRQ12
     mov bl, al              ;; Salvar bit modificado
-    
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2
-    
-    mov al, 0x60            ;; Definir byte de estado Compaq
-    
-    out 0x64, al        
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2
-    
+
+    mov al, 0x60            ;; Definir byte de estado Compaq
+
+    out 0x64, al
+
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2
+
     mov al, bl              ;; Enviar byte modificado
-    
+
     out 0x60, al
 
 ;; Habilitar dispositivo auxiliar (Mouse)
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2
-    
+
     mov al, 0xA8            ;; Habilitar dispositivo auxiliar
-    
+
     out 0x64, al
-    
+
 ;; Usar configurações padrão
 
     mov al, 0xF6            ;; Definir como padrão
-    
+
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
-    
+
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
-    
-    in al, 0x60     
+
+    in al, 0x60
 
 ;; Definir resolução
 
-    mov al, 0xE8        
-    
+    mov al, 0xE8
+
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
-    
+
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
-    
-    in al, 0x60     
+
+    in al, 0x60
 
     mov al, 3               ;; 8 contagens/mm
-    
+
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
-    
-    in al, 0x60     
-    
+
+    in al, 0x60
+
 ;; Habilitar pacotes
 
     mov al, 0xF4            ;; Habilitar pacotes
-    
+
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
-    
+
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
-    
-    in al, 0x60     
+
+    in al, 0x60
 
     mov ax, word[Hexagon.Video.Resolucao.y]
     mov word[manipuladorMousePS2.mouseY], ax
 
     pop eax
-    
+
     ret
 
 ;;************************************************************************************
@@ -191,133 +191,133 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.obterDoMouse:
 ;; Entrada:
 ;;
 ;; EAX - Posição X do mouse
-;; EBX - Posição Y do mouse   
+;; EBX - Posição Y do mouse
 
 Hexagon.Kernel.Dev.Gen.Mouse.Mouse.configurarMouse:
 
     mov [Hexagon.Mouse.mouseX], eax
     mov [Hexagon.Mouse.mouseY], ebx
     mov byte[manipuladorMousePS2.dados], 0
-    
+
     ret
 
-;;************************************************************************************  
+;;************************************************************************************
 
 Hexagon.Kernel.Dev.Gen.Mouse.Mouse.iniciarTouchPad:
 
     push eax
 
     mov al, 0xF5        ;; Desativar
-    
+
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
-    
-    in al, 0x60     
+
+    in al, 0x60
 
     mov al, 0xE8
-    
+
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
-    
+
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
-    
-    in al, 0x60     
+
+    in al, 0x60
 
     mov al, 0x03
-    
+
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
-    
-    in al, 0x60     
+
+    in al, 0x60
 
     mov al, 0xE8
-    
+
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
-    
-    in al, 0x60     
+
+    in al, 0x60
 
     mov al, 0x00
-    
+
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
-    
-    in al, 0x60     
+
+    in al, 0x60
 
     mov al, 0xE8
-    
+
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
-    
-    in al, 0x60     
+
+    in al, 0x60
 
     mov al, 0x00
-    
+
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
-    
-    in al, 0x60     
+
+    in al, 0x60
 
     mov al, 0xE8
-    
+
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
-    
-    in al, 0x60     
+
+    in al, 0x60
 
     mov al, 0x01
-    
+
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
-    
-    in al, 0x60     
+
+    in al, 0x60
 
     mov al, 0xF3
-    
+
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
-    
-    in al, 0x60     
+
+    in al, 0x60
 
     mov al, 0x14
-    
+
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
-    
-    in al, 0x60     
+
+    in al, 0x60
 
     mov al, 0xF4        ;; Habilitar
-    
+
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
-    
-    in al, 0x60     
+
+    in al, 0x60
 
     mov esi, manipuladorTouchpad ;; IRQ 12
     mov eax, 74h                 ;; Número da interrupção
-    
+
     call instalarISR
 
     pop eax
-    
+
     ret
-        
+
 ;;************************************************************************************
 
 ;; Aguardar por eventos do mouse e obter seus valores
 ;;
 ;; Saída:
-;; 
+;;
 ;; EAX - Posição X do mouse
 ;; EBX - Posição Y do mouse
 ;; EDX - Botões do mouse (bit #0 = botão esquerdo, bit #1 = botão direito)
@@ -325,7 +325,7 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.iniciarTouchPad:
 ;; Aguardar por eventos do mouse e obter seus valores
 ;;
 ;; Saída:
-;; 
+;;
 ;; EAX - Posição X do mouse
 ;; EBX - Posição Y do mouse
 ;; EDX - Botões do mouse (bit #0 = botão esquerdo, bit #1 = botão direito)
@@ -335,17 +335,17 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.aguardarMouse:
     sti
 
     mov byte[manipuladorMousePS2.alterado], 0
-    
+
 .aguardar:
 
     cmp byte[manipuladorMousePS2.alterado], 1   ;; Checar se o estado do mouse foi alterado
-    
+
     hlt
-    
+
     jne .aguardar
 
     mov eax, [Hexagon.Mouse.mouseX]
     mov ebx, [Hexagon.Mouse.mouseY]
     movzx edx, byte[manipuladorMousePS2.dados]
-    
+
     ret

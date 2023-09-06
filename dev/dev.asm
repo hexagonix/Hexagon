@@ -10,7 +10,7 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                          Kernel Hexagon - Hexagon kernel         
+;;                          Kernel Hexagon - Hexagon kernel
 ;;
 ;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
@@ -20,7 +20,7 @@
 ;; Português:
 ;;
 ;; O Hexagon, Hexagonix e seus componentes são licenciados sob licença BSD-3-Clause.
-;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório 
+;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório
 ;; para obter mais informações sobre seus direitos e obrigações ao utilizar e reutilizar
 ;; o código deste ou de outros arquivos.
 ;;
@@ -37,10 +37,10 @@
 ;;
 ;; Copyright (c) 2015-2023, Felipe Miguel Nery Lunkes
 ;; All rights reserved.
-;; 
+;;
 ;; Redistribution and use in source and binary forms, with or without
 ;; modification, are permitted provided that the following conditions are met:
-;; 
+;;
 ;; 1. Redistributions of source code must retain the above copyright notice, this
 ;;    list of conditions and the following disclaimer.
 ;;
@@ -51,7 +51,7 @@
 ;; 3. Neither the name of the copyright holder nor the names of its
 ;;    contributors may be used to endorse or promote products derived from
 ;;    this software without specific prior written permission.
-;; 
+;;
 ;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 ;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 ;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -64,10 +64,10 @@
 ;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 ;; $HexagonixOS$
-                                                                  
+
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon 
+;;                     Este arquivo faz parte do kernel Hexagon
 ;;
 ;;************************************************************************************
 
@@ -152,30 +152,30 @@ Hexagon.Kernel.Dev.Dev.fechar:
 
     mov byte[Hexagon.Dev.Controle.aberto], 0
     mov word[Hexagon.Dev.Controle.classeDispositivo], 0
-    
+
     push ebx
-    
+
     mov bx, word[Hexagon.Dev.Controle.idDispositivo]
-    
+
     cmp bx, word[codigoDispositivos.au0]
     je .au0
-    
+
     pop ebx
-    
+
     jmp .finalizar
 
 .au0:
 
     pop ebx
-    
+
     call Hexagon.Kernel.Dev.Gen.Som.Som.desligarSom
 
     jmp .finalizar
-    
+
 .finalizar:
 
     mov byte[Hexagon.Dev.Controle.idDispositivo], 00h
-    
+
     ret
 
 ;;************************************************************************************
@@ -183,7 +183,7 @@ Hexagon.Kernel.Dev.Dev.fechar:
 ;; Enviar dados para determinado dispositivo aberto. Os dados serão enviados para o dispositivo
 ;; aberto. Em caso de erro ou dispositivo não aberto, retornar erro
 ;;
-;; Entrada: 
+;; Entrada:
 ;;
 ;; ESI - Ponteiro para o buffer que contêm os dados à serem enviados
 ;;
@@ -192,118 +192,118 @@ Hexagon.Kernel.Dev.Dev.fechar:
 ;; CF definido em caso de erro
 
 Hexagon.Kernel.Dev.Dev.escrever:
-    
+
     push eax
     push esi
-    
+
     cmp byte[Hexagon.Dev.Controle.aberto], 0
     je .dispositivoNaoAberto
-    
+
     mov dl, byte[Hexagon.Dev.Controle.classeDispositivo]
-    
+
     cmp dl, 01h
     je .armazenamento
-    
+
     cmp dl, 02h
     je .portasSeriais
-    
+
     cmp dl, 03h
     je .portasParalelas
-    
+
     cmp dl, 04h
     je .saida
-    
+
     cmp dl, 05h
     je .processadores
-    
+
     stc
-    
+
     ret
-    
+
 .armazenamento:
-    
-    pop esi
-    pop eax
-    
-    call Hexagon.Kernel.Dev.Dev.fechar
-    
-    ret ;; Por enquanto, desativado!
-    
-.portasSeriais:
-    
-    pop esi
-    pop eax
-    
-    call Hexagon.Kernel.Dev.Gen.COM.Serial.enviarSerial
-    
-    jc .erro
-    
-    call Hexagon.Kernel.Dev.Dev.fechar
-    
-    ret
-    
-.portasParalelas:
-    
-    pop esi
-    pop eax
-    
-    call Hexagon.Kernel.Dev.Gen.Impressora.Impressora.enviarImpressora
-    
-    jc .erro
-    
-    call Hexagon.Kernel.Dev.Dev.fechar
-    
-    ret
-    
-.saida: 
 
     pop esi
     pop eax
-    
+
+    call Hexagon.Kernel.Dev.Dev.fechar
+
+    ret ;; Por enquanto, desativado!
+
+.portasSeriais:
+
+    pop esi
+    pop eax
+
+    call Hexagon.Kernel.Dev.Gen.COM.Serial.enviarSerial
+
+    jc .erro
+
+    call Hexagon.Kernel.Dev.Dev.fechar
+
+    ret
+
+.portasParalelas:
+
+    pop esi
+    pop eax
+
+    call Hexagon.Kernel.Dev.Gen.Impressora.Impressora.enviarImpressora
+
+    jc .erro
+
+    call Hexagon.Kernel.Dev.Dev.fechar
+
+    ret
+
+.saida:
+
+    pop esi
+    pop eax
+
     mov bx, word[Hexagon.Dev.Controle.idDispositivo]
-    
+
     cmp word[Hexagon.Dev.Controle.idDispositivo], bx
     je .au0
-    
+
     call Hexagon.Kernel.Dev.Dev.fechar
-    
+
     ret
 
 .au0:
 
     call Hexagon.Kernel.Dev.Gen.Som.Som.emitirSom
-    
+
     ret
-    
+
 .processadores:
 
     pop esi
     pop eax
-    
+
     call Hexagon.Kernel.Dev.Dev.fechar
-    
+
     ret
-    
+
 .dispositivoNaoAberto:
 
     stc
-    
+
     ret
 
 .erro:
 
     call Hexagon.Kernel.Dev.Dev.fechar
-    
+
     stc
-    
+
     ret
-    
+
 ;;************************************************************************************
 
 ;; Abre um canal de leitura/escrita com determinado dispositivo solicitado.
 ;; Também abre um arquivo comum presente no sistema de arquivos
 ;;
-;; Entrada: 
+;; Entrada:
 ;;
 ;; ESI - Ponteiro para o buffer que contêm o nome convencionado
 ;; EDI - Endereço para carregamento, em caso de arquivo em disco
@@ -317,40 +317,40 @@ Hexagon.Kernel.Dev.Dev.abrir:
 
     push edi
     push esi
-    
+
     call Hexagon.Kernel.Dev.Dev.converterDispositivo
-    
+
     pop esi
     pop edi
-    
+
     push bx
 
 ;; Verificar se está marcado como um possível arquivo comum, presente no sistema de arquivos
-    
-    cmp byte[Hexagon.Dev.Controle.arquivo], 1 
+
+    cmp byte[Hexagon.Dev.Controle.arquivo], 1
     je .arquivo
- 
+
 ;; Caso não, proceder com a abertura de um dispositivo
-    
+
     mov byte[Hexagon.Dev.Controle.classeDispositivo], dl
-    
+
     cmp dl, 01h
     je .armazenamento
-    
+
     cmp dl, 02h
     je .portasSeriais
-    
+
     cmp dl, 03h
     je .portasParalelas
-    
+
     cmp dl, 04h
     je .saida
-    
+
     cmp dl, 05h
     je .processadores
-    
+
     stc
-    
+
     ret
 
 ;; Para armazenamento, as saídas podem ser diferentes
@@ -374,7 +374,7 @@ Hexagon.Kernel.Dev.Dev.abrir:
 .armazenamentoVerificarPermissoes:
 
     call Hexagon.Kernel.Kernel.Usuarios.verificarPermissoes
-    
+
     cmp eax, 03h ;; Código de grupo para usuário padrão
     je .armazenamentoPermissaoNegada
 
@@ -387,17 +387,17 @@ Hexagon.Kernel.Dev.Dev.abrir:
     call Hexagon.Kernel.FS.VFS.definirSistemaArquivos
 
     jc .erroNaoEncontrado
-    
+
     call Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos
 
     jc .erroAbertura
-    
+
     push ebx ;; Contém o código de erro da operação de disco
-    
+
     mov byte[Hexagon.Dev.Controle.aberto], 1
 
     call Hexagon.Kernel.Dev.Dev.fechar
-    
+
     pop ebx  ;; Fornecer a quem solicitou a montagem do disco o código de retorno da operação
 
     mov eax, dword[Hexagon.Dev.Controle.classeDispositivo]
@@ -407,7 +407,7 @@ Hexagon.Kernel.Dev.Dev.abrir:
 .armazenamentoPermissaoNegada:
 
     pop eax
-    
+
     mov eax, 05h
 
     stc
@@ -415,7 +415,7 @@ Hexagon.Kernel.Dev.Dev.abrir:
     jmp .retorno
 
 .erroNaoEncontrado:
-    
+
     mov byte[Hexagon.Dev.Controle.aberto], 0
     mov eax, 06h ;; Dispositivo não encontrado
 
@@ -434,99 +434,99 @@ Hexagon.Kernel.Dev.Dev.abrir:
 .portasSeriais:
 
     pop bx
-    
+
     mov word[portaSerialAtual], bx
-    
+
     call Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarSerial
-    
+
     jc .erroAbertura
-    
+
     mov byte[Hexagon.Dev.Controle.aberto], 1
-    
+
     mov eax, dword[Hexagon.Dev.Controle.classeDispositivo]
-        
+
     jmp .retorno
 
 .portasParalelas:
 
     pop bx
-    
+
     mov word[portaParalelaAtual], bx
-    
+
     call Hexagon.Kernel.Dev.Gen.Impressora.Impressora.iniciarImpressora
-    
+
     jc .erroAbertura
-    
+
     mov byte[Hexagon.Dev.Controle.aberto], 1
-    
+
     mov eax, dword[Hexagon.Dev.Controle.classeDispositivo]
-        
+
     jmp .retorno
 
 .saida:
 
     pop bx
-    
+
     mov eax, dword[Hexagon.Dev.Controle.classeDispositivo]
 
     cmp bx, [codigoDispositivos.vd0]
     je .vd0
-    
+
     cmp bx, [codigoDispositivos.vd1]
     je .vd1
-    
+
     cmp bx, [codigoDispositivos.vd2]
     je .vd2
-    
+
     cmp bx, [codigoDispositivos.au0]
     je .au0
-    
+
     jmp .retorno
 
 .vd0: ;; Console principal
 
     call Hexagon.Kernel.Lib.Graficos.usarBufferVideo1
-    
+
     jmp .retorno
-    
+
 .vd1: ;; Primeiro console virtual
 
     call Hexagon.Kernel.Lib.Graficos.usarBufferVideo2
-    
+
     jmp .retorno
-    
+
 .vd2: ;; Despejo de dados do Kernel
 
     mov ebx, 1h
-    
+
     call Hexagon.Kernel.Lib.Graficos.atualizarTela
-    
+
     jmp .retorno
 
 .au0: ;; Alto-falante interno do computador
-    
+
     jmp .retorno
-    
+
 .processadores:
 
     pop bx
-    
+
     mov eax, dword[Hexagon.Dev.Controle.classeDispositivo]
-    
+
     mov esi, codigoDispositivos.proc0
-        
-    jmp .retorno 
+
+    jmp .retorno
 
 .arquivo:
 
     pop bx
-    
+
     mov byte[Hexagon.Dev.Controle.arquivo], 0
-    
+
     call Hexagon.Kernel.FS.VFS.carregarArquivo
-    
+
     jmp .retorno
-    
+
 .retorno:
 
     ret
@@ -543,129 +543,129 @@ Hexagon.Kernel.Dev.Dev.abrir:
 ;; EAX - Classe do dispositivo (Uso futuro)
 ;;
 ;; Saída:
-;; 
+;;
 ;; AH - Número do dispositivo para uso pelo Kernel
 ;; BX - Cópia de AH em um registrador 16 Bits
 ;; ECX - Cópia de AH em um registrador 32 Bits
 ;; DL - Classe do dispositivo
 
 Hexagon.Kernel.Dev.Dev.converterDispositivo:
-    
+
     mov edi, Hexagon.Dev.Dispositivos.hd0
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
-    jc .hd0 
-    
+    jc .hd0
+
     mov edi, Hexagon.Dev.Dispositivos.hd1
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
     jc .hd1
-    
+
     mov edi, Hexagon.Dev.Dispositivos.hd2
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
     jc .hd2
-    
+
     mov edi, Hexagon.Dev.Dispositivos.hd3
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
     jc .hd3
-    
+
     mov edi, Hexagon.Dev.Dispositivos.com1
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
-    jc .com1    
-    
+    jc .com1
+
     mov edi, Hexagon.Dev.Dispositivos.com2
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
-    jc .com2    
-    
+    jc .com2
+
     mov edi, Hexagon.Dev.Dispositivos.com3
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
-    jc .com3    
-    
+    jc .com3
+
     mov edi, Hexagon.Dev.Dispositivos.com4
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
     jc .com4
-    
+
     mov edi, Hexagon.Dev.Dispositivos.imp0
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
-    jc .imp0    
-    
+    jc .imp0
+
     mov edi, Hexagon.Dev.Dispositivos.imp1
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
-    jc .imp1    
-    
+    jc .imp1
+
     mov edi, Hexagon.Dev.Dispositivos.imp2
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
     jc .imp2
-    
+
     mov edi, Hexagon.Dev.Dispositivos.vd0
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
-    jc .vd0 
-    
+    jc .vd0
+
     mov edi, Hexagon.Dev.Dispositivos.vd1
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
     jc .vd1
-    
+
     mov edi, Hexagon.Dev.Dispositivos.vd2
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
     jc .vd2
-    
+
     mov edi,Hexagon.Dev.Dispositivos.au0
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
     jc .au0
-    
+
     mov edi, Hexagon.Dev.Dispositivos.mouse0
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
     jc .mouse0
-    
+
     mov edi, Hexagon.Dev.Dispositivos.tecla0
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
-    jc .tecla0  
-    
+    jc .tecla0
+
     mov edi, Hexagon.Dev.Dispositivos.proc0
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
     jc .proc0
 
 ;; Este nome pode fazer referência a um arquivo comum!
 ;; Então o sistema tentará realizar a abertura do mesmo!
-    
+
     mov byte[Hexagon.Dev.Controle.arquivo], 1 ;; Marcar como sendo possivelmente um arquivo
-    
+
     ret
-    
+
 .hd0:
 
     mov ah, byte [codigoDispositivos.hd0]
     mov byte[Hexagon.Dev.Controle.idDispositivo], ah
     movzx ecx, byte [codigoDispositivos.hd0]
     mov dl, 01h
-    
+
     ret
-    
+
 .hd1:
 
     mov ah, byte [codigoDispositivos.hd1]
     mov byte[Hexagon.Dev.Controle.idDispositivo], ah
     movzx ecx, byte [codigoDispositivos.hd1]
     mov dl, 01h
-    
+
     ret
-    
+
 .hd2:
 
     mov ah, byte [codigoDispositivos.hd2]
     mov byte[Hexagon.Dev.Controle.idDispositivo], ah
     movzx ecx, byte [codigoDispositivos.hd2]
     mov dl, 01h
-    
+
     ret
-    
+
 .hd3:
 
     mov ah, byte [codigoDispositivos.hd3]
     mov byte[Hexagon.Dev.Controle.idDispositivo], ah
     movzx ecx, byte [codigoDispositivos.hd3]
     mov dl, 01h
-    
+
     ret
-    
+
 .com1:
 
     mov ah, 00h
@@ -673,9 +673,9 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
     movzx ecx, word [codigoDispositivos.com1]
     mov dl, 02h
-    
+
     ret
-    
+
 .com2:
 
     mov ah, 01h
@@ -683,19 +683,19 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
     movzx ecx, word [codigoDispositivos.com2]
     mov dl, 02h
-    
+
     ret
 
 .com3:
- 
+
     mov ah, 02h
     mov bx, word [codigoDispositivos.com3]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
     movzx ecx, word [codigoDispositivos.com3]
     mov dl, 02h
-    
+
     ret
-    
+
 .com4:
 
     mov ah, 03h
@@ -703,34 +703,34 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
     movzx ecx, word [codigoDispositivos.com4]
     mov dl, 02h
-    
+
     ret
-    
+
 .imp0:
 
     mov bx, word [codigoDispositivos.imp0]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
     movzx ecx, word [codigoDispositivos.imp0]
     mov dl, 03h
-    
+
     ret
 
 .imp1:
-    
+
     mov bx, word [codigoDispositivos.imp1]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
     movzx ecx, word [codigoDispositivos.imp1]
     mov dl, 03h
-    
+
     ret
-    
+
 .imp2:
 
     mov bx, word [codigoDispositivos.imp2]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
     movzx ecx, word [codigoDispositivos.imp2]
     mov dl, 03h
-    
+
     ret
 
 .vd0:
@@ -752,7 +752,7 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
     mov dl, 04h
 
     ret
-    
+
 .vd2:
 
     mov ah, 02h
@@ -761,7 +761,7 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
     mov ecx, [codigoDispositivos.vd2]
     mov dl, 04h
 
-    ret 
+    ret
 
 .au0:
 
@@ -769,14 +769,14 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
     mov bx, word [codigoDispositivos.au0]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
     mov dl, 04h
-    
+
 .mouse0:
 
     mov ah, 00h
     mov bx, [codigoDispositivos.mouse0]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
     mov dl, 00h
-    
+
     ret
 
 .tecla0:
@@ -799,7 +799,7 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
     ret
 
 ;;************************************************************************************
-    
+
 ;; Converter um número ou endereço para um nome de dispositivo
 ;;
 ;; Entrada:
@@ -812,190 +812,190 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
 ;; Saída:
 ;;
 ;; ESI - Buffer contendo o nome do arquivo/dispositivo
-    
+
 Hexagon.Kernel.Dev.Dev.paraDispositivo:
 
     cmp dl, 1
     je .armazenamento
-    
+
     cmp dl, 2
     je .seriais
-    
+
     cmp dl, 3
     je .paralelas
-    
+
     cmp dl, 4
     je .saida
-    
+
     cmp dl, 5
     je .processadores
 
     stc  ;; Em caso de classe inválida
-    
+
     ret
 
 .armazenamento:
 
     cmp ah, byte [codigoDispositivos.hd0]
     je .hd0
-    
+
     cmp ah, byte [codigoDispositivos.hd1]
     je .hd1
-    
+
     cmp ah, byte [codigoDispositivos.hd2]
     je .hd2
-    
+
     cmp ah, byte [codigoDispositivos.hd3]
     je .hd3
-    
+
     stc
-    
+
     ret
-    
+
 .hd0:
 
     mov esi, Hexagon.Dev.Dispositivos.hd0
-    
+
     ret
-    
+
 .hd1:
 
     mov esi, Hexagon.Dev.Dispositivos.hd1
-    
+
     ret
 
 .hd2:
 
     mov esi, Hexagon.Dev.Dispositivos.hd2
-    
+
     ret
 
 .hd3:
 
     mov esi, Hexagon.Dev.Dispositivos.hd3
-    
-    ret 
+
+    ret
 
 .seriais:
 
     cmp ax, word [codigoDispositivos.com1]
     je .com1
-    
+
     cmp ax, word [codigoDispositivos.com2]
     je .com2
-    
+
     cmp ax, word [codigoDispositivos.com3]
     je .com3
-    
+
     cmp ax, word [codigoDispositivos.com4]
     je .com4
-    
+
     stc
-    
+
     ret
-    
+
 .com1:
 
     mov esi, Hexagon.Dev.Dispositivos.com1
-    
+
     ret
-    
+
 .com2:
 
     mov esi, Hexagon.Dev.Dispositivos.com2
-    
+
     ret
 
 .com3:
 
     mov esi, Hexagon.Dev.Dispositivos.com3
-    
+
     ret
-    
+
 .com4:
 
     mov esi, Hexagon.Dev.Dispositivos.com4
-    
+
     ret
 
 .paralelas:
 
     cmp ax, word [codigoDispositivos.imp0]
     je .imp0
-    
+
     cmp ax, word [codigoDispositivos.imp1]
     je .imp1
-    
+
     cmp ax, word [codigoDispositivos.imp2]
     je .imp2
-    
+
     stc
-    
+
     ret
-    
+
 .imp0:
 
     mov esi, Hexagon.Dev.Dispositivos.imp0
 
     ret
-    
+
 .imp1:
 
     mov esi, Hexagon.Dev.Dispositivos.imp1
 
     ret
-    
+
 .imp2:
 
     mov esi, Hexagon.Dev.Dispositivos.imp2
 
-    ret 
-    
+    ret
+
 .saida:
 
     cmp ax, codigoDispositivos.vd0
     je .vd0
-    
+
     cmp ax, codigoDispositivos.vd1
     je .vd1
-    
+
     stc
-    
+
     ret
-    
+
 .vd0:
 
     mov esi, Hexagon.Dev.Dispositivos.vd0
-    
+
     ret
-    
+
 .vd1:
 
     mov esi, Hexagon.Dev.Dispositivos.vd1
-    
-    ret 
+
+    ret
 
 .vd2:
 
     mov esi, Hexagon.Dev.Dispositivos.vd2
-    
-    ret 
-    
+
+    ret
+
 .processadores:
 
     cmp ax, 00h
     je .proc0
-    
+
     stc
-    
+
     ret
-    
+
 .proc0:
-    
+
     mov esi, Hexagon.Dev.Dispositivos.proc0
-    
+
     ret
-    
+
 ;;************************************************************************************
 
 ;; Incluir os códigos de dispositivos dependentes da arquitetura

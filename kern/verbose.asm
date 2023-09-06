@@ -10,7 +10,7 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                          Kernel Hexagon - Hexagon kernel         
+;;                          Kernel Hexagon - Hexagon kernel
 ;;
 ;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
@@ -20,7 +20,7 @@
 ;; Português:
 ;;
 ;; O Hexagon, Hexagonix e seus componentes são licenciados sob licença BSD-3-Clause.
-;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório 
+;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório
 ;; para obter mais informações sobre seus direitos e obrigações ao utilizar e reutilizar
 ;; o código deste ou de outros arquivos.
 ;;
@@ -37,10 +37,10 @@
 ;;
 ;; Copyright (c) 2015-2023, Felipe Miguel Nery Lunkes
 ;; All rights reserved.
-;; 
+;;
 ;; Redistribution and use in source and binary forms, with or without
 ;; modification, are permitted provided that the following conditions are met:
-;; 
+;;
 ;; 1. Redistributions of source code must retain the above copyright notice, this
 ;;    list of conditions and the following disclaimer.
 ;;
@@ -51,7 +51,7 @@
 ;; 3. Neither the name of the copyright holder nor the names of its
 ;;    contributors may be used to endorse or promote products derived from
 ;;    this software without specific prior written permission.
-;; 
+;;
 ;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 ;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 ;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -64,16 +64,16 @@
 ;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 ;; $HexagonixOS$
-                                                                  
+
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon 
+;;                     Este arquivo faz parte do kernel Hexagon
 ;;
 ;;************************************************************************************
 
 ;; As mensagens só serão adicionadas ao Hexagon em caso de ativação da verbose em
-;; tempo de montagem. Se o símbolo não for definido, o Kernel não terá suporte a 
-;; verbose direta, mas continuará com a função para o mecanismo de mensagem. 
+;; tempo de montagem. Se o símbolo não for definido, o Kernel não terá suporte a
+;; verbose direta, mas continuará com a função para o mecanismo de mensagem.
 
 ;;************************************************************************************
 
@@ -82,7 +82,7 @@ use32
 align 4
 
 match =SIM, VERBOSE {
-    
+
 Hexagon.Verbose:
 
 .Hexagon:
@@ -98,7 +98,7 @@ db "Starting and setting up the timer (119 Hz)...", 0
 .escalonador:
 db "Starting and setting up the scheduler...", 0
 .teclado:
-db "The keyboard management service has started.", 0 
+db "The keyboard management service has started.", 0
 .mouse:
 db "The mouse management service has started.", 0
 .serial:
@@ -213,5 +213,5 @@ db "The shell terminated unexpectedly.", 10, 10
 db "Some unexpected error caused the shell to terminate.", 10
 db "This problem prevents the system from running properly and to avoid any more serious problem or the", 10
 db "loss of your data, the system has halted.", 10, 0
-            
+
 }

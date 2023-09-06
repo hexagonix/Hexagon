@@ -10,7 +10,7 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                          Kernel Hexagon - Hexagon kernel         
+;;                          Kernel Hexagon - Hexagon kernel
 ;;
 ;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
@@ -20,7 +20,7 @@
 ;; Português:
 ;;
 ;; O Hexagon, Hexagonix e seus componentes são licenciados sob licença BSD-3-Clause.
-;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório 
+;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório
 ;; para obter mais informações sobre seus direitos e obrigações ao utilizar e reutilizar
 ;; o código deste ou de outros arquivos.
 ;;
@@ -37,10 +37,10 @@
 ;;
 ;; Copyright (c) 2015-2023, Felipe Miguel Nery Lunkes
 ;; All rights reserved.
-;; 
+;;
 ;; Redistribution and use in source and binary forms, with or without
 ;; modification, are permitted provided that the following conditions are met:
-;; 
+;;
 ;; 1. Redistributions of source code must retain the above copyright notice, this
 ;;    list of conditions and the following disclaimer.
 ;;
@@ -51,7 +51,7 @@
 ;; 3. Neither the name of the copyright holder nor the names of its
 ;;    contributors may be used to endorse or promote products derived from
 ;;    this software without specific prior written permission.
-;; 
+;;
 ;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 ;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 ;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -64,10 +64,10 @@
 ;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 ;; $HexagonixOS$
-                                                                  
+
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon 
+;;                     Este arquivo faz parte do kernel Hexagon
 ;;
 ;;************************************************************************************
 
@@ -75,7 +75,7 @@
 ;;
 ;; Daqui em diante, o ambiente de operação é o modo protegido
 ;;
-;; Componente executivo do Kernel                   
+;; Componente executivo do Kernel
 
 use32
 
@@ -105,7 +105,7 @@ include "kern/servicos.asm"           ;; Rotinas de interrupção e manipuladore
 ;; Usuários e outras utilidades
 
 include "kern/dmesg.asm"              ;; Funções para manipulação de mensagens do Kernel
-include "kern/panico.asm"             ;; Funções para exibição e identificação de erros do Hexagon 
+include "kern/panico.asm"             ;; Funções para exibição e identificação de erros do Hexagon
 include "kern/usuarios.asm"           ;; Funções de gerenciamento de permissões e usuários
 
 ;; Gerenciamento de Dispositivos do Hexagon
@@ -120,12 +120,12 @@ include "arch/i386/BIOS/BIOS.asm"     ;; Interrupções do BIOS em modo real
 include "arch/i386/APM/apm.asm"       ;; Implementação APM do Hexagon
 include "dev/gen/snd/som.asm"         ;; Funções para controle de som do Hexagon
 include "dev/gen/PS2/PS2.asm"         ;; Funções para controle de portas PS/2 do Hexagon
-include "arch/i386/timer/timer.asm"   ;; Funções para manipulação de timer do Hexagon  
+include "arch/i386/timer/timer.asm"   ;; Funções para manipulação de timer do Hexagon
 include "fs/vfs.asm"                  ;; Sistema de arquivos virtual (VFS) para Hexagon
 include "dev/gen/mouse/mouse.asm"     ;; Funções para mouse PS/2 do Hexagon
 include "dev/gen/lpt/lpt.asm"         ;; Funções de manipulação de impressora
 include "dev/gen/COM/serial.asm"      ;; Funções para manipulação de portas seriais em modo protegido
-include "arch/i386/CMOS/cmos.asm"     ;; Funções para manipulação de data e hora  
+include "arch/i386/CMOS/cmos.asm"     ;; Funções para manipulação de data e hora
 include "dev/dev.asm"                 ;; Funções de gerenciamento e abstração de Hardware do Hexagon
 
 ;; Processos, modelo de processo e de imagens executáveis
@@ -167,7 +167,7 @@ include "kern/parametros.asm"         ;; Código de análise e processamento de 
 
 ;; Aqui será realizada a configuração inicial do ambiente do kernel
 
-Hexagon.init: 
+Hexagon.init:
 
 ;; Primeiramente os registradores de segmento e da pilha serão configurados
 
@@ -177,7 +177,7 @@ Hexagon.init:
     mov ss, ax
     mov fs, ax
     mov gs, ax
-    mov es, ax  
+    mov es, ax
     mov esp, 0x10000 ;; Definir ponteiro de pilha
 
     cli
@@ -189,7 +189,7 @@ Hexagon.init:
 Hexagon.Autoconfig:
 
     call Hexagon.Kernel.Arch.i386.CPU.CPU.identificarProcessador ;; Identifica o processador instalado
-    
+
     call Hexagon.Kernel.Arch.i386.CPU.CPU.configurarProcessador ;; Configura a operação do processador
 
     call Hexagon.Kernel.Arch.Gen.Mm.iniciarMemoria ;; Inicia o alocador de memória do Hexagon
@@ -201,7 +201,7 @@ Hexagon.Autoconfig:
     call Hexagon.Kernel.Lib.Graficos.configurarVideo ;; Configura a resolução e configurações padrão de vídeo
 
     call Hexagon.Kernel.Kernel.Dmesg.iniciarRelatorio ;; Inicia o relatório de componentes do Hexagon
-    
+
 ;;************************************************************************************
 
 ;; Aqui se iniciam as mensagens de aviso junto à inicialização do Hexagon
@@ -211,7 +211,7 @@ Hexagon.Autoconfig:
     call Hexagon.Kernel.Dev.Gen.Console.Console.limparConsole
 
     kprint Hexagon.Verbose.Hexagon
-    
+
     logHexagon Hexagon.Verbose.versao, Hexagon.Dmesg.Prioridades.p5
 
     kprint Hexagon.Dmesg.identificadorHexagon
@@ -245,49 +245,49 @@ Hexagon.Autoconfig:
     kprint Hexagon.Verbose.novaLinha
 
 ;;************************************************************************************
-    
+
     logHexagon Hexagon.Verbose.teclado, Hexagon.Dmesg.Prioridades.p5
 
-    logHexagon Hexagon.Verbose.mouse, Hexagon.Dmesg.Prioridades.p5 
+    logHexagon Hexagon.Verbose.mouse, Hexagon.Dmesg.Prioridades.p5
 
     call Hexagon.Kernel.Arch.i386.Timer.Timer.iniciarTimer ;; Inicializa o serviço de timer do sistema
 
     call Hexagon.Kernel.Kernel.Proc.iniciarEscalonador ;; Inicia o escalonador de processos do Hexagon
 
-    call Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarCOM1 ;; Iniciar primeira porta serial para debug 
+    call Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarCOM1 ;; Iniciar primeira porta serial para debug
 
-    call Hexagon.Kernel.FS.VFS.definirVolumeBoot ;; Define o volume com base em informações da inicialização   
+    call Hexagon.Kernel.FS.VFS.definirVolumeBoot ;; Define o volume com base em informações da inicialização
 
 ;;************************************************************************************
 
     call Hexagon.Kernel.FS.VFS.definirSistemaArquivos ;; Define o sistema de arquivos à ser utilizado para o volume
-    
+
     kprint Hexagon.Dmesg.identificadorHexagon
 
-    kprint Hexagon.Verbose.inicioMontagem 
-    
+    kprint Hexagon.Verbose.inicioMontagem
+
     call Hexagon.Kernel.FS.VFS.obterVolume ;; Obter o identificador do volume
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString ;; Exibir
 
-    kprint Hexagon.Verbose.montagemRealizada 
-    
+    kprint Hexagon.Verbose.montagemRealizada
+
     kprint Hexagon.Verbose.novaLinha
-    
+
 ;;************************************************************************************
 
     call Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos ;; Inicializa as estruturas do sistema de arquivos do volume
-    
+
     kprint Hexagon.Dmesg.identificadorHexagon
 
-    kprint Hexagon.Verbose.sistemaArquivos 
-    
+    kprint Hexagon.Verbose.sistemaArquivos
+
     call Hexagon.Kernel.FS.VFS.obterVolume
 
     push esi
     push edi
-    
-    mov al, ah 
+
+    mov al, ah
     xor ah, ah
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirHexadecimal
@@ -298,8 +298,8 @@ Hexagon.Autoconfig:
 
     kprint Hexagon.Dmesg.identificadorHexagon
 
-    kprint Hexagon.Verbose.rotuloVolume 
-    
+    kprint Hexagon.Verbose.rotuloVolume
+
     pop edi
     pop esi
 
@@ -315,7 +315,7 @@ Hexagon.Autoconfig:
 
     mov esi, "/"
 
-    call Hexagon.Kernel.FS.Dir.definirPontodeMontagem 
+    call Hexagon.Kernel.FS.Dir.definirPontodeMontagem
 
     call Hexagon.Kernel.FS.VFS.montarVolume ;; Monta o volume padrão utilizado para a inicialização
 
@@ -324,15 +324,15 @@ Hexagon.Autoconfig:
 ;;************************************************************************************
 
     call instalarInterrupcoes ;; Instala os manipuladores de interrupção do Hexagon
-    
+
 ;; Primeiramente, deve-se impedir que o usuário mate processos com uma tecla especial, impedindo
 ;; que qualquer processo relevante, como o de login, seja finalizado prematuramente
 
 ;; Impede que o usuário mate processos com uma tecla especial
 
-    call Hexagon.Kernel.Kernel.Proc.travar 
+    call Hexagon.Kernel.Kernel.Proc.travar
 
-    logHexagon Hexagon.Verbose.travando, Hexagon.Dmesg.Prioridades.p5 
+    logHexagon Hexagon.Verbose.travando, Hexagon.Dmesg.Prioridades.p5
 
 ;;************************************************************************************
 
@@ -341,13 +341,13 @@ Hexagon.iniciarModoUsuario:
     logHexagon Hexagon.Verbose.modoUsuario, Hexagon.Dmesg.Prioridades.p5
 
 .iniciarInit:
-    
+
 ;; Agora o Hexagon tentará carregar o init e, em caso de sucesso, transferir o controle para
 ;; ele, que finalizará a inicialização do sistema em modo usuário
-    
+
 ;; Primeiro, verificar se o arquivo existe no volume
 
-    logHexagon Hexagon.Verbose.init, Hexagon.Dmesg.Prioridades.p5 
+    logHexagon Hexagon.Verbose.init, Hexagon.Dmesg.Prioridades.p5
 
     mov esi, Hexagon.Init.Const.initHexagon
 
@@ -359,9 +359,9 @@ Hexagon.iniciarModoUsuario:
 
     mov eax, 0                              ;; Não fornecer argumentos
     mov esi, Hexagon.Init.Const.initHexagon ;; Nome do arquivo
-    
+
     clc
-    
+
     call Hexagon.Kernel.Kernel.Proc.criarProcesso ;; Solicitar o carregamento do init
 
     logHexagon Hexagon.Verbose.semInit, Hexagon.Dmesg.Prioridades.p5
@@ -369,24 +369,24 @@ Hexagon.iniciarModoUsuario:
     jnc .fimInit
 
 .initNaoEncontrado: ;; O init não pôde ser localizado
-    
+
 ;; Por enquanto, o Hexagon tentará carregar o shell padrão do sistema
 
     logHexagon Hexagon.Verbose.initNaoEncontrado, Hexagon.Dmesg.Prioridades.p5
 
     mov eax, 0                               ;; Não fornecer argumentos
     mov esi, Hexagon.Init.Const.shellHexagon ;; Nome do arquivo
-    
+
     clc
-    
+
     call Hexagon.Kernel.Kernel.Proc.criarProcesso ;; Solicitar o carregamento do shell padrão
 
     jnc .fimShell
-    
+
 .fimInit: ;; Imprimir mensagem e finalizar o sistema
 
     mov esi, Hexagon.Verbose.Init.semInit
-    
+
     mov eax, 1
 
     call Hexagon.Kernel.Kernel.Panico.panico
@@ -394,22 +394,22 @@ Hexagon.iniciarModoUsuario:
 .fimShell:
 
     mov esi, Hexagon.Verbose.Init.shellFinalizado
-    
+
     mov eax, 1
 
     call Hexagon.Kernel.Kernel.Panico.panico ;; Solicitar montagem de tela de erro
-    
+
 ;;************************************************************************************
 
 Hexagon.Init.Const:
 
 .initHexagon:          db "init", 0 ;; Nome da imagem em disco do init
 .shellHexagon:         db "sh", 0   ;; Nome do shell padrão
-           
+
 ;;************************************************************************************
 
 Hexagon.FimCodigo:
 
-Hexagon.BlocoModoVBE       = Hexagon.FimCodigo + 0      
+Hexagon.BlocoModoVBE       = Hexagon.FimCodigo + 0
 Hexagon.CacheDisco         = Hexagon.FimCodigo + 1024          ;; Buffer de disco para carregar setores
 Hexagon.ArgumentosProcesso = Hexagon.FimCodigo + 60000 + 0x500 ;; Espaço de armazenamento dos argumentos de um aplicativo

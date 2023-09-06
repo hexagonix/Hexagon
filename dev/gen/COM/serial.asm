@@ -10,7 +10,7 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                          Kernel Hexagon - Hexagon kernel         
+;;                          Kernel Hexagon - Hexagon kernel
 ;;
 ;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
@@ -20,7 +20,7 @@
 ;; Português:
 ;;
 ;; O Hexagon, Hexagonix e seus componentes são licenciados sob licença BSD-3-Clause.
-;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório 
+;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório
 ;; para obter mais informações sobre seus direitos e obrigações ao utilizar e reutilizar
 ;; o código deste ou de outros arquivos.
 ;;
@@ -37,10 +37,10 @@
 ;;
 ;; Copyright (c) 2015-2023, Felipe Miguel Nery Lunkes
 ;; All rights reserved.
-;; 
+;;
 ;; Redistribution and use in source and binary forms, with or without
 ;; modification, are permitted provided that the following conditions are met:
-;; 
+;;
 ;; 1. Redistributions of source code must retain the above copyright notice, this
 ;;    list of conditions and the following disclaimer.
 ;;
@@ -51,7 +51,7 @@
 ;; 3. Neither the name of the copyright holder nor the names of its
 ;;    contributors may be used to endorse or promote products derived from
 ;;    this software without specific prior written permission.
-;; 
+;;
 ;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 ;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 ;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -64,10 +64,10 @@
 ;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 ;; $HexagonixOS$
-                                                                  
+
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon 
+;;                     Este arquivo faz parte do kernel Hexagon
 ;;
 ;;************************************************************************************
 
@@ -103,7 +103,7 @@ Hexagon.Kernel.Dev.Gen.COM.Serial.enviarSerial:    ;; Esse método é usado para
     ret
 
 ;;************************************************************************************
-    
+
 ;; Bloqueia o envio de dados pela porta serial até  a mesma estar pronta
 ;; Se pronta, envia um byte
 ;;
@@ -115,32 +115,32 @@ Hexagon.Kernel.Dev.Gen.COM.Serial.enviarSerial:    ;; Esse método é usado para
 Hexagon.Kernel.Dev.Gen.COM.Serial.serialRealizarEnvio:
 
     pusha
-    
+
     push ax     ;; Salvar entrada do usuário
-    
+
     mov bx, word[portaSerialAtual]
-    
+
 serialAguardarEnviar:
 
     mov dx, bx
-    
+
     add dx, 5   ;; Porta + 5
-    
+
     in al, dx
-    
+
     test al, 00100000b      ;; Bit 5 do Registro de status da linha (Line Status Register)
                             ;; "Registro de espera do transmissor vazio"
-                        
+
     jz serialAguardarEnviar ;; Enquanto não vazio...
-    
+
     pop ax     ;; Restaurar entrada do usuário
-    
+
     mov dx, bx ;; Porta aberta
-    
+
     out dx, al ;; Enviar dados à porta solicitada
-    
+
     popa
-    
+
     ret
 
 ;;************************************************************************************
@@ -148,33 +148,33 @@ serialAguardarEnviar:
 ;; Inicializa e abre para leitura e escrita uma determinada porta serial solicitada pelo sistema
 ;;
 ;; Entrada:
-;;  
+;;
 ;; BX - Registro contendo o número da porta
 
 Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarSerial:
 
     mov bx, word[portaSerialAtual]
-    
+
     pusha
-    
+
     push ds
-    
+
     push cs
     pop ds
-    
+
     mov al, 0
     mov dx, bx
-    
+
     inc dx          ;; Porta + 1
-    
+
     out dx, al      ;; Desativar interrupções
 
     mov dx, bx
 
     add dx, 3       ;; Porta + 3
 
-    mov al, 10000000b   
-    
+    mov al, 10000000b
+
     out dx, al      ;; Habilitar o DLAB (bit mais significativo), para que seja possível
                     ;; iniciar a definição do divisor da taxa de transmissão
 
@@ -186,15 +186,15 @@ Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarSerial:
 
     mov al, 12
     mov dx, bx      ;; Porta + 0
-    
+
     out dx, al      ;; Byte menos significativo do divisor
-    
+
     mov al, 0
-    
+
     mov dx, bx
 
     add dx, 1       ;; Porta + 1
-    
+
     out dx, al      ;; Byte mais significante do divisor
                     ;; Isto produz uma taxa de 115200/12 = 9600
 
@@ -202,7 +202,7 @@ Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarSerial:
     mov dx, bx
 
     add dx, 2       ;; Porta + 2
-    
+
     out dx, al      ;; Manipulador de 14 bytes, habilitar FIFOs
                     ;; Limpar FIFO recebido, limpar FIFO transmitido
 
@@ -213,20 +213,20 @@ Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarSerial:
 ;; Bits 2-2 : Limpar FIFO transmitido
 ;; Bits 1-1 : Limpar FIFO recebido
 ;; Bits 0-0 : Habilitar FIFOs
-                
+
     mov al, 00000011b
     mov dx, bx
 
     add dx, 3       ;; Porta + 3
-    
-    out dx, al      
-    
+
+    out dx, al
+
 ;; Desativar DLAB, e definir:
 ;;
 ;;  - Caractere de tamanho de 8 bits
 ;;  - Sem paridade
 ;;  - 1 bit de parada
-                    
+
 ;; Bits 7-7 : Habilitar DLAB
 ;; Bits 6-6 : Parar transmissão enquanto 1
 ;; Bits 3-5 : Paridade (0=nenhum)
@@ -237,7 +237,7 @@ Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarSerial:
     mov dx, bx
 
     add dx, 4       ;; Porta + 4
-    
+
     out dx, al      ;; Habilitar saída auxiliar 2 (também chamado de "ativar IRQ")
 
 ;; Bits 7-6 - Reservado
@@ -247,22 +247,22 @@ Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarSerial:
 ;; Bits 2-2 - Saída auxiliar 1
 ;; Bits 1-1 - Solicitação para enviar (RTS)
 ;; Bits 0-0 - Terminal de dados pronto (DTR)
-    
+
     in al, 21h          ;; Ler bits de máscara IRQ do PIC principal
-    
+
     and al, 11101111b   ;; Habilitar IRQ4, mantendo todos os outros IRQs inalterados
-    
+
     out 21h, al         ;; Escrever bits de máscara de IRQ para PIC principal
-    
+
     mov al, 1
     mov dx, bx
 
     add dx, 1           ;; Porta + 1
-    
+
     out dx, al          ;; Habilitar interrupções
-    
+
     pop ds
-    
+
     popa
 
     ret
@@ -280,7 +280,7 @@ Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarCOM1:
     mov bx, word[portaSerialAtual]
     mov word[portaSerialAnterior], bx
 
-    mov bx, codigoDispositivos.com1 
+    mov bx, codigoDispositivos.com1
     mov word[portaSerialAtual], bx
 
     call Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarSerial
@@ -292,11 +292,11 @@ Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarCOM1:
     pop ebx
     pop eax
 
-    logHexagon Hexagon.Verbose.serial, Hexagon.Dmesg.Prioridades.p5 
+    logHexagon Hexagon.Verbose.serial, Hexagon.Dmesg.Prioridades.p5
 
     ret
 
 ;;************************************************************************************
 
-portaSerialAtual:    db 0   
+portaSerialAtual:    db 0
 portaSerialAnterior: db 0

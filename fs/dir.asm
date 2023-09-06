@@ -10,7 +10,7 @@
 ;;                                                aa,    ,88
 ;;                                                 "P8bbdP"
 ;;
-;;                          Kernel Hexagon - Hexagon kernel         
+;;                          Kernel Hexagon - Hexagon kernel
 ;;
 ;;                 Copyright (c) 2015-2023 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
@@ -20,7 +20,7 @@
 ;; Português:
 ;;
 ;; O Hexagon, Hexagonix e seus componentes são licenciados sob licença BSD-3-Clause.
-;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório 
+;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório
 ;; para obter mais informações sobre seus direitos e obrigações ao utilizar e reutilizar
 ;; o código deste ou de outros arquivos.
 ;;
@@ -37,10 +37,10 @@
 ;;
 ;; Copyright (c) 2015-2023, Felipe Miguel Nery Lunkes
 ;; All rights reserved.
-;; 
+;;
 ;; Redistribution and use in source and binary forms, with or without
 ;; modification, are permitted provided that the following conditions are met:
-;; 
+;;
 ;; 1. Redistributions of source code must retain the above copyright notice, this
 ;;    list of conditions and the following disclaimer.
 ;;
@@ -51,7 +51,7 @@
 ;; 3. Neither the name of the copyright holder nor the names of its
 ;;    contributors may be used to endorse or promote products derived from
 ;;    this software without specific prior written permission.
-;; 
+;;
 ;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 ;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 ;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -64,16 +64,16 @@
 ;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 ;; $HexagonixOS$
-                                                                  
+
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon 
+;;                     Este arquivo faz parte do kernel Hexagon
 ;;
 ;;************************************************************************************
 
 use32
 
-;; Variáveis, contantes e estruturas necessárias para o gerenciamento de 
+;; Variáveis, contantes e estruturas necessárias para o gerenciamento de
 ;; diretórios do Sistema de Arquivos Virtual
 
 Hexagon.VFS.Diretorio:
@@ -96,7 +96,7 @@ Hexagon.VFS.Montagem:
 ;;************************************************************************************
 
 ;; Define um diretório  atual para uso no Sistema de Arquivos
-;; 
+;;
 ;; Entrada:
 ;;
 ;; ESI - Caminho completo do diretório à ser utilizado. O caminho deve ter 1 ou mais
@@ -143,17 +143,17 @@ Hexagon.Kernel.FS.Dir.definirDiretorioAtual:
     call Hexagon.Kernel.Lib.String.tamanhoString
 
     mov ecx, eax
-    
+
     inc ecx
-    
+
 ;; Copiar o caminho agora
-    
+
     mov edi, Hexagon.VFS.Diretorio.diretorioAnterior
-    
+
     mov esi, Hexagon.VFS.Diretorio.diretorioAtual
 
     rep movsb       ;; Copiar (ECX) caracteres de ESI para EDI
-    
+
 ;; Agora sim, preencher a variável com o valor fornecido
 
     pop esi
@@ -161,15 +161,15 @@ Hexagon.Kernel.FS.Dir.definirDiretorioAtual:
     call Hexagon.Kernel.Lib.String.tamanhoString
 
     mov ecx, eax
-    
+
     inc ecx
-    
+
 ;; Copiar agora o nome fornecido para o local adequado
-    
+
     mov edi, Hexagon.VFS.Diretorio.diretorioAtual
-    
+
     rep movsb       ;; Copiar (ECX) caracteres de ESI para EDI
-    
+
     clc
 
 .fim:
@@ -205,7 +205,7 @@ Hexagon.Kernel.FS.Dir.obterDiretorioAtual:
 ;; Entrada:
 ;;
 ;; ESI - Caminho para o ponto de montagem atual no disco
-;; 
+;;
 ;; Saída:
 ;;
 ;; EAX - Código de erro, dos quais:
@@ -245,17 +245,17 @@ Hexagon.Kernel.FS.Dir.definirPontodeMontagem:
     call Hexagon.Kernel.Lib.String.tamanhoString
 
     mov ecx, eax
-    
+
     inc ecx
-    
+
 ;; Copiar agora o nome fornecido para o local adequado
-    
+
     mov edi, Hexagon.VFS.Montagem.pontoMontagem
-    
+
     rep movsb       ;; Copiar (ECX) caracteres de ESI para EDI
 
     clc
-    
+
 .fim:
 
     ret
@@ -276,9 +276,9 @@ Hexagon.Kernel.FS.Dir.obterPontodeMontagem:
 ;; Primeiro, resgatar o volume físico montado, para EDI
 
     mov ah, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
-    
+
     mov dl, 01h                 ;; Classe de dispositivo de armazenamento
-    
+
     call Hexagon.Kernel.Dev.Dev.paraDispositivo ;; Converter para nome de dispositivo
 
     mov edi, esi
