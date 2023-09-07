@@ -209,15 +209,15 @@ Hexagon.Kernel.Dev.Gen.Console.Console.definirModoTexto:
 
     push eax
 
-    mov ah, 0       ;; Função para definir modo de vídeo
-    mov al, 3       ;; Vídeo em modo texto
+    mov ah, 0 ;; Função para definir modo de vídeo
+    mov al, 3 ;; Vídeo em modo texto
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int10h       ;; Chamar interrupção BIOS de modo real
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int10h ;; Chamar interrupção BIOS de modo real
 
     mov ax, 0x1003
     mov bx, 0
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int10h       ;; Desligar blinking
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int10h ;; Desligar blinking
 
     mov byte[Hexagon.Video.modoGrafico], 0
 
@@ -244,26 +244,26 @@ Hexagon.Kernel.Dev.Gen.Console.Console.definirModoGrafico:
 
     mov ax, word[Hexagon.Video.modoVBE] ;; O padrão é 1024*768*24
 
-    mov cx, ax                          ;; CX: modo de obter informações
-    mov ax, 0x4f01                      ;; Função para obter informações de vídeo
+    mov cx, ax ;; CX: modo de obter informações
+    mov ax, 0x4f01 ;; Função para obter informações de vídeo
     mov di, Hexagon.BlocoModoVBE + 0x500 ;; Endereço onde são armazenados os dados
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int10h                           ;; Chamar interrupção BIOS em modo real
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int10h ;; Chamar interrupção BIOS em modo real
 
-    mov esi, dword[Hexagon.BlocoModoVBE+40]   ;; Ponteiro para a base da memória de vídeo
+    mov esi, dword[Hexagon.BlocoModoVBE+40] ;; Ponteiro para a base da memória de vídeo
     mov dword[Hexagon.Video.Memoria.enderecoLFB], esi
 
-    or cx, 100000000000000b             ;; Definir bit 14 para obter frame buffer linear
+    or cx, 100000000000000b ;; Definir bit 14 para obter frame buffer linear
 
     mov bx, cx
-    mov ax, 0x4f02                      ;; Função para definir modo de vídeo
+    mov ax, 0x4f02 ;; Função para definir modo de vídeo
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int10h                           ;; Chamar interrupção BIOS em modo real
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int10h ;; Chamar interrupção BIOS em modo real
 
     mov ax, word[Hexagon.BlocoModoVBE+16]
     mov word[Hexagon.Video.bytesPorLinha], ax
 
-    mov al, byte[Hexagon.BlocoModoVBE+25]     ;; Obter bits por pixel
+    mov al, byte[Hexagon.BlocoModoVBE+25] ;; Obter bits por pixel
 
     cmp al, 0
     jne .bitsPorPixelOK
@@ -273,10 +273,10 @@ Hexagon.Kernel.Dev.Gen.Console.Console.definirModoGrafico:
 .bitsPorPixelOK:
 
     mov byte[Hexagon.Video.bitsPorPixel], al ;; Salvar bits por pixel
-    shr al, 3                                ;; Divide por 8
+    shr al, 3 ;; Divide por 8
     mov byte[Hexagon.Video.bytesPorPixel], al
 
-    mov ax, word[Hexagon.BlocoModoVBE+18]          ;; Obter resolução X
+    mov ax, word[Hexagon.BlocoModoVBE+18] ;; Obter resolução X
 
     cmp ax, 0
     jne .xResOK
@@ -285,9 +285,9 @@ Hexagon.Kernel.Dev.Gen.Console.Console.definirModoGrafico:
 
 .xResOK:
 
-    mov word[Hexagon.Video.Resolucao.x], ax  ;; Salvar resolução X
+    mov word[Hexagon.Video.Resolucao.x], ax ;; Salvar resolução X
 
-    mov ax, word[Hexagon.BlocoModoVBE+20]          ;; Obter resolução Y
+    mov ax, word[Hexagon.BlocoModoVBE+20] ;; Obter resolução Y
 
     cmp ax, 0
     jne .yResOK
@@ -296,7 +296,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.definirModoGrafico:
 
 .yResOK:
 
-    mov word[Hexagon.Video.Resolucao.y], ax  ;; Salvar resolução Y
+    mov word[Hexagon.Video.Resolucao.y], ax ;; Salvar resolução Y
 
     movzx eax, word[Hexagon.Video.Resolucao.x]
     mov ebx, Hexagon.Fontes.largura
@@ -305,7 +305,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.definirModoGrafico:
 
     div ebx
 
-    dec ax                                   ;; Contando de 0
+    dec ax ;; Contando de 0
 
     mov word[Hexagon.Video.maxColunas], ax
 
@@ -316,7 +316,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.definirModoGrafico:
 
     div ebx
 
-    dec ax                                  ;; Contando de 0
+    dec ax ;; Contando de 0
 
     mov word[Hexagon.Video.maxLinhas], ax
 
@@ -373,13 +373,13 @@ Hexagon.Kernel.Dev.Gen.Console.Console.obterInfoVideo:
 
     mov bl, byte[Hexagon.Video.maxLinhas]
 
-    inc bl                     ;; Contando de 1
+    inc bl ;; Contando de 1
 
     shl ebx, 8
 
     mov bl, byte[Hexagon.Video.maxColunas]
 
-    inc bl                     ;; Contando de 1
+    inc bl ;; Contando de 1
 
     mov ax, word[Hexagon.Video.Resolucao.y]
     shl eax, 16
@@ -425,9 +425,9 @@ Hexagon.Kernel.Dev.Gen.Console.Console.limparConsole:
     mov edi, Hexagon.Video.modoTexto.memoriaDeVideo
     mov ecx, (Hexagon.Video.modoTexto.maximoLinhas+1) * (Hexagon.Video.modoTexto.maximoColunas+1)
     mov ah, byte[Hexagon.Video.modoTexto.corAtual] ;; Cor
-    mov al, ' '                       ;; Caractere para preencher a tela
+    mov al, ' ' ;; Caractere para preencher a tela
 
-    rep stosw                         ;; Realizar loop para preencher (limpar) a memória de vídeo
+    rep stosw ;; Realizar loop para preencher (limpar) a memória de vídeo
 
     jmp .fim
 
@@ -538,7 +538,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor
 
-    movzx eax, al                ;; Calcular posição
+    movzx eax, al ;; Calcular posição
     mov ecx, 160
 
     xor edx, edx
@@ -548,7 +548,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha:
     mov edi, Hexagon.Video.modoTexto.memoriaDeVideo
     add edi, eax
 
-    shr ecx, 2                   ;; Dividir ECX por 4
+    shr ecx, 2 ;; Dividir ECX por 4
 
     mov ah, [Hexagon.Video.modoTexto.corAtual] ;; Cor
     mov al, ' '
@@ -658,7 +658,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.rolarParaBaixo:
     mov ax, 0x10
     mov ds, ax
 
-    mov eax, Hexagon.Video.modoTexto.maximoLinhas       ;; Limpar última linha
+    mov eax, Hexagon.Video.modoTexto.maximoLinhas ;; Limpar última linha
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha
 
@@ -673,7 +673,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.rolarParaBaixo:
     sub edi, dword[Hexagon.Graficos.bytesPorLinha]
 
     mov ecx, [Hexagon.Video.tamanhoVideo]
-    shr ecx, 7                            ;; Dividir por 128
+    shr ecx, 7 ;; Dividir por 128
 
     mov ax, 0x18
     mov es, ax
@@ -787,7 +787,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirDecimal:
 
     push eax
 
-    mov al, '-'        ;; Imprimir menos
+    mov al, '-' ;; Imprimir menos
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
 
@@ -799,22 +799,22 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirDecimal:
 
 ;; Converter inteiro para string para poder imprimir
 
-    mov ebx, 10        ;; Decimais estão na base 10
-    xor ecx, ecx       ;; mov ECX, 0
+    mov ebx, 10  ;; Decimais estão na base 10
+    xor ecx, ecx ;; mov ECX, 0
 
 .loopConverter:
 
-    xor edx, edx       ;; mov EDX, 0
+    xor edx, edx ;; mov EDX, 0
 
     div ebx
 
-    add dl, 0x30       ;; Converter para ASCII
+    add dl, 0x30 ;; Converter para ASCII
 
     push edx
 
     inc ecx
 
-    or eax, eax        ;; cmp EAX, 0
+    or eax, eax ;; cmp EAX, 0
     jne .loopConverter
 
     mov edx, esi
@@ -864,7 +864,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirBinario:
 
     push eax
 
-    mov al, '-'         ;; Imprimir menos
+    mov al, '-' ;; Imprimir menos
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
 
@@ -876,22 +876,22 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirBinario:
 
 ;; Converter inteiro para string para que possa ser impresso
 
-    mov ebx, 2          ;; Números em binário tem base 2
-    xor ecx, ecx        ;; mov ECX, 0
+    mov ebx, 2   ;; Números em binário tem base 2
+    xor ecx, ecx ;; mov ECX, 0
 
 .loopConverter:
 
-    xor edx, edx        ;; mov EDX, 0
+    xor edx, edx ;; mov EDX, 0
 
     div ebx
 
-    add dl, 0x30        ;; Converter isso para ASCII
+    add dl, 0x30 ;; Converter isso para ASCII
 
     push edx
 
     inc ecx
 
-    or eax, eax         ;; cmp EAX, 0
+    or eax, eax ;; cmp EAX, 0
     jne .loopConverter
 
     mov edx, esi
@@ -945,7 +945,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirHexadecimal:
 
     push eax
 
-    mov al, '-'         ;; Imprimir negativo
+    mov al, '-' ;; Imprimir negativo
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
 
@@ -969,12 +969,12 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirHexadecimal:
 
 ;; Converter inteiro para hexadecimal
 
-    mov ebx, 16         ;; Números hexadecimais tem base 16
-    xor ecx, ecx        ;; mov ECX, 0
+    mov ebx, 16  ;; Números hexadecimais tem base 16
+    xor ecx, ecx ;; mov ECX, 0
 
 .loopConverter:
 
-    xor edx, edx        ;; mov EDX, 0
+    xor edx, edx ;; mov EDX, 0
 
     div ebx
 
@@ -987,7 +987,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirHexadecimal:
 
 .adicionar:
 
-    add dl, 7          ;; Converter isso para ASCII
+    add dl, 7 ;; Converter isso para ASCII
 
 .proximo:
 
@@ -995,7 +995,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirHexadecimal:
 
     inc ecx
 
-    or eax, eax        ;; cmp EAX, 0
+    or eax, eax ;; cmp EAX, 0
     jne .loopConverter
 
     mov edx, esi
@@ -1035,16 +1035,16 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractereBase:
     mov dl, byte[Hexagon.Video.modoTexto.cursor.X]
     mov dh, byte[Hexagon.Video.modoTexto.cursor.Y]
 
-    cmp al, 10        ;; Caractere de nova linha
+    cmp al, 10 ;; Caractere de nova linha
     je .novaLinha
 
     cmp al, 9
     je .tab
 
-    cmp al, ' '       ;; Primeiro caractere imprimível
+    cmp al, ' ' ;; Primeiro caractere imprimível
     jb .naoImprimivel
 
-    cmp al, '~'       ;; Último caractere imprimível
+    cmp al, '~' ;; Último caractere imprimível
     ja .naoImprimivel
 
     jmp .proximo
@@ -1097,13 +1097,13 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractereBase:
 
     mov eax, 0
     mov al, dl
-    shl ax, 1                             ;; Multiplicar X por 2
-    mov edi, eax                          ;; Adicionar isso ao índice
+    shl ax, 1    ;; Multiplicar X por 2
+    mov edi, eax ;; Adicionar isso ao índice
     mov al, (Hexagon.Video.modoTexto.maximoColunas+1)*2 ;; Contando de 1
 
-    mul dh                                ;; Multiplica Y por maximoColunas*2
+    mul dh ;; Multiplica Y por maximoColunas*2
 
-    add edi, eax                          ;; Adicionar isso ao índice
+    add edi, eax ;; Adicionar isso ao índice
 
     pop eax
 
@@ -1189,7 +1189,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere.graficos:
 
     inc dh
 
-    mov al, 0   ;; Marcar como não imprimível
+    mov al, 0 ;; Marcar como não imprimível
 
 .consertarXeY:
 
@@ -1325,10 +1325,10 @@ Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor:
     movzx eax, dh
     mov bl, Hexagon.Video.modoTexto.maximoColunas+1 ;; Contando de 1
 
-    mul bl                              ;; Multiplicando Y pelas colunas
+    mul bl ;; Multiplicando Y pelas colunas
 
     movzx ebx, dl
-    add eax, ebx                        ;; Adicionar X para isso
+    add eax, ebx ;; Adicionar X para isso
 
     mov ebx, eax
 
@@ -1339,8 +1339,8 @@ Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor:
 
 ;; Enviar byte menos significante para a porta VGA
 
-    mov al, bl                          ;; BL é o byte menos significante
-    mov dx, 0x3d5                       ;; Porta VGA
+    mov al, bl ;; BL é o byte menos significante
+    mov dx, 0x3d5 ;; Porta VGA
 
     out dx, al
 
@@ -1351,8 +1351,8 @@ Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor:
 
 ;; Enviar byte mais significante para a porta VGA
 
-    mov al, bh                         ;; BH é o byte mais significante
-    mov dx, 0x3d5                      ;; Porta VGA
+    mov al, bh ;; BH é o byte mais significante
+    mov dx, 0x3d5 ;; Porta VGA
 
     out dx, al
 
@@ -1466,7 +1466,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString:
 
 .imprimirStringLoop:
 
-    lodsb           ;; mov AL, byte[ESI] & inc ESI
+    lodsb ;; mov AL, byte[ESI] & inc ESI
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
 

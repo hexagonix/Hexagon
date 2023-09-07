@@ -154,16 +154,16 @@ cabecalhoHexagon:
 
 ;; Habilitar A20, necessário para endereçamento de 4 GB de memória RAM e para entrar em modo protegido
 
-    call Hexagon.Kernel.Arch.i386.CPU.CPU.ativarA20        ;; Ativar A20, necessário para o modo protegido
+    call Hexagon.Kernel.Arch.i386.CPU.CPU.ativarA20 ;; Ativar A20, necessário para o modo protegido
 
     call Hexagon.Kernel.Arch.i386.Mm.Mm.obterMemoriaTotal ;; Obtem o total de memória instalada
 
-    call Hexagon.Kernel.Arch.i386.CPU.CPU.irPara32         ;; Configurar modo protegido 32 bits
+    call Hexagon.Kernel.Arch.i386.CPU.CPU.irPara32 ;; Configurar modo protegido 32 bits
 
 ;; Agora o código de modo protegido será executado (já estamos em 32 bits!)
 
 use32
 
-    jmp Hexagon.init  ;; Vamos agora para o ponto de entrada do Hexagon em modo protegido
+    jmp Hexagon.init ;; Vamos agora para o ponto de entrada do Hexagon em modo protegido
 
-include "kern.asm"  ;; Incluir o restante do Kernel, em ambiente de modo protegido
+include "kern.asm" ;; Incluir o restante do Kernel, em ambiente de modo protegido

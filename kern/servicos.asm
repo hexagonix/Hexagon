@@ -91,30 +91,30 @@ instalarInterrupcoes:
 
     mov dword[ordemKernel], ordemKernelExecutar
 
-    mov esi, manipuladorTimer               ;; IRQ 0
-    mov eax, Hexagon.Int.interrupcaoTimer   ;; Número da interrupção
+    mov esi, manipuladorTimer ;; IRQ 0
+    mov eax, Hexagon.Int.interrupcaoTimer ;; Número da interrupção
 
     call instalarISR
 
-    mov esi, manipuladorTeclado             ;; IRQ 1
+    mov esi, manipuladorTeclado ;; IRQ 1
     mov eax, Hexagon.Int.interrupcaoTeclado ;; Número da interrupção
 
     call instalarISR
 
-    mov esi, manipuladorMousePS2            ;; IRQ 12
-    mov eax, Hexagon.Int.interrupcaoMouse   ;; Número da interrupção
+    mov esi, manipuladorMousePS2 ;; IRQ 12
+    mov eax, Hexagon.Int.interrupcaoMouse ;; Número da interrupção
 
     call instalarISR
 
 ;; Instalar o manipulador de chamadas do Hexagon
 
     mov esi, Hexagon.Syscall.Syscall.manipuladorHexagon ;; Serviços do Hexagon
-    mov eax, Hexagon.Int.interrupcaoHexagon     ;; Número da interrupção
+    mov eax, Hexagon.Int.interrupcaoHexagon ;; Número da interrupção
 
     call instalarISR
 
-    mov esi, Hexagon.Syscall.Syscall.manipuladorHXUnix  ;; Serviços do Hexagon
-    mov eax, Hexagon.Int.interrupcaoHXUnix      ;; Número da interrupção
+    mov esi, Hexagon.Syscall.Syscall.manipuladorHXUnix ;; Serviços do Hexagon
+    mov eax, Hexagon.Int.interrupcaoHXUnix ;; Número da interrupção
 
     call instalarISR
 
@@ -138,7 +138,7 @@ manipuladorTimer:
 
     push ds
 
-    mov ax, 0x10            ;; Segmento de dados do Kernel
+    mov ax, 0x10 ;; Segmento de dados do Kernel
     mov ds, ax
 
     call Hexagon.Kernel.Arch.i386.CMOS.CMOS.atualizarDadosCMOS ;; Atualizar o relógio em tempo real a cada intervalo
@@ -171,7 +171,7 @@ manipuladorTeclado:
 
     push ds
 
-    mov ax, 0x10            ;; Segmento de dados do Kernel
+    mov ax, 0x10 ;; Segmento de dados do Kernel
     mov ds, ax
 
     xor eax,eax
@@ -197,10 +197,10 @@ manipuladorTeclado:
     cmp al, Hexagon.Teclado.Codigo.shiftE ;; Tecla shift da esquerda
     je .shiftPressionado
 
-    cmp al, 54+128         ;; Tecla shift direita liberada
+    cmp al, 54+128 ;; Tecla shift direita liberada
     je .shiftLiberado
 
-    cmp al, 42+128         ;; Tecla shift esquerda liberada
+    cmp al, 42+128 ;; Tecla shift esquerda liberada
     je .shiftLiberado
 
     jmp .outraTecla
@@ -274,9 +274,9 @@ manipuladorTeclado:
 
     iret
 
-.codigosEscaneamento: times 32  db 0
-.codigosEscaneamento.indice:    db 0
-.sinalShift:                    db 0
+.codigosEscaneamento: times 32 db 0
+.codigosEscaneamento.indice:   db 0
+.sinalShift:                   db 0
 
 ;; Bit 0: Tecla Control
 ;; Bit 1: Tecla Shift
@@ -333,44 +333,44 @@ manipuladorMousePS2:
     movzx ebx, byte[manipuladorMousePS2.deltaY] ;; DeltaY alterado em Y
     mov dl, byte[manipuladorMousePS2.dados]
 
-    bt dx, 4        ;; Checar se o mouse se moveu para a esquerda
+    bt dx, 4 ;; Checar se o mouse se moveu para a esquerda
     jnc .movimentoADireita
 
-    xor eax, 0xff       ;; 255 - deltaX
-    sub word[.mouseX], ax   ;; MouseX - DeltaX
+    xor eax, 0xff ;; 255 - deltaX
+    sub word[.mouseX], ax ;; MouseX - DeltaX
 
-    jnc .xOK        ;; Checar se MouseX é menor que 0
-    mov word[.mouseX], 0    ;; Corrigir MouseX
+    jnc .xOK ;; Checar se MouseX é menor que 0
+    mov word[.mouseX], 0 ;; Corrigir MouseX
 
     jmp .xOK
 
 .movimentoADireita:
 
-    add word[.mouseX], ax   ;; MouseX + DeltaX
+    add word[.mouseX], ax ;; MouseX + DeltaX
 
 .xOK:
 
-    bt dx, 5        ;; Checar se o mouse se moveu para baixo
+    bt dx, 5 ;; Checar se o mouse se moveu para baixo
     jnc .movimentoParaCima
 
-    xor ebx, 0xff       ;; 255 - DeltaY
-    sub word[.mouseY], bx   ;; MouseY - DeltaY
+    xor ebx, 0xff ;; 255 - DeltaY
+    sub word[.mouseY], bx ;; MouseY - DeltaY
 
-    jnc .yOK        ;; Checar se MouseY é menor que 0
-    mov word[.mouseY], 0    ;; Corrigir MouseY
+    jnc .yOK ;; Checar se MouseY é menor que 0
+    mov word[.mouseY], 0 ;; Corrigir MouseY
 
     jmp .yOK
 
 .movimentoParaCima:
 
-    add word[.mouseY], bx   ;; MouseY + DeltaY
+    add word[.mouseY], bx ;; MouseY + DeltaY
 
 .yOK:
 
     movzx eax, word[.mouseX]
     movzx ebx, word[.mouseY]
 
-    ;; Ter certeza que X e Y não são maiores que a resolução do vídeo
+;; Ter certeza que X e Y não são maiores que a resolução do vídeo
 
     cmp ax, word[Hexagon.Video.Resolucao.x]
     jng .xNaoMaior
@@ -400,7 +400,7 @@ manipuladorMousePS2:
 .fim2:
 
 
-    mov al, 0x20        ;; Fim da interrupção
+    mov al, 0x20 ;; Fim da interrupção
     out 0x20, al
     out 0xa0, al
 
@@ -599,7 +599,7 @@ manipuladorTouchpad:
 
 .fim:
 
-    mov al, 0x20        ;; Fim da interrupção
+    mov al, 0x20 ;; Fim da interrupção
 
     out 0x20, al
 
@@ -655,16 +655,16 @@ instalarISR:
 ;; passados poderiam sobrescrever as interrupções instaladas previamente pelo Hexagon
 
     cmp eax, Hexagon.Int.interrupcaoHexagon ;; Tentativa de substituir a chamada do Hexagon
-    je .negar                               ;; Negar instalação
+    je .negar ;; Negar instalação
 
-    cmp eax, Hexagon.Int.interrupcaoTimer   ;; Tentativa de alterar a interrupção de timer
-    je .negar                               ;; Negar instalação
+    cmp eax, Hexagon.Int.interrupcaoTimer ;; Tentativa de alterar a interrupção de timer
+    je .negar ;; Negar instalação
 
     cmp eax, Hexagon.Int.interrupcaoTeclado ;; Tentativa de alterar a interrupção de teclado
-    je .negar                               ;; Negar instalação
+    je .negar ;; Negar instalação
 
-    cmp eax, Hexagon.Int.interrupcaoMouse   ;; Tentativa de alterar a interrupção de mouse
-    je .negar                               ;; Negar instalação
+    cmp eax, Hexagon.Int.interrupcaoMouse ;; Tentativa de alterar a interrupção de mouse
+    je .negar ;; Negar instalação
 
 .instalar:
 

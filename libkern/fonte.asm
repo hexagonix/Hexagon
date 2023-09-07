@@ -78,7 +78,7 @@ Hexagon.Fontes:
 .largura = 8
 .altura  = 16
 
-.espacoFonte:   ;; Área protegida para o carregamento de novas fontes
+.espacoFonte: ;; Área protegida para o carregamento de novas fontes
 
 ;;************************************************************************************
 
@@ -88,6 +88,6 @@ include "../../Fontes/aurora.asm"
 
 ;;************************************************************************************
 
-.reservado:       ;; Espaço reservado para fontes com mais caracteres
+.reservado: ;; Espaço reservado para fontes com mais caracteres
 
 times 512 db 0

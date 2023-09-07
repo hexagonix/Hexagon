@@ -830,7 +830,7 @@ Hexagon.Kernel.Dev.Dev.paraDispositivo:
     cmp dl, 5
     je .processadores
 
-    stc  ;; Em caso de classe inválida
+    stc ;; Em caso de classe inválida
 
     ret
 

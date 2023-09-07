@@ -74,8 +74,6 @@
 use32
 
 ;;************************************************************************************
-
-;;************************************************************************************
 ;;
 ;; Erros de entrada e saída em disquetes
 ;;
@@ -233,9 +231,9 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.lerMBR:
 
 ;; Primeiro devemos carregar a MBR na memória
 
-    mov eax, 01h                    ;; Número de setores para ler
-    mov esi, 00h                    ;; LBA do setor inicial
-    mov cx, 0x50                    ;; Segmento
+    mov eax, 01h ;; Número de setores para ler
+    mov esi, 00h ;; LBA do setor inicial
+    mov cx, 0x50 ;; Segmento
     mov edi, Hexagon.CacheDisco+20000 ;; Deslocamento
     mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
 
@@ -247,7 +245,7 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.lerMBR:
 
     add ebx, 0x1BE ;; Deslocamento da primeira partição
 
-    mov ah, byte[es:ebx+04h]        ;; Contém o sistema de arquivos
+    mov ah, byte[es:ebx+04h] ;; Contém o sistema de arquivos
 
     jmp .fim
 
@@ -276,8 +274,8 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.lerBPB:
 
     mov eax, 01h
     mov esi, 00h
-    mov cx, 0x2000                  ;; Segmento
-    mov edi, 0x7C00                 ;; Deslocamento
+    mov cx, 0x2000 ;; Segmento
+    mov edi, 0x7C00 ;; Deslocamento
     mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
 
     call Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores
@@ -402,7 +400,7 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores:
     push esi
 
     mov dword[.PED.totalSetores], eax ;; Total de setores para carregar
-    mov dword[.PED.LBA], esi          ;; Endereço de Bloco Linear (Linear Block Addres - LBA)
+    mov dword[.PED.LBA], esi ;; Endereço de Bloco Linear (Linear Block Addres - LBA)
 
     mov eax, edi
     shr eax, 4
@@ -411,13 +409,13 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores:
 
     and edi, 0xf
 
-    mov word[.PED.segmento], cx       ;; Segmento de modo real
+    mov word[.PED.segmento], cx ;; Segmento de modo real
     mov word[.PED.deslocamento], di
 
     mov esi, .PED
-    mov ah, 0x42                      ;; Leitura extendida BIOS
+    mov ah, 0x42 ;; Leitura extendida BIOS
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int13h                         ;; Serviços de disco do BIOS BIOS
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int13h ;; Serviços de disco do BIOS BIOS
 
     jnc .semErro
 
@@ -480,13 +478,13 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores:
 ;; PED = Pacote de Endereço de Disco. Do termo em inglês DAP (Disk Address Packet)
 
 .PED:
-.PED.tamanho:       db 16
-.PED.reservado:     db 0
-.PED.totalSetores:  dw 0
-.PED.deslocamento:  dw 0x0000
-.PED.segmento:      dw 0
-.PED.LBA:           dd 0
-                    dd 0
+.PED.tamanho:      db 16
+.PED.reservado:    db 0
+.PED.totalSetores: dw 0
+.PED.deslocamento: dw 0x0000
+.PED.segmento:     dw 0
+.PED.LBA:          dd 0
+                   dd 0
 
 ;;************************************************************************************
 
@@ -510,7 +508,7 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores:
     push esi
 
     mov dword[.PED.totalSetores], eax ;; Total de setores para escrever
-    mov dword[.PED.LBA], esi          ;; LBA
+    mov dword[.PED.LBA], esi ;; LBA
 
     mov eax, edi
     shr eax, 4
@@ -520,13 +518,13 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores:
     and edi, 0xf
 
     mov word[.PED.deslocamento], di
-    mov word[.PED.segmento], cx       ;; Segmento de modo real
+    mov word[.PED.segmento], cx ;; Segmento de modo real
 
     mov esi, .PED
-    mov ah, 0x43                      ;; Escrita extendida BIOS
+    mov ah, 0x43 ;; Escrita extendida BIOS
     mov al, 0
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int13h                         ;; Serviços de disco BIOS
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int13h ;; Serviços de disco BIOS
 
     jnc .semErro
 
@@ -650,8 +648,8 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.testarVolume:
 
     mov eax, 1
     mov esi, 01
-    mov cx, 0x50                    ;; Segmento
-    mov edi, Hexagon.CacheDisco+20000   ;; Deslocamento
+    mov cx, 0x50 ;; Segmento
+    mov edi, Hexagon.CacheDisco+20000 ;; Deslocamento
     mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
 
     call Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores

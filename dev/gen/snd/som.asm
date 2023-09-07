@@ -79,13 +79,13 @@ use32
 ;;
 ;; AX - Tom à ser reproduzido
 
-Hexagon.Kernel.Dev.Gen.Som.Som.emitirSom:       ;; Mova para AX o tom a ser emitido pelo sistema
+Hexagon.Kernel.Dev.Gen.Som.Som.emitirSom: ;; Mova para AX o tom a ser emitido pelo sistema
 
     pushad
 
-    mov cx, ax   ;; Som a ser emitido
+    mov cx, ax ;; Som a ser emitido
 
-    mov al, 182  ;; Dado a ser enviado
+    mov al, 182 ;; Dado a ser enviado
 
     out 43h, al
 
@@ -111,7 +111,7 @@ Hexagon.Kernel.Dev.Gen.Som.Som.emitirSom:       ;; Mova para AX o tom a ser emit
 
 ;; Desabilita o alto-falante interno do computador
 
-Hexagon.Kernel.Dev.Gen.Som.Som.desligarSom:    ;; Desliga o alto-falante interno do computador
+Hexagon.Kernel.Dev.Gen.Som.Som.desligarSom: ;; Desliga o alto-falante interno do computador
 
     pushad
 

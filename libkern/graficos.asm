@@ -105,23 +105,23 @@ Hexagon.Graficos:
 
 Hexagon.Kernel.Lib.Graficos.calcularDeslocamentoPixel:
 
-    push eax        ;; X
+    push eax ;; X
 
-    mov esi, dword[Hexagon.Video.Memoria.enderecoLFB]   ;; Ponteiro para a memória de vídeo
+    mov esi, dword[Hexagon.Video.Memoria.enderecoLFB] ;; Ponteiro para a memória de vídeo
 
     movzx eax, word[Hexagon.Video.bytesPorLinha]
 
-    mul ebx         ;; Y * bytes por linha
+    mul ebx ;; Y * bytes por linha
 
     add esi, eax
 
-    pop eax         ;; X
+    pop eax ;; X
 
     movzx ebx, byte[Hexagon.Video.bytesPorPixel]
 
-    mul ebx         ;; X * Bytes por pixel
+    mul ebx ;; X * Bytes por pixel
 
-    add esi, eax    ;; ESI é um ponteiro para a memória de vídeo
+    add esi, eax ;; ESI é um ponteiro para a memória de vídeo
 
     ret
 
@@ -408,13 +408,13 @@ Hexagon.Kernel.Lib.Graficos.desenharBloco:
     cmp byte[Hexagon.Video.modoGrafico], 1
     jne .fim
 
-    mov ecx, edi        ;; Largura
+    mov ecx, edi ;; Largura
 
 .y:
 
     push ecx
 
-    mov ecx, esi        ;; Comprimento
+    mov ecx, esi ;; Comprimento
 
 .x:
 

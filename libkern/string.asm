@@ -96,7 +96,7 @@ Hexagon.Kernel.Lib.String.tamanhoString:
     push edi
     push es
 
-    push ds         ;; ES = DS
+    push ds ;; ES = DS
     pop es
 
     mov edi, esi
@@ -105,15 +105,15 @@ Hexagon.Kernel.Lib.String.tamanhoString:
 
     xor al, al
 
-    cld             ;; Limpar direção
+    cld ;; Limpar direção
 
-    repne scasb     ;; Procurar fim da string em EDI
+    repne scasb ;; Procurar fim da string em EDI
 
     or eax, 0xffffffff
 
     sub eax, ecx
 
-    dec eax          ;; Não incluindo caractere 0
+    dec eax ;; Não incluindo caractere 0
 
     pop es
     pop edi
@@ -204,7 +204,7 @@ Hexagon.Kernel.Lib.String.compararString:
 
     mov al, byte[edi]
 
-    cmp al, 0       ;; Fim da string
+    cmp al, 0 ;; Fim da string
     je .igual
 
     cmp al, byte[esi]
@@ -263,7 +263,7 @@ Hexagon.Kernel.Lib.String.stringParaMaiusculo:
 
 .checar1:
 
-    cmp al, 'a'     ;; Checar se o caractere é minúsculo
+    cmp al, 'a' ;; Checar se o caractere é minúsculo
     jae .checar2
 
     inc esi
@@ -274,7 +274,7 @@ Hexagon.Kernel.Lib.String.stringParaMaiusculo:
 
 .checar2:
 
-    cmp al, 'z'     ;; Checar se o caractere é minúsculo
+    cmp al, 'z' ;; Checar se o caractere é minúsculo
     jbe .ok
 
     inc esi
@@ -285,7 +285,7 @@ Hexagon.Kernel.Lib.String.stringParaMaiusculo:
 
 .ok:
 
-    sub al, ' '     ;; Converter se o caractere for minúsculo
+    sub al, ' ' ;; Converter se o caractere for minúsculo
     mov byte[esi], al
 
     inc esi
@@ -329,7 +329,7 @@ Hexagon.Kernel.Lib.String.stringParaMinusculo:
 
 .checar1:
 
-    cmp al, 'A'     ;; Checar se o caractere está em maiúsculo
+    cmp al, 'A' ;; Checar se o caractere está em maiúsculo
     jae .checar2
 
     inc esi
@@ -340,7 +340,7 @@ Hexagon.Kernel.Lib.String.stringParaMinusculo:
 
 .checar2:
 
-    cmp al, 'Z'     ;; Checar se o caractere está em maiúsculo
+    cmp al, 'Z' ;; Checar se o caractere está em maiúsculo
     jbe .ok
 
     inc esi
@@ -351,7 +351,7 @@ Hexagon.Kernel.Lib.String.stringParaMinusculo:
 
 .ok:
 
-    add al, ' '     ;; Converter se o caractere está em maiúsculo
+    add al, ' ' ;; Converter se o caractere está em maiúsculo
     mov byte[esi], al
 
     inc esi
@@ -384,24 +384,24 @@ Hexagon.Kernel.Lib.String.cortarString:
 
     push es
 
-    push ds                 ;; ES = DS
+    push ds ;; ES = DS
     pop es
 
 ;; Primeiro precisamos tirar os espaços da esquerda e depois da direita
 
-    cmp byte[esi], 0        ;; Se string vazia, sair
+    cmp byte[esi], 0 ;; Se string vazia, sair
     je .fim
 
-    call Hexagon.Kernel.Lib.String.tamanhoString        ;; Obter tamanho da string SI em EAX
+    call Hexagon.Kernel.Lib.String.tamanhoString ;; Obter tamanho da string SI em EAX
 
-    mov ecx, eax            ;; Colocar isso em ECX para usar em loop
+    mov ecx, eax ;; Colocar isso em ECX para usar em loop
 
-    push esi                ;; Salvar posição na string para uso futuro
-    push ecx                ;; Salvar tamanho da string para uso futuro
+    push esi ;; Salvar posição na string para uso futuro
+    push ecx ;; Salvar tamanho da string para uso futuro
 
-    xor ebx, ebx            ;; EBX é um contador de espaços em branco
+    xor ebx, ebx ;; EBX é um contador de espaços em branco
 
-    cld                     ;; Da esquerda para a direita, então limpando a bandeira de direção
+    cld ;; Da esquerda para a direita, então limpando a bandeira de direção
 
 .cortarDaEsquerda:
 
@@ -416,22 +416,22 @@ Hexagon.Kernel.Lib.String.cortarString:
 
     inc ebx
 
-    mov byte[esi-1], 0      ;; Preencher espaços com 0
+    mov byte[esi-1], 0 ;; Preencher espaços com 0
 
     loop .cortarDaEsquerda
 
 .semEspacoEsquerda:
 
-    pop ecx                 ;; Restaurar o tamanho da string
-    pop esi                 ;; Restaurar posição na string
+    pop ecx ;; Restaurar o tamanho da string
+    pop esi ;; Restaurar posição na string
 
     push esi
     push ecx
 
     mov edi, esi
-    add esi, ebx            ;; Adicionar total de espaços em branco
+    add esi, ebx ;; Adicionar total de espaços em branco
 
-    rep movsb               ;; Mover string para nova posição
+    rep movsb ;; Mover string para nova posição
 
     pop ecx
 
@@ -443,7 +443,7 @@ Hexagon.Kernel.Lib.String.cortarString:
 
     dec esi
 
-    std                     ;; Definir direção para decrementar da direita para a esquerda
+    std ;; Definir direção para decrementar da direita para a esquerda
 
 .cortarDaDireita:
 
@@ -456,7 +456,7 @@ Hexagon.Kernel.Lib.String.cortarString:
 
 .cortarDireita:
 
-    mov byte[esi+1], 0      ;; Preencher os espaços com 0
+    mov byte[esi+1], 0 ;; Preencher os espaços com 0
 
     loop .cortarDaDireita
 
@@ -520,9 +520,9 @@ Hexagon.Kernel.Lib.String.stringParaInteiro:
 
 .proximo:
 
-    call Hexagon.Kernel.Lib.String.tamanhoString        ;; Encontrar tamanho da string
+    call Hexagon.Kernel.Lib.String.tamanhoString ;; Encontrar tamanho da string
 
-    mov ecx, eax            ;; Usar a contagem no loop
+    mov ecx, eax ;; Usar a contagem no loop
     add esi, eax
 
     dec esi
@@ -559,7 +559,7 @@ Hexagon.Kernel.Lib.String.stringParaInteiro:
     mov eax, dword[.numero]
     mov edx, 0
 
-    div ebx             ;; Dividir por 10
+    div ebx ;; Dividir por 10
 
     mov dword[.numero], 0
 
@@ -622,13 +622,13 @@ Hexagon.Kernel.Lib.String.encontrarCaractereNaString:
 
     lodsb
 
-    or al, al   ;; cmp AL, 0 (último caractere)
+    or al, al ;; cmp AL, 0 (último caractere)
     jz .proximo
 
-    cmp al, bl  ;; Caractere encontrado
+    cmp al, bl ;; Caractere encontrado
     jne .loopEncontrarLoop
 
-    inc ecx     ;; Contador
+    inc ecx ;; Contador
 
     jmp .loopEncontrarLoop
 
@@ -674,27 +674,27 @@ Hexagon.Kernel.Lib.String.removerCaractereNaString:
 
     call Hexagon.Kernel.Lib.String.tamanhoString
 
-    cmp edx, eax    ;; EAX tem o tamanho da string
+    cmp edx, eax ;; EAX tem o tamanho da string
     ja .fim
 
-    inc eax         ;; Incluindo o último caractere nulo
+    inc eax ;; Incluindo o último caractere nulo
 
     add esi, edx
 
     push es
 
-    push ds         ;; DS = ES
+    push ds ;; DS = ES
     pop es
 
     mov edi, esi
 
-    inc esi         ;; Próximo caractere
+    inc esi ;; Próximo caractere
 
     mov ecx, eax
 
-    cld             ;; Limpar direção
+    cld ;; Limpar direção
 
-    rep movsb       ;; Mover (ECX) caracteres de ESI para EDI
+    rep movsb ;; Mover (ECX) caracteres de ESI para EDI
 
     pop es
     pop edx
@@ -723,7 +723,7 @@ Hexagon.Kernel.Lib.String.inserirCaractereNaString:
     push ecx
     push edi
 
-    mov ebx, eax    ;; Salvar caractere
+    mov ebx, eax ;; Salvar caractere
 
     push esi
 
@@ -731,18 +731,18 @@ Hexagon.Kernel.Lib.String.inserirCaractereNaString:
 
     call Hexagon.Kernel.Lib.String.tamanhoString
 
-    push eax        ;; EAX tem o tamanho da string
+    push eax ;; EAX tem o tamanho da string
 
     add esi, eax
 
-    inc esi         ;; Incluindo caractere nulo
+    inc esi ;; Incluindo caractere nulo
 
     push es
 
-    push ds         ;; ES = DS
+    push ds ;; ES = DS
     pop es
 
-    std             ;; Direção reversa em rep movsb
+    std ;; Direção reversa em rep movsb
 
     add esi, edx
 
@@ -754,7 +754,7 @@ Hexagon.Kernel.Lib.String.inserirCaractereNaString:
 
     mov ecx, eax
 
-    rep movsb       ;; Mover (ECX) caracteres de ESI para EDI
+    rep movsb ;; Mover (ECX) caracteres de ESI para EDI
 
     pop es
 
@@ -763,8 +763,8 @@ Hexagon.Kernel.Lib.String.inserirCaractereNaString:
 
 ;; Inserir o caractere aqui
 
-    mov byte[esi+edx], bl   ;; BL tem o caractere
-    mov byte[esi+eax+1],0   ;; Criar o fim da string
+    mov byte[esi+edx], bl ;; BL tem o caractere
+    mov byte[esi+eax+1],0 ;; Criar o fim da string
 
     cld
 
@@ -791,7 +791,7 @@ Hexagon.Kernel.Lib.String.paraString:
 
     push es
 
-    push ds         ;; DS = ES
+    push ds ;; DS = ES
     pop es
 
     push eax
@@ -809,7 +809,7 @@ Hexagon.Kernel.Lib.String.paraString:
 
     push eax
 
-    mov al, '-'      ;; Imprimir menos
+    mov al, '-' ;; Imprimir menos
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
 
@@ -821,22 +821,22 @@ Hexagon.Kernel.Lib.String.paraString:
 
 ;; Converter inteiro para string para poder imprimir
 
-    mov ebx, 10      ;; Decimais estão na base 10
-    xor ecx, ecx     ;; mov ECX, 0
+    mov ebx, 10  ;; Decimais estão na base 10
+    xor ecx, ecx ;; mov ECX, 0
 
 .loopConverter:
 
-    xor edx, edx     ;; mov EDX, 0
+    xor edx, edx ;; mov EDX, 0
 
     div ebx
 
-    add dl, 0x30     ;; Converter para ASCII
+    add dl, 0x30 ;; Converter para ASCII
 
     push edx
 
     inc ecx
 
-    or eax, eax      ;; cmp EAX, 0
+    or eax, eax ;; cmp EAX, 0
     jne .loopConverter
 
     mov edx, esi

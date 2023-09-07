@@ -80,7 +80,7 @@ use32
 
 Hexagon.Kernel.Lib.HAPP.execucaoIndevida:
 
-    push 4  ;; Encerrar processo
+    push 4 ;; Encerrar processo
 
     mov ebx, 00h
 

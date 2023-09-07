@@ -159,7 +159,7 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
 
     sti
 
-    mov byte[Hexagon.Syscall.Controle.chamadaSistema], 00h  ;; Desmarcar a solicitação de chamada de Sistema
+    mov byte[Hexagon.Syscall.Controle.chamadaSistema], 00h ;; Desmarcar a solicitação de chamada de Sistema
 
     push eax
 
@@ -268,7 +268,7 @@ Hexagon.Syscall.Syscall.manipuladorHXUnix:
 
     sti
 
-    mov byte[Hexagon.Syscall.Controle.chamadaSistema], 00h  ;; Desmarcar a solicitação de chamada de Sistema
+    mov byte[Hexagon.Syscall.Controle.chamadaSistema], 00h ;; Desmarcar a solicitação de chamada de Sistema
 
     push eax
 

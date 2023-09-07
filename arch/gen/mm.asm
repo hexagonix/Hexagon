@@ -134,7 +134,7 @@ Hexagon.Kernel.Arch.Gen.Mm.usoMemoria:
 
     mov ebx, dword[Hexagon.Memoria.memoriaTotal]
 
-.fornecerMB:    ;; Fornecer também a quantidade total em Mbytes
+.fornecerMB: ;; Fornecer também a quantidade total em Mbytes
 
     mov ecx, dword[Hexagon.Memoria.memoriaTotal]
 
@@ -213,14 +213,14 @@ Hexagon.Kernel.Arch.Gen.Mm.iniciarMemoria:
 
     sub ecx, [Hexagon.Memoria.enderecoInicial]
 
-    call Hexagon.Kernel.Arch.Gen.Mm.configurarMemoria                   ;; Iniciar o manipulador de memória
+    call Hexagon.Kernel.Arch.Gen.Mm.configurarMemoria ;; Iniciar o manipulador de memória
 
 ;; Agora, o espaço reservado para os processos será definido, utilizando o padrão estabelecido
 ;; Hexagon.Memoria.Alocador.reservadoInicial
 
     mov ebx, [Hexagon.Memoria.Alocador.reservadoProcessos]
 
-    call Hexagon.Kernel.Arch.Gen.Mm.alocarMemoria                       ;; Alocar memória para os processos
+    call Hexagon.Kernel.Arch.Gen.Mm.alocarMemoria ;; Alocar memória para os processos
 
     call Hexagon.Kernel.Kernel.Proc.configurarAlocacaoProcessos ;; Salvar o endereço usado para a alocação
 
@@ -324,20 +324,20 @@ Hexagon.Kernel.Arch.Gen.Mm.alocarMemoria:
 ;; Nenhum outro bloco livre existe. Adicionar outro e mover o ponteiro de primeiro
 ;; bloco livre para lá
 
-    mov ecx, eax                  ;; Mover o endereço para ECX
+    mov ecx, eax ;; Mover o endereço para ECX
 
     add ecx, ebx
 
-    mov dword [ecx], 0            ;; Definir bloco anterior para 0
+    mov dword [ecx], 0 ;; Definir bloco anterior para 0
     mov edx, [Hexagon.Memoria.Alocador.tamanhoBloco]
 
-    sub edx, ebx                  ;; Espaço restante em EDX
+    sub edx, ebx ;; Espaço restante em EDX
 
-    mov [ecx+4], edx              ;; Salvar no cabeçalho
-    mov dword [ecx+8], 0          ;; Sem ponteiro para o próximo bloco
+    mov [ecx+4], edx ;; Salvar no cabeçalho
+    mov dword [ecx+8], 0 ;; Sem ponteiro para o próximo bloco
 
     mov [Hexagon.Memoria.Alocador.primeiroBlocoLivre], ecx
-    mov ebx, eax                  ;; EAX inalterado
+    mov ebx, eax ;; EAX inalterado
 
     jmp .fim
 
@@ -347,18 +347,18 @@ Hexagon.Kernel.Arch.Gen.Mm.alocarMemoria:
 
 .anteriorNaoProximo:
 
-    mov ecx, eax                  ;; Mover o endereço para ECX
+    mov ecx, eax ;; Mover o endereço para ECX
 
-    add ecx, ebx                  ;; Adicionar a tamanhoBloco o que foi solicitado
+    add ecx, ebx ;; Adicionar a tamanhoBloco o que foi solicitado
 
     mov edx, [Hexagon.Memoria.Alocador.ponteiroAnterior] ;; Definir o ponteiro para o cabeçalho anterior no novo
     mov [ecx], edx                ;; Definir novo cabeçalho para 0
     mov edx, [Hexagon.Memoria.Alocador.tamanhoBloco]
 
-    sub edx, ebx                  ;; Espaço anterior em EDX
+    sub edx, ebx ;; Espaço anterior em EDX
 
-    mov [ecx+4], edx              ;; Salvar no novo cabeçalho
-    mov dword [ecx+8], 0          ;; Sem próximo ponteiro
+    mov [ecx+4], edx ;; Salvar no novo cabeçalho
+    mov dword [ecx+8], 0 ;; Sem próximo ponteiro
 
     mov [Hexagon.Memoria.Alocador.ponteiroAnterior+8], ecx
     mov ebx, eax
@@ -396,7 +396,7 @@ Hexagon.Kernel.Arch.Gen.Mm.alocarMemoria:
     je .naoOProximo
 
     mov dword [edx], ecx
-    mov dword [ecx+8], edx        ;; Endereço para o próximo ponteiro
+    mov dword [ecx+8], edx ;; Endereço para o próximo ponteiro
 
     mov [Hexagon.Memoria.Alocador.ponteiroAnterior+8], ecx
     mov ebx, eax
@@ -489,8 +489,8 @@ Hexagon.Kernel.Arch.Gen.Mm.alocarMemoria:
 
 .proximoMasNaoAnterior2:
 
-    mov ecx, [eax+8]              ;; Obter endereço do próximo cabeçalho
-    mov dword [ecx], 0            ;; Definir cabeçalho anterior para 0 e atualizar
+    mov ecx, [eax+8] ;; Obter endereço do próximo cabeçalho
+    mov dword [ecx], 0 ;; Definir cabeçalho anterior para 0 e atualizar
     mov [Hexagon.Memoria.Alocador.primeiroBlocoLivre], ecx ;; Atualizar também o primeiro bloco livre
     mov ebx, eax
 
@@ -528,17 +528,17 @@ Hexagon.Kernel.Arch.Gen.Mm.liberarMemoria:
 ;; ponteiros para os blocos anterior ou próximo, para saber se podem ser mesclados
 
     mov eax, [Hexagon.Memoria.Alocador.primeiroBlocoLivre] ;; Bloco livre atual
-    mov edx, [eax+8]                ;; Próximo bloco livre
+    mov edx, [eax+8] ;; Próximo bloco livre
 
 .encontrarPosicao:
 
-    cmp edx, 0                      ;; Checar o próximo
-    je .blocoEncontradoFimRAM       ;; Existe bloco livre
+    cmp edx, 0 ;; Checar o próximo
+    je .blocoEncontradoFimRAM ;; Existe bloco livre
 
-    cmp ebx, edx                    ;; EBX está abaixo de EDX?
-    jb .blocoEncontradoEntre        ;; EBX encontrado no meio
+    cmp ebx, edx ;; EBX está abaixo de EDX?
+    jb .blocoEncontradoEntre ;; EBX encontrado no meio
 
-    mov eax, edx                    ;; Atualizar ponteiros para outro loop
+    mov eax, edx ;; Atualizar ponteiros para outro loop
     mov edx, [eax+8]
 
     jmp .encontrarPosicao
@@ -547,12 +547,12 @@ Hexagon.Kernel.Arch.Gen.Mm.liberarMemoria:
 
 .blocoEncontradoEntre:
 
-    mov [ebx], eax         ;; Criar cabeçalho
+    mov [ebx], eax ;; Criar cabeçalho
     mov [ebx+4], ecx
     mov [ebx+8], edx
 
-    mov [eax+8], ebx       ;; Atualizar cabeçalho anterior
-    mov [edx], ebx         ;; Atualizar próximo cabeçalho
+    mov [eax+8], ebx ;; Atualizar cabeçalho anterior
+    mov [edx], ebx ;; Atualizar próximo cabeçalho
 
 ;; Checar se os blocos podem ser mescaldos
 
@@ -573,16 +573,16 @@ Hexagon.Kernel.Arch.Gen.Mm.liberarMemoria:
 
 ;; O anterior e o próximo podem ser mescaldos
 
-    mov ecx, [ebx+4]        ;; Obter o tamanho do bloco atual
+    mov ecx, [ebx+4] ;; Obter o tamanho do bloco atual
 
-    add [eax+4], ecx        ;; Adicionar isso ao tamanho do anterior
+    add [eax+4], ecx ;; Adicionar isso ao tamanho do anterior
 
-    mov ecx, [edx+4]        ;; Obter o tamanho do próximo bloco
+    mov ecx, [edx+4] ;; Obter o tamanho do próximo bloco
 
-    add [eax+4], ecx        ;; Adicionar isso ao tamanho anterior
+    add [eax+4], ecx ;; Adicionar isso ao tamanho anterior
 
-    mov ecx, [edx+8]        ;; Obter o próximo ponteiro
-    mov [eax+8], ecx        ;; Armazená-lo
+    mov ecx, [edx+8] ;; Obter o próximo ponteiro
+    mov [eax+8], ecx ;; Armazená-lo
 
     cmp ecx, 0
     je .fim
@@ -596,11 +596,11 @@ Hexagon.Kernel.Arch.Gen.Mm.liberarMemoria:
     cmp ebx, eax
     jne .fim
 
-    mov ecx, [ebx+4]        ;; Obter o tamanho do bloco atual
+    mov ecx, [ebx+4] ;; Obter o tamanho do bloco atual
 
-    add [eax+4], ecx        ;; Adicionar isso ao tamanho do anterior
+    add [eax+4], ecx ;; Adicionar isso ao tamanho do anterior
 
-    mov [edx], eax          ;; Atualizar o anterior e o próximo ponteiros
+    mov [edx], eax ;; Atualizar o anterior e o próximo ponteiros
     mov [eax+8], edx
 
     jmp .fim
@@ -628,11 +628,11 @@ Hexagon.Kernel.Arch.Gen.Mm.liberarMemoria:
 
 .blocoEncontradoFimRAM:
 
-    mov [ebx], eax           ;; Criar cabeçalho
+    mov [ebx], eax ;; Criar cabeçalho
     mov [ebx+4], ecx
     mov [ebx+8], edx
 
-    mov [eax+8], ebx         ;; Atualizar cabeçalho anterior
+    mov [eax+8], ebx ;; Atualizar cabeçalho anterior
 
 ;; Checar se os blocos podem ser mesclados
 
@@ -657,43 +657,43 @@ Hexagon.Kernel.Arch.Gen.Mm.liberarMemoria:
 .novoPrimeiroLivre:
 
     mov dword [ebx], 0
-    mov [ebx+4], ecx              ;; Criar o novo cabeçalho
+    mov [ebx+4], ecx ;; Criar o novo cabeçalho
     mov edx, [Hexagon.Memoria.Alocador.primeiroBlocoLivre]
     mov [ebx+8], edx
 
     mov edx, ebx
 
-    add edx, [ebx+4]              ;; Checar se o primeiro bloco bate
+    add edx, [ebx+4] ;; Checar se o primeiro bloco bate
 
     cmp edx, [Hexagon.Memoria.Alocador.primeiroBlocoLivre] ;; Posição atual + tamanhoBloco?
-    je .mesclarPrimeiroLivre      ;; Se sim, mesclar os dois
+    je .mesclarPrimeiroLivre ;; Se sim, mesclar os dois
 
-    cmp [Hexagon.Memoria.Alocador.primeiroBlocoLivre], 0   ;; Se não, checar se o primeiro bloco existe
+    cmp [Hexagon.Memoria.Alocador.primeiroBlocoLivre], 0 ;; Se não, checar se o primeiro bloco existe
     je .cont1
 
-    mov edx, [ebx+8]              ;; Se sim, atualizar o ponteiro anterior
+    mov edx, [ebx+8] ;; Se sim, atualizar o ponteiro anterior
     mov [edx], ebx
 
 .cont1:
 
     mov [Hexagon.Memoria.Alocador.primeiroBlocoLivre], ebx ;; Se não, criar novo
 
-    jmp .fim                      ;; Primeira limpeza
+    jmp .fim ;; Primeira limpeza
 
-.mesclarPrimeiroLivre:            ;; Mesclar os dois primeiros
+.mesclarPrimeiroLivre: ;; Mesclar os dois primeiros
 
-    mov edx, [ebx+8]              ;; Adicionar o tamanho do bloco com o anterior no novo
+    mov edx, [ebx+8] ;; Adicionar o tamanho do bloco com o anterior no novo
     mov ecx, [edx+4]
 
     add [ebx+4], ecx
 
-    mov ecx, [edx+8]              ;; Obter o próximo ponteiro do bloco anterior
+    mov ecx, [edx+8] ;; Obter o próximo ponteiro do bloco anterior
     mov [ebx+8], ecx
 
     cmp ecx, 0
     je .cont2
 
-    mov [ecx], ebx                ;; Ataulizar isso mais o próximo
+    mov [ecx], ebx ;; Ataulizar isso mais o próximo
 
 .cont2:
 

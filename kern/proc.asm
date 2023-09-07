@@ -73,7 +73,7 @@
 
 ;;************************************************************************************
 ;;
-;;                Controle e execução de processos do Kernel Hexagon
+;;                Controle e execução de processos do kernel Hexagon
 ;;
 ;; Aqui existem rotinas para a alocação de memória para um novo processo, o
 ;; carregamento de uma imagem executável válida, sua interpretação, sua execução
@@ -83,7 +83,7 @@
 
 ;;************************************************************************************
 ;;
-;;          Códigos de retorno (erro) do Gerenciador de Processos do Hexagon
+;;          Códigos de retorno (erro) do gerenciador de processos do Hexagon
 ;;
 ;;                           Interface padronizada de retorno
 ;;
@@ -152,13 +152,13 @@ Hexagon.Processos Hexagon.Gerenciamento.Tarefas 20 ;; 21 processos por enquanto
 ;;
 ;;************************************************************************************
 
-BCP.esp: times Hexagon.Processos.limiteProcessos     dd 0   ;; Bloco de Controle de Processo
+BCP.esp: times Hexagon.Processos.limiteProcessos     dd 0 ;; Bloco de Controle de Processo
 
-.ponteiro:                                           dd 0   ;; Ponteiro para a pilha do processo
+.ponteiro:                                           dd 0 ;; Ponteiro para a pilha do processo
 
-BCP.tamanho: times Hexagon.Processos.limiteProcessos dd 0   ;; Bloco de mapeamento de memória
+BCP.tamanho: times Hexagon.Processos.limiteProcessos dd 0 ;; Bloco de mapeamento de memória
 
-.ponteiro:                                           dd 0   ;; Ponteiro para o endereço de memória do processo
+.ponteiro:                                           dd 0 ;; Ponteiro para o endereço de memória do processo
 
 ;;************************************************************************************
 ;;
@@ -211,7 +211,7 @@ Hexagon.Kernel.Kernel.Proc.iniciarEscalonador:
     logHexagon Hexagon.Verbose.escalonador, Hexagon.Dmesg.Prioridades.p5
 
 ;; Agora, uma função para iniciar os PBCs
-;; Essa função pode ser executada, mas o uso dos novos BCPs ainda estão em desenvolvimento
+;; Essa função pode ser executada, mas o uso dos novos BCPs ainda está em desenvolvimento
 
     ;; call Hexagon.Kernel.Kernel.Proc.iniciarBCP
 
@@ -230,7 +230,7 @@ Hexagon.Kernel.Kernel.Proc.configurarAlocacaoProcessos:
 
 ;;************************************************************************************
 
-;; Permite encerrar um processo atualmente em execução pelo Sistema, caso esse encerramento
+;; Permite encerrar um processo atualmente em execução pelo sistema, caso esse encerramento
 ;; seja possível
 
 Hexagon.Kernel.Kernel.Proc.matarProcesso:
@@ -358,7 +358,7 @@ Hexagon.Kernel.Kernel.Proc.criarProcesso:
 
     mov edi, Hexagon.ArgumentosProcesso
 
-    rep movsb       ;; Copiar (ECX) caracteres de ESI para EDI
+    rep movsb ;; Copiar (ECX) caracteres de ESI para EDI
 
     pop es
 
@@ -372,7 +372,7 @@ Hexagon.Kernel.Kernel.Proc.criarProcesso:
 
 .verificarImagem:
 
-    ; cmp byte[Hexagon.Imagem.Executavel.HAPP.imagemIncompativel], 00h
+    ;; cmp byte[Hexagon.Imagem.Executavel.HAPP.imagemIncompativel], 00h
 
     push esi
 
@@ -402,9 +402,9 @@ Hexagon.Kernel.Kernel.Proc.criarProcesso:
 
 ;; A imagem que contêm o código executável não foi localizada no disco
 
-    stc          ;; Informar, ao processo que chamou a função, da ausência da imagem
+    stc ;; Informar, ao processo que chamou a função, da ausência da imagem
 
-    popa         ;; Restaurar a pilha
+    popa ;; Restaurar a pilha
 
     mov byte[Hexagon.Processos.codigoRetorno], 01h
 
@@ -419,9 +419,9 @@ Hexagon.Kernel.Kernel.Proc.criarProcesso:
 
 ;; A imagem que contêm o código executável não apresenta um formato compatível
 
-    stc          ;; Informar, ao processo que chamou a função, da ausência da imagem
+    stc ;; Informar, ao processo que chamou a função, da ausência da imagem
 
-    popa         ;; Restaurar a pilha
+    popa ;; Restaurar a pilha
 
     mov byte[Hexagon.Processos.codigoRetorno], 04h
 
@@ -499,13 +499,13 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcesso:
 
 ;; Um erro ocorreu durante o carregamento da imagem presente no disco
 
-    stc                          ;; Informar, ao processo que chamou a função, da ocorrência de erro
+    stc ;; Informar, ao processo que chamou a função, da ocorrência de erro
 
-    popa                         ;; Restaurar a pilha
+    popa ;; Restaurar a pilha
 
     mov byte[Hexagon.Processos.codigoRetorno], 02h
 
-    mov eax, 02h                 ;; Enviar código de erro
+    mov eax, 02h ;; Enviar código de erro
 
     ret
 
@@ -541,7 +541,7 @@ Hexagon.Kernel.Kernel.Proc.executarProcesso:
     mov byte[GDT.codigoPrograma+7], al
     mov byte[GDT.dadosPrograma+7], al
 
-    lgdt[GDTReg]    ;; Carregar a GDT contendo a entrada do processo
+    lgdt[GDTReg] ;; Carregar a GDT contendo a entrada do processo
 
     mov eax, [BCP.esp.ponteiro]
 
@@ -556,7 +556,7 @@ Hexagon.Kernel.Kernel.Proc.executarProcesso:
 
     sti ;; Ter certeza que as interrupções estão disponíveis
 
-    pushfd    ;; Bandeiras
+    pushfd ;; Bandeiras
     push 0x30 ;; Novo CS
     push dword [Hexagon.Imagem.Executavel.HAPP.entradaHAPP] ;; Ponto de entrada da imagem
 
@@ -618,7 +618,7 @@ naoModoGrafico:
     push 0x08
     push eax
 
-    retf                     ;; Ir à essa função agora, trocando o contexto
+    retf ;; Ir à essa função agora, trocando o contexto
 
 ;;************************************************************************************
 
@@ -655,7 +655,7 @@ Hexagon.Kernel.Kernel.Proc.removerProcesso:
     mov dword[Hexagon.Memoria.bytesAlocados], 0
 
 ;; Agora devemos calcular os endereços base de código e dados do programa, os colocando
-;;  na entrada da GDT do programa
+;; na entrada da GDT do programa
 
     mov eax, dword[Hexagon.Processos.enderecoAplicativos]
     mov edx, eax
@@ -747,9 +747,9 @@ Hexagon.Kernel.Kernel.Proc.numeroMaximoProcessosAtingido:
 
 ;; Um erro ocorreu durante o carregamento da imagem presente no disco
 
-    stc          ;; Informar, ao processo que chamou a função, da ocorrência de erro
+    stc ;; Informar, ao processo que chamou a função, da ocorrência de erro
 
-    popa         ;; Restaurar a pilha
+    popa ;; Restaurar a pilha
 
     mov byte[Hexagon.Processos.codigoRetorno], 03h
 
@@ -784,7 +784,7 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcessoPilha:
 
     mov ebx, 14
 
-    mul ebx  ;; EAX contêm o deslocamento
+    mul ebx ;; EAX contêm o deslocamento
 
     inc ebx
 
@@ -843,7 +843,7 @@ Hexagon.Kernel.Kernel.Proc.removerProcessoPilha:
 
     mov ebx, 14
 
-    mul ebx  ;; EAX contêm o deslocamento
+    mul ebx ;; EAX contêm o deslocamento
 
     inc ebx
 
@@ -878,45 +878,45 @@ Hexagon.Kernel.Kernel.Proc.obterListaProcessos:
     push ds
     pop es
 
-    mov edx, Hexagon.CacheDisco    ;; Índice na nova lista
-    mov ebx, 0                     ;; Contador de processos
-    mov esi, tabelaProcessos       ;; Tabela fonte
+    mov edx, Hexagon.CacheDisco ;; Índice na nova lista
+    mov ebx, 0 ;; Contador de processos
+    mov esi, tabelaProcessos ;; Tabela fonte
 
     sub esi, 14
 
 .loopConstruirLista:
 
-    add esi, 14                    ;; Próxima entrada (13 bytes por entrada)
+    add esi, 14 ;; Próxima entrada (13 bytes por entrada)
 
-    cmp byte[esi], 0               ;; Se último processo, termine
+    cmp byte[esi], 0 ;; Se último processo, termine
     je .finalizarLista
 
-    cmp byte[esi], ' '             ;; Ignorar espaço interprocessos
+    cmp byte[esi], ' ' ;; Ignorar espaço interprocessos
     je .loopConstruirLista
 
 ;; Adicionar entrada de nome de processo na lista
 
-    call Hexagon.Kernel.Lib.String.tamanhoString               ;; Encontrar tamanho da entrada
+    call Hexagon.Kernel.Lib.String.tamanhoString ;; Encontrar tamanho da entrada
 
     mov edi, edx
-    mov ecx, eax                   ;; EAX é o tamanho da primeira string
+    mov ecx, eax ;; EAX é o tamanho da primeira string
 
-    rep movsb                      ;; Move (ECX) bytes de ESI para EDI
+    rep movsb ;; Move (ECX) bytes de ESI para EDI
 
 ;; Adicionar um espaço entre os nomes de processos
 
     mov byte[es:edx+eax], ' '
 
-    inc eax                        ;; Tamanho da string + 1 caractere
-    inc ebx                        ;; Atualizar contador de processos
+    inc eax ;; Tamanho da string + 1 caractere
+    inc ebx ;; Atualizar contador de processos
 
-    add edx, eax                   ;; Atualizar índice na lista
+    add edx, eax ;; Atualizar índice na lista
 
-    jmp .loopConstruirLista        ;; Obter próximos processos
+    jmp .loopConstruirLista ;; Obter próximos processos
 
 .finalizarLista:
 
-    mov byte[edx], 0               ;; Fim da lista
+    mov byte[edx], 0 ;; Fim da lista
 
     push ds
     pop es

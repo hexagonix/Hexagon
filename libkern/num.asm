@@ -159,16 +159,16 @@ Hexagon.Kernel.Lib.Num.BCDParaBinario:
 
     push ebx
 
-    mov bl, al    ;; BL = AL mod 16
+    mov bl, al ;; BL = AL mod 16
     and bl, 0x0F
 
-    shr al, 4     ;; AL = AL / 16
+    shr al, 4 ;; AL = AL / 16
 
     mov bh, 10
 
-    mul bh        ;; Multiplicar por 10
+    mul bh ;; Multiplicar por 10
 
-    add al, bl    ;; Adicionar a produto a AL
+    add al, bl ;; Adicionar a produto a AL
 
     pop ebx
 

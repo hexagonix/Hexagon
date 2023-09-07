@@ -73,7 +73,7 @@
 
 ;;************************************************************************************
 ;;
-;;     Controle de usuários e políticas de segurança e acesso do Kernel Hexagon
+;;     Controle de usuários e políticas de segurança e acesso do kernel Hexagon
 ;;
 ;; Este arquivo contém todas as funções de manipulação de usuários, assim como as variáveis
 ;; relacionadas à estas tarefas. Também contém variáveis de controle de acesso por parte de
@@ -141,7 +141,7 @@ Hexagon.Kernel.Kernel.Usuarios.definirUsuario:
 
     pop esi
 
-    rep movsb       ;; Copiar (ECX) caracteres de ESI para EDI
+    rep movsb ;; Copiar (ECX) caracteres de ESI para EDI
 
     pop eax
 

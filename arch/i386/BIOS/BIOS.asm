@@ -114,7 +114,7 @@ use32
 
     mov ax, 0x10
     mov ds, ax
-    mov ax, 0x18  ;; Definir a base de ES, SS e GS base para 0
+    mov ax, 0x18 ;; Definir a base de ES, SS e GS base para 0
     mov ss, ax
     mov es, ax
     mov gs, ax
@@ -177,7 +177,7 @@ use32
 
     mov ax, 0x10
     mov ds, ax
-    mov ax, 0x18                   ;; Definir base de ES, GS e SS para 0
+    mov ax, 0x18 ;; Definir base de ES, GS e SS
     mov ss, ax
     mov gs, ax
     mov es, ax
@@ -245,7 +245,7 @@ use32
 
     mov ax, 0x10
     mov ds, ax
-    mov ax, 0x18            ;; Definir a base de ES, SS e GS base para 0
+    mov ax, 0x18 ;; Definir a base de ES, SS e GS
     mov ss, ax
     mov es, ax
     mov gs, ax

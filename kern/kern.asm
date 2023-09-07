@@ -173,7 +173,7 @@ Hexagon.init:
 
     mov ax, 0x10
     mov ds, ax
-    mov ax, 0x18     ;; ES com base em 0
+    mov ax, 0x18 ;; ES com base em 0
     mov ss, ax
     mov fs, ax
     mov gs, ax
@@ -357,7 +357,7 @@ Hexagon.iniciarModoUsuario:
 
     logHexagon Hexagon.Verbose.initEncontrado, Hexagon.Dmesg.Prioridades.p5
 
-    mov eax, 0                              ;; Não fornecer argumentos
+    mov eax, 0 ;; Não fornecer argumentos
     mov esi, Hexagon.Init.Const.initHexagon ;; Nome do arquivo
 
     clc
@@ -374,7 +374,7 @@ Hexagon.iniciarModoUsuario:
 
     logHexagon Hexagon.Verbose.initNaoEncontrado, Hexagon.Dmesg.Prioridades.p5
 
-    mov eax, 0                               ;; Não fornecer argumentos
+    mov eax, 0 ;; Não fornecer argumentos
     mov esi, Hexagon.Init.Const.shellHexagon ;; Nome do arquivo
 
     clc
@@ -403,13 +403,13 @@ Hexagon.iniciarModoUsuario:
 
 Hexagon.Init.Const:
 
-.initHexagon:          db "init", 0 ;; Nome da imagem em disco do init
-.shellHexagon:         db "sh", 0   ;; Nome do shell padrão
+.initHexagon:  db "init", 0 ;; Nome da imagem em disco do init
+.shellHexagon: db "sh", 0   ;; Nome do shell padrão
 
 ;;************************************************************************************
 
 Hexagon.FimCodigo:
 
 Hexagon.BlocoModoVBE       = Hexagon.FimCodigo + 0
-Hexagon.CacheDisco         = Hexagon.FimCodigo + 1024          ;; Buffer de disco para carregar setores
+Hexagon.CacheDisco         = Hexagon.FimCodigo + 1024 ;; Buffer de disco para carregar setores
 Hexagon.ArgumentosProcesso = Hexagon.FimCodigo + 60000 + 0x500 ;; Espaço de armazenamento dos argumentos de um aplicativo

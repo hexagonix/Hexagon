@@ -108,7 +108,7 @@ Hexagon.Kernel.Kernel.Panico.panico:
 
     pop eax
 
-    cmp eax, 0         ;; Caso o erro não seja fatal, o controle pode ser devolvido à função que chamou
+    cmp eax, 0 ;; Caso o erro não seja fatal, o controle pode ser devolvido à função que chamou
     je .naoFatal
 
     cmp eax, 1
@@ -179,15 +179,15 @@ Hexagon.Kernel.Kernel.Panico.prepararPanico:
 
     call Hexagon.Kernel.Dev.Dev.abrir
 
-    mov eax, 0xFFFFFF  ;; BRANCO_ANDROMEDA
-    mov ebx, 0x4682B4  ;; AZUL_METALICO
+    mov eax, 0xFFFFFF ;; BRANCO_ANDROMEDA
+    mov ebx, 0x4682B4 ;; AZUL_METALICO
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.definirCorTexto
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.limparConsole    ;; Limpar saída de vídeo padrão
+    call Hexagon.Kernel.Dev.Gen.Console.Console.limparConsole ;; Limpar saída de vídeo padrão
 
     mov dx, 0
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor
 
-    ret                ;; Retornar à rotina principal
+    ret ;; Retornar à rotina principal

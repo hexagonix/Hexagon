@@ -110,9 +110,9 @@ match =SIM, VERBOSE
 
 .aguardarLoop:
 
-    in al, 0x64     ;; 0x64 é o registrador de estado
+    in al, 0x64 ;; 0x64 é o registrador de estado
 
-    bt ax, 1        ;; Checar segundo bit até se tornar 0
+    bt ax, 1 ;; Checar segundo bit até se tornar 0
     jnc .OK
 
     jmp .aguardarLoop
@@ -167,38 +167,38 @@ match =SIM, VERBOSE
     push bx
     push cx
 
-    mov ax, 5300h       ;; Função de checagem da instalação
-    mov bx, 0           ;; O ID do dispositivo (APM BIOS)
+    mov ax, 5300h ;; Função de checagem da instalação
+    mov bx, 0 ;; O ID do dispositivo (APM BIOS)
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h           ;; Chamar interrupção APM
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h ;; Chamar interrupção APM
 
     jc APM_falha_instalacao
 
-    mov ax, 5301h       ;; Função de interface de conexão em modo real
-    mov bx, 0           ;; O ID do dispositivo (APM BIOS)
+    mov ax, 5301h ;; Função de interface de conexão em modo real
+    mov bx, 0 ;; O ID do dispositivo (APM BIOS)
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h           ;; Chamar interrupção APM
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h ;; Chamar interrupção APM
 
     jc APM_falha_conexao
 
-    mov ax, 530Eh       ;; Função de seleção de versão do Driver
-    mov bx, 0           ;; O ID do dispositivo (APM BIOS)
-    mov cx, 0102h       ;; Selecionar APM versão 1.2
-                        ;; A funcionalidade está presente após a versão 1.2
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h           ;; Chamar interrupção APM
+    mov ax, 530Eh ;; Função de seleção de versão do Driver
+    mov bx, 0 ;; O ID do dispositivo (APM BIOS)
+    mov cx, 0102h ;; Selecionar APM versão 1.2
+                  ;; A funcionalidade está presente após a versão 1.2
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h ;; Chamar interrupção APM
 
     jc APM_falha_selecionar_versao
 
-    mov ax, 5307h       ;; Função de definir estado
-    mov cx, 0003h       ;; Estado de desligar
-    mov bx, 0001h       ;; Todos os dispositivos tem ID 1
+    mov ax, 5307h ;; Função de definir estado
+    mov cx, 0003h ;; Estado de desligar
+    mov bx, 0001h ;; Todos os dispositivos tem ID 1
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h           ;; Chamar interrupção APM
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h ;; Chamar interrupção APM
 
 ;; Caso o sistema não desligue de forma apropriada, serão retornados códigos de erro ao
 ;; programa que chamou a função de desligamento.
 
-APM_falha_comando:      ;; Chamado caso o comando de desligamento (código 3) não seja executado
+APM_falha_comando: ;; Chamado caso o comando de desligamento (código 3) não seja executado
 
 match =SIM, VERBOSE
 {
@@ -214,7 +214,7 @@ match =SIM, VERBOSE
 
     jmp APM_desligamento_ok
 
-APM_falha_instalacao:   ;; Chamado caso ocorra falha na instalação
+APM_falha_instalacao: ;; Chamado caso ocorra falha na instalação
 
 match =SIM, VERBOSE
 {
@@ -230,7 +230,7 @@ match =SIM, VERBOSE
 
     jmp APM_desligamento_ok
 
-APM_falha_conexao:      ;; Chamado caso ocorra falha na conexão de interface de Modo Real
+APM_falha_conexao: ;; Chamado caso ocorra falha na conexão de interface de Modo Real
 
 match =SIM, VERBOSE
 {
@@ -250,7 +250,7 @@ APM_falha_selecionar_versao: ;; Chamado quando a versão APM é inferior a 1.2
 
     mov ax, 2
 
-APM_desligamento_ok:    ;; Retorna a função que a chamou
+APM_desligamento_ok: ;; Retorna a função que a chamou
 
 match =SIM, VERBOSE
 {

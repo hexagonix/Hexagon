@@ -81,13 +81,13 @@ Hexagon.VFS.Diretorio:
 .codigo:                     db 0
 .deslocamento:               db 0
 .estado:                     db 0
-.diretorioAtual: times 64    db " "
+.diretorioAtual:    times 64 db " "
 .diretorioAnterior: times 64 db 0
 .tamanhoCaminho              equ 64
 
 Hexagon.VFS.Montagem:
 
-.pontoMontagem: times 64   db " "
+.pontoMontagem:   times 64 db " "
 .usuarioMontagem: times 32 db 0
 .estado:                   db 0
 .codigoUsuario:            db 0
@@ -152,7 +152,7 @@ Hexagon.Kernel.FS.Dir.definirDiretorioAtual:
 
     mov esi, Hexagon.VFS.Diretorio.diretorioAtual
 
-    rep movsb       ;; Copiar (ECX) caracteres de ESI para EDI
+    rep movsb ;; Copiar (ECX) caracteres de ESI para EDI
 
 ;; Agora sim, preencher a variável com o valor fornecido
 
@@ -168,7 +168,7 @@ Hexagon.Kernel.FS.Dir.definirDiretorioAtual:
 
     mov edi, Hexagon.VFS.Diretorio.diretorioAtual
 
-    rep movsb       ;; Copiar (ECX) caracteres de ESI para EDI
+    rep movsb ;; Copiar (ECX) caracteres de ESI para EDI
 
     clc
 
@@ -252,7 +252,7 @@ Hexagon.Kernel.FS.Dir.definirPontodeMontagem:
 
     mov edi, Hexagon.VFS.Montagem.pontoMontagem
 
-    rep movsb       ;; Copiar (ECX) caracteres de ESI para EDI
+    rep movsb ;; Copiar (ECX) caracteres de ESI para EDI
 
     clc
 
@@ -277,7 +277,7 @@ Hexagon.Kernel.FS.Dir.obterPontodeMontagem:
 
     mov ah, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
 
-    mov dl, 01h                 ;; Classe de dispositivo de armazenamento
+    mov dl, 01h ;; Classe de dispositivo de armazenamento
 
     call Hexagon.Kernel.Dev.Dev.paraDispositivo ;; Converter para nome de dispositivo
 

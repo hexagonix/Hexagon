@@ -79,11 +79,11 @@ Hexagon.Kernel.Arch.i386.Timer.Timer.iniciarTimer:
 
 ;; Definir frequência do contador
 
-    mov eax, 100            ;; Definir frequência para 1.19 mhz / EAX
+    mov eax, 100 ;; Definir frequência para 1.19 mhz / EAX
 
-    out 0x40, al            ;; Primeiro enviar byte menos significante
+    out 0x40, al ;; Primeiro enviar byte menos significante
 
-    mov al, ah              ;; Agora o byte mais significante
+    mov al, ah ;; Agora o byte mais significante
 
     out 0x40, al
 
@@ -103,11 +103,11 @@ Hexagon.Kernel.Arch.i386.Timer.Timer.causarAtraso:
 
     pusha
 
-    sti                  ;; Habilitar as interrupções para que se possa atualizar o contador
+    sti ;; Habilitar as interrupções para que se possa atualizar o contador
 
     mov ebx, dword[manipuladorTimer.contagemTimer]
 
-.aguardarUm:    ;; Vamos aguardar até o contador mudar
+.aguardarUm: ;; Vamos aguardar até o contador mudar
 
     cmp ebx, dword[manipuladorTimer.contagemTimer]
     je .aguardarUm
@@ -115,14 +115,14 @@ Hexagon.Kernel.Arch.i386.Timer.Timer.causarAtraso:
 .aguardarMudanca:
 
     cmp ebx, dword[manipuladorTimer.contagemTimer]
-    je .aguardarMudanca  ;; Enquanto o contador não tiver seu valor alterado, continue aqui
+    je .aguardarMudanca ;; Enquanto o contador não tiver seu valor alterado, continue aqui
 
     dec ecx
 
     mov ebx, dword[manipuladorTimer.contagemTimer]
 
     cmp ecx, 0
-    ja .aguardarUm       ;; Se não tiver acabado, continue contando...
+    ja .aguardarUm ;; Se não tiver acabado, continue contando...
 
     popa
 

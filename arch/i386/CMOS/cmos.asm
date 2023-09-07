@@ -89,21 +89,21 @@ Hexagon.Arch.i386.CMOS:
 ;;************************************************************************************
 
 ;; Essa função é solicitada pelo manipulador do timer a cada intervalo de tempo, mantendo
-;; o relógio em tempo real do Hexagon® atualizado.
+;; o relógio em tempo real do Hexagon atualizado.
 
 Hexagon.Kernel.Arch.i386.CMOS.CMOS.atualizarDadosCMOS:
 
     push ax
 
-    mov al, 0x00         ;; Obter o byte de segundos
+    mov al, 0x00 ;; Obter o byte de segundos
 
     out 0x70, al
 
     in al, 0x71
 
-    mov [Hexagon.Arch.i386.CMOS.segundo], al    ;; Armazenar essa informação
+    mov [Hexagon.Arch.i386.CMOS.segundo], al ;; Armazenar essa informação
 
-    mov al, 0x02         ;; Obter o byte de minutos
+    mov al, 0x02 ;; Obter o byte de minutos
 
     out 0x70, al
 
@@ -111,7 +111,7 @@ Hexagon.Kernel.Arch.i386.CMOS.CMOS.atualizarDadosCMOS:
 
     mov [Hexagon.Arch.i386.CMOS.minuto], al
 
-    mov al, 0x04         ;; Obter o byte de horas
+    mov al, 0x04 ;; Obter o byte de horas
 
     out 0x70, al
 
@@ -119,7 +119,7 @@ Hexagon.Kernel.Arch.i386.CMOS.CMOS.atualizarDadosCMOS:
 
     mov [Hexagon.Arch.i386.CMOS.hora], al
 
-    mov al, 0x06         ;; Obter o byte de dia da semana
+    mov al, 0x06 ;; Obter o byte de dia da semana
 
     out 0x70, al
 
@@ -127,7 +127,7 @@ Hexagon.Kernel.Arch.i386.CMOS.CMOS.atualizarDadosCMOS:
 
     mov [Hexagon.Arch.i386.CMOS.diaSemana], al
 
-    mov al, 0x07         ;; Obter o byte de dia
+    mov al, 0x07 ;; Obter o byte de dia
 
     out 0x70, al
 
@@ -135,7 +135,7 @@ Hexagon.Kernel.Arch.i386.CMOS.CMOS.atualizarDadosCMOS:
 
     mov [Hexagon.Arch.i386.CMOS.dia], al
 
-    mov al, 0x08         ;; Obter o byte de mês
+    mov al, 0x08 ;; Obter o byte de mês
 
     out 0x70, al
 
@@ -143,7 +143,7 @@ Hexagon.Kernel.Arch.i386.CMOS.CMOS.atualizarDadosCMOS:
 
     mov [Hexagon.Arch.i386.CMOS.mes], al
 
-    mov al, 0x09         ;; Obter o byte de ano
+    mov al, 0x09 ;; Obter o byte de ano
 
     out 0x70, al
 
@@ -151,7 +151,7 @@ Hexagon.Kernel.Arch.i386.CMOS.CMOS.atualizarDadosCMOS:
 
     mov [Hexagon.Arch.i386.CMOS.ano], al
 
-    mov al, 0x32         ;; Obter o byte de século
+    mov al, 0x32 ;; Obter o byte de século
 
     out 0x70, al
 
@@ -165,7 +165,7 @@ Hexagon.Kernel.Arch.i386.CMOS.CMOS.atualizarDadosCMOS:
 
 ;;************************************************************************************
 
-;; Chamado por instâncias do Hexagon® para obtenção direta, independente de atualização
+;; Chamado por instâncias do Hexagon para obtenção direta, independente de atualização
 ;; por timer. Função com nome mantido para garantir compatibilidade com o código fonte
 
 Hexagon.Kernel.Arch.i386.CMOS.CMOS.obterDadosCMOS:

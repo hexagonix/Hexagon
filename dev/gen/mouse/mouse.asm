@@ -90,26 +90,26 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.iniciarMouse:
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2 ;; Esperar se PS/2 estiver ocupado
 
-    mov al, 0x20            ;; Obter bit de status Compaq
+    mov al, 0x20 ;; Obter bit de status Compaq
 
-    out 0x64, al            ;; 0x64 é o registrador de estado
+    out 0x64, al ;; 0x64 é o registrador de estado
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
 
     in al, 0x60
 
-    or al, 2                ;; Definir segundo bit para 1 pra habilitar IRQ12
-    mov bl, al              ;; Salvar bit modificado
+    or al, 2   ;; Definir segundo bit para 1 pra habilitar IRQ12
+    mov bl, al ;; Salvar bit modificado
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2
 
-    mov al, 0x60            ;; Definir byte de estado Compaq
+    mov al, 0x60 ;; Definir byte de estado Compaq
 
     out 0x64, al
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2
 
-    mov al, bl              ;; Enviar byte modificado
+    mov al, bl ;; Enviar byte modificado
 
     out 0x60, al
 
@@ -117,13 +117,13 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.iniciarMouse:
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2
 
-    mov al, 0xA8            ;; Habilitar dispositivo auxiliar
+    mov al, 0xA8 ;; Habilitar dispositivo auxiliar
 
     out 0x64, al
 
 ;; Usar configurações padrão
 
-    mov al, 0xF6            ;; Definir como padrão
+    mov al, 0xF6 ;; Definir como padrão
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
 
@@ -141,7 +141,7 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.iniciarMouse:
 
     in al, 0x60
 
-    mov al, 3               ;; 8 contagens/mm
+    mov al, 3 ;; 8 contagens/mm
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
 
@@ -151,7 +151,7 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.iniciarMouse:
 
 ;; Habilitar pacotes
 
-    mov al, 0xF4            ;; Habilitar pacotes
+    mov al, 0xF4 ;; Habilitar pacotes
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
 
@@ -180,7 +180,7 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.obterDoMouse:
 
     mov eax, [Hexagon.Mouse.mouseX]
     mov ebx, [Hexagon.Mouse.mouseY]
-    mov edx, 0 ;;byte[manipuladorMousePS2.dados]
+    mov edx, 0 ;; byte[manipuladorMousePS2.dados]
 
     ret
 
@@ -207,7 +207,7 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.iniciarTouchPad:
 
     push eax
 
-    mov al, 0xF5        ;; Desativar
+    mov al, 0xF5 ;; Desativar
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
 
@@ -295,7 +295,7 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.iniciarTouchPad:
 
     in al, 0x60
 
-    mov al, 0xF4        ;; Habilitar
+    mov al, 0xF4 ;; Habilitar
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
 
@@ -304,7 +304,7 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.iniciarTouchPad:
     in al, 0x60
 
     mov esi, manipuladorTouchpad ;; IRQ 12
-    mov eax, 74h                 ;; Número da interrupção
+    mov eax, 74h ;; Número da interrupção
 
     call instalarISR
 
@@ -338,7 +338,7 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.aguardarMouse:
 
 .aguardar:
 
-    cmp byte[manipuladorMousePS2.alterado], 1   ;; Checar se o estado do mouse foi alterado
+    cmp byte[manipuladorMousePS2.alterado], 1 ;; Checar se o estado do mouse foi alterado
 
     hlt
 

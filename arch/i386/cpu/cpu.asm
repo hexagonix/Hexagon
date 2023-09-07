@@ -97,24 +97,24 @@ use16
 
     cli
 
-    pop bp          ;; Endereço de retorno
+    pop bp ;; Endereço de retorno
 
 ;; Carregar descriptores
 
-    lgdt[GDTReg]    ;; Carregar GDT
+    lgdt[GDTReg] ;; Carregar GDT
 
-    lidt[IDTReg]    ;; Carregar IDT
+    lidt[IDTReg] ;; Carregar IDT
 
 ;; Agora iremos entrar em modo protegido
 
     mov eax, cr0
-    or eax, 1       ;; Comutar para modo protegido - bit 1
+    or eax, 1 ;; Comutar para modo protegido - bit 1
     mov cr0, eax
 
 ;; Retornar
 
-    push 0x08       ;; Novo CS
-    push bp         ;; Novo IP
+    push 0x08 ;; Novo CS
+    push bp ;; Novo IP
 
     retf
 
@@ -126,9 +126,9 @@ use32
 
 Hexagon.Kernel.Arch.i386.CPU.CPU.irPara16:
 
-    cli                      ;; Limpar interrupções
+    cli ;; Limpar interrupções
 
-    pop edx                  ;; Salvar local de retorno em EDX
+    pop edx ;; Salvar local de retorno em EDX
 
     jmp 0x20:Hexagon.Kernel.Arch.i386.CPU.CPU.modoProtegido16 ;; Carregar CS com seletor 0x20
 
@@ -138,15 +138,15 @@ use16
 
 Hexagon.Kernel.Arch.i386.CPU.CPU.modoProtegido16:
 
-    mov ax, 0x28        ;; 0x28 é o seletor de modo protegido 16-bit
+    mov ax, 0x28 ;; 0x28 é o seletor de modo protegido 16-bit
     mov ss, ax
-    mov sp, 0x5000      ;; Pilha
+    mov sp, 0x5000 ;; Pilha
 
     mov eax, cr0
     and eax, 0xfffffffe ;; Limpar bit de ativação do modo protegido em cr0
-    mov cr0, eax        ;; Desativar modo 32 bits
+    mov cr0, eax ;; Desativar modo 32 bits
 
-    jmp 0x50:Hexagon.Kernel.Arch.i386.CPU.CPU.modoReal   ;; Carregar CS e IP
+    jmp 0x50:Hexagon.Kernel.Arch.i386.CPU.CPU.modoReal ;; Carregar CS e IP
 
 Hexagon.Kernel.Arch.i386.CPU.CPU.modoReal:
 
@@ -162,19 +162,19 @@ Hexagon.Kernel.Arch.i386.CPU.CPU.modoReal:
 
     cli
 
-    lidt[.idtR]         ;; Carregar tabela de vetores de interrupção de modo real
+    lidt[.idtR] ;; Carregar tabela de vetores de interrupção de modo real
 
     sti
 
     push 0x50
-    push dx             ;; Retornar para a localização presente em EDX
+    push dx ;; Retornar para a localização presente em EDX
 
-    retf                ;; Iniciar modo real
+    retf ;; Iniciar modo real
 
 ;; Tabela de vetores de interrupção de modo real
 
-.idtR:  dw 0xffff       ;; Limite
-        dd 0            ;; Base
+.idtR:  dw 0xffff ;; Limite
+        dd 0      ;; Base
 
 ;;************************************************************************************
 
@@ -188,16 +188,16 @@ match =A20NAOSEGURO, A20
 
  .testarA20:
 
-    mov edi, 0x112345  ;; Endereço par
-    mov esi, 0x012345  ;; Endereço ímpar
-    mov [esi], esi     ;; Os dois endereços apresentam valores diferentes
+    mov edi, 0x112345 ;; Endereço par
+    mov esi, 0x012345 ;; Endereço ímpar
+    mov [esi], esi    ;; Os dois endereços apresentam valores diferentes
     mov [edi], edi
 
 ;; Se A20 não definido, os dois ponteiros apontarão para 0x012345, que contêm 0x112345 (EDI)
 
-    cmpsd             ;; Comparar para ver se são equivalentes
+    cmpsd ;; Comparar para ver se são equivalentes
 
-    jne .A20Pronto    ;; Se não, o A20 já está habilitado
+    jne .A20Pronto ;; Se não, o A20 já está habilitado
 
 }
 
@@ -205,9 +205,9 @@ match =A20NAOSEGURO, A20
 
 .habilitarA20:
 
-    mov ax, 0x2401  ;; Solicitar a ativação do A20
+    mov ax, 0x2401 ;; Solicitar a ativação do A20
 
-    int 15h         ;; Interrupção do BIOS
+    int 15h ;; Interrupção do BIOS
 
 .A20Pronto:
 
@@ -222,7 +222,7 @@ Hexagon.Kernel.Arch.i386.CPU.CPU.configurarProcessador:
 ;; Habilitar SSE
 
     mov eax, cr0
-    or eax, 10b               ;; Monitor do coprocessador
+    or eax, 10b ;; Monitor do coprocessador
     and ax, 1111111111111011b ;; Desativar emulação do coprocessador
     mov cr0, eax
 
@@ -293,100 +293,100 @@ align 32
 
 GDT:
 
-    dd 0, 0       ;; Descriptor nulo
+    dd 0, 0 ;; Descriptor nulo
 
 .codigoKernel:
 
-    dw 0xFFFF     ;; Limite (0:15)
-    dw 0x0500     ;; Base (0:15)
-    db 0          ;; Base (16:23)
-    db 10011010b  ;; Presente=1, Privilégio=00, Reservado=1, Executável=1, C=0, L&E=1, Acessado=0
-    db 11001111b  ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
-    db 0          ;; Base (24:31)
+    dw 0xFFFF    ;; Limite (0:15)
+    dw 0x0500    ;; Base (0:15)
+    db 0         ;; Base (16:23)
+    db 10011010b ;; Presente=1, Privilégio=00, Reservado=1, Executável=1, C=0, L&E=1, Acessado=0
+    db 11001111b ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
+    db 0         ;; Base (24:31)
 
 ;; Descriptor de dados com base em 500h
 
 .dadosKernel:
 
-    dw 0xFFFF     ;; Limite (0:15)
-    dw 0x0500     ;; Base (0:15)
-    db 0          ;; Base (16:23)
-    db 10010010b  ;; Presente=1, Privilégio=00, Reservado=1, Executável=0, D=0, W=1, Acessado=0
-    db 11001111b  ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
-    db 0          ;; Base (24:31)
+    dw 0xFFFF    ;; Limite (0:15)
+    dw 0x0500    ;; Base (0:15)
+    db 0         ;; Base (16:23)
+    db 10010010b ;; Presente=1, Privilégio=00, Reservado=1, Executável=0, D=0, W=1, Acessado=0
+    db 11001111b ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
+    db 0         ;; Base (24:31)
 
 ;; Descriptor de dados com base em 0h
 
 .linearKernel:
 
-    dw 0xFFFF     ;; Limite (0:15)
-    dw 0          ;; Base (0:15)
-    db 0          ;; Base (16:23)
-    db 10010010b  ;; Presente=1, Privilégio=00, Reservado=1, Executável=0, D=0, W=1, Acessado=0
-    db 11001111b  ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
-    db 0          ;; Base (24:31)
+    dw 0xFFFF    ;; Limite (0:15)
+    dw 0         ;; Base (0:15)
+    db 0         ;; Base (16:23)
+    db 10010010b ;; Presente=1, Privilégio=00, Reservado=1, Executável=0, D=0, W=1, Acessado=0
+    db 11001111b ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
+    db 0         ;; Base (24:31)
 
 ;; Descriptor de código para modo protegido 16 bits
 
 .codigoMP16:
 
-    dw 0xFFFF     ;; Limite (0:15)
-    dw 0x0500     ;; Base (0:15)
-    db 0          ;; Base (16:23)
-    db 10011010b  ;; Presente=1, Privilégio=00, Reservado=1, Executável=1, C=0, L&E=1, Acessado=0
-    db 0          ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
-    db 0          ;; Base (24:31)
+    dw 0xFFFF    ;; Limite (0:15)
+    dw 0x0500    ;; Base (0:15)
+    db 0         ;; Base (16:23)
+    db 10011010b ;; Presente=1, Privilégio=00, Reservado=1, Executável=1, C=0, L&E=1, Acessado=0
+    db 0         ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
+    db 0         ;; Base (24:31)
 
 ;; Descriptor de dados para modo protegido 16 bits
 
 .dadosPM16:
 
-    dw 0xFFFF     ;; Limite (0:15)
-    dw 0          ;; Base (0:15)
-    db 0          ;; Base (16:23)
-    db 10010010b  ;; Presente=1, Privilégio=00, Reservado=1, Executável=0, D=0, W=1, Acessado=0
-    db 0          ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
-    db 0          ;; Base (24:31)
+    dw 0xFFFF    ;; Limite (0:15)
+    dw 0         ;; Base (0:15)
+    db 0         ;; Base (16:23)
+    db 10010010b ;; Presente=1, Privilégio=00, Reservado=1, Executável=0, D=0, W=1, Acessado=0
+    db 0         ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
+    db 0         ;; Base (24:31)
 
 ;; Código do programa
 
 .codigoPrograma:
 
-    dw 0xFFFF     ;; Limite (0:15)
-    dw 0          ;; Base (0:15)
-    db 0          ;; Base (16:23)
-    db 10011010b  ;; Presente=1, Privilégio=00, Reservado=1, Executável=1, C=0, L&E=1, Acessado=0
-    db 11001111b  ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
-    db 0          ;; Base (24:31)
+    dw 0xFFFF    ;; Limite (0:15)
+    dw 0         ;; Base (0:15)
+    db 0         ;; Base (16:23)
+    db 10011010b ;; Presente=1, Privilégio=00, Reservado=1, Executável=1, C=0, L&E=1, Acessado=0
+    db 11001111b ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
+    db 0         ;; Base (24:31)
 
 ;; Dados do programa
 
 .dadosPrograma:
 
-    dw 0xFFFF     ;; Limite (0:15)
-    dw 0          ;; Base (0:15)
-    db 0          ;; Base (16:23)
-    db 10010010b  ;; Presente=1, Privilégio=00, Reservado=1, Executável=0, D=0, W=1, Acessado=0
-    db 11001111b  ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
-    db 0          ;; Base (24:31)
+    dw 0xFFFF    ;; Limite (0:15)
+    dw 0         ;; Base (0:15)
+    db 0         ;; Base (16:23)
+    db 10010010b ;; Presente=1, Privilégio=00, Reservado=1, Executável=0, D=0, W=1, Acessado=0
+    db 11001111b ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
+    db 0         ;; Base (24:31)
 
 ;; TSS (Task State Segment)
 
 .TSS:
 
-    dw 104        ;; Limite inferior
-    dw TSS        ;; Base
-    db 0          ;; Base
-    db 11101001b  ;; Acesso
-    db 0          ;; Bandeiras e limite superior
-    db 0          ;; Base
+    dw 104       ;; Limite inferior
+    dw TSS       ;; Base
+    db 0         ;; Base
+    db 11101001b ;; Acesso
+    db 0         ;; Bandeiras e limite superior
+    db 0         ;; Base
 
 terminoGDT:
 
 GDTReg:
 
 .tamanho: dw terminoGDT - GDT - 1 ;; Tamanho GDT - 1
-.local:   dd GDT+0x500            ;; Deslocamento da GDT
+.local:   dd GDT+0x500 ;; Deslocamento da GDT
 
 ;;************************************************************************************
 
@@ -405,15 +405,15 @@ IDT: times 256 dw naoManipulado, 0x0008, 0x8e00, 0
 
 ;; naoManipulado: deslocamento (0:15)
 ;; 0x0008:  0x08 é um seletor
-;; 0x8e00:  8 é Presente=1, Prévilégio=00, Tamanho=1, e é interrupção 386, 00 é reservado
+;; 0x8e00:  8 é Presente=1, Privilégio=00, Tamanho=1, e é interrupção 386, 00 é reservado
 ;; 0:       Offset (16:31)
 
 terminoIDT:
 
 IDTReg:
 
-.tamanho: dw terminoIDT - IDT - 1  ;; Tamanho IDT - 1
-.local:   dd IDT+0x500             ;; Deslocamento da IDT
+.tamanho: dw terminoIDT - IDT - 1 ;; Tamanho IDT - 1
+.local:   dd IDT+0x500 ;; Deslocamento da IDT
 
 ;;************************************************************************************
 
@@ -445,7 +445,7 @@ TSS:
     .ebp         dd 0
     .esi         dd 0
     .edi         dd 0
-    .es          dd 0x10    ;; Segmento de dados do Kernel
+    .es          dd 0x10 ;; Segmento de dados do Kernel
     .cs          dd 0x08
     .ss          dd 0x10
     .ds          dd 0x10

@@ -332,7 +332,7 @@ Hexagon.Kernel.FS.VFS.montarVolume:
 
     mov ah, byte[Hexagon.Dev.Gen.Disco.Controle.driveBoot]
 
-    mov dl, 01h                 ;; Classe de dispositivo de armazenamento
+    mov dl, 01h ;; Classe de dispositivo de armazenamento
 
     call Hexagon.Kernel.Dev.Dev.paraDispositivo ;; Converter para nome de dispositivo
 
@@ -461,7 +461,7 @@ Hexagon.Kernel.FS.VFS.definirVolumeBoot:
 Hexagon.Kernel.FS.VFS.obterVolume:
 
     mov ah, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual] ;; Número do dispositivo de armazenamento
-    mov dl, [Hexagon.Dev.Classes.bloco]           ;; Classe do dispositivo
+    mov dl, [Hexagon.Dev.Classes.bloco] ;; Classe do dispositivo
 
     call Hexagon.Kernel.Dev.Dev.paraDispositivo
 

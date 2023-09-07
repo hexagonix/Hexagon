@@ -81,17 +81,17 @@ use32
 
 Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2:
 
-    xchg bl, al     ;; Salvar AL
+    xchg bl, al ;; Salvar AL
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2
 
-    mov al, 0xD4    ;; Estamos enviando um comando
+    mov al, 0xD4 ;; Estamos enviando um comando
 
     out 0x64, al
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2
 
-    xchg bl, al     ;; Obter AL de novo
+    xchg bl, al ;; Obter AL de novo
 
     out 0x60, al
 
@@ -107,9 +107,9 @@ Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2:
 
 .aguardarLoop:
 
-    in al, 0x64     ;; 0x64 é o registrador de estado
+    in al, 0x64 ;; 0x64 é o registrador de estado
 
-    bt ax, 1        ;; Checar segundo bit para torná-lo 0
+    bt ax, 1 ;; Checar segundo bit para torná-lo 0
     jnc .OK
 
     jmp .aguardarLoop
@@ -132,7 +132,7 @@ Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2:
 
     in al, 0x64
 
-    bt ax, 0        ;; Checar primeiro bit para torná-lo 1
+    bt ax, 0 ;; Checar primeiro bit para torná-lo 1
     jc .OK
 
     jmp .aguardarLoop

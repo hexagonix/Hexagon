@@ -115,21 +115,21 @@ Hexagon.Kernel.Dev.Gen.Teclado.Teclado.iniciarTeclado:
 
 ;; Primeiro precisamos enviar comandos e depois configurar os LEDs
 
-    mov al, 0xED        ;; 0xED é o comando para configurar LEDs
+    mov al, 0xED ;; 0xED é o comando para configurar LEDs
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2
 
-    out 0x60, al        ;; Enviar comando
+    out 0x60, al ;; Enviar comando
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
 
     in al, 0x60
 
-    mov al, 000b        ;; 000 define todos os LEDs como desligados
+    mov al, 000b ;; 000 define todos os LEDs como desligados
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2
 
-    out 0x60, al        ;; Enviar dados
+    out 0x60, al ;; Enviar dados
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
 
@@ -137,21 +137,21 @@ Hexagon.Kernel.Dev.Gen.Teclado.Teclado.iniciarTeclado:
 
 ;; Definir taxa de repetição e delay
 
-    mov al, 0xF3        ;; 0xF3 é o comando para ajustar a taxa de repetição e delay
+    mov al, 0xF3 ;; 0xF3 é o comando para ajustar a taxa de repetição e delay
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2
 
-    out 0x60, al        ;; Enviar comando
+    out 0x60, al ;; Enviar comando
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
 
     in al, 0x60
 
-    mov al, 00000000b   ;; 0 é sempre 0, 00 é para delay e 250 ms, 00000 é taxa de repetição de 30 hz
+    mov al, 00000000b ;; 0 é sempre 0, 00 é para delay e 250 ms, 00000 é taxa de repetição de 30 hz
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2
 
-    out 0x60, al        ;; Agora enviar dados
+    out 0x60, al ;; Agora enviar dados
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
 
@@ -189,10 +189,10 @@ Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterString:
     mov byte[.charAtual], 0
 
     push ds
-    pop es                  ;; ES = DS
+    pop es ;; ES = DS
 
-    mov ecx, 0              ;; Contador de caracteres
-    movzx ebx, al           ;; Máximo de caracteres
+    mov ecx, 0 ;; Contador de caracteres
+    movzx ebx, al ;; Máximo de caracteres
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.obterCursor
 
@@ -228,9 +228,9 @@ Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterString:
 
     pop edx
 
-    call Hexagon.Kernel.Dev.Gen.Teclado.Teclado.aguardarTeclado   ;; Obter caractere
+    call Hexagon.Kernel.Dev.Gen.Teclado.Teclado.aguardarTeclado ;; Obter caractere
 
-    cmp ah, Hexagon.Teclado.Codigo.home             ;; Código
+    cmp ah, Hexagon.Teclado.Codigo.home ;; Código
     je .teclaHome
 
     cmp ah, Hexagon.Teclado.Codigo.end
@@ -245,17 +245,17 @@ Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterString:
     cmp ah, Hexagon.Teclado.Codigo.direita
     je .teclaDireita
 
-    cmp al, 10              ;; Código ASCII
+    cmp al, 10 ;; Código ASCII
     je .fim
 
     cmp al, Hexagon.Teclado.Codigo.backspace
     je .teclaBackspace
 
     cmp al, ' '
-    jb .obterTecla          ;; Não utilizar esta tecla
+    jb .obterTecla ;; Não utilizar esta tecla
 
     cmp al, '~'
-    ja .obterTecla          ;; Não utilizar esta tecla
+    ja .obterTecla ;; Não utilizar esta tecla
 
     cmp cl, bl
     je .obterTecla
@@ -467,7 +467,7 @@ Hexagon.Kernel.Dev.Gen.Teclado.Teclado.aguardarTeclado:
     cmp byte[manipuladorTeclado.sinalShift], 1
     je .usarCaracteresShift
 
-    mov ebx, Hexagon.Teclado.leiauteTeclado.teclas        ;; Vetor de códigos de escaneamento
+    mov ebx, Hexagon.Teclado.leiauteTeclado.teclas ;; Vetor de códigos de escaneamento
 
     xlatb
 
@@ -475,7 +475,7 @@ Hexagon.Kernel.Dev.Gen.Teclado.Teclado.aguardarTeclado:
 
 .usarCaracteresShift:
 
-    mov ebx, Hexagon.Teclado.leiauteTeclado.teclasShift   ;; Vetor de códigos de escaneamento com Shift
+    mov ebx, Hexagon.Teclado.leiauteTeclado.teclasShift ;; Vetor de códigos de escaneamento com Shift
 
     xlatb
 

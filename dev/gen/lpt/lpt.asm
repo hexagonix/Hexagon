@@ -83,7 +83,7 @@ Hexagon.Kernel.Dev.Gen.Impressora.Impressora.iniciarImpressora:
 
     mov dx, word[portaParalelaAtual]
 
-    add dx, 2           ;; Registro de controle (base+2)
+    add dx, 2 ;; Registro de controle (base+2)
 
     in al, dx
 
@@ -93,7 +93,7 @@ Hexagon.Kernel.Dev.Gen.Impressora.Impressora.iniciarImpressora:
 ;; Bit 3 - Selecionar impressora
 ;; Bit 5 - Habilitar porta bi-direcional
 
-    out dx, al          ;; Enviar sinal de reinício
+    out dx, al ;; Enviar sinal de reinício
 
     popa
 
@@ -103,24 +103,24 @@ Hexagon.Kernel.Dev.Gen.Impressora.Impressora.iniciarImpressora:
 
 Hexagon.Kernel.Dev.Gen.Impressora.Impressora.enviarImpressora: ;; Função que permite o envio de dados para serem impressos em uma impressora paralela
 
-    lodsb                      ;; Carrega o próximo caractere à ser enviado
+    lodsb ;; Carrega o próximo caractere à ser enviado
 
-    or al, al                  ;; Compara o caractere com o fim da mensagem
-    jz .pronto                 ;; Se igual ao fim, pula para .pronto
+    or al, al ;; Compara o caractere com o fim da mensagem
+    jz .pronto ;; Se igual ao fim, pula para .pronto
 
-    call Hexagon.Kernel.Dev.Gen.Impressora.Impressora.realizarEnvioImpressora ;; Chama  função que irá executar a entrada e saída
+    call Hexagon.Kernel.Dev.Gen.Impressora.Impressora.realizarEnvioImpressora ;; Chama função que irá executar a entrada e saída
 
     jc .falhaImpressora
 
-    jmp Hexagon.Kernel.Dev.Gen.Impressora.Impressora.enviarImpressora       ;; Se não tiver acabado, volta à função e carrega o próximo caractere
+    jmp Hexagon.Kernel.Dev.Gen.Impressora.Impressora.enviarImpressora ;; Se não tiver acabado, volta à função e carrega o próximo caractere
 
-.pronto:                       ;; Se tiver acabado...
+.pronto: ;; Se tiver acabado...
 
-    ret                        ;; Retorna ao processo que o chamou
+    ret ;; Retorna ao processo que o chamou
 
 .falhaImpressora:
 
-    stc   ;; Definir Carry
+    stc ;; Definir Carry
 
     ret
 
@@ -136,13 +136,13 @@ Hexagon.Kernel.Dev.Gen.Impressora.Impressora.realizarEnvioImpressora:
 
     pusha
 
-    push ax             ;; Salvar o byte fornecido em AL
+    push ax ;; Salvar o byte fornecido em AL
 
 ;; Reiniciar porta através do registrador de controle (base+2)
 
     mov dx, word[portaParalelaAtual]
 
-    add dx, 2           ;; Registro de controle (base+2)
+    add dx, 2 ;; Registro de controle (base+2)
 
     in al, dx
 
@@ -152,15 +152,15 @@ Hexagon.Kernel.Dev.Gen.Impressora.Impressora.realizarEnvioImpressora:
 ;; Bit 3 - Selecionar impressora
 ;; Bit 5 - Habilitar porta bi-direcional
 
-    out dx, al          ;; Enviar sinal de reinício
+    out dx, al ;; Enviar sinal de reinício
 
 ;; Enviar dados para a porta via registrador de dados (base+0)
 
-    pop ax              ;; Restaurar dado passado em AL
+    pop ax ;; Restaurar dado passado em AL
 
     mov dx, word[portaParalelaAtual]
 
-    out dx, al          ;; Enviar dados
+    out dx, al ;; Enviar dados
 
 ;; Enviar sinalização para registrador de controle (base+2), mostrando que os dados
 ;; estão disponíveis
@@ -173,7 +173,7 @@ Hexagon.Kernel.Dev.Gen.Impressora.Impressora.realizarEnvioImpressora:
 
 ;; Bit 0 - sinal
 
-    out dx, al          ;; Enviar
+    out dx, al ;; Enviar
 
     popa
 
@@ -181,4 +181,4 @@ Hexagon.Kernel.Dev.Gen.Impressora.Impressora.realizarEnvioImpressora:
 
 ;;************************************************************************************
 
-portaParalelaAtual dw 0         ;; Armazena o endereço de entrada e saída do dispositivo
+portaParalelaAtual dw 0 ;; Armazena o endereço de entrada e saída do dispositivo
