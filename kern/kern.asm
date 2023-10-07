@@ -323,7 +323,7 @@ Hexagon.Autoconfig:
 
 ;;************************************************************************************
 
-    call instalarInterrupcoes ;; Instala os manipuladores de interrupção do Hexagon
+    call Hexagon.Int.instalarInterrupcoes ;; Instala os manipuladores de interrupção do Hexagon
 
 ;; Primeiramente, deve-se impedir que o usuário mate processos com uma tecla especial, impedindo
 ;; que qualquer processo relevante, como o de login, seja finalizado prematuramente

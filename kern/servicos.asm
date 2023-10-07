@@ -85,38 +85,38 @@ Hexagon.Int:
 
 ;; Instala as rotinas de interrupção do Hexagon (ISR - Interrupt Service Routine)
 
-instalarInterrupcoes:
+Hexagon.Int.instalarInterrupcoes:
 
 ;; Instalar os manipuladores de IRQs
 
     mov dword[ordemKernel], ordemKernelExecutar
 
-    mov esi, manipuladorTimer ;; IRQ 0
+    mov esi, Hexagon.Int.manipuladorTimer ;; IRQ 0
     mov eax, Hexagon.Int.interrupcaoTimer ;; Número da interrupção
 
-    call instalarISR
+    call Hexagon.Int.instalarISR
 
-    mov esi, manipuladorTeclado ;; IRQ 1
+    mov esi, Hexagon.Int.manipuladorTeclado ;; IRQ 1
     mov eax, Hexagon.Int.interrupcaoTeclado ;; Número da interrupção
 
-    call instalarISR
+    call Hexagon.Int.instalarISR
 
-    mov esi, manipuladorMousePS2 ;; IRQ 12
-    mov eax, Hexagon.Int.interrupcaoMouse ;; Número da interrupção
+    mov esi, Hexagon.Int.manipuladorMousePS2 ;; IRQ 12
+    mov eax, Hexagon.Int.interrupcaoMouse     ;; Número da interrupção
 
-    call instalarISR
+    call Hexagon.Int.instalarISR
 
 ;; Instalar o manipulador de chamadas do Hexagon
 
     mov esi, Hexagon.Syscall.Syscall.manipuladorHexagon ;; Serviços do Hexagon
     mov eax, Hexagon.Int.interrupcaoHexagon ;; Número da interrupção
 
-    call instalarISR
+    call Hexagon.Int.instalarISR
 
     mov esi, Hexagon.Syscall.Syscall.manipuladorHXUnix ;; Serviços do Hexagon
     mov eax, Hexagon.Int.interrupcaoHXUnix ;; Número da interrupção
 
-    call instalarISR
+    call Hexagon.Int.instalarISR
 
     sti ;; Habilitar interrupções
 
@@ -132,7 +132,7 @@ instalarInterrupcoes:
 ;; ser utilizado para temporizar operações de entrada e saída, assim como causar
 ;; atraso em diversas aplicações do Sistema e de aplicativos.
 
-manipuladorTimer:
+Hexagon.Int.manipuladorTimer:
 
     push eax
 
@@ -164,7 +164,7 @@ manipuladorTimer:
 
 ;; IRQ 1 - Interrupção de teclado
 
-manipuladorTeclado:
+Hexagon.Int.manipuladorTeclado:
 
     push eax
     push ebx
@@ -288,7 +288,7 @@ estadoTeclas:    dd 0
 
 ;; IRQ 12 - Manipulador de Mouse PS/2
 
-manipuladorMousePS2:
+Hexagon.Int.manipuladorMousePS2:
 
     pusha
 
@@ -329,9 +329,9 @@ manipuladorMousePS2:
 .fim:
 
 
-    movzx eax, byte[manipuladorMousePS2.deltaX] ;; DeltaX alterado em X
-    movzx ebx, byte[manipuladorMousePS2.deltaY] ;; DeltaY alterado em Y
-    mov dl, byte[manipuladorMousePS2.dados]
+    movzx eax, byte[Hexagon.Int.manipuladorMousePS2.deltaX] ;; DeltaX alterado em X
+    movzx ebx, byte[Hexagon.Int.manipuladorMousePS2.deltaY] ;; DeltaY alterado em Y
+    mov dl, byte[Hexagon.Int.manipuladorMousePS2.dados]
 
     bt dx, 4 ;; Checar se o mouse se moveu para a esquerda
     jnc .movimentoADireita
@@ -424,7 +424,7 @@ align 32
 
 ;; Manipulador especializado para touchpads - IRQ 12
 
-manipuladorTouchpad:
+Hexagon.Int.manipuladorTouchpad:
 
     push eax
     push edx
@@ -619,7 +619,7 @@ manipuladorTouchpad:
 
 ;; Manipulador para outras interrupções, quando as mesmas não estiverem disponíveis
 
-naoManipulado:
+Hexagon.Int.naoManipulado:
 
     push eax
 
@@ -640,7 +640,7 @@ naoManipulado:
 ;; EAX - Número da interrupção
 ;; ESI - Rotina de interrupção
 
-instalarISR:
+Hexagon.Int.instalarISR:
 
     push eax
     push ebp

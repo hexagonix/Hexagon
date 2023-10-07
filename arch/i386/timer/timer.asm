@@ -105,21 +105,21 @@ Hexagon.Kernel.Arch.i386.Timer.Timer.causarAtraso:
 
     sti ;; Habilitar as interrupções para que se possa atualizar o contador
 
-    mov ebx, dword[manipuladorTimer.contagemTimer]
+    mov ebx, dword[Hexagon.Int.manipuladorTimer.contagemTimer]
 
 .aguardarUm: ;; Vamos aguardar até o contador mudar
 
-    cmp ebx, dword[manipuladorTimer.contagemTimer]
+    cmp ebx, dword[Hexagon.Int.manipuladorTimer.contagemTimer]
     je .aguardarUm
 
 .aguardarMudanca:
 
-    cmp ebx, dword[manipuladorTimer.contagemTimer]
+    cmp ebx, dword[Hexagon.Int.manipuladorTimer.contagemTimer]
     je .aguardarMudanca ;; Enquanto o contador não tiver seu valor alterado, continue aqui
 
     dec ecx
 
-    mov ebx, dword[manipuladorTimer.contagemTimer]
+    mov ebx, dword[Hexagon.Int.manipuladorTimer.contagemTimer]
 
     cmp ecx, 0
     ja .aguardarUm ;; Se não tiver acabado, continue contando...

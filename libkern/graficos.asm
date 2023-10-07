@@ -389,6 +389,26 @@ Hexagon.Kernel.Lib.Graficos.colocarPixel:
 
 ;;************************************************************************************
 
+Hexagon.Kernel.Lib.Graficos.desenharBlocoSyscall:
+
+    sub esi, dword[Hexagon.Processos.enderecoAplicativos]
+    add esi, 0x500
+
+    sub edi, dword[Hexagon.Processos.enderecoAplicativos]
+    add edi, 0x500
+
+    call Hexagon.Kernel.Lib.Graficos.desenharBloco
+
+    add esi, dword[Hexagon.Processos.enderecoAplicativos]
+    sub esi, 0x500
+
+    add edi, dword[Hexagon.Processos.enderecoAplicativos]
+    sub edi, 0x500
+
+    ret
+
+;;************************************************************************************
+
 ;; Desenhar um bloco de cor específica
 ;;
 ;; Entrada:

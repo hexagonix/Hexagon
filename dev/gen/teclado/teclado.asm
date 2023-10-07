@@ -440,10 +440,10 @@ Hexagon.Kernel.Dev.Gen.Teclado.Teclado.aguardarTeclado:
 
     mov al, byte[.indiceCodigosAtual]
 
-    cmp byte[manipuladorTeclado.codigosEscaneamento.indice], al
+    cmp byte[Hexagon.Int.manipuladorTeclado.codigosEscaneamento.indice], al
     je .loopTeclas
 
-    mov ebx, manipuladorTeclado.codigosEscaneamento
+    mov ebx, Hexagon.Int.manipuladorTeclado.codigosEscaneamento
 
     add bl, byte[.indiceCodigosAtual]
 
@@ -464,7 +464,7 @@ Hexagon.Kernel.Dev.Gen.Teclado.Teclado.aguardarTeclado:
 
 ;; Checar Shift
 
-    cmp byte[manipuladorTeclado.sinalShift], 1
+    cmp byte[Hexagon.Int.manipuladorTeclado.sinalShift], 1
     je .usarCaracteresShift
 
     mov ebx, Hexagon.Teclado.leiauteTeclado.teclas ;; Vetor de códigos de escaneamento

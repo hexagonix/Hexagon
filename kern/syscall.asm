@@ -307,27 +307,7 @@ Hexagon.Syscall.Syscall.manipuladorHXUnix:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.API.API.desenharBloco:
-
-    sub esi, dword[Hexagon.Processos.enderecoAplicativos]
-    add esi, 0x500
-
-    sub edi, dword[Hexagon.Processos.enderecoAplicativos]
-    add edi, 0x500
-
-    call Hexagon.Kernel.Lib.Graficos.desenharBloco
-
-    add esi, dword[Hexagon.Processos.enderecoAplicativos]
-    sub esi, 0x500
-
-    add edi, dword[Hexagon.Processos.enderecoAplicativos]
-    sub edi, 0x500
-
-    ret
-
-;;************************************************************************************
-
-Hexagon.Kernel.API.API.Nulo:
+Hexagon.Syscall.Syscall.Nulo:
 
     mov ebp, 0xABC12345
 
@@ -337,17 +317,17 @@ Hexagon.Kernel.API.API.Nulo:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.API.API.intalarInterrupcao:
+Hexagon.Syscall.Syscall.intalarInterrupcao:
 
     cli
 
-    call instalarISR
+    call Hexagon.Int.instalarISR
 
     ret
 
 ;;************************************************************************************
 
-Hexagon.Kernel.API.API.criarNovoProcesso:
+Hexagon.Syscall.Syscall.criarNovoProcesso:
 
     push dword[Hexagon.Syscall.Controle.eip]
     push dword[Hexagon.Syscall.Controle.cs]

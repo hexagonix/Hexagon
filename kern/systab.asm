@@ -79,10 +79,10 @@ Hexagon.Syscall.Syscall.servicosHexagon:
 
 ;; Gerenciamento de memória e processos
 
-    dd Hexagon.Kernel.API.API.Nulo                                     ;; 0 - função nula, apenas retorna
+    dd Hexagon.Syscall.Syscall.Nulo                                    ;; 0 - função nula, apenas retorna
     dd Hexagon.Kernel.Arch.Gen.Mm.alocarMemoria                        ;; 1
     dd Hexagon.Kernel.Arch.Gen.Mm.liberarMemoria                       ;; 2
-    dd Hexagon.Kernel.API.API.criarNovoProcesso                        ;; 3
+    dd Hexagon.Syscall.Syscall.criarNovoProcesso                       ;; 3
     dd Hexagon.Kernel.Kernel.Proc.encerrarProcesso                     ;; 4
     dd Hexagon.Kernel.Kernel.Proc.obterPID                             ;; 5
     dd Hexagon.Kernel.Arch.Gen.Mm.usoMemoria                           ;; 6
@@ -117,7 +117,7 @@ Hexagon.Syscall.Syscall.servicosHexagon:
     dd Hexagon.Kernel.Lib.Num.obterAleatorio                           ;; 23
     dd Hexagon.Kernel.Lib.Num.alimentarAleatorios                      ;; 24
     dd Hexagon.Kernel.Arch.i386.Timer.Timer.causarAtraso               ;; 25
-    dd Hexagon.Kernel.API.API.intalarInterrupcao                       ;; 26
+    dd Hexagon.Syscall.Syscall.intalarInterrupcao                      ;; 26
 
 ;; Gerenciamento de energia do Hexagon
 
@@ -129,11 +129,11 @@ Hexagon.Syscall.Syscall.servicosHexagon:
     dd Hexagon.Kernel.Dev.Gen.Console.Console.imprimir                 ;; 29
     dd Hexagon.Kernel.Dev.Gen.Console.Console.limparConsole            ;; 30
     dd Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha              ;; 31
-    dd Hexagon.Kernel.API.API.Nulo                                     ;; 32
+    dd Hexagon.Syscall.Syscall.Nulo                                    ;; 32
     dd Hexagon.Kernel.Dev.Gen.Console.Console.rolarParaBaixo           ;; 33
     dd Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor         ;; 34
     dd Hexagon.Kernel.Lib.Graficos.colocarPixel                        ;; 35
-    dd Hexagon.Kernel.API.API.desenharBloco                            ;; 36
+    dd Hexagon.Kernel.Lib.Graficos.desenharBlocoSyscall                ;; 36
     dd Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere        ;; 37
     dd Hexagon.Kernel.Dev.Gen.Console.Console.definirCorTexto          ;; 38
     dd Hexagon.Kernel.Dev.Gen.Console.Console.obterCorTexto            ;; 39

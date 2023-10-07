@@ -160,7 +160,7 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.iniciarMouse:
     in al, 0x60
 
     mov ax, word[Hexagon.Video.Resolucao.y]
-    mov word[manipuladorMousePS2.mouseY], ax
+    mov word[Hexagon.Int.manipuladorMousePS2.mouseY], ax
 
     pop eax
 
@@ -197,7 +197,7 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.configurarMouse:
 
     mov [Hexagon.Mouse.mouseX], eax
     mov [Hexagon.Mouse.mouseY], ebx
-    mov byte[manipuladorMousePS2.dados], 0
+    mov byte[Hexagon.Int.manipuladorMousePS2.dados], 0
 
     ret
 
@@ -303,10 +303,10 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.iniciarTouchPad:
 
     in al, 0x60
 
-    mov esi, manipuladorTouchpad ;; IRQ 12
+    mov esi, Hexagon.Int.manipuladorTouchpad ;; IRQ 12
     mov eax, 74h ;; Número da interrupção
 
-    call instalarISR
+    call Hexagon.Int.instalarISR
 
     pop eax
 
@@ -334,11 +334,11 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.aguardarMouse:
 
     sti
 
-    mov byte[manipuladorMousePS2.alterado], 0
+    mov byte[Hexagon.Int.manipuladorMousePS2.alterado], 0
 
 .aguardar:
 
-    cmp byte[manipuladorMousePS2.alterado], 1 ;; Checar se o estado do mouse foi alterado
+    cmp byte[Hexagon.Int.manipuladorMousePS2.alterado], 1 ;; Checar se o estado do mouse foi alterado
 
     hlt
 
@@ -346,6 +346,6 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.aguardarMouse:
 
     mov eax, [Hexagon.Mouse.mouseX]
     mov ebx, [Hexagon.Mouse.mouseY]
-    movzx edx, byte[manipuladorMousePS2.dados]
+    movzx edx, byte[Hexagon.Int.manipuladorMousePS2.dados]
 
     ret
