@@ -101,18 +101,24 @@ Hexagon.Kernel.Dev.Gen.Impressora.Impressora.iniciarImpressora:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Dev.Gen.Impressora.Impressora.enviarImpressora: ;; Função que permite o envio de dados para serem impressos em uma impressora paralela
+;; Função que permite o envio de dados para serem impressos em uma impressora paralela
+
+Hexagon.Kernel.Dev.Gen.Impressora.Impressora.enviarImpressora:
 
     lodsb ;; Carrega o próximo caractere à ser enviado
 
     or al, al ;; Compara o caractere com o fim da mensagem
     jz .pronto ;; Se igual ao fim, pula para .pronto
 
-    call Hexagon.Kernel.Dev.Gen.Impressora.Impressora.realizarEnvioImpressora ;; Chama função que irá executar a entrada e saída
+;; Chama função que irá executar a entrada e saída
+
+    call Hexagon.Kernel.Dev.Gen.Impressora.Impressora.realizarEnvioImpressora
 
     jc .falhaImpressora
 
-    jmp Hexagon.Kernel.Dev.Gen.Impressora.Impressora.enviarImpressora ;; Se não tiver acabado, volta à função e carrega o próximo caractere
+;; Se não tiver acabado, volta à função e carrega o próximo caractere
+
+    jmp Hexagon.Kernel.Dev.Gen.Impressora.Impressora.enviarImpressora
 
 .pronto: ;; Se tiver acabado...
 

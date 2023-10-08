@@ -655,5 +655,3 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.testarVolume:
     call Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores
 
     ret
-
-;;************************************************************************************

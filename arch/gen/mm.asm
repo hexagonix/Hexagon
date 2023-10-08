@@ -739,5 +739,3 @@ dilatarEspacoMemoria:
     add dword[Hexagon.Memoria.Alocador.reservadoProcessos], ecx
 
     ret
-
-;;************************************************************************************

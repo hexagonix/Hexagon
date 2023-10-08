@@ -167,11 +167,11 @@ Hexagon.Kernel.Kernel.Panico.panico:
 ;;************************************************************************************
 
 ;; Rotina que prepara a saída de vídeo padrão para a exibição de informações em caso de
-;; erro grave no Sistema
+;; erro grave no sistema
 
 Hexagon.Kernel.Kernel.Panico.prepararPanico:
 
-    mov esi, Hexagon.Dev.Dispositivos.vd1 ;; Primeiro, Hexagon.Kernel.Dev.Dev.fechar vd1
+    mov esi, Hexagon.Dev.Dispositivos.vd1 ;; Primeiro, fechar vd1
 
     call Hexagon.Kernel.Dev.Dev.fechar
 

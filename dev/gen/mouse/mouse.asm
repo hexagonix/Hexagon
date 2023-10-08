@@ -338,7 +338,9 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.aguardarMouse:
 
 .aguardar:
 
-    cmp byte[Hexagon.Int.manipuladorMousePS2.alterado], 1 ;; Checar se o estado do mouse foi alterado
+;; Checar se o estado do mouse foi alterado
+
+    cmp byte[Hexagon.Int.manipuladorMousePS2.alterado], 1
 
     hlt
 

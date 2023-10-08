@@ -157,7 +157,7 @@ Hexagon.Kernel.Kernel.Dmesg.dataParaRelatorio:
 
     mov al, [Hexagon.Arch.i386.CMOS.dia]
 
-    call BCDParaASCII
+    call Hexagon.Kernel.Lib.String.BCDParaASCII
 
     push eax
 
@@ -175,7 +175,7 @@ Hexagon.Kernel.Kernel.Dmesg.dataParaRelatorio:
 
     mov al, [Hexagon.Arch.i386.CMOS.mes]
 
-    call BCDParaASCII
+    call Hexagon.Kernel.Lib.String.BCDParaASCII
 
     push eax
 
@@ -193,7 +193,7 @@ Hexagon.Kernel.Kernel.Dmesg.dataParaRelatorio:
 
     mov al, [Hexagon.Arch.i386.CMOS.seculo]
 
-    call BCDParaASCII
+    call Hexagon.Kernel.Lib.String.BCDParaASCII
 
     push eax
 
@@ -207,7 +207,7 @@ Hexagon.Kernel.Kernel.Dmesg.dataParaRelatorio:
 
     mov al, [Hexagon.Arch.i386.CMOS.ano]
 
-    call BCDParaASCII
+    call Hexagon.Kernel.Lib.String.BCDParaASCII
 
     push eax
 
@@ -241,7 +241,7 @@ Hexagon.Kernel.Kernel.Dmesg.horaParaRelatorio:
 
     mov al, [Hexagon.Arch.i386.CMOS.hora]
 
-    call BCDParaASCII
+    call Hexagon.Kernel.Lib.String.BCDParaASCII
 
     push eax
 
@@ -259,7 +259,7 @@ Hexagon.Kernel.Kernel.Dmesg.horaParaRelatorio:
 
     mov al, [Hexagon.Arch.i386.CMOS.minuto]
 
-    call BCDParaASCII
+    call Hexagon.Kernel.Lib.String.BCDParaASCII
 
     push eax
 
@@ -277,7 +277,7 @@ Hexagon.Kernel.Kernel.Dmesg.horaParaRelatorio:
 
     mov al, [Hexagon.Arch.i386.CMOS.segundo]
 
-    call BCDParaASCII
+    call Hexagon.Kernel.Lib.String.BCDParaASCII
 
     push eax
 

@@ -138,6 +138,8 @@ db 10, 0
 .opcodeInvalido:
 db "Invalid opcode found at runtime. Failure.", 0
 
+;;************************************************************************************
+
 Hexagon.Verbose.APM:
 
 .reinicioAPM:
@@ -157,9 +159,14 @@ db "Success in requesting the power management system.", 0
 .erroInstalacaoAPM:
 db "Error installing Hexagon power management service.", 0
 
+;;************************************************************************************
+
 Hexagon.Verbose.Servicos:
 
-.matarProcesso: db "The process running with this PID was terminated by Hexagon.", 0
+.matarProcesso:
+db "The process running with this PID was terminated by Hexagon.", 0
+
+;;************************************************************************************
 
 Hexagon.Verbose.Disco:
 
@@ -192,6 +199,8 @@ db "The volume is already in use by Hexagon or another process.", 0
 db "Error writing to volume.", 0
 .erroGeralEscrita:
 db "General error when trying to write sectors to the volume.", 0
+
+;;************************************************************************************
 
 Hexagon.Verbose.Init:
 

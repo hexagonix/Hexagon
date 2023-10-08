@@ -469,6 +469,3 @@ Hexagon.Kernel.FS.VFS.obterVolume:
     mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
 
     ret
-
-;;************************************************************************************
-

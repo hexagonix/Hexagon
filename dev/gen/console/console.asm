@@ -1583,5 +1583,3 @@ Hexagon.Kernel.Dev.Gen.Console.Console.alterarFonte:
     stc
 
     ret
-
-;;************************************************************************************

@@ -124,5 +124,3 @@ Hexagon.Kernel.Dev.Gen.Som.Som.desligarSom: ;; Desliga o alto-falante interno do
     popad
 
     ret
-
-;;*******************************************************************

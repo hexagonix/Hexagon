@@ -101,40 +101,58 @@ Hexagon.Dev.Dispositivos:
 
 ;; Dispositivos de armazenamento
 
-.hd0: db "hd0", 0 ;; Primeiro disco rígido
-.hd1: db "hd1", 0 ;; Segundo disco rígido
-.hd2: db "hd2", 0 ;; Terceiro disco rígido
-.hd3: db "hd3", 0 ;; Quarto disco rígido
+.hd0:
+db "hd0", 0 ;; Primeiro disco rígido
+.hd1:
+db "hd1", 0 ;; Segundo disco rígido
+.hd2:
+db "hd2", 0 ;; Terceiro disco rígido
+.hd3:
+db "hd3", 0 ;; Quarto disco rígido
 
 ;; Portas seriais
 
-.com1: db "com1", 0 ;; Primeira porta serial
-.com2: db "com2", 0 ;; Segunda porta serial
-.com3: db "com3", 0 ;; Terceira porta serial
-.com4: db "com4", 0 ;; Quarta porta serial
+.com1:
+db "com1", 0 ;; Primeira porta serial
+.com2:
+db "com2", 0 ;; Segunda porta serial
+.com3:
+db "com3", 0 ;; Terceira porta serial
+.com4:
+db "com4", 0 ;; Quarta porta serial
 
 ;; Portas paralelas e impressoras
 
-.imp0: db "imp0", 0 ;; Primeira porta paralela
-.imp1: db "imp1", 0 ;; Segunda porta paralela
-.imp2: db "imp2", 0 ;; Terceira porta paralela
+.imp0:
+db "imp0", 0 ;; Primeira porta paralela
+.imp1:
+db "imp1", 0 ;; Segunda porta paralela
+.imp2:
+db "imp2", 0 ;; Terceira porta paralela
 
 ;; Dispositivos de saída
 
-.vd0: db "vd0", 0 ;; Dispositivo de saída padrão
-.vd1: db "vd1", 0 ;; Dispositivo de saída secundário em memória (Buffer)
-.vd2: db "vd2", 0 ;; Despejo de dados do Kernel
+.vd0:
+db "vd0", 0 ;; Dispositivo de saída padrão
+.vd1:
+db "vd1", 0 ;; Dispositivo de saída secundário em memória (Buffer)
+.vd2:
+db "vd2", 0 ;; Despejo de dados do Kernel
 
-.au0: db "au0", 0 ;; Alto-falante interno do computador
+.au0:
+db "au0", 0 ;; Alto-falante interno do computador
 
 ;; Dispositivos de entrada
 
-.mouse0: db "mouse0", 0 ;; Mouse conectado ao computador
-.tecla0: db "tecla0", 0 ;; Teclado conectado ao computador
+.mouse0:
+db "mouse0", 0 ;; Mouse conectado ao computador
+.tecla0:
+db "tecla0", 0 ;; Teclado conectado ao computador
 
 ;; Processadores:
 
-.proc0: db "proc0", 0 ;; Processador principal
+.proc0:
+db "proc0", 0 ;; Processador principal
 
 Hexagon.Dev.Classes:
 

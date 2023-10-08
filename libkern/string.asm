@@ -883,7 +883,7 @@ Hexagon.Kernel.Lib.String.paraString:
 ;;
 ;; AX - Valor em ASCII
 
-BCDParaASCII:
+Hexagon.Kernel.Lib.String.BCDParaASCII:
 
     push ecx
 
