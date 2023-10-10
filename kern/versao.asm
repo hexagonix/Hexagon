@@ -83,24 +83,27 @@ use32
 
 Hexagon.Arquitetura.suporte = 1 ;; Arquitetura desta imagem
 
-Hexagon.Versao.definicao equ "1.4.0"
+Hexagon.Versao.definicao equ "1.4.1"
 
 Hexagon.Versao:
 
 .numeroVersao     = 1   ;; Número principal de versão do Hexagon
 .numeroSubversao  = 4   ;; Número de subversão (secundária) do Hexagon
-.caractereRevisao = "0" ;; Adicionar caractere de revisão, caso necessário, entre aspas (funciona como caractere)
+.caractereRevisao = "1" ;; Adicionar caractere de revisão, caso necessário, entre aspas (funciona como caractere)
 
-.nomeKernel:      db "Hexagon", 0 ;; Nome fornecido ao espaço de usuário
-.build:           db __stringdia, "/", __stringmes, "/", __stringano, " "
-                  db __stringhora, ":", __stringminuto, ":", __stringsegundo, " GMT", 0
+.nomeKernel:
+db "Hexagon", 0 ;; Nome fornecido ao espaço de usuário
+.build:
+db __stringdia, "/", __stringmes, "/", __stringano, " "
+db __stringhora, ":", __stringminuto, ":", __stringsegundo, " GMT", 0
 
 Hexagon.Info:
 
-.sobreHexagon:    db 10, 10
-                  db "Hexagon kernel version ", Hexagon.Versao.definicao, 10
-                  db "Copyright (C) 2015-", __stringano, " Felipe Miguel Nery Lunkes", 10
-                  db "All rights reserved.", 0
+.sobreHexagon:
+db 10, 10
+db "Hexagon kernel version ", Hexagon.Versao.definicao, 10
+db "Copyright (C) 2015-", __stringano, " Felipe Miguel Nery Lunkes", 10
+db "All rights reserved.", 0
 
 ;;************************************************************************************
 
