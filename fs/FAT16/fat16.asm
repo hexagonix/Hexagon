@@ -467,6 +467,85 @@ db 0
 
 ;;************************************************************************************
 
+;; Renomear um arquivo existente no disco
+;;
+;; Entrada:
+;;
+;; ESI - Nome de arquivo da fonte
+;; EDI - Nome de arquivo do destino
+;;
+;; Saída:
+;;
+;; CF definido em caso de erro ou limpo em caso de sucesso
+
+Hexagon.Kernel.FS.FAT16.renomearArquivoFAT16B:
+
+    pushad
+
+    clc
+
+    push edi
+
+;; Checar se o arquivo já existe
+
+    call Hexagon.Kernel.FS.FAT16.arquivoExisteFAT16B
+
+    jc .falha
+
+    pop edi
+
+    mov esi, edi
+
+    push ebx
+
+    call Hexagon.Kernel.FS.FAT16.arquivoExisteFAT16B
+
+    pop ebx
+
+    jnc .falha
+
+    push ebx
+
+    call Hexagon.Kernel.FS.FAT16.nomeArquivoParaFAT
+
+    pop ebx
+
+;; Em EBX, o ponteiro para a entrada no diretório raiz
+
+    mov edi, ebx
+    add edi, 0x500
+    mov ecx, 11
+
+    rep movsb ;; Mover (ECX) vezes a string em ESI para EDI
+
+    kprint edi
+
+;; Escrever diretório raiz modificado no disco
+
+    movzx eax, word[Hexagon.VFS.FAT16B.tamanhoDirRaiz] ;; Setores para escrever
+    mov esi, dword[Hexagon.VFS.FAT16B.dirRaiz] ;; LBA diretório raiz
+    mov cx, 0x50 ;; Segmento
+    mov edi, Hexagon.CacheDisco+20000 ;; Deslocamento
+    mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
+
+    call Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores
+
+    jc .falha
+
+.fim:
+
+    popad
+
+    ret
+
+.falha:
+
+    stc ;; Definir Carry
+
+    jmp .fim
+
+;;************************************************************************************
+
 ;; Checar se um arquivo existe no disco
 ;;
 ;; Entrada:

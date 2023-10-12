@@ -270,6 +270,34 @@ Hexagon.Kernel.FS.VFS.listarArquivos:
 
 ;;************************************************************************************
 
+;; Renomear um arquivo existente no disco
+;;
+;; Entrada:
+;;
+;; ESI - Nome de arquivo da fonte
+;; EDI - Nome de arquivo do destino
+;;
+;; Saída:
+;;
+;; CF definido em caso de erro ou limpo em caso de sucesso
+
+Hexagon.Kernel.FS.VFS.renomearArquivo:
+
+    mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
+
+    cmp ah, Hexagon.VFS.FS.FAT16B
+    je .renomearArquivoFAT16B
+
+    ret
+
+.renomearArquivoFAT16B:
+
+    call Hexagon.Kernel.FS.FAT16.renomearArquivoFAT16B
+
+    ret
+
+;;************************************************************************************
+
 ;; Carregar arquivo na memória
 ;;
 ;; Entrada:

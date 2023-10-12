@@ -100,43 +100,43 @@ Hexagon.Syscall.Syscall.servicosHexagon:
     dd Hexagon.Kernel.FS.VFS.novoArquivo                               ;; 12
     dd Hexagon.Kernel.FS.VFS.salvarArquivo                             ;; 13
     dd Hexagon.Kernel.FS.VFS.deletarArquivo                            ;; 14
-    dd Hexagon.Kernel.FS.VFS.listarArquivos                            ;; 15
-    dd Hexagon.Kernel.FS.VFS.arquivoExiste                             ;; 16
-    dd Hexagon.Kernel.FS.VFS.obterVolume                               ;; 17
+    dd Hexagon.Kernel.FS.VFS.renomearArquivo                           ;; 15
+    dd Hexagon.Kernel.FS.VFS.listarArquivos                            ;; 16
+    dd Hexagon.Kernel.FS.VFS.arquivoExiste                             ;; 17
+    dd Hexagon.Kernel.FS.VFS.obterVolume                               ;; 18
 
 ;; Gerenciamento de usuários
 
-    dd Hexagon.Kernel.Kernel.Proc.travar                               ;; 18
-    dd Hexagon.Kernel.Kernel.Proc.destravar                            ;; 19
-    dd Hexagon.Kernel.Kernel.Usuarios.definirUsuario                   ;; 20
-    dd Hexagon.Kernel.Kernel.Usuarios.obterUsuario                     ;; 21
+    dd Hexagon.Kernel.Kernel.Proc.travar                               ;; 19
+    dd Hexagon.Kernel.Kernel.Proc.destravar                            ;; 20
+    dd Hexagon.Kernel.Kernel.Usuarios.definirUsuario                   ;; 21
+    dd Hexagon.Kernel.Kernel.Usuarios.obterUsuario                     ;; 22
 
 ;; Serviços oferecidos pelo Hexagon
 
-    dd Hexagon.Kernel.Kernel.Versao.retornarVersao                     ;; 22
-    dd Hexagon.Kernel.Lib.Num.obterAleatorio                           ;; 23
-    dd Hexagon.Kernel.Lib.Num.alimentarAleatorios                      ;; 24
-    dd Hexagon.Kernel.Arch.i386.Timer.Timer.causarAtraso               ;; 25
-    dd Hexagon.Syscall.Syscall.intalarInterrupcao                      ;; 26
+    dd Hexagon.Kernel.Kernel.Versao.retornarVersao                     ;; 23
+    dd Hexagon.Kernel.Lib.Num.obterAleatorio                           ;; 24
+    dd Hexagon.Kernel.Lib.Num.alimentarAleatorios                      ;; 25
+    dd Hexagon.Kernel.Arch.i386.Timer.Timer.causarAtraso               ;; 26
+    dd Hexagon.Syscall.Syscall.intalarInterrupcao                      ;; 27
 
 ;; Gerenciamento de energia do Hexagon
 
-    dd Hexagon.Kernel.Arch.i386.APM.Energia.reiniciarPC                ;; 27
-    dd Hexagon.Kernel.Arch.i386.APM.Energia.desligarPC                 ;; 28
+    dd Hexagon.Kernel.Arch.i386.APM.Energia.reiniciarPC                ;; 28
+    dd Hexagon.Kernel.Arch.i386.APM.Energia.desligarPC                 ;; 29
 
 ;; Funções de saída em vídeo e gráficos do Hexagon
 
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.imprimir                 ;; 29
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.limparConsole            ;; 30
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha              ;; 31
-    dd Hexagon.Syscall.Syscall.Nulo                                    ;; 32
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.imprimir                 ;; 30
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.limparConsole            ;; 31
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha              ;; 32
     dd Hexagon.Kernel.Dev.Gen.Console.Console.rolarParaBaixo           ;; 33
     dd Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor         ;; 34
     dd Hexagon.Kernel.Lib.Graficos.colocarPixel                        ;; 35
     dd Hexagon.Kernel.Lib.Graficos.desenharBlocoSyscall                ;; 36
     dd Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere        ;; 37
     dd Hexagon.Kernel.Dev.Gen.Console.Console.definirCorTexto          ;; 38
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.obterCorTexto            ;; 39
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.obterCorTexto            ;; 30
     dd Hexagon.Kernel.Dev.Gen.Console.Console.obterInfoVideo           ;; 40
     dd Hexagon.Kernel.Lib.Graficos.atualizarTela                       ;; 41
     dd Hexagon.Kernel.Dev.Gen.Console.Console.definirResolucao         ;; 42
