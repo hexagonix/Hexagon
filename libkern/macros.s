@@ -154,5 +154,3 @@ __stringdia     equ (__dia/10+'0'),((__dia mod 10)+'0')
 __stringhora    equ (__hora/10+'0'),((__hora mod 10)+'0')
 __stringminuto  equ (__minuto/10+'0'),((__minuto mod 10)+'0')
 __stringsegundo equ (__segundo/10+'0'),((__segundo mod 10)+'0')
-
-;;************************************************************************************

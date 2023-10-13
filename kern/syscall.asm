@@ -338,5 +338,3 @@ Hexagon.Syscall.Syscall.criarNovoProcesso:
     pop dword[Hexagon.Syscall.Controle.eip]
 
     ret
-
-;;************************************************************************************

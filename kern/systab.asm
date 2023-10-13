@@ -199,13 +199,12 @@ Hexagon.Syscall.Syscall.servicosHexagon:
 ;hx.close              = 11
 ;hx.creat              = 13
 ;hx.unlink             = 14
-;hx.indir              = 15
-;hx.syslock            = 18
-;hx.sysunlock          = 19
-;hx.uname              = 22
-;hx.sleep              = 25
-;hx.putc               = 29
+;hx.rename             = 15
+;hx.indir              = 16
+;hx.syslock            = 19
+;hx.sysunlock          = 20
+;hx.uname              = 23
+;hx.sleep              = 26
+;hx.putc               = 30
 ;hx.date               = 67
 ;hx.time               = 68
-
-;;************************************************************************************

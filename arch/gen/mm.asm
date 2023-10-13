@@ -713,7 +713,7 @@ Hexagon.Kernel.Arch.Gen.Mm.liberarMemoria:
 align 32
 
 ;; Dilata o espaço de memória reservado aos processos. AVISO! Todos os dados após o espaço
-;; anteriormente alocado serão perdido!
+;; anteriormente alocado serão perdidos!
 ;;
 ;; Entrada:
 ;;
@@ -725,7 +725,7 @@ align 32
 ;;
 ;; Essa é uma função exclusiva do Kernel!
 
-dilatarEspacoMemoria:
+Hexagon.Kernel.Arch.Gen.Mm.dilatarEspacoMemoria:
 
     mov ebx, eax
     mov ecx, eax

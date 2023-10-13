@@ -1539,5 +1539,3 @@ Hexagon.Kernel.FS.FAT16.iniciarVolumeFAT16B:
     call Hexagon.Kernel.FS.FAT16.obterInfoFAT16B
 
     ret
-
-;;************************************************************************************

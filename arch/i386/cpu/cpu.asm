@@ -291,11 +291,16 @@ use32
 
 align 32
 
+;; Cada entrada da GDT tem 8 bytes, com o limite, a base do seletor (onde o seletor começa na
+;; memória física), os bytes de acesso e as flags
+
 GDT:
 
-    dd 0, 0 ;; Descriptor nulo
+    dd 0, 0 ;; Descriptor nulo - Seletor 0x00
 
-.codigoKernel:
+;; Edereço físico = endereço + base do respectivo seletor
+
+.codigoKernel: ;; Seletor 0x08
 
     dw 0xFFFF    ;; Limite (0:15)
     dw 0x0500    ;; Base (0:15)
@@ -306,7 +311,7 @@ GDT:
 
 ;; Descriptor de dados com base em 500h
 
-.dadosKernel:
+.dadosKernel: ;; Seletor 0x10
 
     dw 0xFFFF    ;; Limite (0:15)
     dw 0x0500    ;; Base (0:15)
@@ -317,7 +322,7 @@ GDT:
 
 ;; Descriptor de dados com base em 0h
 
-.linearKernel:
+.linearKernel: ;; Seletor 0x18
 
     dw 0xFFFF    ;; Limite (0:15)
     dw 0         ;; Base (0:15)
@@ -328,7 +333,7 @@ GDT:
 
 ;; Descriptor de código para modo protegido 16 bits
 
-.codigoMP16:
+.codigoMP16: ;; Seletor 0x20
 
     dw 0xFFFF    ;; Limite (0:15)
     dw 0x0500    ;; Base (0:15)
@@ -339,7 +344,7 @@ GDT:
 
 ;; Descriptor de dados para modo protegido 16 bits
 
-.dadosPM16:
+.dadosPM16: ;; Seletor 0x28
 
     dw 0xFFFF    ;; Limite (0:15)
     dw 0         ;; Base (0:15)
@@ -350,7 +355,7 @@ GDT:
 
 ;; Código do programa
 
-.codigoPrograma:
+.codigoProcessos: ;; Seletor 0x30 -> Seletor usado para a área de código dos processos
 
     dw 0xFFFF    ;; Limite (0:15)
     dw 0         ;; Base (0:15)
@@ -361,7 +366,7 @@ GDT:
 
 ;; Dados do programa
 
-.dadosPrograma:
+.dadosProcessos: ;; Seletor 0x38 -> Seletor para a área de dados dos processos
 
     dw 0xFFFF    ;; Limite (0:15)
     dw 0         ;; Base (0:15)
@@ -428,8 +433,8 @@ align 32
 TSS:
 
     .tssAnterior dd 0
-    .esp0        dd 0x10000 ;; Pilha do Kernel
-    .ss0         dd 0x10    ;; Segmento da pilha do Kernel
+    .esp0        dd 0x10000 ;; Pilha do kernel
+    .ss0         dd 0x10    ;; Segmento da pilha do kernel
     .esp1        dd 0
     .ss1         dd 0
     .esp2        dd 0
@@ -445,7 +450,7 @@ TSS:
     .ebp         dd 0
     .esi         dd 0
     .edi         dd 0
-    .es          dd 0x10 ;; Segmento de dados do Kernel
+    .es          dd 0x10 ;; Segmento de dados do kernel
     .cs          dd 0x08
     .ss          dd 0x10
     .ds          dd 0x10

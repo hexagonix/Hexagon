@@ -196,7 +196,7 @@ Hexagon.Dev.Gen.Disco.Controle Hexagon.Dev.Gen.Disco.Controle
 
 Hexagon.Dev.Gen.Disco:
 
-.codigoOperacao:   db 0
+.codigoOperacao: db 0
 
 ;;************************************************************************************
 
@@ -211,7 +211,6 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.pararDisco:
     call Hexagon.Kernel.Dev.i386.Disco.Disco.reiniciarDisco
 
     ret
-
 
 ;;************************************************************************************
 
@@ -631,13 +630,13 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores:
 ;; PED = Pacote de Endereço de Disco. Do termo em inglês DAP (Disk Address Packet)
 
 .PED:
-.PED.tamanho:       db 16
-.PED.reservado:     db 0
-.PED.totalSetores:  dw 0
-.PED.deslocamento:  dw 0x0000
-.PED.segmento:      dw 0
-.PED.LBA:           dd 0
-                    dd 0
+.PED.tamanho:      db 16
+.PED.reservado:    db 0
+.PED.totalSetores: dw 0
+.PED.deslocamento: dw 0x0000
+.PED.segmento:     dw 0
+.PED.LBA:          dd 0
+                   dd 0
 
 ;;************************************************************************************
 
