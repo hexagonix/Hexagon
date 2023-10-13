@@ -77,14 +77,14 @@ use32
 
 Hexagon.Arch.i386.CMOS:
 
-.seculo     db 0
-.ano        db 0
-.mes        db 0
-.dia        db 0
-.hora       db 0
-.minuto     db 0
-.segundo    db 0
-.diaSemana  db 0
+.seculo    db 0
+.ano       db 0
+.mes       db 0
+.dia       db 0
+.hora      db 0
+.minuto    db 0
+.segundo   db 0
+.diaSemana db 0
 
 ;;************************************************************************************
 

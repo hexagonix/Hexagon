@@ -453,5 +453,3 @@ Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial:
     pop esi
 
     ret
-
-;;************************************************************************************

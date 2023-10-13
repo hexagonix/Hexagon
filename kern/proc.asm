@@ -524,22 +524,22 @@ Hexagon.Kernel.Kernel.Proc.executarProcesso:
     mov edx, eax
     and eax, 0xffff
 
-    mov word[GDT.codigoPrograma+2], ax
-    mov word[GDT.dadosPrograma+2], ax
+    mov word[GDT.codigoProcessos+2], ax
+    mov word[GDT.dadosProcessos+2], ax
 
     mov eax, edx
     shr eax, 16
     and eax, 0xff
 
-    mov byte[GDT.codigoPrograma+4], al
-    mov byte[GDT.dadosPrograma+4], al
+    mov byte[GDT.codigoProcessos+4], al
+    mov byte[GDT.dadosProcessos+4], al
 
     mov eax, edx
     shr eax, 24
     and eax, 0xff
 
-    mov byte[GDT.codigoPrograma+7], al
-    mov byte[GDT.dadosPrograma+7], al
+    mov byte[GDT.codigoProcessos+7], al
+    mov byte[GDT.dadosProcessos+7], al
 
     lgdt[GDTReg] ;; Carregar a GDT contendo a entrada do processo
 
@@ -654,22 +654,22 @@ Hexagon.Kernel.Kernel.Proc.removerProcesso:
     mov edx, eax
     and eax, 0xffff
 
-    mov word[GDT.codigoPrograma+2], ax
-    mov word[GDT.dadosPrograma+2], ax
+    mov word[GDT.codigoProcessos+2], ax
+    mov word[GDT.dadosProcessos+2], ax
 
     mov eax, edx
     shr eax, 16
     and eax, 0xff
 
-    mov byte[GDT.codigoPrograma+4], al
-    mov byte[GDT.dadosPrograma+4], al
+    mov byte[GDT.codigoProcessos+4], al
+    mov byte[GDT.dadosProcessos+4], al
 
     mov eax, edx
     shr eax, 24
     and eax, 0xff
 
-    mov byte[GDT.codigoPrograma+7], al
-    mov byte[GDT.dadosPrograma+7], al
+    mov byte[GDT.codigoProcessos+7], al
+    mov byte[GDT.dadosProcessos+7], al
 
     lgdt[GDTReg]
 

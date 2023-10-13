@@ -79,29 +79,29 @@ codigoDispositivos:
 
 ;; Dispositivos de armazenamento
 
-.hd0:    db 80h
-.hd1:    db 81h
-.hd2:    db 82h
-.hd3:    db 83h
+.hd0: db 80h
+.hd1: db 81h
+.hd2: db 82h
+.hd3: db 83h
 
 ;; Portas seriais
 
-.com1:   dw 3F8h
-.com2:   dw 2F8h
-.com3:   dw 3E8h
-.com4:   dw 2E8h
+.com1: dw 3F8h
+.com2: dw 2F8h
+.com3: dw 3E8h
+.com4: dw 2E8h
 
 ;; Portas paralelas e impressoras
 
-.imp0:   dw 3BCh
-.imp1:   dw 378h
-.imp2:   dw 278h
+.imp0: dw 3BCh
+.imp1: dw 378h
+.imp2: dw 278h
 
 ;; Dispositivos de saída
 
-.vd0:    dw 44h ;; Vídeo
-.vd1:    dw 45h ;; Vídeo
-.vd2:    dw 46h ;; Vídeo
+.vd0: dw 44h ;; Vídeo
+.vd1: dw 45h ;; Vídeo
+.vd2: dw 46h ;; Vídeo
 
 ;; Dispositivos de entrada
 
@@ -114,4 +114,4 @@ codigoDispositivos:
 
 ;; Dispositivo de som
 
-.au0:    dw 10h ;; Áudio
+.au0: dw 10h ;; Áudio

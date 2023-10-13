@@ -292,6 +292,3 @@ Hexagon.Kernel.FS.Dir.obterPontodeMontagem:
     mov eax, [Hexagon.VFS.Controle.tipoSistemaArquivos]
 
     ret
-
-;;************************************************************************************
-

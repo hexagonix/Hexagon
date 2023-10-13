@@ -367,5 +367,4 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
     call Hexagon.Kernel.Arch.Gen.Mm.liberarUsoMemoria ;; Vamos liberar a memória
 
     ret
-
-;;************************************************************************************
+    

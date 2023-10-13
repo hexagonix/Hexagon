@@ -172,14 +172,14 @@ match =SIM, VERBOSE
 
     call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h ;; Chamar interrupção APM
 
-    jc APM_falha_instalacao
+    jc .falhaAoInstalarAPM
 
     mov ax, 5301h ;; Função de interface de conexão em modo real
     mov bx, 0 ;; O ID do dispositivo (APM BIOS)
 
     call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h ;; Chamar interrupção APM
 
-    jc APM_falha_conexao
+    jc .falhaAoConectarAPM
 
     mov ax, 530Eh ;; Função de seleção de versão do Driver
     mov bx, 0 ;; O ID do dispositivo (APM BIOS)
@@ -187,7 +187,7 @@ match =SIM, VERBOSE
                   ;; A funcionalidade está presente após a versão 1.2
     call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h ;; Chamar interrupção APM
 
-    jc APM_falha_selecionar_versao
+    jc .falhaSelecionarVersaoAPM
 
     mov ax, 5307h ;; Função de definir estado
     mov cx, 0003h ;; Estado de desligar
@@ -198,7 +198,7 @@ match =SIM, VERBOSE
 ;; Caso o sistema não desligue de forma apropriada, serão retornados códigos de erro ao
 ;; programa que chamou a função de desligamento.
 
-APM_falha_comando: ;; Chamado caso o comando de desligamento (código 3) não seja executado
+.falhaComandoAPM: ;; Chamado caso o comando de desligamento (código 3) não seja executado
 
 match =SIM, VERBOSE
 {
@@ -212,9 +212,9 @@ match =SIM, VERBOSE
 
     mov ax, 3
 
-    jmp APM_desligamento_ok
+    jmp .desligamentoFalhouAPM
 
-APM_falha_instalacao: ;; Chamado caso ocorra falha na instalação
+.falhaAoInstalarAPM: ;; Chamado caso ocorra falha na instalação
 
 match =SIM, VERBOSE
 {
@@ -228,9 +228,9 @@ match =SIM, VERBOSE
 
     mov ax, 0
 
-    jmp APM_desligamento_ok
+    jmp .desligamentoFalhouAPM
 
-APM_falha_conexao: ;; Chamado caso ocorra falha na conexão de interface de Modo Real
+.falhaAoConectarAPM: ;; Chamado caso ocorra falha na conexão de interface de Modo Real
 
 match =SIM, VERBOSE
 {
@@ -244,13 +244,13 @@ match =SIM, VERBOSE
 
     mov ax, 1
 
-    jmp APM_desligamento_ok
+    jmp .desligamentoFalhouAPM
 
-APM_falha_selecionar_versao: ;; Chamado quando a versão APM é inferior a 1.2
+.falhaSelecionarVersaoAPM: ;; Chamado quando a versão APM é inferior a 1.2
 
     mov ax, 2
 
-APM_desligamento_ok: ;; Retorna a função que a chamou
+.desligamentoFalhouAPM: ;; Retorna a função que a chamou
 
 match =SIM, VERBOSE
 {
