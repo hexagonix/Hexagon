@@ -291,8 +291,8 @@ use32
 
 align 32
 
-;; Cada entrada da GDT tem 8 bytes, com o limite, a base do seletor (onde o seletor começa na 
-;; memória física), os bytes de acesso e as flags 
+;; Cada entrada da GDT tem 8 bytes, com o limite, a base do seletor (onde o seletor começa na
+;; memória física), os bytes de acesso e as flags
 
 GDT:
 
@@ -364,7 +364,7 @@ GDT:
     db 11001111b ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
     db 0         ;; Base (24:31)
 
-;; Dados do programa 
+;; Dados do programa
 
 .dadosProcessos: ;; Seletor 0x38 -> Seletor para a área de dados dos processos
 

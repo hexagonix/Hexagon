@@ -471,7 +471,7 @@ Hexagon.Kernel.FS.VFS.definirVolumeBoot:
 ;; Irá armazenar o volume a ser utilizado pelo sistema (pode ser alterado)
 
     mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveBoot]
-    mov byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual], dl 
+    mov byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual], dl
 
     logHexagon Hexagon.Verbose.definirVolume, Hexagon.Dmesg.Prioridades.p5
 
