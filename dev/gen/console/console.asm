@@ -72,7 +72,7 @@
 ;;************************************************************************************
 
 ;; Informações úteis para utilização do modo gráfico
-;; Implementação de modo gráfico
+;; Implementação de modo gráfico do Hexagon
 
 ;; A implementação de modo gráfico se baseia nas especificações VESA 3.0.
 
