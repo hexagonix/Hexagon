@@ -72,10 +72,9 @@
 ;;************************************************************************************
 
 ;; Informações úteis para utilização do modo gráfico
-;; Implementação de modo gráfico do Sistema Operacional Hexagon
+;; Implementação de modo gráfico
 
-;; A implementação de modo gráfico do Sistema Operacional Hexagon se baseia nas
-;; especificações VESA 3.0.
+;; A implementação de modo gráfico se baseia nas especificações VESA 3.0.
 
 ;; Visualizar especificações VESA 3.0 para mais informações
 ;; VBE = VESA BIOS Extensions
@@ -731,7 +730,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.rolarParaBaixo:
 
 ;;************************************************************************************
 
-;; Central de solicitações de saída para dispositivos do Sistema
+;; Central de solicitações de saída para dispositivos do sistema
 ;;
 ;; Entrada:
 ;;

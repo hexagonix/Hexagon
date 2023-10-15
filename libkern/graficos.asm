@@ -240,7 +240,7 @@ Hexagon.Kernel.Lib.Graficos.colocarCaractereBitmap:
 
 ;;************************************************************************************
 
-;; Usar buffer para armazenamento de mensagens e relatórios do Kernel
+;; Usar buffer para armazenamento de mensagens e relatórios do kernel
 
 Hexagon.Kernel.Lib.Graficos.usarBufferKernel:
 

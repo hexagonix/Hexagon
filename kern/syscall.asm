@@ -102,7 +102,7 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
 
     mov ebp, esp
 
-    push 0x10 ;; Segmento do Kernel
+    push 0x10 ;; Segmento do kernel
     pop ds
 
     mov [Hexagon.Syscall.Controle.es], es
@@ -211,7 +211,7 @@ Hexagon.Syscall.Syscall.manipuladorHXUnix:
 
     mov ebp, esp
 
-    push 0x10 ;; Segmento do Kernel
+    push 0x10 ;; Segmento do kernel
     pop ds
 
     mov [Hexagon.Syscall.Controle.es], es
@@ -268,7 +268,7 @@ Hexagon.Syscall.Syscall.manipuladorHXUnix:
 
     sti
 
-    mov byte[Hexagon.Syscall.Controle.chamadaSistema], 00h ;; Desmarcar a solicitação de chamada de Sistema
+    mov byte[Hexagon.Syscall.Controle.chamadaSistema], 00h ;; Desmarcar a solicitação de chamada de sistema
 
     push eax
 

@@ -104,54 +104,54 @@ use32
 ;; #4       Subversão mínima do Hexagon        1 byte                 0 para qualquer ou número correspondente
 ;; #5       Ponto de entrada (offset)          1 dword                Offset do ponto de entrada dentro da imagem
 ;; #6       Tipo da imagem                     1 byte                 Imagem executável estática = 01h
-;; #7       Campo reservado                    1 dword                Reservado para uso do Sistema
-;; #8       Campo reservado                    1 byte                 Reservado para uso do Sistema
-;; #9       Campo reservado                    1 byte                 Reservado para uso do Sistema
-;; #10      Campo reservado                    1 byte                 Reservado para uso do Sistema
-;; #11      Campo reservado                    1 dword                Reservado para uso do Sistema
-;; #12      Campo reservado                    1 dword                Reservado para uso do Sistema
-;; #13      Campo reservado                    1 dword                Reservado para uso do Sistema
-;; #14      Campo reservado                    1 dword                Reservado para uso do Sistema
-;; #15      Campo reservado                    1 word                 Reservado para uso do Sistema
-;; #16      Campo reservado                    1 word                 Reservado para uso do Sistema
-;; #17      Campo reservado                    1 word                 Reservado para uso do Sistema
+;; #7       Campo reservado                    1 dword                Reservado para uso do sistema
+;; #8       Campo reservado                    1 byte                 Reservado para uso do sistema
+;; #9       Campo reservado                    1 byte                 Reservado para uso do sistema
+;; #10      Campo reservado                    1 byte                 Reservado para uso do sistema
+;; #11      Campo reservado                    1 dword                Reservado para uso do sistema
+;; #12      Campo reservado                    1 dword                Reservado para uso do sistema
+;; #13      Campo reservado                    1 dword                Reservado para uso do sistema
+;; #14      Campo reservado                    1 dword                Reservado para uso do sistema
+;; #15      Campo reservado                    1 word                 Reservado para uso do sistema
+;; #16      Campo reservado                    1 word                 Reservado para uso do sistema
+;; #17      Campo reservado                    1 word                 Reservado para uso do sistema
 ;;
 ;; Para a especificação HAPP2 (HAPP 2.1), novos campos serão já reservados e já podem ser implementados
 ;; nas imagens de aplicativos. Os campos aumentaram para serem utilizados em futuras implementações
 ;; multitarefa, que exigem o armazenamento do conteúdo dos registradores para salvar o contexto de
 ;; execução ao trocar entre processos. O número de campos é exagerado mas garante a compatibilidade
-;; para necessidades futuras do Sistema. As definições de cada campo já se encontram na especificação
+;; para necessidades futuras do sistema. As definições de cada campo já se encontram na especificação
 ;; abaixo. Existem dois campos extras, com um byte e com uma qword, para armazenamento de dados
 ;; pertinentes ao processo, juntamente aos campos de #7 a #17, que estão reservados mas já serão
 ;; distribuídos na especificação HAPP2 (HAPP 2.2).
 ;;
 ;; Número | Parâmetro                        | Tamanho do parâmetro | Conteúdo (fixo ou variável)
 ;;
-;; #18      Registrador EAX                    1 dword                Reservado para uso do Sistema
-;; #19      Registrador EBX                    1 dword                Reservado para uso do Sistema
-;; #20      Registrador ECX                    1 dword                Reservado para uso do Sistema
-;; #21      Registrador EDX                    1 dword                Reservado para uso do Sistema
-;; #22      Registrador EDI                    1 dword                Reservado para uso do Sistema
-;; #23      Registrador ESI                    1 dword                Reservado para uso do Sistema
-;; #24      Registrador CS                     1 dword                Reservado para uso do Sistema
-;; #25      Registrador DS                     1 dword                Reservado para uso do Sistema
-;; #26      Registrador ES                     1 dword                Reservado para uso do Sistema
-;; #27      Registrador FS                     1 dword                Reservado para uso do Sistema
-;; #28      Registrador GS                     1 dword                Reservado para uso do Sistema
-;; #29      Registrador EFLAGS                 1 dword                Reservado para uso do Sistema
-;; #30      Registrador EIP                    1 dword                Reservado para uso do Sistema
-;; #31      Registrador EBP                    1 dword                Reservado para uso do Sistema
-;; #32      Registrador ESP                    1 dword                Reservado para uso do Sistema
-;; #33      Registrador SS                     1 dword                Reservado para uso do Sistema
-;; #34      Número de arquivos abertos         1 dword                Reservado para uso do Sistema
-;; #35      Identificador do processo (PID)    1 dword                Reservado para uso do Sistema
-;; #36      Campo reservado                    1 word                 Reservado para uso do Sistema
-;; #37      Campo reservado                    1 qword                Reservado para uso do Sistema
+;; #18      Registrador EAX                    1 dword                Reservado para uso do sistema
+;; #19      Registrador EBX                    1 dword                Reservado para uso do sistema
+;; #20      Registrador ECX                    1 dword                Reservado para uso do sistema
+;; #21      Registrador EDX                    1 dword                Reservado para uso do sistema
+;; #22      Registrador EDI                    1 dword                Reservado para uso do sistema
+;; #23      Registrador ESI                    1 dword                Reservado para uso do sistema
+;; #24      Registrador CS                     1 dword                Reservado para uso do sistema
+;; #25      Registrador DS                     1 dword                Reservado para uso do sistema
+;; #26      Registrador ES                     1 dword                Reservado para uso do sistema
+;; #27      Registrador FS                     1 dword                Reservado para uso do sistema
+;; #28      Registrador GS                     1 dword                Reservado para uso do sistema
+;; #29      Registrador EFLAGS                 1 dword                Reservado para uso do sistema
+;; #30      Registrador EIP                    1 dword                Reservado para uso do sistema
+;; #31      Registrador EBP                    1 dword                Reservado para uso do sistema
+;; #32      Registrador ESP                    1 dword                Reservado para uso do sistema
+;; #33      Registrador SS                     1 dword                Reservado para uso do sistema
+;; #34      Número de arquivos abertos         1 dword                Reservado para uso do sistema
+;; #35      Identificador do processo (PID)    1 dword                Reservado para uso do sistema
+;; #36      Campo reservado                    1 word                 Reservado para uso do sistema
+;; #37      Campo reservado                    1 qword                Reservado para uso do sistema
 ;;
 ;; O processo tem acesso a estes campos, e haverá uma cópia dos campos #18 a #34 em área de memória
 ;; reservada do kernel, uma vez que o processo poderia intencionalmente alterar valores e dados
 ;; de segmento para forçar acesso a áreas de memória que não foram atribuídas a ele. Estes campos
-;; serão preenchidos pelo Sistema e copiados (a estrutura) para o heap do kernel. O processo poderá
+;; serão preenchidos pelo sistema e copiados (a estrutura) para o heap do kernel. O processo poderá
 ;; ler e editar mas a cópia já foi trasnferida para o heap do kernel, e de lá serão lidos os dados
 ;; para reestabelecer o contexto do processo.
 ;;
@@ -162,11 +162,11 @@ use32
 ;; e na estrutura no heap do kernel (#1 a #20).
 ;;
 ;; O processo conseguirá obter dados do contexto e da localização em memória, mas não conseguirá
-;; alterar os valores de forma a interferir no funcionamento do Sistema. Isso pode ser útil para
+;; alterar os valores de forma a interferir no funcionamento do sistema. Isso pode ser útil para
 ;; manipulação de dados de memória intra processo, servindo apenas de referência para o processo,
 ;; mas não para qualquer outro fim que burle a segurança da segmentação da GDT.
 ;;
-;; Os campos reservados são marcados para uso do Sistema. Eles poderão ser utilizados pelo Sistema
+;; Os campos reservados são marcados para uso do sistema. Eles poderão ser utilizados pelo sistema
 ;; para reservados dados em troca de contexto futuramente, por exemplo, durante a multitarefa.
 
 ;; Aqui o alinhamento deve ser de 4
@@ -213,8 +213,8 @@ Hexagon.Imagem.Executavel.HAPP Hexagon.Gerenciamento.Imagem.HAPP
 ;;************************************************************************************
 
 ;; Essa função realizada a análise da imagem executável do aplicativo, verificando se
-;; ela apresenta o cabeçalho válido, se a arquitetura é a suportada pelo Sistema e se
-;; os números de versionalização do Kernel são os necessários para a execução da imagem.
+;; ela apresenta o cabeçalho válido, se a arquitetura é a suportada pelo sistema e se
+;; os números de versionalização do kernel são os necessários para a execução da imagem.
 ;; Em caso negativo, a imagem será marcada como inválida e não será executada, retornando
 ;; ao processo que solicitou o carregamento o código de erro 3.
 
@@ -278,7 +278,7 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
     jne .cabecalhoInvalido
 
 ;; Se chegamos até aqui, temos o cabeçalho no arquivo, devemos checar o restante dos campos,
-;; como as versões mínimas do Kernel necessárias para a execução, bem como a arquitetura
+;; como as versões mínimas do kernel necessárias para a execução, bem como a arquitetura
 
 ;; Vamos checar se a arquitetura da imagem é a mesma do Hexagon
 
@@ -288,18 +288,18 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
     mov ah, byte[edi+4]
     mov byte[Hexagon.Imagem.Executavel.HAPP.arquiteturaImagem], ah
 
-;; Pronto, agora vamos chegar as versões do Kernel necessárias como dependências da imagem
+;; Pronto, agora vamos chegar as versões do kernel necessárias como dependências da imagem
 
-    cmp byte[edi+5], Hexagon.Versao.numeroVersao ;; Versão declarada do Kernel
+    cmp byte[edi+5], Hexagon.Versao.numeroVersao ;; Versão declarada do kernel
     jg .cabecalhoInvalido ;; A imagem requer uma versão do Hexagon superior a essa
 
-    cmp byte[edi+5], Hexagon.Versao.numeroVersao ;; Versão declarada do Kernel
+    cmp byte[edi+5], Hexagon.Versao.numeroVersao ;; Versão declarada do kernel
     jl .cabecalhoValido ;; A imagem requer uma versão do Hexagon superior a essa
 
     mov ah, byte[edi+5]
     mov byte[Hexagon.Imagem.Executavel.HAPP.versaoMinima], ah
 
-    cmp byte[edi+6], Hexagon.Versao.numeroSubversao ;; Subversão declarada do Kernel
+    cmp byte[edi+6], Hexagon.Versao.numeroSubversao ;; Subversão declarada do kernel
     jg .cabecalhoInvalido ;; A imagem requer uma versão do Hexagon superior a essa
 
 .cabecalhoValido:

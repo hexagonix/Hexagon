@@ -105,8 +105,8 @@ struc Hexagon.Arch.Gen.Memoria.Alocador tamanhoEspacoProcessos
 ;; o carregamentos de executáveis na memória. Essas informações estão disponíveis no
 ;; ato de se criar o objeto instanciado e pode ser alterado. A primeira instância determina
 ;; onde começa o espaço de memória que pode ser utilizado pelos processos, após o espaço
-;; reservado ao Kernel. Já a segunda, determina qual o tamanho de memória a ser alocada para
-;; os processos. Então, essa área é alocada e é gerenciada pelo Kernel.
+;; reservado ao kernel. Já a segunda, determina qual o tamanho de memória a ser alocada para
+;; os processos. Então, essa área é alocada e é gerenciada pelo kernel.
 
 Hexagon.Memoria          Hexagon.Arch.Gen.Memoria Hexagon.Arch.Gen.Memoria.memoriaReservadaHexagon
 Hexagon.Memoria.Alocador Hexagon.Arch.Gen.Memoria.Alocador Hexagon.Arch.Gen.Memoria.memoriaReservadaHexagon
@@ -202,7 +202,7 @@ Hexagon.Kernel.Arch.Gen.Mm.liberarUsoMemoria:
 Hexagon.Kernel.Arch.Gen.Mm.iniciarMemoria:
 
 ;; Primeiramente, o endereço inicial para a alocação de processos e dados se dará após os 16 Mb
-;; reservados para o Kernel e estruturas dele
+;; reservados para o kernel e estruturas dele
 
     mov ebx, Hexagon.Memoria.enderecoInicial ;; Após os 16 MB iniciais reservados
 
@@ -723,7 +723,7 @@ align 32
 ;;
 ;; EAX - 0 se erro
 ;;
-;; Essa é uma função exclusiva do Kernel!
+;; Essa é uma função exclusiva do kernel!
 
 Hexagon.Kernel.Arch.Gen.Mm.dilatarEspacoMemoria:
 

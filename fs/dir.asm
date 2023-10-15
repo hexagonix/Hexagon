@@ -263,7 +263,7 @@ Hexagon.Kernel.FS.Dir.definirPontodeMontagem:
 ;;************************************************************************************
 
 ;; Obtêm o ponto de montagem atual (será expandido quando múltiplos pontos forem
-;; suportados pelo Kernel)
+;; suportados pelo kernel)
 ;;
 ;; Saída:
 ;;

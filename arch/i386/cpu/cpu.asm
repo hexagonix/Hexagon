@@ -402,7 +402,7 @@ GDTReg:
 ;;************************************************************************************
 
 ;; Primeiramente todas as interrupções serão redirecionadas para naoManipulado durante a inicialização
-;; do Sistema. Após, as interrupções do Sistema serão instaladas, sobrescrevendo naoManipulado.
+;; do Sistema. Após, as interrupções de sistema serão instaladas, sobrescrevendo naoManipulado.
 
 align 32
 
