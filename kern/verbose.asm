@@ -72,7 +72,7 @@
 ;;************************************************************************************
 
 ;; As mensagens só serão adicionadas ao Hexagon em caso de ativação da verbose em
-;; tempo de montagem. Se o símbolo não for definido, o Kernel não terá suporte a
+;; tempo de montagem. Se o símbolo não for definido, o kernel não terá suporte a
 ;; verbose direta, mas continuará com a função para o mecanismo de mensagem.
 
 ;;************************************************************************************

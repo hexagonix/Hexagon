@@ -241,7 +241,7 @@ Hexagon.Kernel.Kernel.Proc.matarProcesso:
 
 ;; Primeiro deve-se checar se a função de terminar um processo em primeiro plano com o uso
 ;; de combinação de teclas ou a tecla especial "Matar processo" (F1) está habilitada
-;; por parte do Sistema. Isso é uma medida de segurança que visa prevenir o fechamento de
+;; por parte do sistema. Isso é uma medida de segurança que visa prevenir o fechamento de
 ;; processos vitais como o gerenciador de login, por exemplo.
 
     cmp dword[Hexagon.Processos.processoBloqueado], 1 ;; Caso a função esteja desabilitada, a ocorrência será ignorada
@@ -619,8 +619,8 @@ naoModoGrafico:
 
 ;;************************************************************************************
 
-;; Remove as credenciais e permissões do processo da pilha de execução do Sistema e da
-;; GDT, transferindo o controle novamente ao Kernel
+;; Remove as credenciais e permissões do processo da pilha de execução do sistema e da
+;; GDT, transferindo o controle novamente ao kernel
 
 Hexagon.Kernel.Kernel.Proc.removerProcesso:
 

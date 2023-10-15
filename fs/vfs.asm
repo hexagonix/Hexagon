@@ -364,13 +364,13 @@ Hexagon.Kernel.FS.VFS.montarVolume:
 
     call Hexagon.Kernel.Dev.Dev.paraDispositivo ;; Converter para nome de dispositivo
 
-;; Habilitar os privilégios do Kernel para solicitação privilegiada
+;; Habilitar os privilégios do kernel para solicitação privilegiada
 
     mov dword[ordemKernel], ordemKernelExecutar
 
     call Hexagon.Kernel.Dev.Dev.abrir ;; Abrir o dispositivo para leitura/escrita com privilégios
 
-;; Desabilitar os privilégios do Kernel, uma vez que já não são necessários
+;; Desabilitar os privilégios do kernel, uma vez que já não são necessários
 
     mov dword[ordemKernel], ordemKernelDesativada
 

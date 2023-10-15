@@ -75,7 +75,7 @@
 ;;
 ;; Daqui em diante, o ambiente de operação é o modo protegido
 ;;
-;; Componente executivo do Kernel
+;; Componente executivo do kernel
 
 use32
 
@@ -87,7 +87,7 @@ include "libkern/macros.s"                 ;; Macros
 
 ;;************************************************************************************
 ;;
-;; Arquivos que compõem o Kernel Hexagon
+;; Arquivos que compõem o Hexagon
 ;;
 ;;************************************************************************************
 
@@ -104,7 +104,7 @@ include "kern/servicos.asm"           ;; Rotinas de interrupção e manipuladore
 
 ;; Usuários e outras utilidades
 
-include "kern/dmesg.asm"              ;; Funções para manipulação de mensagens do Kernel
+include "kern/dmesg.asm"              ;; Funções para manipulação de mensagens do kernel
 include "kern/panico.asm"             ;; Funções para exibição e identificação de erros do Hexagon
 include "kern/usuarios.asm"           ;; Funções de gerenciamento de permissões e usuários
 
@@ -144,11 +144,11 @@ include "libkern/num.asm"             ;; Funções de geração e alimentação 
 include "libkern/relogio.asm"         ;; Interface de relógio em tempo real
 
 ;; Aqui temos um stub que previne a execução da imagem do Hexagon diretamente pelo usuário, o que poderia
-;; causar problemas visto a natureza da imagem (ser um Kernel, não um processo comum)
+;; causar problemas visto a natureza da imagem (ser um kernel, não um processo comum)
 
 include "libkern/stubHAPP.asm"        ;; Stub para prevenir execução acidental da imagem do Hexagon
 
-;; Fonte padrão do Sistema
+;; Fonte padrão do sistema
 
 include "libkern/fonte.asm"           ;; Fontes e serviços de texto para modo gráfico do Hexagon
 

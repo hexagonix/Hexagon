@@ -111,7 +111,7 @@ cabecalhoHexagon:
 .reservado9:      dw 0      ;; Reservado (Word)
 .reservado10:     dw 0      ;; Reservado (Word)
 
-;; Primeiramente, os segmentos do Kernel em modo real serão definidos
+;; Primeiramente, os segmentos do kernel em modo real serão definidos
 
     mov ax, 50h
     mov ds, ax

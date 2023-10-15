@@ -137,7 +137,7 @@ db "vd0", 0 ;; Dispositivo de saída padrão
 .vd1:
 db "vd1", 0 ;; Dispositivo de saída secundário em memória (Buffer)
 .vd2:
-db "vd2", 0 ;; Despejo de dados do Kernel
+db "vd2", 0 ;; Despejo de dados do kernel
 
 .au0:
 db "au0", 0 ;; Alto-falante interno do computador
@@ -513,7 +513,7 @@ Hexagon.Kernel.Dev.Dev.abrir:
 
     jmp .retorno
 
-.vd2: ;; Despejo de dados do Kernel
+.vd2: ;; Despejo de dados do kernel
 
     mov ebx, 1h
 
@@ -562,9 +562,9 @@ Hexagon.Kernel.Dev.Dev.abrir:
 ;;
 ;; Saída:
 ;;
-;; AH - Número do dispositivo para uso pelo Kernel
-;; BX - Cópia de AH em um registrador 16 Bits
-;; ECX - Cópia de AH em um registrador 32 Bits
+;; AH - Número do dispositivo para uso pelo kernel
+;; BX - Cópia de AH em um registrador 16 bits
+;; ECX - Cópia de AH em um registrador 32 bits
 ;; DL - Classe do dispositivo
 
 Hexagon.Kernel.Dev.Dev.converterDispositivo:

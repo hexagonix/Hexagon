@@ -91,14 +91,14 @@ db "] ", 0
 
 Hexagon.Dmesg.Prioridades:
 
-;; Lista de prioridades do Kernel:
+;; Lista de prioridades do kernel:
 ;;
 ;; 0 - Interromper a execução do processo atual e exibir uma mensagem (a ser implementado).
 ;; 1 - Não interromper o processamento e exibir a mensagem apenas, interrompendo a execução de
 ;;     qualquer processo (a ser implementado).
 ;; 2 - Exibir a mensagem apenas de algum utilitário realizar uma chamada de solicitação
 ;;     (a ser implementado).
-;; 3 - Mensagem relevante apenas ao Kernel (a ser implementado).
+;; 3 - Mensagem relevante apenas ao kernel (a ser implementado).
 ;; 4 - Enviar a mensagem apenas via serial, para fins de debug (verbose).
 ;; 5 - Enviar a mensagem na saída padrão e por via serial.
 
@@ -129,7 +129,7 @@ Hexagon.Kernel.Kernel.Dmesg.iniciarRelatorio:
 
 ;;************************************************************************************
 
-;; Esta função permite adicionar uma mensagem no relatório do Kernel
+;; Esta função permite adicionar uma mensagem no relatório do kernel
 
 Hexagon.Kernel.Kernel.Dmesg.adicionarMensagem:
 

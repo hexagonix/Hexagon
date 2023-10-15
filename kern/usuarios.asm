@@ -217,18 +217,18 @@ Hexagon.Kernel.Kernel.Usuarios.verificarPermissoes:
 
 ;;************************************************************************************
 
-;; O sistema de permissões do Sistema trabalha com IDs de usuário. Cada tipo de usuário
+;; O sistema de permissões do Hexagon trabalha com IDs de usuário. Cada tipo de usuário
 ;; apresenta um ID específico que será utilizado para verificar a validade de operações
 ;; solicitadas pelo usuário logado. Os IDs válidos são os designados à seguir:
 ;;
 ;; Nome de usuário | ID de usuário |               Permissões               | Tipo de conta
 ;;
-;; Hexagon           000                  Total (Hardware, Software)         Kernel
+;; Hexagon           000                  Total (Hardware, Software)          Kernel
 ;; root              777             Leitura, escrita e execução (total)      Raiz
 ;; supervisor        699             Leitura, escrita e execução (debug)      Raiz
 ;; Outros nomes      555             Leitura, escrita e execução (parcial)    Comum
 ;;
-;; Os nomes não são levados em conta (exceto root, para serviços de login). O que o Sistema
+;; Os nomes não são levados em conta (exceto root, para serviços de login). O que o Hexagon
 ;; validará são os IDs, onde o de usuário comum pode variar, mas sempre iniciando no número
 ;; 555 e terminando em 699, no máximo.
 
@@ -238,22 +238,22 @@ nomeUsuario: times 32 db 0 ;; Armazenará o nome do usuário atualmente logado
 
 loginFeito:           db 0 ;; Armazena se o login foi ou não realizado
 
-;; O Sistema também poderá alter o estado de permissão de operações solicitadas pelo usuário
+;; O Hexagon também poderá alter o estado de permissão de operações solicitadas pelo usuário
 ;; ou processos. Essas permissões serão armazenadas nas variáveis abaixo.
 
 leitura:  db 0
 escrita:  db 0
 execucao: db 0
 
-;; Para que o Kernel possa burlar medidas de segurança que distinguam usuários ou valores de entrada
+;; Para que o kernel possa burlar medidas de segurança que distinguam usuários ou valores de entrada
 ;; e consiga executar qualquer função nele alocada, será utilizada uma variável que indica se a ordem
-;; de execução da função partiu do próprio Kernel ou não. Apenas as funções que fazem distinção de
+;; de execução da função partiu do próprio kernel ou não. Apenas as funções que fazem distinção de
 ;; privilégios e também de valores de entrada devem ler/gravar nessa variável.
 ;; Os valores utilizados também são padronizados, como abaixo.
 ;;
 ;; Nome objeto                          | Código |               Tipo de acesso               |
 ;;
-;; ordemKernelDesativada                    00h      O Kernel não está solicitando operações
+;; ordemKernelDesativada                    00h      O kernel não está solicitando operações
 ;;                                                   que demandem acesso restrito ou análise
 ;; ordemKernelExecutar                      01h           Executar a função solicitada
 ;; ordemKernelNegar                         02h       Impedir a execução de qualquer função
