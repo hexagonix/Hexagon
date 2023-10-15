@@ -71,7 +71,7 @@
 ;;
 ;;************************************************************************************
 
-;; Ponto de entrada do Kernel Hexagon
+;; Ponto de entrada do kernel Hexagon
 
 ;; Neste momento, o ambiente de operação é o modo real
 
@@ -166,4 +166,4 @@ use32
 
     jmp Hexagon.init ;; Vamos agora para o ponto de entrada do Hexagon em modo protegido
 
-include "kern.asm" ;; Incluir o restante do Kernel, em ambiente de modo protegido
+include "kern.asm" ;; Incluir o restante do kernel, em ambiente de modo protegido
