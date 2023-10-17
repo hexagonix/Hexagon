@@ -93,10 +93,11 @@ include "libkern/macros.s"                 ;; Macros
 
 ;; Versão do Hexagon
 
-include "kern/versao.asm"             ;; Contém informações de versão do Hexagon
+include "kern/versao.asm"             ;; Contêm informações de versão do Hexagon
 
 ;; Serviços do Hexagon
 
+include "kern/uname.asm"              ;; Versão do Hexagon
 include "kern/syscall.asm"            ;; Manipulador de interrupção do Hexagon
 include "kern/systab.asm"             ;; Tabela com as chamadas de sistema
 include "libkern/graficos.asm"        ;; Funções para gráficos do Hexagon
@@ -108,7 +109,7 @@ include "kern/dmesg.asm"              ;; Funções para manipulação de mensage
 include "kern/panico.asm"             ;; Funções para exibição e identificação de erros do Hexagon
 include "kern/usuarios.asm"           ;; Funções de gerenciamento de permissões e usuários
 
-;; Gerenciamento de Dispositivos do Hexagon
+;; Gerenciamento de dispositivos do Hexagon
 
 include "arch/gen/mm.asm"             ;; Funções para gerenciamento de memória do Hexagon
 include "arch/i386/mm/mm.asm"         ;; Funções para gerenciamento de memória dependentes de arquitetura

@@ -114,7 +114,7 @@ Hexagon.Syscall.Syscall.servicosHexagon:
 
 ;; Serviços oferecidos pelo Hexagon
 
-    dd Hexagon.Kernel.Kernel.Versao.retornarVersao                     ;; 23
+    dd Hexagon.Kernel.Kernel.Uname.retornarVersao                      ;; 23
     dd Hexagon.Kernel.Lib.Num.obterAleatorio                           ;; 24
     dd Hexagon.Kernel.Lib.Num.alimentarAleatorios                      ;; 25
     dd Hexagon.Kernel.Arch.i386.Timer.Timer.causarAtraso               ;; 26

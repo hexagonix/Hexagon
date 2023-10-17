@@ -73,34 +73,24 @@
 
 use32
 
-;; Arquitetura do Hexagon
+;; Retorna para os aplicativos solicitantes os número de versão e subversão do Hexagon
 ;;
-;; A arquitetura pode ser:
+;; Saída:
 ;;
-;; 1 - i386
-;; 2 - x86_x64
-;; 3... Outras arquiteturas (futuras implementações?)
+;; EAX - Número da versão do Hexagon
+;; EBX - Número da subversão do Hexagon
+;; ECX - Revisão do kernel
+;; EDX - Arquitetura
+;; ESI - String de nome do kernel
+;; EDI - Build do kernel
 
-Hexagon.Arquitetura.suporte = 1 ;; Arquitetura desta imagem
+Hexagon.Kernel.Kernel.Uname.retornarVersao:
 
-Hexagon.Versao.definicao equ "1.5.2-beta"
+    mov eax, Hexagon.Versao.numeroVersao
+    mov ebx, Hexagon.Versao.numeroSubversao
+    mov ecx, Hexagon.Versao.caractereRevisao
+    mov edx, Hexagon.Arquitetura.suporte
+    mov esi, Hexagon.Versao.nomeKernel
+    mov edi, Hexagon.Versao.build
 
-Hexagon.Versao:
-
-.numeroVersao     = 1 ;; Número principal de versão do Hexagon
-.numeroSubversao  = 5 ;; Número de subversão (secundária) do Hexagon
-.caractereRevisao = 2 ;; Adicionar caractere de revisão, caso necessário, entre aspas (funciona como caractere)
-
-.nomeKernel:
-db "Hexagon", 0 ;; Nome fornecido ao espaço de usuário
-.build:
-db __stringdia, "/", __stringmes, "/", __stringano, " "
-db __stringhora, ":", __stringminuto, ":", __stringsegundo, " GMT", 0
-
-Hexagon.Info:
-
-.sobreHexagon:
-db 10, 10
-db "Hexagon kernel version ", Hexagon.Versao.definicao, 10
-db "Copyright (C) 2015-", __stringano, " Felipe Miguel Nery Lunkes", 10
-db "All rights reserved.", 0
+    ret
