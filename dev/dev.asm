@@ -140,7 +140,7 @@ db "vd1", 0 ;; Dispositivo de saída secundário em memória (Buffer)
 db "vd2", 0 ;; Despejo de dados do kernel
 
 .au0:
-db "au0", 0 ;; Alto-falante interno do computador
+db "au0", 0 ;; Alto-falante interno
 
 ;; Dispositivos de entrada
 
@@ -175,7 +175,7 @@ Hexagon.Kernel.Dev.Dev.fechar:
 
     mov bx, word[Hexagon.Dev.Controle.idDispositivo]
 
-    cmp bx, word[codigoDispositivos.au0]
+    cmp bx, word[Hexagon.Dev.codigoDispositivos.au0]
     je .au0
 
     pop ebx
@@ -211,11 +211,11 @@ Hexagon.Kernel.Dev.Dev.fechar:
 
 Hexagon.Kernel.Dev.Dev.escrever:
 
-    push eax
-    push esi
-
     cmp byte[Hexagon.Dev.Controle.aberto], 0
     je .dispositivoNaoAberto
+
+    push eax
+    push esi
 
     mov dl, byte[Hexagon.Dev.Controle.classeDispositivo]
 
@@ -265,7 +265,7 @@ Hexagon.Kernel.Dev.Dev.escrever:
     pop esi
     pop eax
 
-    call Hexagon.Kernel.Dev.Gen.Impressora.Impressora.enviarImpressora
+    call Hexagon.Kernel.Dev.Gen.LPT.LPT.enviarPortaParalela
 
     jc .erro
 
@@ -280,7 +280,7 @@ Hexagon.Kernel.Dev.Dev.escrever:
 
     mov bx, word[Hexagon.Dev.Controle.idDispositivo]
 
-    cmp word[Hexagon.Dev.Controle.idDispositivo], bx
+    cmp word[Hexagon.Dev.codigoDispositivos.au0], bx
     je .au0
 
     call Hexagon.Kernel.Dev.Dev.fechar
@@ -471,7 +471,7 @@ Hexagon.Kernel.Dev.Dev.abrir:
 
     mov word[portaParalelaAtual], bx
 
-    call Hexagon.Kernel.Dev.Gen.Impressora.Impressora.iniciarImpressora
+    call Hexagon.Kernel.Dev.Gen.LPT.LPT.iniciarPortaParalela
 
     jc .erroAbertura
 
@@ -487,16 +487,16 @@ Hexagon.Kernel.Dev.Dev.abrir:
 
     mov eax, dword[Hexagon.Dev.Controle.classeDispositivo]
 
-    cmp bx, [codigoDispositivos.vd0]
+    cmp bx, [Hexagon.Dev.codigoDispositivos.vd0]
     je .vd0
 
-    cmp bx, [codigoDispositivos.vd1]
+    cmp bx, [Hexagon.Dev.codigoDispositivos.vd1]
     je .vd1
 
-    cmp bx, [codigoDispositivos.vd2]
+    cmp bx, [Hexagon.Dev.codigoDispositivos.vd2]
     je .vd2
 
-    cmp bx, [codigoDispositivos.au0]
+    cmp bx, [Hexagon.Dev.codigoDispositivos.au0]
     je .au0
 
     jmp .retorno
@@ -531,7 +531,7 @@ Hexagon.Kernel.Dev.Dev.abrir:
 
     mov eax, dword[Hexagon.Dev.Controle.classeDispositivo]
 
-    mov esi, codigoDispositivos.proc0
+    mov esi, Hexagon.Dev.codigoDispositivos.proc0
 
     jmp .retorno
 
@@ -650,36 +650,36 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
 
 .hd0:
 
-    mov ah, byte [codigoDispositivos.hd0]
+    mov ah, byte [Hexagon.Dev.codigoDispositivos.hd0]
     mov byte[Hexagon.Dev.Controle.idDispositivo], ah
-    movzx ecx, byte [codigoDispositivos.hd0]
+    movzx ecx, byte [Hexagon.Dev.codigoDispositivos.hd0]
     mov dl, 01h
 
     ret
 
 .hd1:
 
-    mov ah, byte [codigoDispositivos.hd1]
+    mov ah, byte [Hexagon.Dev.codigoDispositivos.hd1]
     mov byte[Hexagon.Dev.Controle.idDispositivo], ah
-    movzx ecx, byte [codigoDispositivos.hd1]
+    movzx ecx, byte [Hexagon.Dev.codigoDispositivos.hd1]
     mov dl, 01h
 
     ret
 
 .hd2:
 
-    mov ah, byte [codigoDispositivos.hd2]
+    mov ah, byte [Hexagon.Dev.codigoDispositivos.hd2]
     mov byte[Hexagon.Dev.Controle.idDispositivo], ah
-    movzx ecx, byte [codigoDispositivos.hd2]
+    movzx ecx, byte [Hexagon.Dev.codigoDispositivos.hd2]
     mov dl, 01h
 
     ret
 
 .hd3:
 
-    mov ah, byte [codigoDispositivos.hd3]
+    mov ah, byte [Hexagon.Dev.codigoDispositivos.hd3]
     mov byte[Hexagon.Dev.Controle.idDispositivo], ah
-    movzx ecx, byte [codigoDispositivos.hd3]
+    movzx ecx, byte [Hexagon.Dev.codigoDispositivos.hd3]
     mov dl, 01h
 
     ret
@@ -687,9 +687,9 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
 .com1:
 
     mov ah, 00h
-    mov bx, word [codigoDispositivos.com1]
+    mov bx, word [Hexagon.Dev.codigoDispositivos.com1]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
-    movzx ecx, word [codigoDispositivos.com1]
+    movzx ecx, word [Hexagon.Dev.codigoDispositivos.com1]
     mov dl, 02h
 
     ret
@@ -697,9 +697,9 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
 .com2:
 
     mov ah, 01h
-    mov bx, word [codigoDispositivos.com2]
+    mov bx, word [Hexagon.Dev.codigoDispositivos.com2]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
-    movzx ecx, word [codigoDispositivos.com2]
+    movzx ecx, word [Hexagon.Dev.codigoDispositivos.com2]
     mov dl, 02h
 
     ret
@@ -707,9 +707,9 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
 .com3:
 
     mov ah, 02h
-    mov bx, word [codigoDispositivos.com3]
+    mov bx, word [Hexagon.Dev.codigoDispositivos.com3]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
-    movzx ecx, word [codigoDispositivos.com3]
+    movzx ecx, word [Hexagon.Dev.codigoDispositivos.com3]
     mov dl, 02h
 
     ret
@@ -717,36 +717,36 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
 .com4:
 
     mov ah, 03h
-    mov bx, word [codigoDispositivos.com4]
+    mov bx, word [Hexagon.Dev.codigoDispositivos.com4]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
-    movzx ecx, word [codigoDispositivos.com4]
+    movzx ecx, word [Hexagon.Dev.codigoDispositivos.com4]
     mov dl, 02h
 
     ret
 
 .imp0:
 
-    mov bx, word [codigoDispositivos.imp0]
+    mov bx, word [Hexagon.Dev.codigoDispositivos.imp0]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
-    movzx ecx, word [codigoDispositivos.imp0]
+    movzx ecx, word [Hexagon.Dev.codigoDispositivos.imp0]
     mov dl, 03h
 
     ret
 
 .imp1:
 
-    mov bx, word [codigoDispositivos.imp1]
+    mov bx, word [Hexagon.Dev.codigoDispositivos.imp1]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
-    movzx ecx, word [codigoDispositivos.imp1]
+    movzx ecx, word [Hexagon.Dev.codigoDispositivos.imp1]
     mov dl, 03h
 
     ret
 
 .imp2:
 
-    mov bx, word [codigoDispositivos.imp2]
+    mov bx, word [Hexagon.Dev.codigoDispositivos.imp2]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
-    movzx ecx, word [codigoDispositivos.imp2]
+    movzx ecx, word [Hexagon.Dev.codigoDispositivos.imp2]
     mov dl, 03h
 
     ret
@@ -754,9 +754,9 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
 .vd0:
 
     mov ah, 00h
-    mov bx, word [codigoDispositivos.vd0]
+    mov bx, word [Hexagon.Dev.codigoDispositivos.vd0]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
-    mov ecx, [codigoDispositivos.vd0]
+    mov ecx, [Hexagon.Dev.codigoDispositivos.vd0]
     mov dl, 04h
 
     ret
@@ -764,9 +764,9 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
 .vd1:
 
     mov ah, 01h
-    mov bx, word [codigoDispositivos.vd1]
+    mov bx, word [Hexagon.Dev.codigoDispositivos.vd1]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
-    mov ecx, [codigoDispositivos.vd1]
+    mov ecx, [Hexagon.Dev.codigoDispositivos.vd1]
     mov dl, 04h
 
     ret
@@ -774,24 +774,24 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
 .vd2:
 
     mov ah, 02h
-    mov bx, word [codigoDispositivos.vd2]
+    mov bx, word [Hexagon.Dev.codigoDispositivos.vd2]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
-    mov ecx, [codigoDispositivos.vd2]
+    mov ecx, [Hexagon.Dev.codigoDispositivos.vd2]
     mov dl, 04h
 
     ret
 
 .au0:
 
-    mov ah, byte [codigoDispositivos.au0]
-    mov bx, word [codigoDispositivos.au0]
+    mov ah, byte [Hexagon.Dev.codigoDispositivos.au0]
+    mov bx, word [Hexagon.Dev.codigoDispositivos.au0]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
     mov dl, 04h
 
 .mouse0:
 
     mov ah, 00h
-    mov bx, [codigoDispositivos.mouse0]
+    mov bx, [Hexagon.Dev.codigoDispositivos.mouse0]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
     mov dl, 00h
 
@@ -800,7 +800,7 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
 .tecla0:
 
     mov ah, 00h
-    mov bx, word [codigoDispositivos.tecla0]
+    mov bx, word [Hexagon.Dev.codigoDispositivos.tecla0]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
     mov dl, 00h
 
@@ -809,9 +809,9 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
 .proc0:
 
     mov ah, 00h
-    mov bx, word [codigoDispositivos.proc0]
+    mov bx, word [Hexagon.Dev.codigoDispositivos.proc0]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
-    movzx ecx, word [codigoDispositivos.proc0]
+    movzx ecx, word [Hexagon.Dev.codigoDispositivos.proc0]
     mov dl, 05h
 
     ret
@@ -854,16 +854,16 @@ Hexagon.Kernel.Dev.Dev.paraDispositivo:
 
 .armazenamento:
 
-    cmp ah, byte [codigoDispositivos.hd0]
+    cmp ah, byte [Hexagon.Dev.codigoDispositivos.hd0]
     je .hd0
 
-    cmp ah, byte [codigoDispositivos.hd1]
+    cmp ah, byte [Hexagon.Dev.codigoDispositivos.hd1]
     je .hd1
 
-    cmp ah, byte [codigoDispositivos.hd2]
+    cmp ah, byte [Hexagon.Dev.codigoDispositivos.hd2]
     je .hd2
 
-    cmp ah, byte [codigoDispositivos.hd3]
+    cmp ah, byte [Hexagon.Dev.codigoDispositivos.hd3]
     je .hd3
 
     stc
@@ -896,16 +896,16 @@ Hexagon.Kernel.Dev.Dev.paraDispositivo:
 
 .seriais:
 
-    cmp ax, word [codigoDispositivos.com1]
+    cmp ax, word [Hexagon.Dev.codigoDispositivos.com1]
     je .com1
 
-    cmp ax, word [codigoDispositivos.com2]
+    cmp ax, word [Hexagon.Dev.codigoDispositivos.com2]
     je .com2
 
-    cmp ax, word [codigoDispositivos.com3]
+    cmp ax, word [Hexagon.Dev.codigoDispositivos.com3]
     je .com3
 
-    cmp ax, word [codigoDispositivos.com4]
+    cmp ax, word [Hexagon.Dev.codigoDispositivos.com4]
     je .com4
 
     stc
@@ -938,13 +938,13 @@ Hexagon.Kernel.Dev.Dev.paraDispositivo:
 
 .paralelas:
 
-    cmp ax, word [codigoDispositivos.imp0]
+    cmp ax, word [Hexagon.Dev.codigoDispositivos.imp0]
     je .imp0
 
-    cmp ax, word [codigoDispositivos.imp1]
+    cmp ax, word [Hexagon.Dev.codigoDispositivos.imp1]
     je .imp1
 
-    cmp ax, word [codigoDispositivos.imp2]
+    cmp ax, word [Hexagon.Dev.codigoDispositivos.imp2]
     je .imp2
 
     stc
@@ -971,10 +971,10 @@ Hexagon.Kernel.Dev.Dev.paraDispositivo:
 
 .saida:
 
-    cmp ax, codigoDispositivos.vd0
+    cmp ax, Hexagon.Dev.codigoDispositivos.vd0
     je .vd0
 
-    cmp ax, codigoDispositivos.vd1
+    cmp ax, Hexagon.Dev.codigoDispositivos.vd1
     je .vd1
 
     stc

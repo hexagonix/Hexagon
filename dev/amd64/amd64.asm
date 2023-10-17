@@ -75,7 +75,7 @@ use32
 
 ;; Os códigos à seguir são dependentes de arquitetura
 
-codigoDispositivos:
+Hexagon.Dev.codigoDispositivos:
 
 ;; Dispositivos de armazenamento
 
