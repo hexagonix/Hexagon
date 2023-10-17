@@ -280,7 +280,7 @@ Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarCOM1:
     mov bx, word[portaSerialAtual]
     mov word[portaSerialAnterior], bx
 
-    mov bx, codigoDispositivos.com1
+    mov bx, Hexagon.Dev.codigoDispositivos.com1
     mov word[portaSerialAtual], bx
 
     call Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarSerial

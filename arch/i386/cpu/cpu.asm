@@ -245,7 +245,7 @@ Hexagon.Kernel.Arch.i386.CPU.CPU.configurarProcessador:
 
 Hexagon.Kernel.Arch.i386.CPU.CPU.identificarProcessador:
 
-    mov esi, codigoDispositivos.proc0
+    mov esi, Hexagon.Dev.codigoDispositivos.proc0
 
     mov edi, 0x80000002
 

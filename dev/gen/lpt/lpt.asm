@@ -75,7 +75,7 @@ use32
 
 ;; Inicializa a porta paralela, utilizando o número da porta fornecido
 
-Hexagon.Kernel.Dev.Gen.Impressora.Impressora.iniciarImpressora:
+Hexagon.Kernel.Dev.Gen.LPT.LPT.iniciarPortaParalela:
 
     pusha
 
@@ -90,7 +90,7 @@ Hexagon.Kernel.Dev.Gen.Impressora.Impressora.iniciarImpressora:
     mov al, 00001100b
 
 ;; Bit 2 - Reiniciar porta
-;; Bit 3 - Selecionar impressora
+;; Bit 3 - Selecionar dispositivo
 ;; Bit 5 - Habilitar porta bi-direcional
 
     out dx, al ;; Enviar sinal de reinício
@@ -101,9 +101,9 @@ Hexagon.Kernel.Dev.Gen.Impressora.Impressora.iniciarImpressora:
 
 ;;************************************************************************************
 
-;; Função que permite o envio de dados para serem impressos em uma impressora paralela
+;; Função que permite o envio de dados para uma porta paralela
 
-Hexagon.Kernel.Dev.Gen.Impressora.Impressora.enviarImpressora:
+Hexagon.Kernel.Dev.Gen.LPT.LPT.enviarPortaParalela:
 
     lodsb ;; Carrega o próximo caractere à ser enviado
 
@@ -112,13 +112,13 @@ Hexagon.Kernel.Dev.Gen.Impressora.Impressora.enviarImpressora:
 
 ;; Chama função que irá executar a entrada e saída
 
-    call Hexagon.Kernel.Dev.Gen.Impressora.Impressora.realizarEnvioImpressora
+    call Hexagon.Kernel.Dev.Gen.LPT.LPT.realizarEnvioPortaParalela
 
     jc .falhaImpressora
 
 ;; Se não tiver acabado, volta à função e carrega o próximo caractere
 
-    jmp Hexagon.Kernel.Dev.Gen.Impressora.Impressora.enviarImpressora
+    jmp Hexagon.Kernel.Dev.Gen.LPT.LPT.enviarPortaParalela
 
 .pronto: ;; Se tiver acabado...
 
@@ -132,13 +132,13 @@ Hexagon.Kernel.Dev.Gen.Impressora.Impressora.enviarImpressora:
 
 ;;************************************************************************************
 
-;; Enviar dados para a porta paralela onde a impressora deve estar conectada
+;; Enviar dados para a porta paralela
 ;;
 ;; Entrada:
 ;;
 ;; AL - byte para enviar
 
-Hexagon.Kernel.Dev.Gen.Impressora.Impressora.realizarEnvioImpressora:
+Hexagon.Kernel.Dev.Gen.LPT.LPT.realizarEnvioPortaParalela:
 
     pusha
 
@@ -155,7 +155,7 @@ Hexagon.Kernel.Dev.Gen.Impressora.Impressora.realizarEnvioImpressora:
     mov al, 00001100b
 
 ;; Bit 2 - Reiniciar porta
-;; Bit 3 - Selecionar impressora
+;; Bit 3 - Selecionar dispositivo
 ;; Bit 5 - Habilitar porta bi-direcional
 
     out dx, al ;; Enviar sinal de reinício
