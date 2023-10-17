@@ -93,7 +93,7 @@ include "libkern/macros.s"                 ;; Macros
 
 ;; Versão do Hexagon
 
-include "kern/versao.asm"             ;; Contêm informações de versão do Hexagon 
+include "kern/versao.asm"             ;; Contêm informações de versão do Hexagon
 
 ;; Serviços do Hexagon
 
