@@ -413,4 +413,5 @@ Hexagon.FimCodigo:
 
 Hexagon.BlocoModoVBE       = Hexagon.FimCodigo + 0
 Hexagon.CacheDisco         = Hexagon.FimCodigo + 1024 ;; Buffer de disco para carregar setores
-Hexagon.ArgumentosProcesso = Hexagon.FimCodigo + 60000 + 0x500 ;; Espaço de armazenamento dos argumentos de um aplicativo
+Hexagon.TabelaProcessos    = Hexagon.FimCodigo + 90000
+Hexagon.ArgumentosProcesso = Hexagon.FimCodigo + 100000 + 0x500 ;; Espaço de armazenamento dos argumentos de um aplicativo

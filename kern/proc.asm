@@ -142,7 +142,7 @@ struc Hexagon.Gerenciamento.Tarefas maxProcessos
 
 ;;************************************************************************************
 
-Hexagon.Processos Hexagon.Gerenciamento.Tarefas 20 ;; 21 processos por enquanto
+Hexagon.Processos Hexagon.Gerenciamento.Tarefas 21 ;; 20 processos por enquanto
 
 ;;************************************************************************************
 ;;
@@ -150,15 +150,19 @@ Hexagon.Processos Hexagon.Gerenciamento.Tarefas 20 ;; 21 processos por enquanto
 ;;
 ;;************************************************************************************
 
-BCP.esp: ;; Bloco de Controle de Processo
+virtual at Hexagon.TabelaProcessos
+
+Hexagon.Processos.BCP.esp: ;; Bloco de Controle de Processo
 times Hexagon.Processos.limiteProcessos dd 0
 .ponteiro: ;; Ponteiro para a pilha do processo
 dd 0
 
-BCP.tamanho:  ;; Bloco de mapeamento de memória
+Hexagon.Processos.BCP.tamanho:  ;; Bloco de mapeamento de memória
 times Hexagon.Processos.limiteProcessos dd 0
 .ponteiro: ;; Ponteiro para o endereço de memória do processo
 dd 0
+
+end virtual
 
 ;;************************************************************************************
 ;;
@@ -166,11 +170,8 @@ dd 0
 ;;
 ;;************************************************************************************
 
-tabelaProcessos: ;; Cria uma tabela para o nome dos processos
+Hexagon.Processos.tabelaProcessos: ;; Cria uma tabela para o nome dos processos
 times 13 * Hexagon.Processos.limiteProcessos db ' '
-
-tabelaPilha: ;; Armazenará o nome dos processos na pilha
-times 13 * Hexagon.Processos.limiteProcessos db 0
 
 ;;************************************************************************************
 
@@ -196,7 +197,7 @@ Hexagon.Kernel.Kernel.Proc.travar:
 
 Hexagon.Kernel.Kernel.Proc.iniciarEscalonador:
 
-    mov esi, tabelaProcessos
+    mov esi, Hexagon.Processos.tabelaProcessos
 
     mov ebx, 14*Hexagon.Processos.limiteProcessos
 
@@ -212,7 +213,7 @@ Hexagon.Kernel.Kernel.Proc.iniciarEscalonador:
 
     logHexagon Hexagon.Verbose.escalonador, Hexagon.Dmesg.Prioridades.p5
 
-;; Agora, uma função para iniciar os PBCs
+;; Agora, uma função para iniciar os BCPs
 ;; Essa função pode ser executada, mas o uso dos novos BCPs ainda está em desenvolvimento
 
     ;; call Hexagon.Kernel.Kernel.Proc.iniciarBCP
@@ -323,7 +324,7 @@ Hexagon.Kernel.Kernel.Proc.criarProcesso:
 ;; com o carregamento. Caso contrário, impedir o carregamento retornando
 ;; um erro
 
-    cmp eax, Hexagon.Processos.limiteProcessos ;; Número limite de processos carregados
+    cmp eax, Hexagon.Processos.limiteProcessos - 1  ;; Número limite de processos carregados
     jl .limiteDisponivel
 
     pop eax
@@ -462,17 +463,17 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcesso:
 
     add ebx, [Hexagon.Processos.tamanhoUltimoPrograma]
 
-    mov eax, [BCP.tamanho.ponteiro]
+    mov eax, [Hexagon.Processos.BCP.tamanho.ponteiro]
 
-    add eax, BCP.tamanho
+    add eax, Hexagon.Processos.BCP.tamanho
 
     mov dword[eax], ebx
 
     mov dword[Hexagon.Processos.tamanhoUltimoPrograma], ebx
 
-    add dword[BCP.tamanho.ponteiro], 4
+    add dword[Hexagon.Processos.BCP.tamanho.ponteiro], 4
 
-    cmp dword[BCP.tamanho.ponteiro], 4 * Hexagon.Processos.limiteProcessos
+    cmp dword[Hexagon.Processos.BCP.tamanho.ponteiro], 4 * Hexagon.Processos.limiteProcessos
     ja Hexagon.Kernel.Kernel.Proc.numeroMaximoProcessosAtingido
 
     add dword[Hexagon.Processos.enderecoAplicativos], ebx
@@ -543,15 +544,15 @@ Hexagon.Kernel.Kernel.Proc.executarProcesso:
 
     lgdt[GDTReg] ;; Carregar a GDT contendo a entrada do processo
 
-    mov eax, [BCP.esp.ponteiro]
+    mov eax, [Hexagon.Processos.BCP.esp.ponteiro]
 
-    add eax, BCP.esp
+    add eax, Hexagon.Processos.BCP.esp
 
     mov dword[eax], esp
 
-    add dword[BCP.esp.ponteiro], 4
+    add dword[Hexagon.Processos.BCP.esp.ponteiro], 4
 
-    cmp dword[BCP.esp.ponteiro], 4*Hexagon.Processos.limiteProcessos
+    cmp dword[Hexagon.Processos.BCP.esp.ponteiro], 4*Hexagon.Processos.limiteProcessos
     ja Hexagon.Kernel.Kernel.Proc.numeroMaximoProcessosAtingido
 
     sti ;; Ter certeza que as interrupções estão disponíveis
@@ -603,9 +604,9 @@ naoModoGrafico:
 
 .continuar:
 
-    mov eax, [BCP.esp.ponteiro]
+    mov eax, [Hexagon.Processos.BCP.esp.ponteiro]
 
-    add eax, BCP.esp
+    add eax, Hexagon.Processos.BCP.esp
     sub eax, 4
 
     mov esp, dword[eax]
@@ -629,9 +630,9 @@ Hexagon.Kernel.Kernel.Proc.removerProcesso:
     mov ax, 0x10
     mov ds, ax
 
-    mov eax, [BCP.tamanho.ponteiro]
+    mov eax, [Hexagon.Processos.BCP.tamanho.ponteiro]
 
-    add eax, BCP.tamanho
+    add eax, Hexagon.Processos.BCP.tamanho
 
     sub eax, 4
 
@@ -639,7 +640,7 @@ Hexagon.Kernel.Kernel.Proc.removerProcesso:
 
     sub dword[Hexagon.Processos.enderecoAplicativos], ebx
 
-    sub dword[BCP.tamanho.ponteiro], 4
+    sub dword[Hexagon.Processos.BCP.tamanho.ponteiro], 4
 
     mov eax, dword[Hexagon.Memoria.bytesAlocados]
 
@@ -673,7 +674,7 @@ Hexagon.Kernel.Kernel.Proc.removerProcesso:
 
     lgdt[GDTReg]
 
-    sub dword[BCP.esp.ponteiro], 4
+    sub dword[Hexagon.Processos.BCP.esp.ponteiro], 4
 
     push eax
     push ebx
@@ -782,7 +783,7 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcessoPilha:
 
     inc ebx
 
-    mov edi, tabelaProcessos
+    mov edi, Hexagon.Processos.tabelaProcessos
 
     add edi, eax
 
@@ -841,7 +842,7 @@ Hexagon.Kernel.Kernel.Proc.removerProcessoPilha:
 
     inc ebx
 
-    mov edi, tabelaProcessos
+    mov edi, Hexagon.Processos.tabelaProcessos
 
     add edi, eax
 
@@ -874,7 +875,7 @@ Hexagon.Kernel.Kernel.Proc.obterListaProcessos:
 
     mov edx, Hexagon.CacheDisco ;; Índice na nova lista
     mov ebx, 0 ;; Contador de processos
-    mov esi, tabelaProcessos ;; Tabela fonte
+    mov esi, Hexagon.Processos.tabelaProcessos ;; Tabela fonte
 
     sub esi, 14
 
@@ -938,4 +939,3 @@ Hexagon.Kernel.Kernel.Proc.obterCodigoErro:
     mov eax, [Hexagon.Processos.codigoErro]
 
     ret
-
