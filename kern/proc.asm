@@ -199,9 +199,7 @@ Hexagon.Kernel.Kernel.Proc.iniciarEscalonador:
 
     mov esi, Hexagon.Processos.tabelaProcessos
 
-    mov ebx, 14*Hexagon.Processos.limiteProcessos
-
-    inc ebx
+    mov ebx, 13*Hexagon.Processos.limiteProcessos
 
     mov byte[esi+ebx], 0
 
@@ -883,8 +881,17 @@ Hexagon.Kernel.Kernel.Proc.obterListaProcessos:
 
     add esi, 14 ;; Próxima entrada (13 bytes por entrada)
 
+;; Vamos checar a existência da parada no final da lista, adicionada anteriormente
+
+    cmp byte[esi-14], 0
+    je .finalizarLista
+
+;; Se não chegou ao final da lista com todos os processos, verificar se já chegamos direto ao final da lista
+
     cmp byte[esi], 0 ;; Se último processo, termine
     je .finalizarLista
+
+;; Se não, processar próxima entrada
 
     cmp byte[esi], ' ' ;; Ignorar espaço interprocessos
     je .loopConstruirLista
