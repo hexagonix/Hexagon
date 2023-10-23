@@ -391,7 +391,7 @@ terminoGDT:
 GDTReg:
 
 .tamanho: dw terminoGDT - GDT - 1 ;; Tamanho GDT - 1
-.local:   dd GDT+0x500 ;; Deslocamento da GDT
+.local:   dd GDT + 500h ;; Deslocamento da GDT
 
 ;;************************************************************************************
 
@@ -418,7 +418,7 @@ terminoIDT:
 IDTReg:
 
 .tamanho: dw terminoIDT - IDT - 1 ;; Tamanho IDT - 1
-.local:   dd IDT+0x500 ;; Deslocamento da IDT
+.local:   dd IDT + 500h ;; Deslocamento da IDT
 
 ;;************************************************************************************
 

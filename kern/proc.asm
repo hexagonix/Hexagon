@@ -478,7 +478,7 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcesso:
 
     mov edi, dword[Hexagon.Processos.enderecoAplicativos]
 
-    sub edi, 0x500
+    sub edi, 500h
 
     push esi
 

@@ -240,7 +240,7 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.lerMBR:
 
     jc .erro
 
-    mov ebx, Hexagon.CacheDisco + 0x500 + 20000
+    mov ebx, Hexagon.CacheDisco + 500h + 20000
 
     add ebx, 0x1BE ;; Deslocamento da primeira partição
 

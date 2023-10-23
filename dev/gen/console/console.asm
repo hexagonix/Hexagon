@@ -245,7 +245,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.definirModoGrafico:
 
     mov cx, ax ;; CX: modo de obter informações
     mov ax, 0x4f01 ;; Função para obter informações de vídeo
-    mov di, Hexagon.BlocoModoVBE + 0x500 ;; Endereço onde são armazenados os dados
+    mov di, Hexagon.BlocoModoVBE + 500h ;; Endereço onde são armazenados os dados
 
     call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int10h ;; Chamar interrupção BIOS em modo real
 

@@ -248,7 +248,7 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
 
     mov edi, dword[Hexagon.Processos.enderecoAplicativos] ;; Endereço final para carregamento
 
-    sub edi, 0x500
+    sub edi, 500h
 
 ;; Vamos carregar a imagem para começar as análises
 
@@ -259,7 +259,7 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
 ;; Vamos começar a checagem do cabeçalho executável da imagem carregada
 
     mov edi, [Hexagon.Processos.enderecoAplicativos]
-    sub edi, 0x500
+    sub edi, 500h
 
 ;; Pronto, agora devemos iniciar a análise da imagem
 

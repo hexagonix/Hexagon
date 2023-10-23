@@ -392,18 +392,18 @@ Hexagon.Kernel.Lib.Graficos.colocarPixel:
 Hexagon.Kernel.Lib.Graficos.desenharBlocoSyscall:
 
     sub esi, dword[Hexagon.Processos.enderecoAplicativos]
-    add esi, 0x500
+    add esi, 500h
 
     sub edi, dword[Hexagon.Processos.enderecoAplicativos]
-    add edi, 0x500
+    add edi, 500h
 
     call Hexagon.Kernel.Lib.Graficos.desenharBloco
 
     add esi, dword[Hexagon.Processos.enderecoAplicativos]
-    sub esi, 0x500
+    sub esi, 500h
 
     add edi, dword[Hexagon.Processos.enderecoAplicativos]
-    sub edi, 0x500
+    sub edi, 500h
 
     ret
 

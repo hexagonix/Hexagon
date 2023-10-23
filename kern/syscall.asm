@@ -116,11 +116,11 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
 
     add esi, dword[Hexagon.Processos.enderecoAplicativos]
 
-    sub esi, 0x500
+    sub esi, 500h
 
     add edi, dword[Hexagon.Processos.enderecoAplicativos]
 
-    sub edi, 0x500
+    sub edi, 500h
 
     pop eax ;; Limpar pilha
 
@@ -175,11 +175,11 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
 
     sub esi, dword[Hexagon.Processos.enderecoAplicativos]
 
-    add esi, 0x500
+    add esi, 500h
 
     sub edi, dword[Hexagon.Processos.enderecoAplicativos]
 
-    add edi, 0x500
+    add edi, 500h
 
     mov es, [Hexagon.Syscall.Controle.es]
 
@@ -225,11 +225,11 @@ Hexagon.Syscall.Syscall.manipuladorHXUnix:
 
     add esi, dword[Hexagon.Processos.enderecoAplicativos]
 
-    sub esi, 0x500
+    sub esi, 500h
 
     add edi, dword[Hexagon.Processos.enderecoAplicativos]
 
-    sub edi, 0x500
+    sub edi, 500h
 
     pop eax ;; Limpar pilha
 
@@ -284,11 +284,11 @@ Hexagon.Syscall.Syscall.manipuladorHXUnix:
 
     sub esi, dword[Hexagon.Processos.enderecoAplicativos]
 
-    add esi, 0x500
+    add esi, 500h
 
     sub edi, dword[Hexagon.Processos.enderecoAplicativos]
 
-    add edi, 0x500
+    add edi, 500h
 
     mov es, [Hexagon.Syscall.Controle.es]
 
