@@ -142,7 +142,7 @@ struc Hexagon.Gerenciamento.Tarefas maxProcessos
 
 ;;************************************************************************************
 
-Hexagon.Processos Hexagon.Gerenciamento.Tarefas 21 ;; 20 processos por enquanto
+Hexagon.Processos Hexagon.Gerenciamento.Tarefas 22 ;; 21 processos por enquanto (n-1)
 
 ;;************************************************************************************
 ;;
@@ -150,7 +150,7 @@ Hexagon.Processos Hexagon.Gerenciamento.Tarefas 21 ;; 20 processos por enquanto
 ;;
 ;;************************************************************************************
 
-virtual at Hexagon.TabelaProcessos
+virtual at Hexagon.InfoProcessos
 
 Hexagon.Processos.BCP.esp: ;; Bloco de Controle de Processo
 times Hexagon.Processos.limiteProcessos dd 0
@@ -163,15 +163,6 @@ times Hexagon.Processos.limiteProcessos dd 0
 dd 0
 
 end virtual
-
-;;************************************************************************************
-;;
-;;                         Tabela de Processos do Hexagon
-;;
-;;************************************************************************************
-
-Hexagon.Processos.tabelaProcessos: ;; Cria uma tabela para o nome dos processos
-times 13 * Hexagon.Processos.limiteProcessos db ' '
 
 ;;************************************************************************************
 
@@ -197,11 +188,43 @@ Hexagon.Kernel.Kernel.Proc.travar:
 
 Hexagon.Kernel.Kernel.Proc.iniciarEscalonador:
 
-    mov esi, Hexagon.Processos.tabelaProcessos
+    logHexagon Hexagon.Verbose.heapKernel, Hexagon.Dmesg.Prioridades.p5
+
+    push es
+
+;; Vamos iniciar a área de memória do heap do kernel que vai armazenar o nome dos
+;; processos em execução
+
+    push ds
+    pop es
+
+    mov edx, 13*Hexagon.Processos.limiteProcessos
+    mov ebx, 0
+
+.loop:
+
+    mov esi, .espaco
+    mov edi, Hexagon.TabelaProcessos
+    add edi, ebx
+    mov ecx, 1
+
+    rep movsb
+
+    dec edx
+    inc ebx
+
+    cmp edx, 0
+    jne .loop
+
+    pop es
+
+    mov esi, Hexagon.TabelaProcessos
 
     mov ebx, 13*Hexagon.Processos.limiteProcessos
 
     mov byte[esi+ebx], 0
+
+;; Pronto, tudo feito para a área de armazenamento do nome dos processos, vamos continuar
 
     mov dword[Hexagon.Processos.PIDAtual], 0
 
@@ -217,6 +240,8 @@ Hexagon.Kernel.Kernel.Proc.iniciarEscalonador:
     ;; call Hexagon.Kernel.Kernel.Proc.iniciarBCP
 
     ret
+
+.espaco: db ' '
 
 ;;************************************************************************************
 
@@ -322,7 +347,7 @@ Hexagon.Kernel.Kernel.Proc.criarProcesso:
 ;; com o carregamento. Caso contrário, impedir o carregamento retornando
 ;; um erro
 
-    cmp eax, Hexagon.Processos.limiteProcessos - 1  ;; Número limite de processos carregados
+    cmp eax, Hexagon.Processos.limiteProcessos - 1 ;; Número limite de processos carregados
     jl .limiteDisponivel
 
     pop eax
@@ -781,7 +806,7 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcessoPilha:
 
     inc ebx
 
-    mov edi, Hexagon.Processos.tabelaProcessos
+    mov edi, Hexagon.TabelaProcessos
 
     add edi, eax
 
@@ -840,7 +865,7 @@ Hexagon.Kernel.Kernel.Proc.removerProcessoPilha:
 
     inc ebx
 
-    mov edi, Hexagon.Processos.tabelaProcessos
+    mov edi, Hexagon.TabelaProcessos
 
     add edi, eax
 
@@ -868,72 +893,31 @@ Hexagon.Kernel.Kernel.Proc.removerProcessoPilha:
 
 Hexagon.Kernel.Kernel.Proc.obterListaProcessos:
 
-    push ds
-    pop es
-
-    mov edx, Hexagon.CacheDisco ;; Índice na nova lista
-    mov ebx, 0 ;; Contador de processos
-    mov esi, Hexagon.Processos.tabelaProcessos ;; Tabela fonte
-
-    sub esi, 14
-
-.loopConstruirLista:
-
-    add esi, 14 ;; Próxima entrada (13 bytes por entrada)
-
-;; Vamos checar a existência da parada no final da lista, adicionada anteriormente
-
-    cmp byte[esi-14], 0
-    je .finalizarLista
-
-;; Se não chegou ao final da lista com todos os processos, verificar se já chegamos direto ao final da lista
-
-    cmp byte[esi], 0 ;; Se último processo, termine
-    je .finalizarLista
-
-;; Se não, processar próxima entrada
-
-    cmp byte[esi], ' ' ;; Ignorar espaço interprocessos
-    je .loopConstruirLista
-
-;; Adicionar entrada de nome de processo na lista
-
-    call Hexagon.Kernel.Lib.String.tamanhoString ;; Encontrar tamanho da entrada
-
-    mov edi, edx
-    mov ecx, eax ;; EAX é o tamanho da primeira string
-
-    rep movsb ;; Move (ECX) bytes de ESI para EDI
-
-;; Adicionar um espaço entre os nomes de processos
-
-    mov byte[es:edx+eax], ' '
-
-    inc eax ;; Tamanho da string + 1 caractere
-    inc ebx ;; Atualizar contador de processos
-
-    add edx, eax ;; Atualizar índice na lista
-
-    jmp .loopConstruirLista ;; Obter próximos processos
-
-.finalizarLista:
-
-    mov byte[edx], 0 ;; Fim da lista
+;; Vamos iniciar a área de memória do heap do kernel que vai armazenar o nome dos
+;; processos em execução
 
     push ds
     pop es
 
-    mov esi, Hexagon.CacheDisco
+.loop:
+
+    mov esi, Hexagon.TabelaProcessos
+    mov edi, Hexagon.Lista
+    mov ecx, 13*Hexagon.Processos.limiteProcessos
+
+    rep movsb
+
+    mov esi, Hexagon.Lista
+
+    mov ebx, 13*Hexagon.Processos.limiteProcessos
+
+    mov byte[esi+ebx], 0
+
+    mov esi, Hexagon.Lista
 
     call Hexagon.Kernel.Lib.String.cortarString
 
     mov eax, dword[Hexagon.Processos.contagemProcessos]
-
-    jmp .fim
-
-.erroLista:
-
-    stc
 
 .fim:
 

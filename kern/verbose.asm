@@ -97,6 +97,8 @@ db "Enabling user and security guidelines...", 0
 db "Starting and setting up the timer (119 Hz)...", 0
 .escalonador:
 db "Starting and setting up the scheduler...", 0
+.heapKernel:
+db "Setting up the kernel heap...", 0
 .teclado:
 db "The keyboard management service has started.", 0
 .mouse:

@@ -169,10 +169,6 @@ use32
 ;; Os campos reservados são marcados para uso do sistema. Eles poderão ser utilizados pelo sistema
 ;; para reservados dados em troca de contexto futuramente, por exemplo, durante a multitarefa.
 
-;; Aqui o alinhamento deve ser de 4
-
-align 4
-
 ;; Essa é a estrutura inicial que deve seguir as especificações HAPP em vigor.
 ;; Especificação utilizada: HAPP2 (HAPP 2.0)
 

@@ -412,6 +412,8 @@ Hexagon.Init.Const:
 Hexagon.FimCodigo:
 
 Hexagon.BlocoModoVBE       = Hexagon.FimCodigo + 0
-Hexagon.CacheDisco         = Hexagon.FimCodigo + 1200 ;; Buffer de disco para carregar setores
-Hexagon.TabelaProcessos    = Hexagon.FimCodigo + 90000 ;; Buffer para objetos relacionados com processos
-Hexagon.ArgumentosProcesso = Hexagon.FimCodigo + 100000 + 500h ;; Espaço de armazenamento dos argumentos de um aplicativo
+Hexagon.CacheDisco         = Hexagon.BlocoModoVBE + 1200 ;; Buffer de disco para carregar setores
+Hexagon.InfoProcessos      = Hexagon.CacheDisco + 200000 ;; Buffer para objetos relacionados com processos
+Hexagon.TabelaProcessos    = Hexagon.InfoProcessos + 5000
+Hexagon.ArgumentosProcesso = Hexagon.TabelaProcessos + 5000 + 500h ;; Espaço de armazenamento dos argumentos de um aplicativo
+Hexagon.Lista              = Hexagon.ArgumentosProcesso + 2000

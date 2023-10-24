@@ -83,13 +83,13 @@ use32
 
 Hexagon.Arquitetura.suporte = 1 ;; Arquitetura desta imagem
 
-Hexagon.Versao.definicao equ "1.0.1-beta2"
+Hexagon.Versao.definicao equ "1.0.2-beta"
 
 Hexagon.Versao:
 
 .numeroVersao     = 1 ;; Número principal de versão do Hexagon
 .numeroSubversao  = 0 ;; Número de subversão (secundária) do Hexagon
-.caractereRevisao = 1 ;; Adicionar caractere de revisão, caso necessário, entre aspas (funciona como caractere)
+.caractereRevisao = 2 ;; Adicionar caractere de revisão, caso necessário, entre aspas (funciona como caractere)
 
 .nomeKernel:
 db "Hexagon", 0 ;; Nome fornecido ao espaço de usuário
