@@ -233,14 +233,14 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.lerMBR:
     mov eax, 01h ;; Número de setores para ler
     mov esi, 00h ;; LBA do setor inicial
     mov cx, 0x50 ;; Segmento
-    mov edi, Hexagon.CacheDisco+20000 ;; Deslocamento
+    mov edi, Hexagon.Heap.CacheDisco+20000 ;; Deslocamento
     mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
 
     call Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores
 
     jc .erro
 
-    mov ebx, Hexagon.CacheDisco + 500h + 20000
+    mov ebx, Hexagon.Heap.CacheDisco + 500h + 20000
 
     add ebx, 0x1BE ;; Deslocamento da primeira partição
 
@@ -648,7 +648,7 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.testarVolume:
     mov eax, 1
     mov esi, 01
     mov cx, 0x50 ;; Segmento
-    mov edi, Hexagon.CacheDisco+20000 ;; Deslocamento
+    mov edi, Hexagon.Heap.CacheDisco+20000 ;; Deslocamento
     mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
 
     call Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores

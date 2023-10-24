@@ -113,8 +113,8 @@ use16
 
 ;; Retornar
 
-    push 0x08 ;; Novo CS
-    push bp ;; Novo IP
+    push 08h ;; Novo CS
+    push bp  ;; Novo IP
 
     retf
 
@@ -130,7 +130,7 @@ Hexagon.Kernel.Arch.i386.CPU.CPU.irPara16:
 
     pop edx ;; Salvar local de retorno em EDX
 
-    jmp 0x20:Hexagon.Kernel.Arch.i386.CPU.CPU.modoProtegido16 ;; Carregar CS com seletor 0x20
+    jmp 20h:Hexagon.Kernel.Arch.i386.CPU.CPU.modoProtegido16 ;; Carregar CS com seletor 20h
 
 ;; Para ir ao modo real 16 bits, temos de passar pelo modo protegido 16 bits
 
@@ -138,23 +138,23 @@ use16
 
 Hexagon.Kernel.Arch.i386.CPU.CPU.modoProtegido16:
 
-    mov ax, 0x28 ;; 0x28 é o seletor de modo protegido 16-bit
+    mov ax, 28h ;; 28h é o seletor de modo protegido 16-bit
     mov ss, ax
-    mov sp, 0x5000 ;; Pilha
+    mov sp, 5000h ;; Pilha
 
     mov eax, cr0
-    and eax, 0xfffffffe ;; Limpar bit de ativação do modo protegido em cr0
+    and eax, 0xFFFFFFFE ;; Limpar bit de ativação do modo protegido em cr0
     mov cr0, eax ;; Desativar modo 32 bits
 
-    jmp 0x50:Hexagon.Kernel.Arch.i386.CPU.CPU.modoReal ;; Carregar CS e IP
+    jmp 50h:Hexagon.Kernel.Arch.i386.CPU.CPU.modoReal ;; Carregar CS e IP
 
 Hexagon.Kernel.Arch.i386.CPU.CPU.modoReal:
 
 ;; Carregar registradores de segmento com valores de 16 bits
 
-    mov ax, 0x50
+    mov ax, 50h
     mov ds, ax
-    mov ax, 0x6000
+    mov ax, 6000h
     mov ss, ax
     mov ax, 0
     mov es, ax
@@ -166,14 +166,14 @@ Hexagon.Kernel.Arch.i386.CPU.CPU.modoReal:
 
     sti
 
-    push 0x50
+    push 50h
     push dx ;; Retornar para a localização presente em EDX
 
     retf ;; Iniciar modo real
 
 ;; Tabela de vetores de interrupção de modo real
 
-.idtR:  dw 0xffff ;; Limite
+.idtR:  dw 0xFFFF ;; Limite
         dd 0      ;; Base
 
 ;;************************************************************************************
@@ -188,12 +188,12 @@ match =A20NAOSEGURO, A20
 
  .testarA20:
 
-    mov edi, 0x112345 ;; Endereço par
-    mov esi, 0x012345 ;; Endereço ímpar
+    mov edi, 112345h ;; Endereço par
+    mov esi, 012345h ;; Endereço ímpar
     mov [esi], esi    ;; Os dois endereços apresentam valores diferentes
     mov [edi], edi
 
-;; Se A20 não definido, os dois ponteiros apontarão para 0x012345, que contêm 0x112345 (EDI)
+;; Se A20 não definido, os dois ponteiros apontarão para 012345h, que contêm 112345h (EDI)
 
     cmpsd ;; Comparar para ver se são equivalentes
 
@@ -205,7 +205,7 @@ match =A20NAOSEGURO, A20
 
 .habilitarA20:
 
-    mov ax, 0x2401 ;; Solicitar a ativação do A20
+    mov ax, 2401h ;; Solicitar a ativação do A20
 
     int 15h ;; Interrupção do BIOS
 
@@ -247,7 +247,7 @@ Hexagon.Kernel.Arch.i386.CPU.CPU.identificarProcessador:
 
     mov esi, Hexagon.Dev.codigoDispositivos.proc0
 
-    mov edi, 0x80000002
+    mov edi, 80000002h
 
     mov ecx, 3
 
@@ -296,14 +296,14 @@ align 32
 
 GDT:
 
-    dd 0, 0 ;; Descriptor nulo - Seletor 0x00
+    dd 0, 0 ;; Descriptor nulo - Seletor 00h
 
 ;; Edereço físico = endereço + base do respectivo seletor
 
-.codigoKernel: ;; Seletor 0x08
+.codigoKernel: ;; Seletor 08h
 
     dw 0xFFFF    ;; Limite (0:15)
-    dw 0x0500    ;; Base (0:15)
+    dw 500h      ;; Base (0:15)
     db 0         ;; Base (16:23)
     db 10011010b ;; Presente=1, Privilégio=00, Reservado=1, Executável=1, C=0, L&E=1, Acessado=0
     db 11001111b ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
@@ -311,10 +311,10 @@ GDT:
 
 ;; Descriptor de dados com base em 500h
 
-.dadosKernel: ;; Seletor 0x10
+.dadosKernel: ;; Seletor 10h
 
     dw 0xFFFF    ;; Limite (0:15)
-    dw 0x0500    ;; Base (0:15)
+    dw 500h      ;; Base (0:15)
     db 0         ;; Base (16:23)
     db 10010010b ;; Presente=1, Privilégio=00, Reservado=1, Executável=0, D=0, W=1, Acessado=0
     db 11001111b ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
@@ -322,7 +322,7 @@ GDT:
 
 ;; Descriptor de dados com base em 0h
 
-.linearKernel: ;; Seletor 0x18
+.linearKernel: ;; Seletor 18h
 
     dw 0xFFFF    ;; Limite (0:15)
     dw 0         ;; Base (0:15)
@@ -333,10 +333,10 @@ GDT:
 
 ;; Descriptor de código para modo protegido 16 bits
 
-.codigoMP16: ;; Seletor 0x20
+.codigoMP16: ;; Seletor 20h
 
     dw 0xFFFF    ;; Limite (0:15)
-    dw 0x0500    ;; Base (0:15)
+    dw 0500h     ;; Base (0:15)
     db 0         ;; Base (16:23)
     db 10011010b ;; Presente=1, Privilégio=00, Reservado=1, Executável=1, C=0, L&E=1, Acessado=0
     db 0         ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
@@ -344,7 +344,7 @@ GDT:
 
 ;; Descriptor de dados para modo protegido 16 bits
 
-.dadosPM16: ;; Seletor 0x28
+.dadosPM16: ;; Seletor 28h
 
     dw 0xFFFF    ;; Limite (0:15)
     dw 0         ;; Base (0:15)
@@ -355,7 +355,7 @@ GDT:
 
 ;; Código do programa
 
-.codigoProcessos: ;; Seletor 0x30 -> Seletor usado para a área de código dos processos
+.codigoProcessos: ;; Seletor 30h -> Seletor usado para a área de código dos processos
 
     dw 0xFFFF    ;; Limite (0:15)
     dw 0         ;; Base (0:15)
@@ -366,7 +366,7 @@ GDT:
 
 ;; Dados do programa
 
-.dadosProcessos: ;; Seletor 0x38 -> Seletor para a área de dados dos processos
+.dadosProcessos: ;; Seletor 38h -> Seletor para a área de dados dos processos
 
     dw 0xFFFF    ;; Limite (0:15)
     dw 0         ;; Base (0:15)
@@ -433,8 +433,8 @@ align 32
 TSS:
 
     .tssAnterior dd 0
-    .esp0        dd 0x10000 ;; Pilha do kernel
-    .ss0         dd 0x10    ;; Segmento da pilha do kernel
+    .esp0        dd 10000h ;; Pilha do kernel
+    .ss0         dd 10h    ;; Segmento da pilha do kernel
     .esp1        dd 0
     .ss1         dd 0
     .esp2        dd 0
@@ -450,12 +450,12 @@ TSS:
     .ebp         dd 0
     .esi         dd 0
     .edi         dd 0
-    .es          dd 0x10 ;; Segmento de dados do kernel
-    .cs          dd 0x08
-    .ss          dd 0x10
-    .ds          dd 0x10
-    .fs          dd 0x10
-    .gs          dd 0x10
+    .es          dd 10h ;; Segmento de dados do kernel
+    .cs          dd 08h
+    .ss          dd 10h
+    .ds          dd 10h
+    .fs          dd 10h
+    .gs          dd 10h
     .ldt         dd 0
     .ldtr        dw 0
     .mapaIO      dw 104

@@ -123,7 +123,7 @@ cabecalhoHexagon:
 
     cli
 
-    mov ax, 0x5000
+    mov ax, 5000h
     mov ss, ax
     mov sp, 0
 

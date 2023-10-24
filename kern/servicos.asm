@@ -138,7 +138,7 @@ Hexagon.Int.manipuladorTimer:
 
     push ds
 
-    mov ax, 0x10 ;; Segmento de dados do Kernel
+    mov ax, 10h ;; Segmento de dados do Kernel
     mov ds, ax
 
     call Hexagon.Kernel.Arch.i386.CMOS.CMOS.atualizarDadosCMOS ;; Atualizar o relógio em tempo real a cada intervalo
@@ -146,9 +146,9 @@ Hexagon.Int.manipuladorTimer:
     inc dword[.contagemTimer] ;; Incrementa o contador
     inc dword[.contadorRelativo]
 
-    mov al, 0x20
+    mov al, 20h
 
-    out 0x20, al
+    out 20h, al
 
     pop ds
     pop eax
@@ -171,12 +171,12 @@ Hexagon.Int.manipuladorTeclado:
 
     push ds
 
-    mov ax, 0x10 ;; Segmento de dados do Kernel
+    mov ax, 10h ;; Segmento de dados do kernel
     mov ds, ax
 
     xor eax,eax
 
-    in al, 0x60
+    in al, 60h
 
     cmp al, Hexagon.Teclado.Codigo.F1 ;; Tecla F1
     je .terminarTarefa
@@ -263,9 +263,9 @@ Hexagon.Int.manipuladorTeclado:
 
 .naoArmazenar:
 
-    mov al, 0x20
+    mov al, 20h
 
-    out 0x20, al
+    out 20h, al
 
     pop ds
 
@@ -303,7 +303,7 @@ Hexagon.Int.manipuladorMousePS2:
 
 .pacoteDeDados:
 
-    in al, 0x60
+    in al, 60h
     mov byte[.dados], al
 
     mov byte[.estado], 1
@@ -311,7 +311,7 @@ Hexagon.Int.manipuladorMousePS2:
 
 .pacoteX:
 
-    in al, 0x60
+    in al, 60h
     mov byte[.deltaX], al
 
     mov byte[.estado], 2
@@ -319,7 +319,7 @@ Hexagon.Int.manipuladorMousePS2:
 
 .pacoteY:
 
-    in al, 0x60
+    in al, 60h
     mov byte[.deltaY], al
 
     mov byte[.estado], 0
@@ -336,7 +336,7 @@ Hexagon.Int.manipuladorMousePS2:
     bt dx, 4 ;; Checar se o mouse se moveu para a esquerda
     jnc .movimentoADireita
 
-    xor eax, 0xff ;; 255 - deltaX
+    xor eax, 0xFF ;; 255 - deltaX
     sub word[.mouseX], ax ;; MouseX - DeltaX
 
     jnc .xOK ;; Checar se MouseX é menor que 0
@@ -353,7 +353,7 @@ Hexagon.Int.manipuladorMousePS2:
     bt dx, 5 ;; Checar se o mouse se moveu para baixo
     jnc .movimentoParaCima
 
-    xor ebx, 0xff ;; 255 - DeltaY
+    xor ebx, 0xFF ;; 255 - DeltaY
     sub word[.mouseY], bx ;; MouseY - DeltaY
 
     jnc .yOK ;; Checar se MouseY é menor que 0
@@ -400,9 +400,9 @@ Hexagon.Int.manipuladorMousePS2:
 .fim2:
 
 
-    mov al, 0x20 ;; Fim da interrupção
-    out 0x20, al
-    out 0xa0, al
+    mov al, 20h ;; Fim da interrupção
+    out 20h, al
+    out 0xA0, al
 
     popa
 
@@ -453,7 +453,7 @@ Hexagon.Int.manipuladorTouchpad:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha
 
-    in al, 0x60
+    in al, 60h
 
     movzx eax, al
     mov dl, 0
@@ -471,7 +471,7 @@ Hexagon.Int.manipuladorTouchpad:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha
 
-    in al, 0x60
+    in al, 60h
 
     mov bl, al
 
@@ -503,7 +503,7 @@ Hexagon.Int.manipuladorTouchpad:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha
 
-    in al, 0x60
+    in al, 60h
 
     movzx eax, al
     mov dl, 0
@@ -521,7 +521,7 @@ Hexagon.Int.manipuladorTouchpad:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha
 
-    in al, 0x60
+    in al, 60h
 
     mov bl, al
 
@@ -555,7 +555,7 @@ Hexagon.Int.manipuladorTouchpad:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha
 
-    in al, 0x60
+    in al, 60h
 
     movzx ax, al
     or word[.X], ax
@@ -579,7 +579,7 @@ Hexagon.Int.manipuladorTouchpad:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha
 
-    in al, 0x60
+    in al, 60h
 
     movzx ax, al
     or word[.Y], ax
@@ -599,11 +599,11 @@ Hexagon.Int.manipuladorTouchpad:
 
 .fim:
 
-    mov al, 0x20 ;; Fim da interrupção
+    mov al, 20h ;; Fim da interrupção
 
-    out 0x20, al
+    out 20h, al
 
-    out 0xa0, al
+    out 20h, al
 
     pop edx
     pop eax
@@ -623,9 +623,9 @@ Hexagon.Int.naoManipulado:
 
     push eax
 
-    mov al, 0x20
+    mov al, 20h
 
-    out 0x20, al
+    out 20h, al
 
     pop eax
 

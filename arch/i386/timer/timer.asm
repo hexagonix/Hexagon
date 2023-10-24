@@ -81,11 +81,11 @@ Hexagon.Kernel.Arch.i386.Timer.Timer.iniciarTimer:
 
     mov eax, 100 ;; Definir frequência para 1.19 mhz / EAX
 
-    out 0x40, al ;; Primeiro enviar byte menos significante
+    out 40h, al ;; Primeiro enviar byte menos significante
 
     mov al, ah ;; Agora o byte mais significante
 
-    out 0x40, al
+    out 40h, al
 
     logHexagon Hexagon.Verbose.timer, Hexagon.Dmesg.Prioridades.p5
 

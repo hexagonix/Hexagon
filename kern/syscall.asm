@@ -102,23 +102,23 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
 
     mov ebp, esp
 
-    push 0x10 ;; Segmento do kernel
+    push 10h ;; Segmento do kernel
     pop ds
 
     mov [Hexagon.Syscall.Controle.es], es
 
-    push 0x18
+    push 18h
     pop es
 
     cld
 
     mov dword[Hexagon.Syscall.Controle.eax], eax
 
-    add esi, dword[Hexagon.Processos.enderecoAplicativos]
+    add esi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
 
     sub esi, 500h
 
-    add edi, dword[Hexagon.Processos.enderecoAplicativos]
+    add edi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
 
     sub edi, 500h
 
@@ -173,17 +173,17 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
     push dword[Hexagon.Syscall.Controle.cs]
     push dword[Hexagon.Syscall.Controle.eip]
 
-    sub esi, dword[Hexagon.Processos.enderecoAplicativos]
+    sub esi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
 
     add esi, 500h
 
-    sub edi, dword[Hexagon.Processos.enderecoAplicativos]
+    sub edi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
 
     add edi, 500h
 
     mov es, [Hexagon.Syscall.Controle.es]
 
-    push 0x38
+    push 38h
     pop ds
 
     iret
@@ -211,23 +211,23 @@ Hexagon.Syscall.Syscall.manipuladorHXUnix:
 
     mov ebp, esp
 
-    push 0x10 ;; Segmento do kernel
+    push 10h ;; Segmento do kernel
     pop ds
 
     mov [Hexagon.Syscall.Controle.es], es
 
-    push 0x18
+    push 18h
     pop es
 
     cld
 
     mov dword[Hexagon.Syscall.Controle.eax], eax
 
-    add esi, dword[Hexagon.Processos.enderecoAplicativos]
+    add esi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
 
     sub esi, 500h
 
-    add edi, dword[Hexagon.Processos.enderecoAplicativos]
+    add edi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
 
     sub edi, 500h
 
@@ -282,17 +282,17 @@ Hexagon.Syscall.Syscall.manipuladorHXUnix:
     push dword[Hexagon.Syscall.Controle.cs]
     push dword[Hexagon.Syscall.Controle.eip]
 
-    sub esi, dword[Hexagon.Processos.enderecoAplicativos]
+    sub esi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
 
     add esi, 500h
 
-    sub edi, dword[Hexagon.Processos.enderecoAplicativos]
+    sub edi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
 
     add edi, 500h
 
     mov es, [Hexagon.Syscall.Controle.es]
 
-    push 0x38
+    push 38h
     pop ds
 
     iret

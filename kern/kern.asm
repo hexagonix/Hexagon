@@ -172,14 +172,14 @@ Hexagon.init:
 
 ;; Primeiramente os registradores de segmento e da pilha serão configurados
 
-    mov ax, 0x10
+    mov ax, 10h
     mov ds, ax
-    mov ax, 0x18 ;; ES com base em 0
+    mov ax, 18h ;; ES com base em 0
     mov ss, ax
     mov fs, ax
     mov gs, ax
     mov es, ax
-    mov esp, 0x10000 ;; Definir ponteiro de pilha
+    mov esp, 10000h ;; Definir ponteiro de pilha
 
     cli
 
@@ -404,16 +404,16 @@ Hexagon.iniciarModoUsuario:
 
 Hexagon.Init.Const:
 
-.initHexagon:  db "init", 0 ;; Nome da imagem em disco do init
+.initHexagon:  db "init", 0 ;; Nome da imagem do init no volume
 .shellHexagon: db "sh", 0   ;; Nome do shell padrão
 
 ;;************************************************************************************
 
-Hexagon.FimCodigo:
+Hexagon.Heap:
 
-Hexagon.BlocoModoVBE       = Hexagon.FimCodigo + 0
-Hexagon.CacheDisco         = Hexagon.BlocoModoVBE + 1200 ;; Buffer de disco para carregar setores
-Hexagon.InfoProcessos      = Hexagon.CacheDisco + 200000 ;; Buffer para objetos relacionados com processos
-Hexagon.TabelaProcessos    = Hexagon.InfoProcessos + 5000
-Hexagon.ArgumentosProcesso = Hexagon.TabelaProcessos + 5000 + 500h ;; Espaço de armazenamento dos argumentos de um aplicativo
-Hexagon.Lista              = Hexagon.ArgumentosProcesso + 2000
+Hexagon.Heap.VBE        = Hexagon.Heap + 0
+Hexagon.Heap.CacheDisco = Hexagon.Heap.VBE + 1200  ;; Buffer de disco
+Hexagon.Heap.BCPs       = Hexagon.Heap.CacheDisco + 200000  ;; Localização dos blocos de controle de processos (BCPs)
+Hexagon.Heap.ProcTab    = Hexagon.Heap.BCPs + 5000 ;; Localização da tabela de processos
+Hexagon.Heap.ArgProc    = Hexagon.Heap.ProcTab + 5000 + 500h ;; Argumentos de um processo
+Hexagon.Heap.Temp       = Hexagon.Heap.ArgProc + 2000

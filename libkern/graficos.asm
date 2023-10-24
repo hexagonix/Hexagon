@@ -139,7 +139,7 @@ Hexagon.Kernel.Lib.Graficos.colocarCaractereBitmap:
 
     push edx
 
-    and eax, 0xff
+    and eax, 0xFF
     sub eax, 32
     mov ebx, Hexagon.Fontes.altura
 
@@ -310,7 +310,7 @@ Hexagon.Kernel.Lib.Graficos.atualizarTela:
     push es
     push ds
 
-    mov ax, 0x18
+    mov ax, 18h
     mov es, ax
     mov ds, ax
 
@@ -391,18 +391,18 @@ Hexagon.Kernel.Lib.Graficos.colocarPixel:
 
 Hexagon.Kernel.Lib.Graficos.desenharBlocoSyscall:
 
-    sub esi, dword[Hexagon.Processos.enderecoAplicativos]
+    sub esi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
     add esi, 500h
 
-    sub edi, dword[Hexagon.Processos.enderecoAplicativos]
+    sub edi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
     add edi, 500h
 
     call Hexagon.Kernel.Lib.Graficos.desenharBloco
 
-    add esi, dword[Hexagon.Processos.enderecoAplicativos]
+    add esi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
     sub esi, 500h
 
-    add edi, dword[Hexagon.Processos.enderecoAplicativos]
+    add edi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
     sub edi, 500h
 
     ret

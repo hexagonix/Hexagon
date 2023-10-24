@@ -204,7 +204,11 @@ struc Hexagon.Gerenciamento.Imagem.HAPP
 ;; funções de gerenciamento virtual e escalonamento de processos. O escalonador obtêm
 ;; o ponto de entrada e manipula os dados do cabeçalho em memória
 
+virtual at Hexagon.Heap.Temp ;; Esse objeto estará localizado em uma área de despejo
+
 Hexagon.Imagem.Executavel.HAPP Hexagon.Gerenciamento.Imagem.HAPP
+
+end virtual
 
 ;;************************************************************************************
 
@@ -224,27 +228,9 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
 
     call Hexagon.Kernel.FS.VFS.arquivoExiste
 
-    push eax ;; Aqui temos o tamanho
-    push esi
-
-    call Hexagon.Kernel.Arch.Gen.Mm.confirmarUsoMemoria ;; Vamos aqui confirmar o uso de memória
-
-    pop esi
-    pop eax
-
     push eax
 
-;; O que está sendo feito aqui deverá ser desfeito ao final do processo, visto que estamos
-;; utilizando uma área previamente alocada para a imagem e ela poderá ser rejeitada. Devemos
-;; confirmar o uso de memória que deve ser liberado após, independente do resultado
-
-    add dword[Hexagon.Processos.enderecoAplicativos], eax ;; Somar à área alocada
-    mov ebx, dword[Hexagon.Processos.tamanhoUltimoPrograma] ;; Pegar o offset da área
-    add dword[Hexagon.Processos.enderecoAplicativos], ebx ;; Somar isso ao endereço
-
-    mov edi, dword[Hexagon.Processos.enderecoAplicativos] ;; Endereço final para carregamento
-
-    sub edi, 500h
+    mov edi, Hexagon.Heap.Temp + 1000
 
 ;; Vamos carregar a imagem para começar as análises
 
@@ -253,11 +239,9 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
     jc .imagemAusente
 
 ;; Vamos começar a checagem do cabeçalho executável da imagem carregada
-
-    mov edi, [Hexagon.Processos.enderecoAplicativos]
-    sub edi, 500h
-
 ;; Pronto, agora devemos iniciar a análise da imagem
+
+    mov edi, Hexagon.Heap.Temp + 1000
 
 ;; Vamos verificar os 4 bytes do "número mágico" do cabeçalho
 
@@ -353,13 +337,5 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
 
     pop eax
     pop esi
-
-;; Agora vamos limpar a área de alocação utilizada para o teste
-
-    sub dword[Hexagon.Processos.enderecoAplicativos], eax
-    mov ebx, dword[Hexagon.Processos.tamanhoUltimoPrograma]
-    sub dword[Hexagon.Processos.enderecoAplicativos], ebx
-
-    call Hexagon.Kernel.Arch.Gen.Mm.liberarUsoMemoria ;; Vamos liberar a memória
 
     ret

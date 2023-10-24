@@ -87,13 +87,13 @@ Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2:
 
     mov al, 0xD4 ;; Estamos enviando um comando
 
-    out 0x64, al
+    out 64h, al
 
     call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2
 
     xchg bl, al ;; Obter AL de novo
 
-    out 0x60, al
+    out 60h, al
 
     ret
 
@@ -107,7 +107,7 @@ Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2:
 
 .aguardarLoop:
 
-    in al, 0x64 ;; 0x64 é o registrador de estado
+    in al, 64h ;; 64h é o registrador de estado
 
     bt ax, 1 ;; Checar segundo bit para torná-lo 0
     jnc .OK

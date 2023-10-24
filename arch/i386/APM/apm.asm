@@ -110,7 +110,7 @@ match =SIM, VERBOSE
 
 .aguardarLoop:
 
-    in al, 0x64 ;; 0x64 é o registrador de estado
+    in al, 64h ;; 64h é o registrador de estado
 
     bt ax, 1 ;; Checar segundo bit até se tornar 0
     jnc .OK
@@ -119,9 +119,9 @@ match =SIM, VERBOSE
 
 .OK:
 
-    mov al, 0xfe
+    mov al, 0xFE
 
-    out 0x64, al
+    out 64h, al
 
     cli
 

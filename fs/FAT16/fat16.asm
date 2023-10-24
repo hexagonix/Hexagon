@@ -524,8 +524,8 @@ Hexagon.Kernel.FS.FAT16.renomearArquivoFAT16B:
 
     movzx eax, word[Hexagon.VFS.FAT16B.tamanhoDirRaiz] ;; Setores para escrever
     mov esi, dword[Hexagon.VFS.FAT16B.dirRaiz] ;; LBA diretório raiz
-    mov cx, 0x50 ;; Segmento
-    mov edi, Hexagon.CacheDisco + 20000 ;; Deslocamento
+    mov cx, 50h ;; Segmento
+    mov edi, Hexagon.Heap.CacheDisco + 20000 ;; Deslocamento
     mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
 
     call Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores
@@ -593,8 +593,8 @@ Hexagon.Kernel.FS.FAT16.arquivoExisteFAT16B:
 
     movzx eax, word[Hexagon.VFS.FAT16B.tamanhoDirRaiz] ;; Setores para carregar
     mov esi, dword[Hexagon.VFS.FAT16B.dirRaiz] ;; LBA do diretório raiz
-    mov cx, 0x50 ;; Segmento
-    mov edi, Hexagon.CacheDisco + 20000 ;; Deslocamento
+    mov cx, 50h ;; Segmento
+    mov edi, Hexagon.Heap.CacheDisco + 20000 ;; Deslocamento
     mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
 
     call Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores
@@ -602,7 +602,7 @@ Hexagon.Kernel.FS.FAT16.arquivoExisteFAT16B:
 ;; Procurar nome em todas as entradas
 
     movzx edx, word[Hexagon.VFS.FAT16B.entradasRaiz] ;; Total de pastas ou arquivos no diretório raiz
-    mov ebx, Hexagon.CacheDisco + 500h + 20000
+    mov ebx, Hexagon.Heap.CacheDisco + 500h + 20000
 
     cld ;; Limpar bandeira de direção
 
@@ -693,15 +693,15 @@ Hexagon.Kernel.FS.FAT16.carregarArquivoFAT16B:
 
     movzx eax, word[Hexagon.VFS.FAT16B.setoresPorFAT] ;; Setores para carregar
     mov esi, dword[Hexagon.VFS.FAT16B.FAT] ;; LBA da FAT
-    mov ecx, 0x50 ;; Segmento
-    mov edi, Hexagon.CacheDisco + 20000 ;; Deslocamento
+    mov ecx, 50h ;; Segmento
+    mov edi, Hexagon.Heap.CacheDisco + 20000 ;; Deslocamento
 
     mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
 
     call Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores
 
     mov ebp, dword[Hexagon.VFS.FAT16B.tamanhoCluster] ;; Salvar tamanho do cluster
-    mov cx,  0x00 ;; Segmento de modo real
+    mov cx,  00h ;; Segmento de modo real
     mov edi, dword[.enderecoCarregamento] ;; Deslocamento
 
 ;; Encontrar cluster e carregar a cadeia de clusters
@@ -736,7 +736,7 @@ Hexagon.Kernel.FS.FAT16.carregarArquivoFAT16B:
 
     push edi
 
-    mov edi, Hexagon.CacheDisco + 500h
+    mov edi, Hexagon.Heap.CacheDisco + 500h
 
     call Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores
 
@@ -748,7 +748,7 @@ Hexagon.Kernel.FS.FAT16.carregarArquivoFAT16B:
 
     add edi, 500h
 
-    mov esi, Hexagon.CacheDisco
+    mov esi, Hexagon.Heap.CacheDisco
     mov ecx, ebp ;; EBP possui os bytes por setor
 
     cld
@@ -763,7 +763,7 @@ Hexagon.Kernel.FS.FAT16.carregarArquivoFAT16B:
 
     shl ebx, 1 ;; BX * 2 (2 bytes na entrada)
 
-    add ebx, Hexagon.CacheDisco + 20000 ;; Localização da FAT
+    add ebx, Hexagon.Heap.CacheDisco + 20000 ;; Localização da FAT
 
     mov si, word[ebx] ;; SI contém o próximo cluster
 
@@ -830,8 +830,8 @@ Hexagon.Kernel.FS.FAT16.listarArquivosFAT16B:
 
     movzx eax, word[Hexagon.VFS.FAT16B.tamanhoDirRaiz] ;; Setores para carregar
     mov esi, dword[Hexagon.VFS.FAT16B.dirRaiz] ;; LBA do diretório raiz
-    mov cx, 0x50 ;; Segmento
-    mov edi, Hexagon.CacheDisco + 20000 ;; Deslocamento
+    mov cx, 50h ;; Segmento
+    mov edi, Hexagon.Heap.CacheDisco + 20000 ;; Deslocamento
     mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
 
     call Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores
@@ -840,9 +840,9 @@ Hexagon.Kernel.FS.FAT16.listarArquivosFAT16B:
 
 ;; Construir a lista
 
-    mov edx, Hexagon.CacheDisco + 500h ;; Índice na nova lista
+    mov edx, Hexagon.Heap.CacheDisco + 500h ;; Índice na nova lista
     mov ebx, 0 ;; Contador de arquivos
-    mov esi, Hexagon.CacheDisco + 20000 ;; Deslocamento no diretório raiz
+    mov esi, Hexagon.Heap.CacheDisco + 20000 ;; Deslocamento no diretório raiz
 
     sub esi, 32
 
@@ -904,7 +904,7 @@ Hexagon.Kernel.FS.FAT16.listarArquivosFAT16B:
 
     mov byte[edx-500h], 0 ;; Fim da string
 
-    mov esi, Hexagon.CacheDisco
+    mov esi, Hexagon.Heap.CacheDisco
     mov eax, ebx
 
     jmp .fim
@@ -958,8 +958,8 @@ Hexagon.Kernel.FS.FAT16.salvarArquivoFAT16B:
 
     movzx eax, word[Hexagon.VFS.FAT16B.setoresPorFAT] ;; Setores para carregar
     mov esi, dword[Hexagon.VFS.FAT16B.FAT] ;; LBA do diretório raiz
-    mov ecx, 0x50 ;; Segmento
-    mov edi, Hexagon.CacheDisco + 20000 ;; Deslocamento
+    mov ecx, 50h ;; Segmento
+    mov edi, Hexagon.Heap.CacheDisco + 20000 ;; Deslocamento
 
     mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
 
@@ -983,12 +983,12 @@ Hexagon.Kernel.FS.FAT16.salvarArquivoFAT16B:
 
     mov ecx, eax ;; Contador do loop
 
-    mov esi, Hexagon.CacheDisco + 20000
+    mov esi, Hexagon.Heap.CacheDisco + 20000
 
     add esi, (3*2) ;; Clusters reservados
 
     mov edx, 3 ;; Contador de clusters lógicos
-    mov edi, Hexagon.CacheDisco + 500h ;; Ponteiro para a lista de clusters livres
+    mov edi, Hexagon.Heap.CacheDisco + 500h ;; Ponteiro para a lista de clusters livres
     mov eax, 0
 
 ;; Obter lista de clusters livres da FAT
@@ -1018,7 +1018,7 @@ Hexagon.Kernel.FS.FAT16.salvarArquivoFAT16B:
 
     loop .encontrarClustersLivresLoop
 
-    movzx edx, word[Hexagon.CacheDisco]
+    movzx edx, word[Hexagon.Heap.CacheDisco]
 
     push edx ;; Cluster livre
 
@@ -1027,13 +1027,13 @@ Hexagon.Kernel.FS.FAT16.salvarArquivoFAT16B:
 ;; Criar cadeia de clusters na FAT
 
     mov ecx, dword[.clustersNecessarios]
-    mov esi, Hexagon.CacheDisco ;; Lista de clusters livres (words)
+    mov esi, Hexagon.Heap.CacheDisco ;; Lista de clusters livres (words)
 
 .criarCadeiaClusters:
 
     mov dx, word[esi] ;; Cluster atual
 
-    mov edi, Hexagon.CacheDisco + 20000 ;; Endereço da FAT
+    mov edi, Hexagon.Heap.CacheDisco + 20000 ;; Endereço da FAT
     shl dx, 1 ;; Multiplicar por 2
 
     add di, dx ;; EDI é o ponteiro da atual entrada FAT
@@ -1056,8 +1056,8 @@ Hexagon.Kernel.FS.FAT16.salvarArquivoFAT16B:
 
     movzx eax, word[Hexagon.VFS.FAT16B.setoresPorFAT] ;; Setores para escrever
     mov esi, dword[Hexagon.VFS.FAT16B.FAT] ;; LBA do diretório raiz
-    mov ecx, 0x50 ;; Segmento
-    mov edi, Hexagon.CacheDisco + 20000 ;; Deslocamento
+    mov ecx, 50h ;; Segmento
+    mov edi, Hexagon.Heap.CacheDisco + 20000 ;; Deslocamento
 
     mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
 
@@ -1085,15 +1085,15 @@ Hexagon.Kernel.FS.FAT16.salvarArquivoFAT16B:
 
     movzx eax, word[Hexagon.VFS.FAT16B.tamanhoDirRaiz] ;; Setores para escrever
     mov esi, dword[Hexagon.VFS.FAT16B.dirRaiz] ;; LBA diretório raiz
-    mov cx, 0x50 ;; Segmento
-    mov edi, Hexagon.CacheDisco + 20000 ;; Deslocamento
+    mov cx, 50h ;; Segmento
+    mov edi, Hexagon.Heap.CacheDisco + 20000 ;; Deslocamento
     mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
 
     call Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores
 
 ;; Salvar dados nos clusters livres
 
-    mov ebx, Hexagon.CacheDisco ;; Lista de clusters vazios
+    mov ebx, Hexagon.Heap.CacheDisco ;; Lista de clusters vazios
     movzx ecx, word[.clustersNecessarios]
 
 ;; Converter endereço lógico [cluster] para LBA
@@ -1109,7 +1109,7 @@ Hexagon.Kernel.FS.FAT16.salvarArquivoFAT16B:
 ;; Copiar dados atuais para um buffer temporário
 
     mov esi, ebp
-    mov edi, Hexagon.CacheDisco + 500h + 20000
+    mov edi, Hexagon.Heap.CacheDisco + 500h + 20000
     mov ecx, dword[Hexagon.VFS.FAT16B.tamanhoCluster]
 
     rep movsb
@@ -1133,7 +1133,7 @@ Hexagon.Kernel.FS.FAT16.salvarArquivoFAT16B:
 
 ;; Escrever buffer temporário
 
-    mov edi, Hexagon.CacheDisco + 500h + 20000
+    mov edi, Hexagon.Heap.CacheDisco + 500h + 20000
     mov ecx, 0 ;; Segmento de modo real
 
     call Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores
@@ -1200,8 +1200,8 @@ Hexagon.Kernel.FS.FAT16.deletarArquivoFAT16B:
 
     movzx eax, word[Hexagon.VFS.FAT16B.tamanhoDirRaiz] ;; Setores para escrever
     mov esi, dword[Hexagon.VFS.FAT16B.dirRaiz] ;; LBA do diretório raiz
-    mov cx, 0x50 ;; Segmento
-    mov edi, Hexagon.CacheDisco + 20000 ;; Deslocamento
+    mov cx, 50h ;; Segmento
+    mov edi, Hexagon.Heap.CacheDisco + 20000 ;; Deslocamento
     mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
 
     call Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores
@@ -1212,8 +1212,8 @@ Hexagon.Kernel.FS.FAT16.deletarArquivoFAT16B:
 
     movzx eax, word[Hexagon.VFS.FAT16B.setoresPorFAT] ;; Setores para carregar
     mov esi, dword[Hexagon.VFS.FAT16B.FAT] ;; LBA da FAT
-    mov ecx, 0x50 ;; Segmento
-    mov edi, Hexagon.CacheDisco + 20000 ;; Deslocamento
+    mov ecx, 50h ;; Segmento
+    mov edi, Hexagon.Heap.CacheDisco + 20000 ;; Deslocamento
 
     mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
 
@@ -1223,7 +1223,7 @@ Hexagon.Kernel.FS.FAT16.deletarArquivoFAT16B:
 
 ;; Calcular próximo cluster
 
-    mov edi, Hexagon.CacheDisco + 20000 ;; Tabela FAT
+    mov edi, Hexagon.Heap.CacheDisco + 20000 ;; Tabela FAT
     movzx esi, word[.cluster]
     shl esi, 1 ;; Multiplica por 2
 
@@ -1246,8 +1246,8 @@ Hexagon.Kernel.FS.FAT16.deletarArquivoFAT16B:
 
     movzx eax, word[Hexagon.VFS.FAT16B.setoresPorFAT] ;; Setores para escrever
     mov esi, dword[Hexagon.VFS.FAT16B.FAT] ;; LBA da FAT
-    mov ecx, 0x50 ;; Segmento
-    mov edi, Hexagon.CacheDisco + 20000 ;; Deslocamento
+    mov ecx, 50h ;; Segmento
+    mov edi, Hexagon.Heap.CacheDisco + 20000 ;; Deslocamento
 
     mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
 
@@ -1436,13 +1436,13 @@ Hexagon.Kernel.FS.FAT16.novoArquivoFAT16B:
 
     movzx eax, word[Hexagon.VFS.FAT16B.tamanhoDirRaiz] ;; Setores para carregar
     mov esi, dword[Hexagon.VFS.FAT16B.dirRaiz] ;; LBA diretório raiz
-    mov cx, 0x50 ;; Segmento
-    mov edi, Hexagon.CacheDisco + 20000 ;; Deslocamento
+    mov cx, 50h ;; Segmento
+    mov edi, Hexagon.Heap.CacheDisco + 20000 ;; Deslocamento
     mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
 
     call Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores
 
-    mov edi, Hexagon.CacheDisco + 20000
+    mov edi, Hexagon.Heap.CacheDisco + 20000
     movzx ecx, word[Hexagon.VFS.FAT16B.entradasRaiz]
 
 ;; Procurar entrada vazia no diretório raiz
@@ -1495,8 +1495,8 @@ Hexagon.Kernel.FS.FAT16.novoArquivoFAT16B:
 
     movzx eax, word[Hexagon.VFS.FAT16B.tamanhoDirRaiz] ;; Setores para escrever
     mov esi, dword[Hexagon.VFS.FAT16B.dirRaiz] ;; LBA do diretório raiz
-    mov cx, 0x50 ;; Segmento
-    mov edi, Hexagon.CacheDisco + 20000 ;; Deslocamento
+    mov cx, 50h ;; Segmento
+    mov edi, Hexagon.Heap.CacheDisco + 20000 ;; Deslocamento
     mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
 
     call Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores

@@ -112,7 +112,7 @@ struc Hexagon.VFS.FAT
 .atributoOculto        equ 00h    ;; Atributo de um arquivo oculto
 .atributoSistema       equ 04h    ;; Atributo de um arquivo marcado como de sistema
 .atributoDiretorio     equ 10h    ;; Atributo de um diretório
-.atributoLFN           equ 0x0f   ;; Atributo de um nome de arquivo longo (Long File Name)
+.atributoLFN           equ 0x0F   ;; Atributo de um nome de arquivo longo (Long File Name)
 .atributoDeletado      equ 0xE5   ;; Atributo de arquivo deletado/entrada livre
 .atributoUltimoCluster equ 0xFFF8 ;; Atributo de último cluster na cadeia
 .bitDiretorio          equ 04h    ;; Bit de um diretório = .atributoDiretorio, mas para bit check

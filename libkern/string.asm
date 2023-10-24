@@ -101,7 +101,7 @@ Hexagon.Kernel.Lib.String.tamanhoString:
 
     mov edi, esi
 
-    or ecx, 0xffffffff
+    or ecx, 0xFFFFFFFF
 
     xor al, al
 
@@ -109,7 +109,7 @@ Hexagon.Kernel.Lib.String.tamanhoString:
 
     repne scasb ;; Procurar fim da string em EDI
 
-    or eax, 0xffffffff
+    or eax, 0xFFFFFFFF
 
     sub eax, ecx
 
@@ -536,7 +536,7 @@ Hexagon.Kernel.Lib.String.stringParaInteiro:
 
     dec esi
 
-    sub bl, 0x30
+    sub bl, 30h
 
     cmp bl, 9
     ja .numeroInvalido
@@ -890,7 +890,7 @@ Hexagon.Kernel.Lib.String.BCDParaASCII:
     mov ah, al
     and ax, 0xF00F ;; Mascarar bits
     shr ah, 4      ;; Deslocar para direita AH para obter BCD desempacotado
-    or ax, 0x3030  ;; Combinar com 30 para obter ASCII
+    or ax, 3030h   ;; Combinar com 30 para obter ASCII
     xchg ah, al    ;; Trocar por convenção ASCII
 
     pop ecx
