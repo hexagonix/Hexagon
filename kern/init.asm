@@ -71,36 +71,78 @@
 ;;
 ;;************************************************************************************
 
-use32
+Hexagon.Init.iniciarModoUsuario:
 
-;; Arquitetura do Hexagon
-;;
-;; A arquitetura pode ser:
-;;
-;; 1 - i386
-;; 2 - x86_x64
-;; 3... Outras arquiteturas (futuras implementações?)
+    logHexagon Hexagon.Verbose.modoUsuario, Hexagon.Dmesg.Prioridades.p5
 
-Hexagon.Arquitetura.suporte = 1 ;; Arquitetura desta imagem
+.iniciarInit:
 
-Hexagon.Versao.definicao equ "1.0.1-beta5"
+;; Agora o Hexagon tentará carregar o init e, em caso de sucesso, transferir o controle para
+;; ele, que finalizará a inicialização do sistema em modo usuário
 
-Hexagon.Versao:
+;; Primeiro, verificar se o arquivo existe no volume
 
-.numeroVersao     = 1 ;; Número principal de versão do Hexagon
-.numeroSubversao  = 0 ;; Número de subversão (secundária) do Hexagon
-.caractereRevisao = 1 ;; Adicionar caractere de revisão, caso necessário, entre aspas (funciona como caractere)
+    logHexagon Hexagon.Verbose.init, Hexagon.Dmesg.Prioridades.p5
 
-.nomeKernel:
-db "Hexagon", 0 ;; Nome fornecido ao espaço de usuário
-.build:
-db __stringdia, "/", __stringmes, "/", __stringano, " "
-db __stringhora, ":", __stringminuto, ":", __stringsegundo, " GMT", 0
+    mov esi, Hexagon.Init.Const.initHexagon
 
-Hexagon.Info:
+    call Hexagon.Kernel.FS.VFS.arquivoExiste
 
-.sobreHexagon:
-db 10, 10
-db "Hexagon kernel version ", Hexagon.Versao.definicao, 10
-db "Copyright (C) 2015-", __stringano, " Felipe Miguel Nery Lunkes", 10
-db "All rights reserved.", 0
+    jc .initNaoEncontrado
+
+    logHexagon Hexagon.Verbose.initEncontrado, Hexagon.Dmesg.Prioridades.p5
+
+    mov eax, 0 ;; Não fornecer argumentos
+    mov esi, Hexagon.Init.Const.initHexagon ;; Nome do arquivo
+
+    clc
+
+    call Hexagon.Kernel.Kernel.Proc.criarProcesso ;; Solicitar o carregamento do init
+
+    logHexagon Hexagon.Verbose.semInit, Hexagon.Dmesg.Prioridades.p5
+
+    jnc .fimInit
+
+.initNaoEncontrado: ;; O init não pôde ser localizado
+
+;; Por enquanto, o Hexagon tentará carregar o shell padrão do sistema
+
+    logHexagon Hexagon.Verbose.initNaoEncontrado, Hexagon.Dmesg.Prioridades.p5
+
+    mov eax, 0 ;; Não fornecer argumentos
+    mov esi, Hexagon.Init.Const.shellHexagon ;; Nome do arquivo
+
+    clc
+
+    call Hexagon.Kernel.Kernel.Proc.criarProcesso ;; Solicitar o carregamento do shell padrão
+
+    jnc .fimShell
+
+.fimInit: ;; Imprimir mensagem e finalizar o sistema
+
+    mov esi, Hexagon.Verbose.Init.semInit
+
+    mov eax, 1
+
+    call Hexagon.Kernel.Kernel.Panico.panico
+
+    jmp .fim
+
+.fimShell:
+
+    mov esi, Hexagon.Verbose.Init.shellFinalizado
+
+    mov eax, 1
+
+    call Hexagon.Kernel.Kernel.Panico.panico ;; Solicitar montagem de tela de erro
+
+.fim:
+
+    ret ;; Nunca chegaremos até aqui
+
+;;************************************************************************************
+
+Hexagon.Init.Const:
+
+.initHexagon:  db "init", 0 ;; Nome da imagem do init no volume
+.shellHexagon: db "sh", 0   ;; Nome do shell padrão

@@ -133,6 +133,7 @@ include "dev/dev.asm"                 ;; Funções de gerenciamento e abstraçã
 
 include "kern/proc.asm"               ;; Funções para a manipulação de processos
 include "libkern/HAPP.asm"            ;; Funções para tratamento de imagens HAPP
+include "kern/init.asm"               ;; Função para ir para o modo usuário
 
 ;; Sistemas de arquivos suportados pelo Hexagon
 
@@ -337,83 +338,20 @@ Hexagon.Autoconfig:
 
 ;;************************************************************************************
 
-Hexagon.iniciarModoUsuario:
+Hexagon.ModoUsuario:
 
-    logHexagon Hexagon.Verbose.modoUsuario, Hexagon.Dmesg.Prioridades.p5
+;; Agora, devemos ir para o modo usuário, executando o primeiro processo, init. Caso
+;; init não esteja presente no volume, tentar executar o shell padrão.
 
-.iniciarInit:
-
-;; Agora o Hexagon tentará carregar o init e, em caso de sucesso, transferir o controle para
-;; ele, que finalizará a inicialização do sistema em modo usuário
-
-;; Primeiro, verificar se o arquivo existe no volume
-
-    logHexagon Hexagon.Verbose.init, Hexagon.Dmesg.Prioridades.p5
-
-    mov esi, Hexagon.Init.Const.initHexagon
-
-    call Hexagon.Kernel.FS.VFS.arquivoExiste
-
-    jc .initNaoEncontrado
-
-    logHexagon Hexagon.Verbose.initEncontrado, Hexagon.Dmesg.Prioridades.p5
-
-    mov eax, 0 ;; Não fornecer argumentos
-    mov esi, Hexagon.Init.Const.initHexagon ;; Nome do arquivo
-
-    clc
-
-    call Hexagon.Kernel.Kernel.Proc.criarProcesso ;; Solicitar o carregamento do init
-
-    logHexagon Hexagon.Verbose.semInit, Hexagon.Dmesg.Prioridades.p5
-
-    jnc .fimInit
-
-.initNaoEncontrado: ;; O init não pôde ser localizado
-
-;; Por enquanto, o Hexagon tentará carregar o shell padrão do sistema
-
-    logHexagon Hexagon.Verbose.initNaoEncontrado, Hexagon.Dmesg.Prioridades.p5
-
-    mov eax, 0 ;; Não fornecer argumentos
-    mov esi, Hexagon.Init.Const.shellHexagon ;; Nome do arquivo
-
-    clc
-
-    call Hexagon.Kernel.Kernel.Proc.criarProcesso ;; Solicitar o carregamento do shell padrão
-
-    jnc .fimShell
-
-.fimInit: ;; Imprimir mensagem e finalizar o sistema
-
-    mov esi, Hexagon.Verbose.Init.semInit
-
-    mov eax, 1
-
-    call Hexagon.Kernel.Kernel.Panico.panico
-
-.fimShell:
-
-    mov esi, Hexagon.Verbose.Init.shellFinalizado
-
-    mov eax, 1
-
-    call Hexagon.Kernel.Kernel.Panico.panico ;; Solicitar montagem de tela de erro
-
-;;************************************************************************************
-
-Hexagon.Init.Const:
-
-.initHexagon:  db "init", 0 ;; Nome da imagem do init no volume
-.shellHexagon: db "sh", 0   ;; Nome do shell padrão
+    call Hexagon.Init.iniciarModoUsuario
 
 ;;************************************************************************************
 
 Hexagon.Heap:
 
-Hexagon.Heap.VBE        = Hexagon.Heap + 0
-Hexagon.Heap.CacheDisco = Hexagon.Heap.VBE + 1200  ;; Buffer de disco
-Hexagon.Heap.BCPs       = Hexagon.Heap.CacheDisco + 200000  ;; Localização dos blocos de controle de processos (BCPs)
-Hexagon.Heap.ProcTab    = Hexagon.Heap.BCPs + 5000 ;; Localização da tabela de processos
-Hexagon.Heap.ArgProc    = Hexagon.Heap.ProcTab + 5000 + 500h ;; Argumentos de um processo
-Hexagon.Heap.Temp       = Hexagon.Heap.ArgProc + 2000
+Hexagon.Heap.VBE        = Hexagon.Heap            + 0           ;; Bloco de controle de vídeo
+Hexagon.Heap.CacheDisco = Hexagon.Heap.VBE        + 1200        ;; Buffer de disco
+Hexagon.Heap.BCPs       = Hexagon.Heap.CacheDisco + 200000      ;; Blocos de controle de processos
+Hexagon.Heap.ProcTab    = Hexagon.Heap.BCPs       + 5000        ;; Tabela de processos
+Hexagon.Heap.ArgProc    = Hexagon.Heap.ProcTab    + 5000 + 500h ;; Argumentos de um processo
+Hexagon.Heap.Temp       = Hexagon.Heap.ArgProc    + 2000        ;; Dados temporários

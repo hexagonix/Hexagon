@@ -137,13 +137,12 @@ virtual at Hexagon.Heap.BCPs ;; Este objeto está localizado na posição defini
 
 Hexagon.Processos.BCP.esp: ;; Bloco de Controle de Processo
 times Hexagon.Processos.BCP.limiteProcessos + 1 dd 0
-.ponteiro: ;; Ponteiro para a pilha do processo
-dd 0
+.ponteiro: dd 0 ;; Ponteiro para a pilha do processo
+
 
 Hexagon.Processos.BCP.tamanho:  ;; Bloco de mapeamento de memória
 times Hexagon.Processos.BCP.limiteProcessos + 1 dd 0
-.ponteiro: ;; Ponteiro para o endereço de memória do processo
-dd 0
+.ponteiro: dd 0 ;; Ponteiro para o endereço de memória do processo
 
 Hexagon.Processos.BCP:
 .codigoErro:            dd 0 ;; Código de erro emitido pelo último processo
