@@ -349,7 +349,7 @@ Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon:
 
 ;; O PID do processo será exibido na tela
 
-    movzx eax, word[Hexagon.Processos.Imagens.PID] ;; Obter o PID
+    movzx eax, word[Hexagon.Processos.BCP.PID] ;; Obter o PID
 
     call Hexagon.Kernel.Lib.String.paraString ;; Transformar em uma string
 
@@ -404,7 +404,7 @@ Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon:
 
 ;; O PID do processo será exibido na tela
 
-    movzx eax, word[Hexagon.Processos.Imagens.PID] ;; Obter o PID
+    movzx eax, word[Hexagon.Processos.BCP.PID] ;; Obter o PID
 
     call Hexagon.Kernel.Lib.String.paraString ;; Transformar em uma string
 

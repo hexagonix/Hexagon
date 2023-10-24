@@ -136,16 +136,16 @@ Hexagon.Processos Hexagon.Gerenciamento.Tarefas
 virtual at Hexagon.Heap.BCPs ;; Este objeto está localizado na posição definida
 
 Hexagon.Processos.BCP.esp: ;; Bloco de Controle de Processo
-times Hexagon.Processos.Imagens.limiteProcessos + 1 dd 0
+times Hexagon.Processos.BCP.limiteProcessos + 1 dd 0
 .ponteiro: ;; Ponteiro para a pilha do processo
 dd 0
 
 Hexagon.Processos.BCP.tamanho:  ;; Bloco de mapeamento de memória
-times Hexagon.Processos.Imagens.limiteProcessos + 1 dd 0
+times Hexagon.Processos.BCP.limiteProcessos + 1 dd 0
 .ponteiro: ;; Ponteiro para o endereço de memória do processo
 dd 0
 
-Hexagon.Processos.Imagens:
+Hexagon.Processos.BCP:
 .codigoErro:            dd 0 ;; Código de erro emitido pelo último processo
 .tamanhoProcessos:      dd 0 ;; Endereço base de carregamento de processos, fornececido pelo alocador
 .modoTerminar:          db 0 ;; Marca se o aplicativo deve ficar residente ou não
@@ -161,10 +161,9 @@ Hexagon.Processos.Imagens:
 .imagemIncompativel:    db 0 ;; Marca se uma imagem é incompatível
 .entradaHAPP:           dd 0 ;; Entrada da imagem HAPP
 .tipoImagem:            db 0 ;; Tipo executável da imagem
-
 .tamanhoImagem: ;; Tamanho do programa atual na pilha de execução
-times Hexagon.Processos.Imagens.limiteProcessos + 1 dd 0
-.nomeProcesso:  ;; Armazena o nome do processo
+times Hexagon.Processos.BCP.limiteProcessos + 1 dd 0
+.nomeProcesso: ;; Armazena o nome do processo
 times 11 db 0
 
 end virtual
@@ -175,7 +174,7 @@ end virtual
 
 Hexagon.Kernel.Kernel.Proc.destravar:
 
-    mov word[Hexagon.Processos.Imagens.processoBloqueado], 0h
+    mov word[Hexagon.Processos.BCP.processoBloqueado], 0h
 
     ret
 
@@ -185,7 +184,7 @@ Hexagon.Kernel.Kernel.Proc.destravar:
 
 Hexagon.Kernel.Kernel.Proc.travar:
 
-    mov word[Hexagon.Processos.Imagens.processoBloqueado], 01h
+    mov word[Hexagon.Processos.BCP.processoBloqueado], 01h
 
     ret
 
@@ -203,7 +202,7 @@ Hexagon.Kernel.Kernel.Proc.iniciarEscalonador:
     push ds
     pop es
 
-    mov edx, 13*Hexagon.Processos.Imagens.limiteProcessos
+    mov edx, 13*Hexagon.Processos.BCP.limiteProcessos
     mov ebx, 0
 
 .loop:
@@ -225,17 +224,17 @@ Hexagon.Kernel.Kernel.Proc.iniciarEscalonador:
 
     mov esi, Hexagon.Heap.ProcTab
 
-    mov ebx, 13*Hexagon.Processos.Imagens.limiteProcessos
+    mov ebx, 13*Hexagon.Processos.BCP.limiteProcessos
 
     mov byte[esi+ebx], 0
 
 ;; Pronto, tudo feito para a área de armazenamento do nome dos processos, vamos continuar
 
-    mov dword[Hexagon.Processos.Imagens.PIDAtual], 0
+    mov dword[Hexagon.Processos.BCP.PIDAtual], 0
 
-    mov dword[Hexagon.Processos.Imagens.PID], 0
+    mov dword[Hexagon.Processos.BCP.PID], 0
 
-    mov dword[Hexagon.Processos.Imagens.contagemProcessos], 0
+    mov dword[Hexagon.Processos.BCP.contagemProcessos], 0
 
     logHexagon Hexagon.Verbose.escalonador, Hexagon.Dmesg.Prioridades.p5
 
@@ -255,7 +254,7 @@ Hexagon.Kernel.Kernel.Proc.iniciarEscalonador:
 
 Hexagon.Kernel.Kernel.Proc.configurarAlocacaoProcessos:
 
-    mov dword[Hexagon.Processos.Imagens.tamanhoProcessos], ebx
+    mov dword[Hexagon.Processos.BCP.tamanhoProcessos], ebx
 
     ret
 
@@ -273,10 +272,10 @@ Hexagon.Kernel.Kernel.Proc.matarProcesso:
 ;; por parte do sistema. Isso é uma medida de segurança que visa prevenir o fechamento de
 ;; processos vitais como o gerenciador de login, por exemplo.
 
-    cmp dword[Hexagon.Processos.Imagens.processoBloqueado], 1 ;; Caso a função esteja desabilitada, a ocorrência será ignorada
+    cmp dword[Hexagon.Processos.BCP.processoBloqueado], 1 ;; Caso a função esteja desabilitada, a ocorrência será ignorada
     je .fim
 
-    cmp byte[Hexagon.Processos.Imagens.contagemProcessos], 0 ;; Não exite processo para ser fechado
+    cmp byte[Hexagon.Processos.BCP.contagemProcessos], 0 ;; Não exite processo para ser fechado
     je .fim
 
 match =SIM, VERBOSE
@@ -346,13 +345,13 @@ Hexagon.Kernel.Kernel.Proc.criarProcesso:
 
     push eax
 
-    mov eax, [Hexagon.Processos.Imagens.contagemProcessos]
+    mov eax, [Hexagon.Processos.BCP.contagemProcessos]
 
 ;; Caso o número de processos carregados seja menos que o limite, proceder
 ;; com o carregamento. Caso contrário, impedir o carregamento retornando
 ;; um erro
 
-    cmp eax, Hexagon.Processos.Imagens.limiteProcessos - 1 ;; Número limite de processos carregados
+    cmp eax, Hexagon.Processos.BCP.limiteProcessos - 1 ;; Número limite de processos carregados
     jl .limiteDisponivel
 
     pop eax
@@ -437,7 +436,7 @@ Hexagon.Kernel.Kernel.Proc.criarProcesso:
 
     popa ;; Restaurar a pilha
 
-    mov byte[Hexagon.Processos.Imagens.codigoRetorno], 01h
+    mov byte[Hexagon.Processos.BCP.codigoRetorno], 01h
 
     mov eax, 01h ;; Enviar código de erro
 
@@ -454,7 +453,7 @@ Hexagon.Kernel.Kernel.Proc.criarProcesso:
 
     popa ;; Restaurar a pilha
 
-    mov byte[Hexagon.Processos.Imagens.codigoRetorno], 04h
+    mov byte[Hexagon.Processos.BCP.codigoRetorno], 04h
 
     mov eax, 04h ;; Enviar código de erro
 
@@ -480,16 +479,16 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcesso:
     push eax
     push ebx
 
-    mov ebx, dword[Hexagon.Processos.Imagens.PID]
+    mov ebx, dword[Hexagon.Processos.BCP.PID]
     inc ebx
-    mov dword[Hexagon.Processos.Imagens.tamanhoImagem+ebx*4], eax
+    mov dword[Hexagon.Processos.BCP.tamanhoImagem+ebx*4], eax
 
     call Hexagon.Kernel.Arch.Gen.Mm.confirmarUsoMemoria
 
     pop ebx
     pop eax
 
-    add ebx, [Hexagon.Processos.Imagens.tamanhoUltimoProcesso]
+    add ebx, [Hexagon.Processos.BCP.tamanhoUltimoProcesso]
 
     mov eax, [Hexagon.Processos.BCP.tamanho.ponteiro]
 
@@ -497,16 +496,16 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcesso:
 
     mov dword[eax], ebx
 
-    mov dword[Hexagon.Processos.Imagens.tamanhoUltimoProcesso], ebx
+    mov dword[Hexagon.Processos.BCP.tamanhoUltimoProcesso], ebx
 
     add dword[Hexagon.Processos.BCP.tamanho.ponteiro], 4
 
-    cmp dword[Hexagon.Processos.BCP.tamanho.ponteiro], 4 * Hexagon.Processos.Imagens.limiteProcessos
+    cmp dword[Hexagon.Processos.BCP.tamanho.ponteiro], 4 * Hexagon.Processos.BCP.limiteProcessos
     ja Hexagon.Kernel.Kernel.Proc.numeroMaximoProcessosAtingido
 
-    add dword[Hexagon.Processos.Imagens.tamanhoProcessos], ebx
+    add dword[Hexagon.Processos.BCP.tamanhoProcessos], ebx
 
-    mov edi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
+    mov edi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
 
     sub edi, 500h
 
@@ -518,7 +517,7 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcesso:
 
     jc .erroCarregandoImagem
 
-    mov byte[Hexagon.Processos.Imagens.codigoRetorno], 00h ;; Remover o sinalizador de erro
+    mov byte[Hexagon.Processos.BCP.codigoRetorno], 00h ;; Remover o sinalizador de erro
 
     call Hexagon.Kernel.Kernel.Proc.adicionarProcessoPilha
 
@@ -532,7 +531,7 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcesso:
 
     popa ;; Restaurar a pilha
 
-    mov byte[Hexagon.Processos.Imagens.codigoRetorno], 02h
+    mov byte[Hexagon.Processos.BCP.codigoRetorno], 02h
 
     mov eax, 02h ;; Enviar código de erro
 
@@ -549,7 +548,7 @@ Hexagon.Kernel.Kernel.Proc.executarProcesso:
 ;; Agora devemos calcular os endereços base de código e dados do programa, os colocando
 ;; na entrada da GDT do programa
 
-    mov eax, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
+    mov eax, dword[Hexagon.Processos.BCP.tamanhoProcessos]
     mov edx, eax
     and eax, 0xFFFF
 
@@ -580,7 +579,7 @@ Hexagon.Kernel.Kernel.Proc.executarProcesso:
 
     add dword[Hexagon.Processos.BCP.esp.ponteiro], 4
 
-    cmp dword[Hexagon.Processos.BCP.esp.ponteiro], 4*Hexagon.Processos.Imagens.limiteProcessos
+    cmp dword[Hexagon.Processos.BCP.esp.ponteiro], 4*Hexagon.Processos.BCP.limiteProcessos
     ja Hexagon.Kernel.Kernel.Proc.numeroMaximoProcessosAtingido
 
     sti ;; Ter certeza que as interrupções estão disponíveis
@@ -589,12 +588,12 @@ Hexagon.Kernel.Kernel.Proc.executarProcesso:
     push 30h ;; Segmento de código do processo
     push dword [Hexagon.Imagem.Executavel.HAPP.entradaHAPP] ;; Ponto de entrada da imagem
 
-    inc dword[Hexagon.Processos.Imagens.contagemProcessos]
-    inc dword[Hexagon.Processos.Imagens.PID]
+    inc dword[Hexagon.Processos.BCP.contagemProcessos]
+    inc dword[Hexagon.Processos.BCP.PID]
 
     mov edi, Hexagon.Heap.ArgProc
 
-    sub edi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
+    sub edi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
 
     mov ax, 38h ;; Segmento de dados do processo
     mov ds, ax
@@ -610,7 +609,7 @@ Hexagon.Kernel.Kernel.Proc.encerrarProcesso:
 
 ;; Primeiramente, armazenar o código de erro do processo à ser finalizado
 
-    mov [Hexagon.Processos.Imagens.codigoErro], eax
+    mov [Hexagon.Processos.BCP.codigoErro], eax
 
     mov ax, 10h
     mov ds, ax
@@ -628,7 +627,7 @@ naoModoGrafico:
 
 .terminarFicarResidente:
 
-    mov byte[Hexagon.Processos.Imagens.modoTerminar], 01h
+    mov byte[Hexagon.Processos.BCP.modoTerminar], 01h
 
 .continuar:
 
@@ -666,20 +665,20 @@ Hexagon.Kernel.Kernel.Proc.removerProcesso:
 
     mov ebx, dword[eax]
 
-    sub dword[Hexagon.Processos.Imagens.tamanhoProcessos], ebx
+    sub dword[Hexagon.Processos.BCP.tamanhoProcessos], ebx
 
     sub dword[Hexagon.Processos.BCP.tamanho.ponteiro], 4
 
     mov eax, dword[Hexagon.Memoria.bytesAlocados]
 
-    sub dword[Hexagon.Processos.Imagens.tamanhoProcessos], eax
+    sub dword[Hexagon.Processos.BCP.tamanhoProcessos], eax
 
     mov dword[Hexagon.Memoria.bytesAlocados], 0
 
 ;; Agora devemos calcular os endereços base de código e dados do programa, os colocando
 ;; na entrada da GDT do programa
 
-    mov eax, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
+    mov eax, dword[Hexagon.Processos.BCP.tamanhoProcessos]
     mov edx, eax
     and eax, 0xFFFF
 
@@ -707,19 +706,19 @@ Hexagon.Kernel.Kernel.Proc.removerProcesso:
     push eax
     push ebx
 
-    mov ebx, dword[Hexagon.Processos.Imagens.PID]
-    mov eax, dword[Hexagon.Processos.Imagens.tamanhoImagem+ebx*4]
-    mov dword[Hexagon.Processos.Imagens.tamanhoImagem+ebx], 00h
+    mov ebx, dword[Hexagon.Processos.BCP.PID]
+    mov eax, dword[Hexagon.Processos.BCP.tamanhoImagem+ebx*4]
+    mov dword[Hexagon.Processos.BCP.tamanhoImagem+ebx], 00h
 
     call Hexagon.Kernel.Arch.Gen.Mm.liberarUsoMemoria
 
     pop ebx
     pop eax
 
-    dec dword[Hexagon.Processos.Imagens.contagemProcessos]
-    dec dword[Hexagon.Processos.Imagens.PID]
+    dec dword[Hexagon.Processos.BCP.contagemProcessos]
+    dec dword[Hexagon.Processos.BCP.PID]
 
-    cmp byte[Hexagon.Processos.Imagens.modoTerminar], 01h
+    cmp byte[Hexagon.Processos.BCP.modoTerminar], 01h
     je .ficarResidente
 
     clc
@@ -728,12 +727,12 @@ Hexagon.Kernel.Kernel.Proc.removerProcesso:
 
 .ficarResidente:
 
-    mov ebx, dword[Hexagon.Processos.Imagens.PID]
+    mov ebx, dword[Hexagon.Processos.BCP.PID]
 
-    mov eax, [Hexagon.Processos.Imagens.tamanhoProcessos]
-    add eax, [Hexagon.Processos.Imagens.tamanhoImagem+ebx]
+    mov eax, [Hexagon.Processos.BCP.tamanhoProcessos]
+    add eax, [Hexagon.Processos.BCP.tamanhoImagem+ebx]
 
-    mov byte[Hexagon.Processos.Imagens.modoTerminar], 00h
+    mov byte[Hexagon.Processos.BCP.modoTerminar], 00h
 
     clc
 
@@ -749,7 +748,7 @@ Hexagon.Kernel.Kernel.Proc.removerProcesso:
 
     clc
 
-    mov ah, [Hexagon.Processos.Imagens.codigoRetorno]
+    mov ah, [Hexagon.Processos.BCP.codigoRetorno]
 
     cmp ah, 00h
     je .finalizar
@@ -758,7 +757,7 @@ Hexagon.Kernel.Kernel.Proc.removerProcesso:
 
 .finalizar:
 
-    mov eax, [Hexagon.Processos.Imagens.codigoRetorno]
+    mov eax, [Hexagon.Processos.BCP.codigoRetorno]
 
     ret
 
@@ -774,7 +773,7 @@ Hexagon.Kernel.Kernel.Proc.numeroMaximoProcessosAtingido:
 
     popa ;; Restaurar a pilha
 
-    mov byte[Hexagon.Processos.Imagens.codigoRetorno], 03h
+    mov byte[Hexagon.Processos.BCP.codigoRetorno], 03h
 
     mov eax, 03h ;; Enviar código de erro
 
@@ -790,7 +789,7 @@ Hexagon.Kernel.Kernel.Proc.numeroMaximoProcessosAtingido:
 
 Hexagon.Kernel.Kernel.Proc.obterPID:
 
-    mov eax, dword[Hexagon.Processos.Imagens.PID]
+    mov eax, dword[Hexagon.Processos.BCP.PID]
 
     ret
 
@@ -798,12 +797,12 @@ Hexagon.Kernel.Kernel.Proc.obterPID:
 
 Hexagon.Kernel.Kernel.Proc.adicionarProcessoPilha:
 
-    mov dword[Hexagon.Processos.Imagens.nomeProcesso], esi
+    mov dword[Hexagon.Processos.BCP.nomeProcesso], esi
 
     push ds
     pop es
 
-    mov eax, dword[Hexagon.Processos.Imagens.contagemProcessos]
+    mov eax, dword[Hexagon.Processos.BCP.contagemProcessos]
 
     mov ebx, 14
 
@@ -817,7 +816,7 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcessoPilha:
 
     push edi
 
-    mov esi, [Hexagon.Processos.Imagens.nomeProcesso]
+    mov esi, [Hexagon.Processos.BCP.nomeProcesso]
 
     call Hexagon.Kernel.Lib.String.tamanhoString
 
@@ -825,7 +824,7 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcessoPilha:
 
 ;; Copiar o nome do processo
 
-    mov esi, dword[Hexagon.Processos.Imagens.nomeProcesso]
+    mov esi, dword[Hexagon.Processos.BCP.nomeProcesso]
 
     pop edi
 
@@ -842,7 +841,7 @@ Hexagon.Kernel.Kernel.Proc.removerProcessoPilha:
     push ds
     pop es
 
-    mov eax, dword[Hexagon.Processos.Imagens.contagemProcessos]
+    mov eax, dword[Hexagon.Processos.BCP.contagemProcessos]
 
     dec eax
 
@@ -890,13 +889,13 @@ Hexagon.Kernel.Kernel.Proc.obterListaProcessos:
 
     mov esi, Hexagon.Heap.ProcTab
     mov edi, Hexagon.Heap.Temp
-    mov ecx, 13*Hexagon.Processos.Imagens.limiteProcessos
+    mov ecx, 13*Hexagon.Processos.BCP.limiteProcessos
 
     rep movsb
 
     mov esi, Hexagon.Heap.Temp
 
-    mov ebx, 13*Hexagon.Processos.Imagens.limiteProcessos
+    mov ebx, 13*Hexagon.Processos.BCP.limiteProcessos
 
     mov byte[esi+ebx], 0
 
@@ -904,7 +903,7 @@ Hexagon.Kernel.Kernel.Proc.obterListaProcessos:
 
     call Hexagon.Kernel.Lib.String.cortarString
 
-    mov eax, dword[Hexagon.Processos.Imagens.contagemProcessos]
+    mov eax, dword[Hexagon.Processos.BCP.contagemProcessos]
 
 .fim:
 
@@ -914,6 +913,6 @@ Hexagon.Kernel.Kernel.Proc.obterListaProcessos:
 
 Hexagon.Kernel.Kernel.Proc.obterCodigoErro:
 
-    mov eax, [Hexagon.Processos.Imagens.codigoErro]
+    mov eax, [Hexagon.Processos.BCP.codigoErro]
 
     ret

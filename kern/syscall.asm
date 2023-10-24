@@ -114,11 +114,11 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
 
     mov dword[Hexagon.Syscall.Controle.eax], eax
 
-    add esi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
+    add esi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
 
     sub esi, 500h
 
-    add edi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
+    add edi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
 
     sub edi, 500h
 
@@ -173,11 +173,11 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
     push dword[Hexagon.Syscall.Controle.cs]
     push dword[Hexagon.Syscall.Controle.eip]
 
-    sub esi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
+    sub esi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
 
     add esi, 500h
 
-    sub edi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
+    sub edi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
 
     add edi, 500h
 
@@ -223,11 +223,11 @@ Hexagon.Syscall.Syscall.manipuladorHXUnix:
 
     mov dword[Hexagon.Syscall.Controle.eax], eax
 
-    add esi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
+    add esi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
 
     sub esi, 500h
 
-    add edi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
+    add edi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
 
     sub edi, 500h
 
@@ -282,11 +282,11 @@ Hexagon.Syscall.Syscall.manipuladorHXUnix:
     push dword[Hexagon.Syscall.Controle.cs]
     push dword[Hexagon.Syscall.Controle.eip]
 
-    sub esi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
+    sub esi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
 
     add esi, 500h
 
-    sub edi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
+    sub edi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
 
     add edi, 500h
 

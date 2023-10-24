@@ -391,18 +391,18 @@ Hexagon.Kernel.Lib.Graficos.colocarPixel:
 
 Hexagon.Kernel.Lib.Graficos.desenharBlocoSyscall:
 
-    sub esi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
+    sub esi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
     add esi, 500h
 
-    sub edi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
+    sub edi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
     add edi, 500h
 
     call Hexagon.Kernel.Lib.Graficos.desenharBloco
 
-    add esi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
+    add esi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
     sub esi, 500h
 
-    add edi, dword[Hexagon.Processos.Imagens.tamanhoProcessos]
+    add edi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
     sub edi, 500h
 
     ret
