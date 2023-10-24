@@ -147,18 +147,18 @@ dd 0
 
 Hexagon.Processos.Imagens:
 .codigoErro:            dd 0 ;; Código de erro emitido pelo último processo
-.tamanhoProcessos:      dd 0 ;; Endereço base de carregamento de aplicativos, fornececido pelo alocador
-.modoTerminar:          db 0 ;; Marca se o aplicativo deve ficar Imagens.residente ou não
+.tamanhoProcessos:      dd 0 ;; Endereço base de carregamento de processos, fornececido pelo alocador
+.modoTerminar:          db 0 ;; Marca se o aplicativo deve ficar residente ou não
 .processoBloqueado:     dd 0 ;; Marca se o aplicativo pode ser finalizado por uma tecla ou combinação
-.limiteProcessos        = 23 ;; Número limite de processos carregados
+.limiteProcessos        = 23 ;; Número limite de processos carregados (n-1)
 .contagemProcessos:     dd 0 ;; Número de processos atualmente na pilha de execução
-.PID:                   dd 0 ;; Imagens.PID
+.PID:                   dd 0 ;; PID
 .tamanhoUltimoProcesso: dd 0 ;; Tamanho do último aplicativo
 .codigoRetorno:         db 0 ;; Registra os códigos de erro em operações de processos
-.PIDAtual:              dd 0 ;; Imagens.PID atual
+.PIDAtual:              dd 0 ;; PID atual
 .contador:              db 0 ;; Contador de processos
-.residente:             db 0 ;; Se o processo será Imagens.residente (futuro)
-.imagemIncompativel:    db 0 ;; Marca se uma imagem é incomátível
+.residente:             db 0 ;; Se o processo será residente (futuro)
+.imagemIncompativel:    db 0 ;; Marca se uma imagem é incompatível
 .entradaHAPP:           dd 0 ;; Entrada da imagem HAPP
 .tipoImagem:            db 0 ;; Tipo executável da imagem
 
