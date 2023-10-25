@@ -102,12 +102,12 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
 
     mov ebp, esp
 
-    push 10h ;; Segmento do kernel
+    push 10h ;; Segmento de dados do kernel
     pop ds
 
     mov [Hexagon.Syscall.Controle.es], es
 
-    push 18h
+    push 18h ;; Segmento linear do kernel
     pop es
 
     cld
@@ -116,9 +116,13 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
 
     add esi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
 
+;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+
     sub esi, 500h
 
     add edi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
+
+;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
 
     sub edi, 500h
 
@@ -159,7 +163,9 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
 
     sti
 
-    mov byte[Hexagon.Syscall.Controle.chamadaSistema], 00h ;; Desmarcar a solicitação de chamada de Sistema
+;; Desmarcar a solicitação de chamada de sistema
+
+    mov byte[Hexagon.Syscall.Controle.chamadaSistema], 00h
 
     push eax
 
@@ -175,15 +181,19 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
 
     sub esi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
 
+;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+
     add esi, 500h
 
     sub edi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
+
+;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
 
     add edi, 500h
 
     mov es, [Hexagon.Syscall.Controle.es]
 
-    push 38h
+    push 38h ;; Segmento de dados do ambiente de usuário (processos)
     pop ds
 
     iret
@@ -211,12 +221,12 @@ Hexagon.Syscall.Syscall.manipuladorHXUnix:
 
     mov ebp, esp
 
-    push 10h ;; Segmento do kernel
+    push 10h ;; Segmento de dados do kernel
     pop ds
 
     mov [Hexagon.Syscall.Controle.es], es
 
-    push 18h
+    push 18h ;; Segmento linear do kernel
     pop es
 
     cld
@@ -225,9 +235,13 @@ Hexagon.Syscall.Syscall.manipuladorHXUnix:
 
     add esi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
 
+;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+
     sub esi, 500h
 
     add edi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
+
+;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
 
     sub edi, 500h
 
@@ -284,15 +298,19 @@ Hexagon.Syscall.Syscall.manipuladorHXUnix:
 
     sub esi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
 
+;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+
     add esi, 500h
 
     sub edi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
+
+;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
 
     add edi, 500h
 
     mov es, [Hexagon.Syscall.Controle.es]
 
-    push 38h
+    push 38h ;; Segmento de dados do ambiente de usuário (processos)
     pop ds
 
     iret
@@ -329,10 +347,14 @@ Hexagon.Syscall.Syscall.intalarInterrupcao:
 
 Hexagon.Syscall.Syscall.criarNovoProcesso:
 
+;; Salvar ponteiro de instrução e segmento de código
+
     push dword[Hexagon.Syscall.Controle.eip]
     push dword[Hexagon.Syscall.Controle.cs]
 
     call Hexagon.Kernel.Kernel.Proc.criarProcesso
+
+;; Restaurar ponteiro de instrução e segmento de código
 
     pop dword[Hexagon.Syscall.Controle.cs]
     pop dword[Hexagon.Syscall.Controle.eip]

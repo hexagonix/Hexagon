@@ -245,13 +245,13 @@ leitura:  db 0
 escrita:  db 0
 execucao: db 0
 
-;; Para que o kernel possa burlar medidas de segurança que distinguam usuários ou valores de entrada
-;; e consiga executar qualquer função nele alocada, será utilizada uma variável que indica se a ordem
-;; de execução da função partiu do próprio kernel ou não. Apenas as funções que fazem distinção de
-;; privilégios e também de valores de entrada devem ler/gravar nessa variável.
+;; Para que o kernel possa burlar medidas de segurança que distinguam usuários ou valores de
+;; entrada e consiga executar qualquer função nele alocada, será utilizada uma variável que indica
+;; se a ordem de execução da função partiu do próprio kernel ou não. Apenas as funções que fazem
+;; distinção de privilégios e também de valores de entrada devem ler/gravar nessa variável.
 ;; Os valores utilizados também são padronizados, como abaixo.
 ;;
-;; Nome objeto                          | Código |               Tipo de acesso               |
+;; Nome do objeto                       | Código |               Tipo de acesso               |
 ;;
 ;; ordemKernelDesativada                    00h      O kernel não está solicitando operações
 ;;                                                   que demandem acesso restrito ou análise

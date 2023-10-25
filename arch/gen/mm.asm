@@ -127,7 +127,7 @@ align 4
 
 Hexagon.Kernel.Arch.Gen.Mm.usoMemoria:
 
-    push ds
+    push ds ;; Segmento de dados do kernel
     pop es
 
     mov eax, dword[Hexagon.Memoria.memoriaUsada]
@@ -138,9 +138,9 @@ Hexagon.Kernel.Arch.Gen.Mm.usoMemoria:
 
     mov ecx, dword[Hexagon.Memoria.memoriaTotal]
 
-    shr ecx, 10 ;; ECX = ECX / 1024
+    shr ecx, 10 ;; ECX = ECX/1024
 
-    shr ecx, 10 ;; ECX = ECX / 1024
+    shr ecx, 10 ;; ECX = ECX/1024
 
 .fornecerMemoriaReservada:
 

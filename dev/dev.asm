@@ -133,11 +133,11 @@ db "imp2", 0 ;; Terceira porta paralela
 ;; Dispositivos de saída
 
 .vd0:
-db "vd0", 0 ;; Dispositivo de saída padrão
+db "vd0", 0 ;; Console padrão
 .vd1:
-db "vd1", 0 ;; Dispositivo de saída secundário em memória (Buffer)
+db "vd1", 0 ;; Console secundário (buffer)
 .vd2:
-db "vd2", 0 ;; Despejo de dados do kernel
+db "vd2", 0 ;; Console de despejo de dados do kernel
 
 .au0:
 db "au0", 0 ;; Alto-falante interno
@@ -513,7 +513,7 @@ Hexagon.Kernel.Dev.Dev.abrir:
 
     jmp .retorno
 
-.vd2: ;; Despejo de dados do kernel
+.vd2: ;; Console de despejo de dados do kernel
 
     mov ebx, 1h
 

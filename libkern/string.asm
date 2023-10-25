@@ -96,7 +96,7 @@ Hexagon.Kernel.Lib.String.tamanhoString:
     push edi
     push es
 
-    push ds ;; ES = DS
+    push ds ;; Segmento de dados do kernel
     pop es
 
     mov edi, esi
@@ -384,7 +384,7 @@ Hexagon.Kernel.Lib.String.cortarString:
 
     push es
 
-    push ds ;; ES = DS
+    push ds ;; Segmento de dados do kernel
     pop es
 
 ;; Primeiro precisamos tirar os espaços da esquerda e depois da direita
@@ -401,7 +401,7 @@ Hexagon.Kernel.Lib.String.cortarString:
 
     xor ebx, ebx ;; EBX é um contador de espaços em branco
 
-    cld ;; Da esquerda para a direita, então limpando a bandeira de direção
+    cld ;; Da esquerda para a direita, então limpando a flag de direção
 
 .cortarDaEsquerda:
 
@@ -683,7 +683,7 @@ Hexagon.Kernel.Lib.String.removerCaractereNaString:
 
     push es
 
-    push ds ;; DS = ES
+    push ds ;; Segmento de dados do kernel
     pop es
 
     mov edi, esi
@@ -739,7 +739,7 @@ Hexagon.Kernel.Lib.String.inserirCaractereNaString:
 
     push es
 
-    push ds ;; ES = DS
+    push ds ;; Segmento de dados do kernel
     pop es
 
     std ;; Direção reversa em rep movsb
@@ -791,7 +791,7 @@ Hexagon.Kernel.Lib.String.paraString:
 
     push es
 
-    push ds ;; DS = ES
+    push ds ;; Segmento de dados do kernel
     pop es
 
     push eax
@@ -888,6 +888,7 @@ Hexagon.Kernel.Lib.String.BCDParaASCII:
     push ecx
 
     mov ah, al
+
     and ax, 0xF00F ;; Mascarar bits
     shr ah, 4      ;; Deslocar para direita AH para obter BCD desempacotado
     or ax, 3030h   ;; Combinar com 30 para obter ASCII

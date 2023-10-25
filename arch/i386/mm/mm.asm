@@ -116,13 +116,13 @@ Hexagon.Kernel.Arch.i386.Mm.Mm.obterMemoriaTotal:
 
     add eax, 100h
 
-    shl eax, 16 ;; EAX = EAX * 65536
+    shl eax, 16 ;; EAX = EAX*65536
 
     jmp .fim
 
 .abaixoDe16MB:
 
-    shl eax, 10 ;; EAX = EAX * 1024
+    shl eax, 10 ;; EAX = EAX*1024
 
 .fim:
 

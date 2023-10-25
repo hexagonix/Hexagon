@@ -107,21 +107,21 @@ include "kern/servicos.asm"           ;; Rotinas de interrupção e manipuladore
 
 include "kern/dmesg.asm"              ;; Funções para manipulação de mensagens do kernel
 include "kern/panico.asm"             ;; Funções para exibição e identificação de erros do Hexagon
-include "kern/usuarios.asm"           ;; Funções de gerenciamento de permissões e usuários
+include "kern/usuarios.asm"           ;; Gerenciamento de permissões e usuários
 
 ;; Gerenciamento de dispositivos do Hexagon
 
-include "arch/gen/mm.asm"             ;; Funções para gerenciamento de memória do Hexagon
-include "arch/i386/mm/mm.asm"         ;; Funções para gerenciamento de memória dependentes de arquitetura
+include "arch/gen/mm.asm"             ;; Gerenciamento de memória do Hexagon
+include "arch/i386/mm/mm.asm"         ;; Gerenciamento de memória dependentes de arquitetura
 include "dev/i386/disco/disco.asm"    ;; Funções para ler e escrever em discos rígidos do Hexagon
-include "dev/gen/console/console.asm" ;; Funções de gerenciamento de vídeo do Hexagon
+include "dev/gen/console/console.asm" ;; Gerenciamento de vídeo do Hexagon
 include "dev/gen/teclado/teclado.asm" ;; Funções necessárias para o uso do teclado
 include "arch/i386/cpu/cpu.asm"       ;; IDT, GDT e procedimentos para definir modo real e protegido
 include "arch/i386/BIOS/BIOS.asm"     ;; Interrupções do BIOS em modo real
 include "arch/i386/APM/apm.asm"       ;; Implementação APM do Hexagon
-include "dev/gen/snd/som.asm"         ;; Funções para controle de som do Hexagon
-include "dev/gen/PS2/PS2.asm"         ;; Funções para controle de portas PS/2 do Hexagon
-include "arch/i386/timer/timer.asm"   ;; Funções para manipulação de timer do Hexagon
+include "dev/gen/snd/som.asm"         ;; Controle de som do Hexagon
+include "dev/gen/PS2/PS2.asm"         ;; Controle de portas PS/2 do Hexagon
+include "arch/i386/timer/timer.asm"   ;; Manipulação de timer do Hexagon
 include "fs/vfs.asm"                  ;; Sistema de arquivos virtual (VFS) para Hexagon
 include "dev/gen/mouse/mouse.asm"     ;; Funções para mouse PS/2 do Hexagon
 include "dev/gen/lpt/lpt.asm"         ;; Funções de manipulação de impressora
@@ -137,7 +137,7 @@ include "kern/init.asm"               ;; Função para ir para o modo usuário
 
 ;; Sistemas de arquivos suportados pelo Hexagon
 
-include "fs/FAT16/fat16.asm"          ;; Rotinas para manipulação de arquivos no sistema de arquivos FAT16
+include "fs/FAT16/fat16.asm"          ;; Manipulação de arquivos no sistema de arquivos FAT16
 
 ;; Bibliotecas do Hexagon
 
@@ -145,8 +145,8 @@ include "libkern/string.asm"          ;; Funções para manipulação de caracte
 include "libkern/num.asm"             ;; Funções de geração e alimentação de números aleatórios
 include "libkern/relogio.asm"         ;; Interface de relógio em tempo real
 
-;; Aqui temos um stub que previne a execução da imagem do Hexagon diretamente pelo usuário, o que poderia
-;; causar problemas visto a natureza da imagem (ser um kernel, não um processo comum)
+;; Aqui temos um stub que previne a execução da imagem do Hexagon diretamente pelo usuário, o que
+;; poderia causar problemas visto a natureza da imagem (ser um kernel, não um processo comum)
 
 include "libkern/stubHAPP.asm"        ;; Stub para prevenir execução acidental da imagem do Hexagon
 
@@ -341,7 +341,7 @@ Hexagon.Autoconfig:
 Hexagon.ModoUsuario:
 
 ;; Agora, devemos ir para o modo usuário, executando o primeiro processo, init. Caso
-;; init não esteja presente no volume, tentar executar o shell padrão.
+;; init não esteja presente no volume, tentar executar o shell padrão
 
     call Hexagon.Init.iniciarModoUsuario
 

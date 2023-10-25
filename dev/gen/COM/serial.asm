@@ -79,7 +79,9 @@ use32
 ;;
 ;; SI - Ponteiro para o buffer que contêm os dados a serem enviados
 
-Hexagon.Kernel.Dev.Gen.COM.Serial.enviarSerial: ;; Esse método é usado para transferir dados pela Porta Serial aberta
+;; A função a seguir é usada para transferir dados pela porta serial aberta
+
+Hexagon.Kernel.Dev.Gen.COM.Serial.enviarSerial:
 
     lodsb ;; Carrega o próximo caractere à ser enviado
 
@@ -90,7 +92,9 @@ Hexagon.Kernel.Dev.Gen.COM.Serial.enviarSerial: ;; Esse método é usado para tr
 
     jc near .erro
 
-    jmp Hexagon.Kernel.Dev.Gen.COM.Serial.enviarSerial ;; Se não tiver acabado, volta à função e carrega o próximo caractere
+;; Se não tiver acabado, volta à função e carrega o próximo caractere
+
+    jmp Hexagon.Kernel.Dev.Gen.COM.Serial.enviarSerial
 
 .pronto: ;; Se tiver acabado...
 
@@ -104,7 +108,7 @@ Hexagon.Kernel.Dev.Gen.COM.Serial.enviarSerial: ;; Esse método é usado para tr
 
 ;;************************************************************************************
 
-;; Bloqueia o envio de dados pela porta serial até  a mesma estar pronta
+;; Bloqueia o envio de dados pela porta serial até  a mesma estar pronta.
 ;; Se pronta, envia um byte
 ;;
 ;; Entrada:
@@ -209,7 +213,7 @@ Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarSerial:
 ;; Bits 7-6 : Nível do manipulador de interrupção
 ;; Bits 5-5 : Habilitar FIFO de 64 bytes
 ;; Bits 4-4 : Reservado
-;; Bits 3-3 : Seletor de modo DNA
+;; Bits 3-3 : Seletor de modo
 ;; Bits 2-2 : Limpar FIFO transmitido
 ;; Bits 1-1 : Limpar FIFO recebido
 ;; Bits 0-0 : Habilitar FIFOs

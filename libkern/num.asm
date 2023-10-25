@@ -127,7 +127,7 @@ Hexagon.Kernel.Lib.Num.obterAleatorio:
 
     ret
 
-.numeroAleatorio:   dd 1
+.numeroAleatorio: dd 1
 
 ;;************************************************************************************
 
@@ -162,13 +162,13 @@ Hexagon.Kernel.Lib.Num.BCDParaBinario:
     mov bl, al ;; BL = AL mod 16
     and bl, 0x0F
 
-    shr al, 4 ;; AL = AL / 16
+    shr al, 4 ;; AL = AL/16
 
     mov bh, 10
 
     mul bh ;; Multiplicar por 10
 
-    add al, bl ;; Adicionar a produto a AL
+    add al, bl ;; Adicionar o produto a AL
 
     pop ebx
 

@@ -438,8 +438,10 @@ Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon:
 
 Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial:
 
-    push esi ;; Primeiro, salvar a mensagem já presente em ESI para uso futuro em
-             ;; Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+;; Primeiro, salvar a mensagem já presente em ESI para uso futuro em
+;; Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+
+    push esi
 
     mov esi, Hexagon.Dev.Dispositivos.com1
 

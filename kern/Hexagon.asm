@@ -141,7 +141,7 @@ cabecalhoHexagon:
 
     mov dword[Hexagon.Memoria.enderecoBPB], ebp
 
-;; Armazenar o tamanho da memória RAM disponível, fornecido pelo Carregador de Inicialização do Hexagon
+;; Armazenar o tamanho da memória RAM disponível, fornecido pelo HBoot
 
     mov word[Hexagon.Memoria.memoriaCMOS], cx
 
@@ -152,7 +152,8 @@ cabecalhoHexagon:
 ;; Agora vamos arrumar a casa para entrar em modo protegido e ir para o ponto de entrada de fato do
 ;; Hexagon, iniciando de fato o kernel
 
-;; Habilitar A20, necessário para endereçamento de 4 GB de memória RAM e para entrar em modo protegido
+;; Habilitar A20, necessário para endereçamento de 4 GB de memória RAM e para entrar em modo
+;; protegido
 
     call Hexagon.Kernel.Arch.i386.CPU.CPU.ativarA20 ;; Ativar A20, necessário para o modo protegido
 

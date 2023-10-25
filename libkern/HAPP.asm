@@ -230,7 +230,7 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
 
     push eax
 
-    mov edi, Hexagon.Heap.Temp + 1000
+    mov edi, Hexagon.Heap.Temp + 1000 ;; Usar o heap do kernel
 
 ;; Vamos carregar a imagem para começar as análises
 
@@ -241,7 +241,7 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
 ;; Vamos começar a checagem do cabeçalho executável da imagem carregada
 ;; Pronto, agora devemos iniciar a análise da imagem
 
-    mov edi, Hexagon.Heap.Temp + 1000
+    mov edi, Hexagon.Heap.Temp + 1000 ;; Usar o heap do kernel
 
 ;; Vamos verificar os 4 bytes do "número mágico" do cabeçalho
 

@@ -112,9 +112,9 @@ use16
 
 use32
 
-    mov ax, 0x10
+    mov ax, 10h ;; Segmento de dados do kernel
     mov ds, ax
-    mov ax, 0x18 ;; Definir a base de ES, SS e GS base para 0
+    mov ax, 18h ;; Definir a base de ES, SS e GS base para 0 - segmento linear do kernel
     mov ss, ax
     mov es, ax
     mov gs, ax
@@ -175,9 +175,9 @@ use16
 
 use32
 
-    mov ax, 0x10
+    mov ax, 10h ;; Segmento de dados do kernel
     mov ds, ax
-    mov ax, 0x18 ;; Definir base de ES, GS e SS
+    mov ax, 18h ;; Definir base de ES, GS e SS para 0 - segmento linear do kernel
     mov ss, ax
     mov gs, ax
     mov es, ax
@@ -243,9 +243,9 @@ use16
 
 use32
 
-    mov ax, 0x10
+    mov ax, 10h ;; Segmento de dados do kernel
     mov ds, ax
-    mov ax, 0x18 ;; Definir a base de ES, SS e GS
+    mov ax, 18h ;; Definir a base de ES, SS e GS para 0 - segmento linear do kernel
     mov ss, ax
     mov es, ax
     mov gs, ax

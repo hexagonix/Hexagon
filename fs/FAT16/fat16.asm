@@ -188,7 +188,7 @@ Hexagon.Kernel.FS.FAT16.nomeFATParaNomeHumano:
 
     mov byte[esi+eax], '.'
 
-;; Onter extensão
+;; Obter extensão
 
     pop esi
 
@@ -220,7 +220,9 @@ Hexagon.Kernel.FS.FAT16.nomeFATParaNomeHumano:
 
     mov edi, esi
 
-    add edi, 500h ;; Segmento ES
+;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+
+    add edi, 500h ;; Segmento ES com base em 500h
 
     mov esi, .bufferNomeDeArquivo
     mov ecx, 12
@@ -319,8 +321,8 @@ Hexagon.Kernel.FS.FAT16.nomeArquivoParaFAT:
 
     push es
 
-    push ds
-    pop es ;; ES = DS
+    push ds ;; Segmento de dados do kernel
+    pop es
 
 ;; Ter certeza que o nome apressenta exatamente 11 caracteres
 
@@ -389,6 +391,8 @@ Hexagon.Kernel.FS.FAT16.nomeArquivoParaFAT:
 
     push esi
 
+;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+
     mov edi, .bufferNomeDeArquivo + 500h
     mov ecx, ebx
 
@@ -433,6 +437,8 @@ Hexagon.Kernel.FS.FAT16.nomeArquivoParaFAT:
     push esi
 
     mov edi, esi
+
+;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
 
     add edi, 500h
 
@@ -513,12 +519,14 @@ Hexagon.Kernel.FS.FAT16.renomearArquivoFAT16B:
 ;; Em EBX, o ponteiro para a entrada no diretório raiz
 
     mov edi, ebx
+
+;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+
     add edi, 500h
+
     mov ecx, 11
 
     rep movsb ;; Mover (ECX) vezes a string em ESI para EDI
-
-    kprint edi
 
 ;; Escrever diretório raiz modificado no disco
 
@@ -628,6 +636,8 @@ Hexagon.Kernel.FS.FAT16.arquivoExisteFAT16B:
 
     mov eax, dword[es:ebx+28] ;; Tamanho do arquivo
 
+;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+
     sub ebx, 500h ;; Segmento ES
 
 .sucessoOperacao:
@@ -736,6 +746,8 @@ Hexagon.Kernel.FS.FAT16.carregarArquivoFAT16B:
 
     push edi
 
+;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+
     mov edi, Hexagon.Heap.CacheDisco + 500h
 
     call Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores
@@ -745,6 +757,8 @@ Hexagon.Kernel.FS.FAT16.carregarArquivoFAT16B:
 ;; Copiar o cluster para a sua localização original
 
     push edi
+
+;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
 
     add edi, 500h
 
@@ -839,6 +853,7 @@ Hexagon.Kernel.FS.FAT16.listarArquivosFAT16B:
     jc .erroLista
 
 ;; Construir a lista
+;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
 
     mov edx, Hexagon.Heap.CacheDisco + 500h ;; Índice na nova lista
     mov ebx, 0 ;; Contador de arquivos
@@ -870,7 +885,7 @@ Hexagon.Kernel.FS.FAT16.listarArquivosFAT16B:
     cmp byte[esi], Hexagon.VFS.FAT16B.atributoDeletado ;; Se arquivo deletado, pule
     je .loopConstruirLista ;; Em caso de arquivo deletado, pule a entrada
 
-    cmp byte[esi], 0 ;; Se último arquivo, termine
+    cmp byte[esi], 0   ;; Se último arquivo, termine
     je .finalizarLista ;; Se este for o último arquivo, não vamos querer procurar mais
                        ;; no diretório atrás de algo que não existe ;-)
 
@@ -901,6 +916,8 @@ Hexagon.Kernel.FS.FAT16.listarArquivosFAT16B:
     jmp .loopConstruirLista ;; Obter próximos arquivos
 
 .finalizarLista:
+
+;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
 
     mov byte[edx-500h], 0 ;; Fim da string
 
@@ -1259,7 +1276,7 @@ Hexagon.Kernel.FS.FAT16.deletarArquivoFAT16B:
 
     ret
 
-.cluster:   dw 0
+.cluster: dw 0
 
 ;;************************************************************************************
 
@@ -1472,6 +1489,8 @@ Hexagon.Kernel.FS.FAT16.novoArquivoFAT16B:
     mov ecx, 11 ;; Tamanho do nome de arquivo
 
     push edi
+
+;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
 
     add edi, 500h ;; Segmento ES
 

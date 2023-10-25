@@ -356,7 +356,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.definirModoGrafico:
 ;; EAX - Resolução de X (bits 0-15), Y (bits 16-31)
 ;; EBX - Colunas (bits 0-7), Linhas (8-15), Bits por Pixel (16-23)
 ;; EDX - Endereço inicial do buffer
-;; CF definido quando em modo de vídeo
+;; CF definido quando em modo texto
 
 Hexagon.Kernel.Dev.Gen.Console.Console.obterInfoVideo:
 
@@ -477,7 +477,7 @@ align 16
 
     push ds
 
-    mov ax, 18h
+    mov ax, 18h ;; Segmento linear do kernel
     mov ds, ax
 
 .loop:
@@ -529,7 +529,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha:
 
     push es
 
-    push 18h
+    push 18h ;; Segmento linear do kernel
     pop es
 
     mov dl, 0
@@ -644,7 +644,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.rolarParaBaixo:
 
 ;; Mover todo o conteúdo da tela uma linha acima
 
-    mov ax, 18h
+    mov ax, 18h ;; Segmento linear do kernel
     mov es, ax
     mov ds, ax
 
@@ -652,9 +652,9 @@ Hexagon.Kernel.Dev.Gen.Console.Console.rolarParaBaixo:
     mov edi, Hexagon.Video.modoTexto.memoriaDeVideo-160 ;; Uma linha acima
     mov ecx, 2000
 
-    rep movsw ;; Repetir ECX vezes (mov byte[ES:EDI], byte[DS:ESI])
+    rep movsw ;; Repetir ECX vezes (mov word[ES:EDI], word[DS:ESI])
 
-    mov ax, 10h
+    mov ax, 10h ;; Segmento de dados do kernel
     mov ds, ax
 
     mov eax, Hexagon.Video.modoTexto.maximoLinhas ;; Limpar última linha
@@ -674,7 +674,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.rolarParaBaixo:
     mov ecx, [Hexagon.Video.tamanhoVideo]
     shr ecx, 7 ;; Dividir por 128
 
-    mov ax, 18h
+    mov ax, 18h ;; Segmento linear do kernel
     mov es, ax
     mov ds, ax
 
@@ -708,7 +708,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.rolarParaBaixo:
 
     loop .copiar
 
-    mov ax, 10h
+    mov ax, 10h ;; Segmento de dados do kernel
     mov ds, ax
 
     movzx eax, word[Hexagon.Video.maxLinhas]
@@ -1166,13 +1166,13 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere.graficos:
 
 .retorno:
 
-    movzx eax, word[Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor.graficos.Xanterior]
-    movzx ebx, word[Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor.graficos.Yanterior]
+    movzx eax, word[Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursorModoGrafico.Xanterior]
+    movzx ebx, word[Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursorModoGrafico.Yanterior]
 
     push edx
 
     mov ecx, Hexagon.Fontes.altura
-    mov edx, [Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor.graficos.corCursorAnterior]
+    mov edx, [Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursorModoGrafico.corCursorAnterior]
 
 .limparCursorAnterior:
 
@@ -1294,7 +1294,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.obterCursor:
 Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor:
 
     cmp byte[Hexagon.Video.modoGrafico], 1
-    je Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor.graficos
+    je Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursorModoGrafico
 
     push eax
     push ebx
@@ -1350,7 +1350,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor:
 
 ;; Enviar byte mais significante para a porta VGA
 
-    mov al, bh ;; BH é o byte mais significante
+    mov al, bh    ;; BH é o byte mais significante
     mov dx, 0x3D5 ;; Porta VGA
 
     out dx, al
@@ -1361,7 +1361,9 @@ Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor:
 
     ret
 
-Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor.graficos:
+;;************************************************************************************
+
+Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursorModoGrafico:
 
     push eax
     push ebx

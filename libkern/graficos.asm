@@ -268,7 +268,7 @@ Hexagon.Kernel.Lib.Graficos.usarBufferVideo2:
 
 ;;************************************************************************************
 
-;; Usar buffer de página real
+;; Usar buffer de vídeo principal
 
 Hexagon.Kernel.Lib.Graficos.usarBufferVideo1:
 
@@ -290,7 +290,7 @@ Hexagon.Kernel.Lib.Graficos.atualizarTela:
     mov ecx, eax
     shr ecx, 7 ;; Dividir por 128
 
-    cmp ebx, 1h
+    cmp ebx, 01h
     je .bufferKernel
 
 .bufferUsuario:
@@ -310,7 +310,7 @@ Hexagon.Kernel.Lib.Graficos.atualizarTela:
     push es
     push ds
 
-    mov ax, 18h
+    mov ax, 18h ;; Segmento linear do kernel
     mov es, ax
     mov ds, ax
 
@@ -392,17 +392,29 @@ Hexagon.Kernel.Lib.Graficos.colocarPixel:
 Hexagon.Kernel.Lib.Graficos.desenharBlocoSyscall:
 
     sub esi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
+
+;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+
     add esi, 500h
 
     sub edi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
+
+;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+
     add edi, 500h
 
     call Hexagon.Kernel.Lib.Graficos.desenharBloco
 
     add esi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
+
+;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+
     sub esi, 500h
 
     add edi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
+
+;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+
     sub edi, 500h
 
     ret

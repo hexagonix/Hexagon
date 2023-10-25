@@ -91,7 +91,7 @@ Hexagon.Kernel.Dev.Gen.LPT.LPT.iniciarPortaParalela:
 
 ;; Bit 2 - Reiniciar porta
 ;; Bit 3 - Selecionar dispositivo
-;; Bit 5 - Habilitar porta bi-direcional
+;; Bit 5 - Habilitar porta bidirecional
 
     out dx, al ;; Enviar sinal de reinício
 
@@ -156,7 +156,7 @@ Hexagon.Kernel.Dev.Gen.LPT.LPT.realizarEnvioPortaParalela:
 
 ;; Bit 2 - Reiniciar porta
 ;; Bit 3 - Selecionar dispositivo
-;; Bit 5 - Habilitar porta bi-direcional
+;; Bit 5 - Habilitar porta bidirecional
 
     out dx, al ;; Enviar sinal de reinício
 

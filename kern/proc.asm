@@ -147,12 +147,12 @@ times Hexagon.Processos.BCP.limiteProcessos + 1 dd 0
 Hexagon.Processos.BCP:
 .codigoErro:            dd 0 ;; Código de erro emitido pelo último processo
 .tamanhoProcessos:      dd 0 ;; Endereço base de carregamento de processos, fornececido pelo alocador
-.modoTerminar:          db 0 ;; Marca se o aplicativo deve ficar residente ou não
-.processoBloqueado:     dd 0 ;; Marca se o aplicativo pode ser finalizado por uma tecla ou combinação
+.modoTerminar:          db 0 ;; Marca se o processo deve ficar residente ou não
+.processoBloqueado:     dd 0 ;; Marca se o processo pode ser finalizado por uma tecla ou combinação
 .limiteProcessos        = 23 ;; Número limite de processos carregados (n-1)
 .contagemProcessos:     dd 0 ;; Número de processos atualmente na pilha de execução
 .PID:                   dd 0 ;; PID
-.tamanhoUltimoProcesso: dd 0 ;; Tamanho do último aplicativo
+.tamanhoUltimoProcesso: dd 0 ;; Tamanho do último processo
 .codigoRetorno:         db 0 ;; Registra os códigos de erro em operações de processos
 .PIDAtual:              dd 0 ;; PID atual
 .contador:              db 0 ;; Contador de processos
@@ -169,7 +169,7 @@ end virtual
 
 ;;************************************************************************************
 
-;; Destravar a pilha de processos, permitindo o fechamento do aplicativo pelo usuário
+;; Destravar a pilha de processos, permitindo o encerramento do processo pelo usuário
 
 Hexagon.Kernel.Kernel.Proc.destravar:
 
@@ -196,7 +196,8 @@ Hexagon.Kernel.Kernel.Proc.iniciarEscalonador:
     push es
 
 ;; Vamos iniciar a área de memória do heap do kernel que vai armazenar o nome dos
-;; processos em execução
+;; processos em execução, aplicando a formatação esperada pelas funções que gerenciam
+;; esses campos
 
     push ds
     pop es
@@ -267,11 +268,13 @@ Hexagon.Kernel.Kernel.Proc.matarProcesso:
 ;; Terminar processo atual em execução
 
 ;; Primeiro deve-se checar se a função de terminar um processo em primeiro plano com o uso
-;; de combinação de teclas ou a tecla especial "Matar processo" (F1) está habilitada
-;; por parte do sistema. Isso é uma medida de segurança que visa prevenir o fechamento de
-;; processos vitais como o gerenciador de login, por exemplo.
+;; de combinação de teclas ou a tecla especial "Matar processo" está habilitada por parte do
+;; sistema. Isso é uma medida de segurança que visa prevenir o fechamento de processos vitais
+;; como o gerenciador de login, por exemplo.
 
-    cmp dword[Hexagon.Processos.BCP.processoBloqueado], 1 ;; Caso a função esteja desabilitada, a ocorrência será ignorada
+;; Caso a função esteja desabilitada, a ocorrência será ignorada
+
+    cmp dword[Hexagon.Processos.BCP.processoBloqueado], 1
     je .fim
 
     cmp byte[Hexagon.Processos.BCP.contagemProcessos], 0 ;; Não exite processo para ser fechado
@@ -337,7 +340,7 @@ Hexagon.Kernel.Kernel.Proc.criarProcesso:
 
     pusha
 
-;; Agora o limite de aplicativos carregados será verificado. Caso já existam
+;; Agora o limite de processos carregados será verificado. Caso já existam
 ;; muitos processos em memória, o carregamento de um outro será impedido
 
 .verificarLimite:
@@ -378,7 +381,7 @@ Hexagon.Kernel.Kernel.Proc.criarProcesso:
 
     inc ecx
 
-    push 18h
+    push 18h ;; Segmento linear do kernel
     pop es
 
 ;; Copiar argumentos para um endereço conhecido
@@ -400,8 +403,6 @@ Hexagon.Kernel.Kernel.Proc.criarProcesso:
     mov byte[gs:Hexagon.Heap.ArgProc], 0
 
 .verificarImagem:
-
-    ;; cmp byte[Hexagon.Imagem.Executavel.HAPP.Imagens.imagemIncompativel], 00h
 
     push esi
 
@@ -506,6 +507,8 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcesso:
 
     mov edi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
 
+;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+
     sub edi, 500h
 
     push esi
@@ -584,7 +587,7 @@ Hexagon.Kernel.Kernel.Proc.executarProcesso:
     sti ;; Ter certeza que as interrupções estão disponíveis
 
     pushfd   ;; Flags
-    push 30h ;; Segmento de código do processo
+    push 30h ;; Segmento de código do ambiente do usuário (processo)
     push dword [Hexagon.Imagem.Executavel.HAPP.entradaHAPP] ;; Ponto de entrada da imagem
 
     inc dword[Hexagon.Processos.BCP.contagemProcessos]
@@ -594,7 +597,7 @@ Hexagon.Kernel.Kernel.Proc.executarProcesso:
 
     sub edi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
 
-    mov ax, 38h ;; Segmento de dados do processo
+    mov ax, 38h ;; Segmento de dados do ambiente de usuário (processo)
     mov ds, ax
 
     iret
@@ -637,10 +640,12 @@ naoModoGrafico:
 
     mov esp, dword[eax]
 
-    mov eax, Hexagon.Kernel.Kernel.Proc.removerProcesso ;; Endereço da função que removerá as permissões do processo
+;; Endereço da função que removerá as permissões do processo
 
-    push 08h
-    push eax
+    mov eax, Hexagon.Kernel.Kernel.Proc.removerProcesso
+
+    push 08h ;; Segmento de código do kernel
+    push eax ;; Endereço de retorno de retf
 
     retf ;; Ir à essa função agora, trocando o contexto
 
@@ -653,7 +658,7 @@ Hexagon.Kernel.Kernel.Proc.removerProcesso:
 
     call Hexagon.Kernel.Kernel.Proc.removerProcessoPilha
 
-    mov ax, 10h
+    mov ax, 10h ;; Segmento de dados do kernel
     mov ds, ax
 
     mov eax, [Hexagon.Processos.BCP.tamanho.ponteiro]
@@ -780,11 +785,11 @@ Hexagon.Kernel.Kernel.Proc.numeroMaximoProcessosAtingido:
 
 ;;************************************************************************************
 
-;; Retorna ao processo o seu Imagens.PID
+;; Retorna ao processo o seu PID
 ;;
 ;; Saída:
 ;;
-;; EAX - Imagens.PID do processo
+;; EAX - PID do processo
 
 Hexagon.Kernel.Kernel.Proc.obterPID:
 
@@ -798,7 +803,7 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcessoPilha:
 
     mov dword[Hexagon.Processos.BCP.nomeProcesso], esi
 
-    push ds
+    push ds ;; Segmento de dados do kernel
     pop es
 
     mov eax, dword[Hexagon.Processos.BCP.contagemProcessos]
@@ -837,7 +842,7 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcessoPilha:
 
 Hexagon.Kernel.Kernel.Proc.removerProcessoPilha:
 
-    push ds
+    push ds ;; Segmento de dados do kernel
     pop es
 
     mov eax, dword[Hexagon.Processos.BCP.contagemProcessos]
@@ -881,7 +886,7 @@ Hexagon.Kernel.Kernel.Proc.obterListaProcessos:
 ;; Vamos iniciar a área de memória do heap do kernel que vai armazenar o nome dos
 ;; processos em execução
 
-    push ds
+    push ds ;; Segmento de dados do kernel
     pop es
 
 .loop:

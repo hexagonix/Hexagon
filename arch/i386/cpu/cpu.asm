@@ -298,7 +298,7 @@ GDT:
 
     dd 0, 0 ;; Descriptor nulo - Seletor 00h
 
-;; Edereço físico = endereço + base do respectivo seletor
+;; Endereço físico = endereço + base do respectivo seletor
 
 .codigoKernel: ;; Seletor 08h
 
@@ -406,7 +406,7 @@ GDTReg:
 
 align 32
 
-IDT: times 256 dw Hexagon.Int.naoManipulado, 0x0008, 0x8e00, 0
+IDT: times 256 dw Hexagon.Int.intVazia, 0x0008, 0x8e00, 0
 
 ;; naoManipulado: deslocamento (0:15)
 ;; 0x0008:  0x08 é um seletor

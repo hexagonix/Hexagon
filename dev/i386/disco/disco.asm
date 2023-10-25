@@ -225,15 +225,15 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.pararDisco:
 
 Hexagon.Kernel.Dev.i386.Disco.Disco.lerMBR:
 
-    push ds
+    push ds ;; Segmento de dados do kernel
     pop es
 
 ;; Primeiro devemos carregar a MBR na memória
 
     mov eax, 01h ;; Número de setores para ler
     mov esi, 00h ;; LBA do setor inicial
-    mov cx, 0x50 ;; Segmento
-    mov edi, Hexagon.Heap.CacheDisco+20000 ;; Deslocamento
+    mov cx, 50h  ;; Segmento
+    mov edi, Hexagon.Heap.CacheDisco + 20000 ;; Deslocamento
     mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
 
     call Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores
@@ -266,14 +266,14 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.lerMBR:
 
 Hexagon.Kernel.Dev.i386.Disco.Disco.lerBPB:
 
-    push ds
+    push ds ;; Segmento de dados do kernel
     pop es
 
 ;; Primeiro devemos carregar a MBR na memória
 
     mov eax, 01h
     mov esi, 00h
-    mov cx, 0x2000 ;; Segmento
+    mov cx, 2000h ;; Segmento
     mov edi, 0x7C00 ;; Deslocamento
     mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
 
@@ -406,13 +406,13 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores:
 
     add cx, ax
 
-    and edi, 0xf
+    and edi, 0xF
 
     mov word[.PED.segmento], cx ;; Segmento de modo real
     mov word[.PED.deslocamento], di
 
     mov esi, .PED
-    mov ah, 0x42 ;; Leitura extendida BIOS
+    mov ah, 42h ;; Leitura extendida BIOS
 
     call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int13h ;; Serviços de disco do BIOS BIOS
 
@@ -480,7 +480,7 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores:
 .PED.tamanho:      db 16
 .PED.reservado:    db 0
 .PED.totalSetores: dw 0
-.PED.deslocamento: dw 0x0000
+.PED.deslocamento: dw 0000h
 .PED.segmento:     dw 0
 .PED.LBA:          dd 0
                    dd 0
@@ -514,13 +514,13 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores:
 
     add cx, ax
 
-    and edi, 0xf
+    and edi, 0xF
 
     mov word[.PED.deslocamento], di
     mov word[.PED.segmento], cx ;; Segmento de modo real
 
     mov esi, .PED
-    mov ah, 0x43 ;; Escrita extendida BIOS
+    mov ah, 43h ;; Escrita extendida BIOS
     mov al, 0
 
     call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int13h ;; Serviços de disco BIOS
@@ -633,7 +633,7 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores:
 .PED.tamanho:      db 16
 .PED.reservado:    db 0
 .PED.totalSetores: dw 0
-.PED.deslocamento: dw 0x0000
+.PED.deslocamento: dw 0000h
 .PED.segmento:     dw 0
 .PED.LBA:          dd 0
                    dd 0
@@ -647,8 +647,8 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.testarVolume:
 
     mov eax, 1
     mov esi, 01
-    mov cx, 0x50 ;; Segmento
-    mov edi, Hexagon.Heap.CacheDisco+20000 ;; Deslocamento
+    mov cx, 50h ;; Segmento
+    mov edi, Hexagon.Heap.CacheDisco + 20000 ;; Deslocamento
     mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
 
     call Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores

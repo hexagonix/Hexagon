@@ -109,7 +109,7 @@ Hexagon.Kernel.Dev.Gen.Som.Som.emitirSom: ;; Mova para AX o tom a ser emitido pe
 
 ;;*******************************************************************
 
-;; Desabilita o alto-falante interno do computador
+;; Desativa o alto-falante interno do computador
 
 Hexagon.Kernel.Dev.Gen.Som.Som.desligarSom: ;; Desliga o alto-falante interno do computador
 

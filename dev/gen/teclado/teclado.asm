@@ -188,8 +188,8 @@ Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterString:
     mov byte[.string], 0
     mov byte[.charAtual], 0
 
-    push ds
-    pop es ;; ES = DS
+    push ds ;; Segmento de dados do kernel
+    pop es
 
     mov ecx, 0 ;; Contador de caracteres
     movzx ebx, al ;; Máximo de caracteres
@@ -368,8 +368,8 @@ Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterString:
     ret
 
 .string: times 256 db 0 ;; Buffer para armazenar caracteres
-.charAtual:        db 0
-.eco:              dd 0 ;; Registra se a tecla pressionada deve ou não ser exibida (eco)
+.charAtual: db 0
+.eco: dd 0 ;; Registra se a tecla pressionada deve ou não ser exibida (eco)
 
 ;;************************************************************************************
 

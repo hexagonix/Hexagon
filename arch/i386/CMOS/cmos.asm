@@ -173,4 +173,3 @@ Hexagon.Kernel.Arch.i386.CMOS.CMOS.obterDadosCMOS:
     call Hexagon.Kernel.Arch.i386.CMOS.CMOS.atualizarDadosCMOS
 
     ret
-

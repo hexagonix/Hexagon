@@ -130,7 +130,7 @@ Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2:
 
 .aguardarLoop:
 
-    in al, 0x64
+    in al, 64h
 
     bt ax, 0 ;; Checar primeiro bit para torná-lo 1
     jc .OK

@@ -102,7 +102,7 @@ Hexagon.Int.instalarInterrupcoes:
     call Hexagon.Int.instalarISR
 
     mov esi, Hexagon.Int.manipuladorMousePS2 ;; IRQ 12
-    mov eax, Hexagon.Int.interrupcaoMouse     ;; Número da interrupção
+    mov eax, Hexagon.Int.interrupcaoMouse    ;; Número da interrupção
 
     call Hexagon.Int.instalarISR
 
@@ -141,7 +141,9 @@ Hexagon.Int.manipuladorTimer:
     mov ax, 10h ;; Segmento de dados do Kernel
     mov ds, ax
 
-    call Hexagon.Kernel.Arch.i386.CMOS.CMOS.atualizarDadosCMOS ;; Atualizar o relógio em tempo real a cada intervalo
+;; Atualizar o relógio em tempo real a cada intervalo
+
+    call Hexagon.Kernel.Arch.i386.CMOS.CMOS.atualizarDadosCMOS
 
     inc dword[.contagemTimer] ;; Incrementa o contador
     inc dword[.contadorRelativo]
@@ -304,22 +306,27 @@ Hexagon.Int.manipuladorMousePS2:
 .pacoteDeDados:
 
     in al, 60h
+
     mov byte[.dados], al
 
     mov byte[.estado], 1
-    jmp .fim2
+
+    jmp .finalizar
 
 .pacoteX:
 
     in al, 60h
+
     mov byte[.deltaX], al
 
     mov byte[.estado], 2
-    jmp .fim2
+
+    jmp .finalizar
 
 .pacoteY:
 
     in al, 60h
+
     mov byte[.deltaY], al
 
     mov byte[.estado], 0
@@ -327,7 +334,6 @@ Hexagon.Int.manipuladorMousePS2:
     mov byte[.alterado], 1
 
 .fim:
-
 
     movzx eax, byte[Hexagon.Int.manipuladorMousePS2.deltaX] ;; DeltaX alterado em X
     movzx ebx, byte[Hexagon.Int.manipuladorMousePS2.deltaY] ;; DeltaY alterado em Y
@@ -397,10 +403,10 @@ Hexagon.Int.manipuladorMousePS2:
     mov dword[Hexagon.Mouse.mouseX], eax
     mov dword[Hexagon.Mouse.mouseY], ebx
 
-.fim2:
-
+.finalizar:
 
     mov al, 20h ;; Fim da interrupção
+
     out 20h, al
     out 0xA0, al
 
@@ -610,16 +616,16 @@ Hexagon.Int.manipuladorTouchpad:
 
     iret
 
-.estado:        db 0
-.X:     dw 0
-.Y:     dw 0
-.Z:     db 0
+.estado: db 0
+.X:      dw 0
+.Y:      dw 0
+.Z:      db 0
 
 ;;************************************************************************************
 
 ;; Manipulador para outras interrupções, quando as mesmas não estiverem disponíveis
 
-Hexagon.Int.naoManipulado:
+Hexagon.Int.intVazia:
 
     push eax
 
@@ -646,7 +652,7 @@ Hexagon.Int.instalarISR:
     push ebp
 
 ;; Primeiramente vamos verificar se o pedido de instalação de interrupção partiu
-;; do Hexagon, observando a variável que registra essas solicitações previlegiadas.
+;; do Hexagon, observando a variável que registra essas solicitações previlegiadas
 
     cmp dword[ordemKernel], ordemKernelExecutar ;; Caso sim, ignorar medidas de discriminação
     je .instalar

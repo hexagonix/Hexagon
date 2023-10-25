@@ -182,7 +182,7 @@ match =SIM, VERBOSE
     jc .falhaAoConectarAPM
 
     mov ax, 530Eh ;; Função de seleção de versão do Driver
-    mov bx, 0 ;; O ID do dispositivo (APM BIOS)
+    mov bx, 0     ;; O ID do dispositivo (APM BIOS)
     mov cx, 0102h ;; Selecionar APM versão 1.2
                   ;; A funcionalidade está presente após a versão 1.2
     call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h ;; Chamar interrupção APM
