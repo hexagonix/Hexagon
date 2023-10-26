@@ -132,12 +132,12 @@ db "imp2", 0 ;; Terceira porta paralela
 
 ;; Dispositivos de saída
 
-.vd0:
-db "vd0", 0 ;; Console padrão
-.vd1:
-db "vd1", 0 ;; Console secundário (buffer)
-.vd2:
-db "vd2", 0 ;; Console de despejo de dados do kernel
+.tty0:
+db "tty0", 0 ;; Console padrão
+.tty1:
+db "tty1", 0 ;; Console secundário (buffer)
+.tty2:
+db "tty2", 0 ;; Console de despejo de dados do kernel
 
 .au0:
 db "au0", 0 ;; Alto-falante interno
@@ -487,33 +487,33 @@ Hexagon.Kernel.Dev.Dev.abrir:
 
     mov eax, dword[Hexagon.Dev.Controle.classeDispositivo]
 
-    cmp bx, [Hexagon.Dev.codigoDispositivos.vd0]
-    je .vd0
+    cmp bx, [Hexagon.Dev.codigoDispositivos.tty0]
+    je .tty0
 
-    cmp bx, [Hexagon.Dev.codigoDispositivos.vd1]
-    je .vd1
+    cmp bx, [Hexagon.Dev.codigoDispositivos.tty1]
+    je .tty1
 
-    cmp bx, [Hexagon.Dev.codigoDispositivos.vd2]
-    je .vd2
+    cmp bx, [Hexagon.Dev.codigoDispositivos.tty2]
+    je .tty2
 
     cmp bx, [Hexagon.Dev.codigoDispositivos.au0]
     je .au0
 
     jmp .retorno
 
-.vd0: ;; Console principal
+.tty0: ;; Console principal
 
     call Hexagon.Kernel.Lib.Graficos.usarBufferVideo1
 
     jmp .retorno
 
-.vd1: ;; Primeiro console virtual
+.tty1: ;; Primeiro console virtual
 
     call Hexagon.Kernel.Lib.Graficos.usarBufferVideo2
 
     jmp .retorno
 
-.vd2: ;; Console de despejo de dados do kernel
+.tty2: ;; Console de despejo de dados do kernel
 
     mov ebx, 1h
 
@@ -613,17 +613,17 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
     jc .imp2
 
-    mov edi, Hexagon.Dev.Dispositivos.vd0
+    mov edi, Hexagon.Dev.Dispositivos.tty0
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
-    jc .vd0
+    jc .tty0
 
-    mov edi, Hexagon.Dev.Dispositivos.vd1
+    mov edi, Hexagon.Dev.Dispositivos.tty1
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
-    jc .vd1
+    jc .tty1
 
-    mov edi, Hexagon.Dev.Dispositivos.vd2
+    mov edi, Hexagon.Dev.Dispositivos.tty2
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
-    jc .vd2
+    jc .tty2
 
     mov edi,Hexagon.Dev.Dispositivos.au0
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
@@ -751,32 +751,32 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
 
     ret
 
-.vd0:
+.tty0:
 
     mov ah, 00h
-    mov bx, word [Hexagon.Dev.codigoDispositivos.vd0]
+    mov bx, word [Hexagon.Dev.codigoDispositivos.tty0]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
-    mov ecx, [Hexagon.Dev.codigoDispositivos.vd0]
+    mov ecx, [Hexagon.Dev.codigoDispositivos.tty0]
     mov dl, 04h
 
     ret
 
-.vd1:
+.tty1:
 
     mov ah, 01h
-    mov bx, word [Hexagon.Dev.codigoDispositivos.vd1]
+    mov bx, word [Hexagon.Dev.codigoDispositivos.tty1]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
-    mov ecx, [Hexagon.Dev.codigoDispositivos.vd1]
+    mov ecx, [Hexagon.Dev.codigoDispositivos.tty1]
     mov dl, 04h
 
     ret
 
-.vd2:
+.tty2:
 
     mov ah, 02h
-    mov bx, word [Hexagon.Dev.codigoDispositivos.vd2]
+    mov bx, word [Hexagon.Dev.codigoDispositivos.tty2]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
-    mov ecx, [Hexagon.Dev.codigoDispositivos.vd2]
+    mov ecx, [Hexagon.Dev.codigoDispositivos.tty2]
     mov dl, 04h
 
     ret
@@ -971,31 +971,34 @@ Hexagon.Kernel.Dev.Dev.paraDispositivo:
 
 .saida:
 
-    cmp ax, Hexagon.Dev.codigoDispositivos.vd0
-    je .vd0
+    cmp ax, Hexagon.Dev.codigoDispositivos.tty0
+    je .tty0
 
-    cmp ax, Hexagon.Dev.codigoDispositivos.vd1
-    je .vd1
+    cmp ax, Hexagon.Dev.codigoDispositivos.tty1
+    je .tty1
+
+    cmp ax, Hexagon.Dev.codigoDispositivos.tty2
+    je .tty2
 
     stc
 
     ret
 
-.vd0:
+.tty0:
 
-    mov esi, Hexagon.Dev.Dispositivos.vd0
-
-    ret
-
-.vd1:
-
-    mov esi, Hexagon.Dev.Dispositivos.vd1
+    mov esi, Hexagon.Dev.Dispositivos.tty0
 
     ret
 
-.vd2:
+.tty1:
 
-    mov esi, Hexagon.Dev.Dispositivos.vd2
+    mov esi, Hexagon.Dev.Dispositivos.tty1
+
+    ret
+
+.tty2:
+
+    mov esi, Hexagon.Dev.Dispositivos.tty2
 
     ret
 

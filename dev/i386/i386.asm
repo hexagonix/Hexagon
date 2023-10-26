@@ -99,9 +99,9 @@ Hexagon.Dev.codigoDispositivos:
 
 ;; Dispositivos de saída
 
-.vd0: dw 44h ;; Console
-.vd1: dw 45h ;; Console
-.vd2: dw 46h ;; Console
+.tty0: dw 44h ;; Console
+.tty1: dw 45h ;; Console
+.tty2: dw 46h ;; Console
 
 ;; Dispositivos de entrada
 

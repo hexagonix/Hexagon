@@ -171,11 +171,11 @@ Hexagon.Kernel.Kernel.Panico.panico:
 
 Hexagon.Kernel.Kernel.Panico.prepararPanico:
 
-    mov esi, Hexagon.Dev.Dispositivos.vd1 ;; Primeiro, fechar vd1
+    mov esi, Hexagon.Dev.Dispositivos.tty1 ;; Primeiro, fechar tty1
 
     call Hexagon.Kernel.Dev.Dev.fechar
 
-    mov esi, Hexagon.Dev.Dispositivos.vd0 ;; Abrir a saída de vídeo padrão
+    mov esi, Hexagon.Dev.Dispositivos.tty0 ;; Abrir a saída de vídeo padrão
 
     call Hexagon.Kernel.Dev.Dev.abrir
 
