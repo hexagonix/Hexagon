@@ -423,8 +423,6 @@ Hexagon.Kernel.FS.FAT16.nomeArquivoParaFAT:
 
     rep movsb ;; Move (ECX) caracteres de ESI para o buffer
 
-    ;;mov byte[.bufferNomeDeArquivo+11], 0
-
 .sucesso:
 
 ;; Salvar buffer na posição indicada por ESI
