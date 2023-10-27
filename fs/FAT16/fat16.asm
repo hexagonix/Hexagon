@@ -121,7 +121,7 @@ Hexagon.VFS.FAT16B Hexagon.VFS.FAT
 
 ;;************************************************************************************
 
-;; Converte o nome FAT a um nome humano
+;; Converte o nome no formato FAT a um nome no padrão 8.3
 ;;
 ;; Entrada:
 ;;
@@ -132,7 +132,7 @@ Hexagon.VFS.FAT16B Hexagon.VFS.FAT
 ;; AVISO! O nome será modificado
 ;; CF definido caso o nome do arquivo seja inválido
 
-Hexagon.Kernel.FS.FAT16.nomeFATParaNomeHumano:
+Hexagon.Kernel.FS.FAT16.nomeFATParaNomeArquivo:
 
     push eax
     push ebx
@@ -170,7 +170,7 @@ Hexagon.Kernel.FS.FAT16.nomeFATParaNomeHumano:
 
     push esi
 
-    mov edi, .bufferNomeDeArquivo + 500h
+    mov edi, .bufferNomeDeArquivo + 500h ;; Corrigir endereço com base do segmento
     mov ecx, 11
 
     rep movsb ;; Copiar (ECX) bytes de ESI para EDI
@@ -245,8 +245,6 @@ Hexagon.Kernel.FS.FAT16.nomeFATParaNomeHumano:
 
     push esi
 
-    ;; call stringParaMinusculo
-
     clc ;; Limpar Carry
 
     jmp .fim
@@ -265,12 +263,11 @@ Hexagon.Kernel.FS.FAT16.nomeFATParaNomeHumano:
 
     ret
 
-.bufferNomeDeArquivo: times 13 db ' '
-db 0
+.bufferNomeDeArquivo: times 12 db ' '
 
 ;;************************************************************************************
 
-;; Converter nome de arquivo para formato FAT
+;; Converter nome de arquivo no padrão 8.3 para formato FAT
 ;;
 ;; Entrada:
 ;;
@@ -278,7 +275,7 @@ db 0
 ;;
 ;; Saída:
 ;;
-;; AVISO! O nome será modificado
+;; AVISO! O nome será modificado diretamente no endereço apontado por ESI
 ;; CF definido caso o nome do arquivo seja inválido
 
 Hexagon.Kernel.FS.FAT16.nomeArquivoParaFAT:
@@ -305,7 +302,7 @@ Hexagon.Kernel.FS.FAT16.nomeArquivoParaFAT:
 
     call Hexagon.Kernel.Lib.String.tamanhoString
 
-    cmp eax, 8 ;; Mais de oito caracteres não são permitidos
+    cmp eax, 8 ;; Mais de oito caracteres não são permitidos no formato 8.3
     ja .nomeArquivoInvalido
 
     call Hexagon.Kernel.Lib.String.stringParaMaiusculo
@@ -324,7 +321,7 @@ Hexagon.Kernel.FS.FAT16.nomeArquivoParaFAT:
     push ds ;; Segmento de dados do kernel
     pop es
 
-;; Ter certeza que o nome apressenta exatamente 11 caracteres
+;; Ter certeza que o nome possui exatamente 11 caracteres
 
     mov edi, esi
 
@@ -347,7 +344,7 @@ Hexagon.Kernel.FS.FAT16.nomeArquivoParaFAT:
 ;; Limpar o buffer temporário da operação anterior
 
     mov al, ' '
-    mov ecx, 12
+    mov ecx, 11
     mov edi, .bufferNomeDeArquivo + 500h ;; Limpar buffer temporário
 
     cld
@@ -407,7 +404,7 @@ Hexagon.Kernel.FS.FAT16.nomeArquivoParaFAT:
     push esi
 
     add esi, ebx ;; EBX para o tamanho do nome do arquivo
-    add esi, 1   ;; 1 para o caractere '.'
+    add esi, 1   ;; 1 byte para o caractere '.'
 
     call Hexagon.Kernel.Lib.String.tamanhoString ;; Checar tamanho da extensão
 
@@ -426,7 +423,7 @@ Hexagon.Kernel.FS.FAT16.nomeArquivoParaFAT:
 
     rep movsb ;; Move (ECX) caracteres de ESI para o buffer
 
-    mov byte[.bufferNomeDeArquivo+11], 0
+    ;;mov byte[.bufferNomeDeArquivo+11], 0
 
 .sucesso:
 
@@ -443,7 +440,7 @@ Hexagon.Kernel.FS.FAT16.nomeArquivoParaFAT:
     add edi, 500h
 
     mov esi, .bufferNomeDeArquivo
-    mov ecx, 12
+    mov ecx, 11
 
     cld
 
@@ -468,8 +465,7 @@ Hexagon.Kernel.FS.FAT16.nomeArquivoParaFAT:
 
     ret
 
-.bufferNomeDeArquivo: times 13 db ' '
-db 0
+.bufferNomeDeArquivo: times 11 db ' '
 
 ;;************************************************************************************
 
@@ -662,7 +658,6 @@ Hexagon.Kernel.FS.FAT16.arquivoExisteFAT16B:
     ret
 
 .bufferNomeDeArquivo: times 13 db ' '
-db 0
 
 ;;************************************************************************************
 
@@ -889,7 +884,7 @@ Hexagon.Kernel.FS.FAT16.listarArquivosFAT16B:
     je .finalizarLista ;; Se este for o último arquivo, não vamos querer procurar mais
                        ;; no diretório atrás de algo que não existe ;-)
 
-    call Hexagon.Kernel.FS.FAT16.nomeFATParaNomeHumano ;; Converter nome para formato legível
+    call Hexagon.Kernel.FS.FAT16.nomeFATParaNomeArquivo ;; Converter nome para formato 8.3
 
 ;; Adicionar entrada de nome de arquivo na lista
 
@@ -1503,7 +1498,7 @@ Hexagon.Kernel.FS.FAT16.novoArquivoFAT16B:
 ;; Limpar outros campos da entrada do arquivo no diretório raiz, a partir do nome do arquivo
 
     add edi, 500h + 11 ;; Pular para o término do nome do arquivo
-    mov ecx, 32-11    ;; Fazer isso para 32 bytes de entrada menos os primeiros 11 do nome
+    mov ecx, 32 - 11   ;; Fazer isso para 32 bytes de entrada menos os primeiros 11 do nome
     mov al, 0
 
     cld
@@ -1541,7 +1536,6 @@ Hexagon.Kernel.FS.FAT16.novoArquivoFAT16B:
     ret
 
 .bufferNomeDeArquivo: times 13 db ' '
-db 0
 
 ;;************************************************************************************
 
