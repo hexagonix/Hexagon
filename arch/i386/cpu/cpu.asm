@@ -113,10 +113,10 @@ use16
 
 ;; Retornar
 
-    push 08h ;; Novo CS
-    push bp  ;; Novo IP
+    push 08h ;; Segmento de código do kernel
+    push bp  ;; Endereço de retorno (primeira intrução em modo 32-bit)
 
-    retf
+    retf ;; Ir para código 32-bit
 
 ;;************************************************************************************
 
@@ -132,13 +132,13 @@ Hexagon.Kernel.Arch.i386.CPU.CPU.irPara16:
 
     jmp 20h:Hexagon.Kernel.Arch.i386.CPU.CPU.modoProtegido16 ;; Carregar CS com seletor 20h
 
-;; Para ir ao modo real 16 bits, temos de passar pelo modo protegido 16 bits
+;; Para ir ao modo real 16-bit, temos de passar pelo modo protegido 16-bit
 
 use16
 
 Hexagon.Kernel.Arch.i386.CPU.CPU.modoProtegido16:
 
-    mov ax, 28h ;; 28h é o seletor de modo protegido 16-bit
+    mov ax, 28h ;; 28h é o seletor de dados do modo protegido 16-bit
     mov ss, ax
     mov sp, 5000h ;; Pilha
 
@@ -146,15 +146,15 @@ Hexagon.Kernel.Arch.i386.CPU.CPU.modoProtegido16:
     and eax, 0xFFFFFFFE ;; Limpar bit de ativação do modo protegido em cr0
     mov cr0, eax ;; Desativar modo 32 bits
 
-    jmp 50h:Hexagon.Kernel.Arch.i386.CPU.CPU.modoReal ;; Carregar CS e IP
+    jmp 50h:Hexagon.Kernel.Arch.i386.CPU.CPU.modoReal ;; Carregar par CS e IP (segmento:instrução)
 
 Hexagon.Kernel.Arch.i386.CPU.CPU.modoReal:
 
 ;; Carregar registradores de segmento com valores de 16 bits
 
-    mov ax, 50h
+    mov ax, 50h ;; Segmento de modo real a ser utilizado (segmento usado pelo kernel)
     mov ds, ax
-    mov ax, 6000h
+    mov ax, 6000h ;; Pilha
     mov ss, ax
     mov ax, 0
     mov es, ax
@@ -166,15 +166,15 @@ Hexagon.Kernel.Arch.i386.CPU.CPU.modoReal:
 
     sti
 
-    push 50h
-    push dx ;; Retornar para a localização presente em EDX
+    push 50h ;; Segmento de código a ser utilizado
+    push dx  ;; Retornar para a localização presente em EDX (primeira instrução em modo real)
 
-    retf ;; Iniciar modo real
+    retf ;; Iniciar modo real (ir para código 16-bit de modo real)
 
-;; Tabela de vetores de interrupção de modo real
+;; Tabela de vetores de interrupção de modo real (o limite do modo com base 0)
 
-.idtR:  dw 0xFFFF ;; Limite
-        dd 0      ;; Base
+.idtR:  dw 0xFFFF ;; Limite (limite do modo de operação)
+        dd 0      ;; Base (base zero, sem deslocamento)
 
 ;;************************************************************************************
 
@@ -190,7 +190,7 @@ match =A20NAOSEGURO, A20
 
     mov edi, 112345h ;; Endereço par
     mov esi, 012345h ;; Endereço ímpar
-    mov [esi], esi    ;; Os dois endereços apresentam valores diferentes
+    mov [esi], esi   ;; Os dois endereços apresentam valores diferentes
     mov [edi], edi
 
 ;; Se A20 não definido, os dois ponteiros apontarão para 012345h, que contêm 112345h (EDI)
@@ -243,6 +243,10 @@ Hexagon.Kernel.Arch.i386.CPU.CPU.configurarProcessador:
 
 ;;************************************************************************************
 
+;; Essa função obtêm informações do processador instalado e salva em um buffer que
+;; será utilizado em váriso pontos por funções do kernel ou copiado para o ambiente
+;; de usuário, para ser usado pelos processos
+
 Hexagon.Kernel.Arch.i386.CPU.CPU.identificarProcessador:
 
     mov esi, Hexagon.Dev.codigoDispositivos.proc0
@@ -278,8 +282,6 @@ Hexagon.Kernel.Arch.i386.CPU.CPU.identificarProcessador:
     ret
 
 ;;************************************************************************************
-
-use32
 
 ;;************************************************************************************
 ;;
