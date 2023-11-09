@@ -204,7 +204,9 @@ struc Hexagon.Gerenciamento.Imagem.HAPP
 ;; funções de gerenciamento virtual e escalonamento de processos. O escalonador obtêm
 ;; o ponto de entrada e manipula os dados do cabeçalho em memória
 
-virtual at Hexagon.Heap.Temp ;; Esse objeto estará localizado em uma área de despejo
+;; Esse objeto estará localizado em uma área reservada de memória do kernel
+
+virtual at Hexagon.Heap.Temp
 
 Hexagon.Imagem.Executavel.HAPP Hexagon.Gerenciamento.Imagem.HAPP
 
