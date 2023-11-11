@@ -136,12 +136,12 @@ Hexagon.Processos Hexagon.Gerenciamento.Tarefas
 virtual at Hexagon.Heap.BCPs ;; Este objeto está localizado na posição definida
 
 Hexagon.Processos.BCP.esp: ;; Bloco de Controle de Processo
-times Hexagon.Processos.BCP.limiteProcessos + 1 dd 0
+times Hexagon.Processos.BCP.limiteProcessos dd 0
 .ponteiro: dd 0 ;; Ponteiro para a pilha do processo
 
 
 Hexagon.Processos.BCP.tamanho:  ;; Bloco de mapeamento de memória
-times Hexagon.Processos.BCP.limiteProcessos + 1 dd 0
+times Hexagon.Processos.BCP.limiteProcessos dd 0
 .ponteiro: dd 0 ;; Ponteiro para o endereço de memória do processo
 
 Hexagon.Processos.BCP:
@@ -161,7 +161,7 @@ Hexagon.Processos.BCP:
 .entradaHAPP:           dd 0 ;; Entrada da imagem HAPP
 .tipoImagem:            db 0 ;; Tipo executável da imagem
 .tamanhoImagem: ;; Tamanho do programa atual na pilha de execução
-times Hexagon.Processos.BCP.limiteProcessos + 1 dd 0
+times Hexagon.Processos.BCP.limiteProcessos dd 0
 .nomeProcesso: ;; Armazena o nome do processo
 times 11 db 0
 
@@ -500,9 +500,6 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcesso:
 
     add dword[Hexagon.Processos.BCP.tamanho.ponteiro], 4
 
-    cmp dword[Hexagon.Processos.BCP.tamanho.ponteiro], 4 * Hexagon.Processos.BCP.limiteProcessos
-    ja Hexagon.Kernel.Kernel.Proc.numeroMaximoProcessosAtingido
-
     add dword[Hexagon.Processos.BCP.tamanhoProcessos], ebx
 
     mov edi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
@@ -580,9 +577,6 @@ Hexagon.Kernel.Kernel.Proc.executarProcesso:
     mov dword[eax], esp
 
     add dword[Hexagon.Processos.BCP.esp.ponteiro], 4
-
-    cmp dword[Hexagon.Processos.BCP.esp.ponteiro], 4*Hexagon.Processos.BCP.limiteProcessos
-    ja Hexagon.Kernel.Kernel.Proc.numeroMaximoProcessosAtingido
 
     sti ;; Ter certeza que as interrupções estão disponíveis
 
