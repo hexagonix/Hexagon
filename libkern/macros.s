@@ -98,17 +98,17 @@ macro kprint string
 
 ;; Agora, função para codificação de data de build
 
-;; O código abaixo extrai e cria strings com informações sobre a build do software
+;; O código abaixo extrai e cria strings com informações sobre a build do Hexagon
 
-__tempoatual            = %t
-__quadvalorano          = (__tempoatual+31536000)/126230400
-__quadrestoano          = (__tempoatual+31536000)-(126230400*__quadvalorano)
-__quadsecaoano          = __quadrestoano/31536000
-__ano                   = 1969+(__quadvalorano*4)+__quadsecaoano-(__quadsecaoano shr 2)
-__anobissexto           = __quadsecaoano/3
-__segundosano           = __quadrestoano-31536000*(__quadsecaoano-__quadsecaoano/4)
-__diaano                = __segundosano/86400
-__diaanotemp            = __diaano
+__tempoatual   = %t
+__quadvalorano = (__tempoatual+31536000)/126230400
+__quadrestoano = (__tempoatual+31536000)-(126230400*__quadvalorano)
+__quadsecaoano = __quadrestoano/31536000
+__ano          = 1969+(__quadvalorano*4)+__quadsecaoano-(__quadsecaoano shr 2)
+__anobissexto  = __quadsecaoano/3
+__segundosano  = __quadrestoano-31536000*(__quadsecaoano-__quadsecaoano/4)
+__diaano       = __segundosano/86400
+__diaanotemp   = __diaano
 
 if (__diaanotemp>=(59+__anobissexto))
 

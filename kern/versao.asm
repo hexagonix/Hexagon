@@ -91,9 +91,9 @@ Hexagon.Versao:
 .numeroSubversao  = 0 ;; Número de subversão (secundária) do Hexagon
 .caractereRevisao = 1 ;; Adicionar caractere de revisão, caso necessário, entre aspas (funciona como caractere)
 
-.nomeKernel:
-db "Hexagon", 0 ;; Nome fornecido ao espaço de usuário
-.build:
+.nomeKernel:  ;; Nome fornecido ao espaço de usuário
+db "Hexagon", 0
+.build: ;; Informações de build da versão atual
 db __stringdia, "/", __stringmes, "/", __stringano, " "
 db __stringhora, ":", __stringminuto, ":", __stringsegundo, " GMT", 0
 

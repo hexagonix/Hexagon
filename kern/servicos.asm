@@ -276,15 +276,16 @@ Hexagon.Int.manipuladorTeclado:
 
     iret
 
-.codigosEscaneamento: times 32 db 0
-.codigosEscaneamento.indice:   db 0
-.sinalShift:                   db 0
+.codigosEscaneamento:
+times 32 db 0
+.codigosEscaneamento.indice: db 0
+.sinalShift: db 0
 
 ;; Bit 0: Tecla Control
 ;; Bit 1: Tecla Shift
 ;; Bit 2-31: Reservado
 
-estadoTeclas:    dd 0
+estadoTeclas: dd 0
 
 ;;************************************************************************************
 
@@ -414,11 +415,11 @@ Hexagon.Int.manipuladorMousePS2:
 
     iret
 
-.estado:    db 0
-.deltaX:    db 0
-.deltaY:    db 0
-.dados:     db 0
-.alterado:  db 0
+.estado:   db 0
+.deltaX:   db 0
+.deltaY:   db 0
+.dados:    db 0
+.alterado: db 0
 
 align 32
 
