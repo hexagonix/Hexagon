@@ -517,7 +517,7 @@ Hexagon.Kernel.Dev.Dev.abrir:
 
     mov ebx, 1h
 
-    call Hexagon.Kernel.Lib.Graficos.atualizarTela
+    call Hexagon.Kernel.Lib.Graficos.atualizarConsole
 
     jmp .retorno
 

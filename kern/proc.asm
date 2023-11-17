@@ -301,13 +301,13 @@ match =SIM, VERBOSE
     mov eax, dword[Hexagon.Graficos.corFonte]
     mov ebx, dword[Hexagon.Graficos.corFundo]
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.definirCorTexto
+    call Hexagon.Kernel.Dev.Gen.Console.Console.definirCorConsole
 
-    call Hexagon.Kernel.Lib.Graficos.atualizarTela
+    call Hexagon.Kernel.Lib.Graficos.atualizarConsole
 
     call Hexagon.Kernel.Lib.Graficos.usarBufferVideo1
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.rolarParaBaixo
+    call Hexagon.Kernel.Dev.Gen.Console.Console.rolarConsole
 
     mov al, 20h
 

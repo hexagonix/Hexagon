@@ -358,7 +358,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.definirModoGrafico:
 ;; EDX - Endereço inicial do buffer
 ;; CF definido quando em modo texto
 
-Hexagon.Kernel.Dev.Gen.Console.Console.obterInfoVideo:
+Hexagon.Kernel.Dev.Gen.Console.Console.obterInfoConsole:
 
     cmp byte[Hexagon.Video.modoGrafico], 0
     je .modoTextoVideo
@@ -626,7 +626,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha:
 
 ;; Rolar a tela para baixo
 
-Hexagon.Kernel.Dev.Gen.Console.Console.rolarParaBaixo:
+Hexagon.Kernel.Dev.Gen.Console.Console.rolarConsole:
 
     push eax
     push ecx
@@ -1074,7 +1074,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractereBase:
     cmp dh, Hexagon.Video.modoTexto.maximoLinhas
     jna .yOK
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.rolarParaBaixo
+    call Hexagon.Kernel.Dev.Gen.Console.Console.rolarConsole
 
     mov dh, Hexagon.Video.modoTexto.maximoLinhas
 
@@ -1204,7 +1204,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere.graficos:
     cmp dh, byte[Hexagon.Video.maxLinhas]
     jna .xOK
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.rolarParaBaixo
+    call Hexagon.Kernel.Dev.Gen.Console.Console.rolarConsole
 
     mov dh, byte[Hexagon.Video.maxLinhas]
     mov dl, 0
@@ -1483,7 +1483,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString:
 
 ;;************************************************************************************
 
-;; Alterar o fundo do texto e a cor do primeiro plano
+;; Alterar o esquema de cores do console
 ;;
 ;; Entrada:
 ;;
@@ -1493,7 +1493,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString:
 ;;
 ;; O modo texto tem de ser apenas preto e branco
 
-Hexagon.Kernel.Dev.Gen.Console.Console.definirCorTexto:
+Hexagon.Kernel.Dev.Gen.Console.Console.definirCorConsole:
 
     cmp byte[Hexagon.Video.modoGrafico], 1
     je .graficos
@@ -1525,16 +1525,16 @@ Hexagon.Kernel.Dev.Gen.Console.Console.definirCorTexto:
 
 ;;************************************************************************************
 
-;; Obter cor do fundo e primeiro plano
+;; Obter o esquema de cores do console
 ;;
 ;; Saída:
 ;;
-;; EAX - Primeiro plano (hex RGB)
+;; EAX - Primeiro plano (hex RGB) -
 ;; EBX - Plano de fundo (hex RGB)
 ;; ECX - Cor definida para a fonte segundo o tema escolhido
 ;; EDX - Cor definida para o plano de fundo de acordo com o tema
 
-Hexagon.Kernel.Dev.Gen.Console.Console.obterCorTexto:
+Hexagon.Kernel.Dev.Gen.Console.Console.obterCorConsole:
 
     cmp byte[Hexagon.Video.modoGrafico], 1
     je .graficos

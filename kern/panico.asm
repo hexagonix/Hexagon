@@ -179,10 +179,10 @@ Hexagon.Kernel.Kernel.Panico.prepararPanico:
 
     call Hexagon.Kernel.Dev.Dev.abrir
 
-    mov eax, 0xFFFFFF ;; BRANCO_ANDROMEDA
-    mov ebx, 0x4682B4 ;; AZUL_METALICO
+    mov eax, HEXAGONIX_CLASSICO_BRANCO
+    mov ebx, HEXAGONIX_BLOSSOM_AZUL
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.definirCorTexto
+    call Hexagon.Kernel.Dev.Gen.Console.Console.definirCorConsole
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.limparConsole ;; Limpar saída de vídeo padrão
 

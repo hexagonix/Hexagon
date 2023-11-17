@@ -82,11 +82,12 @@ Hexagon.Graficos:
 
 .corFundoPadrao = HEXAGONIX_BLOSSOM_CINZA
 .corFontePadrao = HEXAGONIX_BLOSSOM_AMARELO
+
 .corFundo:      dd .corFundoPadrao
 .corFonte:      dd .corFontePadrao
 .bytesPorLinha: dd 0
-.corFonteTema:  dd 0
-.corFundoTema:  dd 0
+.corFundoTema:  dd .corFundoPadrao
+.corFonteTema:  dd .corFontePadrao
 
 ;;************************************************************************************
 
@@ -279,7 +280,7 @@ Hexagon.Kernel.Lib.Graficos.usarBufferVideo1:
 
 ;; Copiar buffer para a memória de vídeo
 
-Hexagon.Kernel.Lib.Graficos.atualizarTela:
+Hexagon.Kernel.Lib.Graficos.atualizarConsole:
 
     cmp byte[Hexagon.Video.modoGrafico], 1
     jne .nadaAFazer

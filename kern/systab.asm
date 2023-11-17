@@ -125,20 +125,20 @@ Hexagon.Syscall.Syscall.servicosHexagon:
     dd Hexagon.Kernel.Arch.i386.APM.Energia.reiniciarPC                ;; 28
     dd Hexagon.Kernel.Arch.i386.APM.Energia.desligarPC                 ;; 29
 
-;; Funções de saída em vídeo e gráficos do Hexagon
+;; Funções de saída em console e gráficos do Hexagon
 
     dd Hexagon.Kernel.Dev.Gen.Console.Console.imprimir                 ;; 30
     dd Hexagon.Kernel.Dev.Gen.Console.Console.limparConsole            ;; 31
     dd Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha              ;; 32
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.rolarParaBaixo           ;; 33
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.rolarConsole             ;; 33
     dd Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor         ;; 34
     dd Hexagon.Kernel.Lib.Graficos.colocarPixel                        ;; 35
     dd Hexagon.Kernel.Lib.Graficos.desenharBlocoSyscall                ;; 36
     dd Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere        ;; 37
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.definirCorTexto          ;; 38
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.obterCorTexto            ;; 30
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.obterInfoVideo           ;; 40
-    dd Hexagon.Kernel.Lib.Graficos.atualizarTela                       ;; 41
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.definirCorConsole        ;; 38
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.obterCorConsole          ;; 39
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.obterInfoConsole         ;; 40
+    dd Hexagon.Kernel.Lib.Graficos.atualizarConsole                    ;; 41
     dd Hexagon.Kernel.Dev.Gen.Console.Console.definirResolucao         ;; 42
     dd Hexagon.Kernel.Dev.Gen.Console.Console.obterResolucao           ;; 43
     dd Hexagon.Kernel.Dev.Gen.Console.Console.obterCursor              ;; 44
