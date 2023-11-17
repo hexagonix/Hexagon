@@ -77,11 +77,11 @@ use32
 
 Hexagon.Graficos:
 
-;; Use as definições presentes em libkern/macros.s para definir as cores padrão aplicadas
-;; na inicialização
+;; Use as definições presentes em libkern/macros.s para definir o esquema de cores
+;; aplicadas na inicialização
 
-.corFundoPadrao = HEXAGONIX_PADRAO_FUNDO
-.corFontePadrao = HEXAGONIX_PADRAO_FONTE
+.corFundoPadrao = HEXAGONIX_BLOSSOM_CINZA
+.corFontePadrao = HEXAGONIX_BLOSSOM_AMARELO
 .corFundo:      dd .corFundoPadrao
 .corFonte:      dd .corFontePadrao
 .bytesPorLinha: dd 0

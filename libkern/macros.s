@@ -76,11 +76,19 @@ use32
 ;;************************************************************************************
 
 ;; Esquema de cores padrão do Hexagonix
+;; O esquema presente aqui é uma versão reduzida do encontrado em "lib/fasm/console.s",
+;; com os esquemas de cores necessários para a inicialização. As personalizações serão
+;; realizadas pelos utilitários
 
-HEXAGONIX_PADRAO_FUNDO = 0x29282928
-HEXAGONIX_PADRAO_FONTE = 0x00C7B898
-HEXAGONIX_PRETO_FUNDO  = 0x00000000
-HEXAGONIX_BRANCO_FONTE = 0xFFFFFFFF
+;; Tema Blossom para Hexagon (apenas o esquema de cores necessário)
+
+HEXAGONIX_BLOSSOM_CINZA   = 0x29282928
+HEXAGONIX_BLOSSOM_AMARELO = 0x00C7B898
+
+;; Tema clássico (descontinuado)
+
+HEXAGONIX_CLASSICO_PRETO  = 0x00000000
+HEXAGONIX_CLASSICO_BRANCO = 0xFFFFFFFF
 
 ;;************************************************************************************
 
