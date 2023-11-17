@@ -73,6 +73,13 @@
 
 use32
 
+;; Esquema de cores padrão do Hexagonix
+
+HEXAGONIX_PADRAO_FUNDO = 0x29282928
+HEXAGONIX_PADRAO_FONTE = 0x00C7B898
+HEXAGONIX_PRETO_FUNDO  = 0x00000000
+HEXAGONIX_BRANCO_FONTE = 0xFFFFFFFF
+
 ;; Aqui temos alguns macros úteis para o Hexagon
 
 macro logHexagon mensagem, prioridade
