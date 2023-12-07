@@ -298,8 +298,8 @@ match =SIM, VERBOSE
     mov ax, 18h
     mov es, ax
 
-    mov eax, dword[Hexagon.Graficos.corFonte]
-    mov ebx, dword[Hexagon.Graficos.corFundo]
+    mov eax, dword[Hexagon.Console.corFonte]
+    mov ebx, dword[Hexagon.Console.corFundo]
 
 ;; Definir cor padrão do console
 
@@ -315,7 +315,7 @@ match =SIM, VERBOSE
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.usarConsolePrincipal
 
-;; Rolar console 
+;; Rolar console
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.rolarConsole
 
@@ -620,7 +620,7 @@ Hexagon.Kernel.Kernel.Proc.encerrarProcesso:
     mov ax, 10h
     mov ds, ax
 
-    cmp byte[Hexagon.Video.modoGrafico], 0
+    cmp byte[Hexagon.Console.modoGrafico], 0
     je naoModoGrafico
 
 naoModoGrafico:

@@ -75,22 +75,6 @@ use32
 
 ;;************************************************************************************
 
-Hexagon.Graficos:
-
-;; Use as definições presentes em libkern/macros.s para definir o esquema de cores
-;; aplicadas na inicialização
-
-.corFundoPadrao = HEXAGONIX_BLOSSOM_CINZA
-.corFontePadrao = HEXAGONIX_BLOSSOM_AMARELO
-
-.corFundo:      dd .corFundoPadrao
-.corFonte:      dd .corFontePadrao
-.bytesPorLinha: dd 0
-.corFundoTema:  dd .corFundoPadrao
-.corFonteTema:  dd .corFontePadrao
-
-;;************************************************************************************
-
 ;; Calcular deslocamento do pixel no buffer de vídeo
 ;;
 ;; Entrada:
@@ -106,9 +90,9 @@ Hexagon.Kernel.Lib.Graficos.calcularDeslocamentoPixel:
 
     push eax ;; X
 
-    mov esi, dword[Hexagon.Video.Memoria.enderecoLFB] ;; Ponteiro para a memória de vídeo
+    mov esi, dword[Hexagon.Console.Memoria.enderecoLFB] ;; Ponteiro para a memória de vídeo
 
-    movzx eax, word[Hexagon.Video.bytesPorLinha]
+    movzx eax, word[Hexagon.Console.bytesPorLinha]
 
     mul ebx ;; Y * bytes por linha
 
@@ -116,7 +100,7 @@ Hexagon.Kernel.Lib.Graficos.calcularDeslocamentoPixel:
 
     pop eax ;; X
 
-    movzx ebx, byte[Hexagon.Video.bytesPorPixel]
+    movzx ebx, byte[Hexagon.Console.bytesPorPixel]
 
     mul ebx ;; X * Bytes por pixel
 
@@ -169,7 +153,7 @@ Hexagon.Kernel.Lib.Graficos.colocarCaractereBitmap:
     mov word[.y], ax
 
     mov eax, Hexagon.Fontes.largura
-    mov ebx, dword[Hexagon.Video.bytesPorPixel]
+    mov ebx, dword[Hexagon.Console.bytesPorPixel]
 
     mul ebx
 
@@ -202,17 +186,17 @@ Hexagon.Kernel.Lib.Graficos.colocarCaractereBitmap:
 
 .colocarPlanodeFundo:
 
-    mov edx, dword[Hexagon.Graficos.corFundo]
+    mov edx, dword[Hexagon.Console.corFundo]
 
     jmp .colocarLinha.proximo
 
 .colocarPrimeiroPlano:
 
-    mov edx, dword[Hexagon.Graficos.corFonte]
+    mov edx, dword[Hexagon.Console.corFonte]
 
 .colocarLinha.proximo:
 
-    add esi, dword[Hexagon.Video.bytesPorPixel]
+    add esi, dword[Hexagon.Console.bytesPorPixel]
 
     mov word[gs:esi], dx
     shr edx, 8
@@ -224,7 +208,7 @@ Hexagon.Kernel.Lib.Graficos.colocarCaractereBitmap:
 
     pop ecx
 
-    add esi, dword[Hexagon.Video.bytesPorLinha]
+    add esi, dword[Hexagon.Console.bytesPorLinha]
     sub esi, dword[.proximaLinha]
 
     loop .colocarColuna
@@ -323,7 +307,7 @@ Hexagon.Kernel.Lib.Graficos.desenharBloco:
     push ebx
     push ecx
 
-    cmp byte[Hexagon.Video.modoGrafico], 1
+    cmp byte[Hexagon.Console.modoGrafico], 1
     jne .fim
 
     mov ecx, edi ;; Largura
@@ -355,19 +339,5 @@ Hexagon.Kernel.Lib.Graficos.desenharBloco:
     pop ecx
     pop ebx
     pop eax
-
-    ret
-
-;;************************************************************************************
-
-;; Configura a resolução e configurações padrão de vídeo durante a inicialização
-
-Hexagon.Kernel.Lib.Graficos.configurarVideo:
-
-.modoGrafico1:
-
-    mov eax, 01h
-
-    call Hexagon.Kernel.Dev.Gen.Console.Console.definirResolucao
 
     ret

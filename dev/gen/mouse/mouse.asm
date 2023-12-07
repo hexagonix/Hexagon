@@ -159,7 +159,7 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.iniciarMouse:
 
     in al, 60h
 
-    mov ax, word[Hexagon.Video.Resolucao.y]
+    mov ax, word[Hexagon.Console.Resolucao.y]
     mov word[Hexagon.Int.manipuladorMousePS2.mouseY], ax
 
     pop eax

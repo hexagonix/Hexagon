@@ -200,7 +200,7 @@ Hexagon.Autoconfig:
 
     call Hexagon.Kernel.Dev.Gen.Mouse.Mouse.iniciarMouse ;; Iniciar o serviço de mouse do Hexagon
 
-    call Hexagon.Kernel.Lib.Graficos.configurarVideo ;; Configura a resolução e configurações padrão de vídeo
+    call Hexagon.Kernel.Dev.Gen.Console.Console.configurarConsole ;; Configura a resolução e configurações padrão de vídeo
 
     call Hexagon.Kernel.Kernel.Dmesg.iniciarRelatorio ;; Inicia o relatório de componentes do Hexagon
 

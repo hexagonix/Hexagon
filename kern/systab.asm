@@ -138,7 +138,7 @@ Hexagon.Syscall.Syscall.servicosHexagon:
     dd Hexagon.Kernel.Dev.Gen.Console.Console.definirCorConsole        ;; 38
     dd Hexagon.Kernel.Dev.Gen.Console.Console.obterCorConsole          ;; 39
     dd Hexagon.Kernel.Dev.Gen.Console.Console.obterInfoConsole         ;; 40
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.atualizarConsole                    ;; 41
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.atualizarConsole         ;; 41
     dd Hexagon.Kernel.Dev.Gen.Console.Console.definirResolucao         ;; 42
     dd Hexagon.Kernel.Dev.Gen.Console.Console.obterResolucao           ;; 43
     dd Hexagon.Kernel.Dev.Gen.Console.Console.obterCursor              ;; 44

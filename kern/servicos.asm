@@ -379,24 +379,24 @@ Hexagon.Int.manipuladorMousePS2:
 
 ;; Ter certeza que X e Y não são maiores que a resolução do vídeo
 
-    cmp ax, word[Hexagon.Video.Resolucao.x]
+    cmp ax, word[Hexagon.Console.Resolucao.x]
     jng .xNaoMaior
 
-    mov ax, word[Hexagon.Video.Resolucao.x]
+    mov ax, word[Hexagon.Console.Resolucao.x]
     mov word[.mouseX], ax
 
 .xNaoMaior:
 
-    cmp bx, word[Hexagon.Video.Resolucao.y]
+    cmp bx, word[Hexagon.Console.Resolucao.y]
     jng .yNaoMaior
 
-    mov bx, word[Hexagon.Video.Resolucao.y]
+    mov bx, word[Hexagon.Console.Resolucao.y]
     mov word[.mouseY], bx
 
 .yNaoMaior:
 
     push edx
-    movzx edx, word[Hexagon.Video.Resolucao.y]
+    movzx edx, word[Hexagon.Console.Resolucao.y]
     sub dx, word[.mouseY]
     mov ebx, edx
     pop edx
