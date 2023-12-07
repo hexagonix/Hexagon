@@ -315,7 +315,7 @@ match =SIM, VERBOSE
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.usarConsolePrincipal
 
-;; Rolar console
+;; Rolar console 
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.rolarConsole
 
