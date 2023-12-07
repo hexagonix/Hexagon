@@ -113,7 +113,7 @@ Hexagon.Dmesg.Prioridades:
 
 Hexagon.Kernel.Kernel.Dmesg.iniciarRelatorio:
 
-    call Hexagon.Kernel.Lib.Graficos.usarBufferKernel
+    call Hexagon.Kernel.Dev.Gen.Console.Console.usarConsoleKernel
 
     mov esi, Hexagon.Info.sobreHexagon
 
@@ -123,7 +123,7 @@ Hexagon.Kernel.Kernel.Dmesg.iniciarRelatorio:
 
     call Hexagon.Kernel.Kernel.Dmesg.horaParaRelatorio
 
-    call Hexagon.Kernel.Lib.Graficos.usarBufferVideo1
+    call Hexagon.Kernel.Dev.Gen.Console.Console.usarConsolePrincipal
 
     ret
 
@@ -133,11 +133,11 @@ Hexagon.Kernel.Kernel.Dmesg.iniciarRelatorio:
 
 Hexagon.Kernel.Kernel.Dmesg.adicionarMensagem:
 
-    call Hexagon.Kernel.Lib.Graficos.usarBufferKernel
+    call Hexagon.Kernel.Dev.Gen.Console.Console.usarConsoleKernel
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
 
-    call Hexagon.Kernel.Lib.Graficos.usarBufferVideo1
+    call Hexagon.Kernel.Dev.Gen.Console.Console.usarConsolePrincipal
 
     ret
 

@@ -301,11 +301,21 @@ match =SIM, VERBOSE
     mov eax, dword[Hexagon.Graficos.corFonte]
     mov ebx, dword[Hexagon.Graficos.corFundo]
 
+;; Definir cor padrão do console
+
     call Hexagon.Kernel.Dev.Gen.Console.Console.definirCorConsole
 
-    call Hexagon.Kernel.Lib.Graficos.atualizarConsole
+;; Atualizar buffer de vídeo (console seundário -> console principal)
+;; Essa atualização não é obrigatória, só é útil para utilitários que
+;; utilizam double buffering
 
-    call Hexagon.Kernel.Lib.Graficos.usarBufferVideo1
+    ;; call Hexagon.Kernel.Dev.Gen.Console.Console.atualizarConsole
+
+;; Usar console principal
+
+    call Hexagon.Kernel.Dev.Gen.Console.Console.usarConsolePrincipal
+
+;; Rolar console
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.rolarConsole
 
@@ -418,7 +428,7 @@ Hexagon.Kernel.Kernel.Proc.criarProcesso:
     call Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP
 
     cmp byte[Hexagon.Imagem.Executavel.HAPP.imagemIncompativel], 01h
-    je .Imagens.imagemIncompativel
+    je .imagemIncompativel
 
     cmp byte[Hexagon.Imagem.Executavel.HAPP.imagemIncompativel], 02h
     je .imagemAusente
@@ -442,7 +452,7 @@ Hexagon.Kernel.Kernel.Proc.criarProcesso:
 
     ret
 
-.Imagens.imagemIncompativel:
+.imagemIncompativel:
 
     pop ebx
     pop eax

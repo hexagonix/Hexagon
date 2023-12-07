@@ -85,11 +85,12 @@ use32
 
 Hexagon.Video:
 
+.padrao         = 118h
+
 .modoUsuario:   db 0
 .modoGrafico:   db 0
 .tamanhoVideo:  dd 0
 .modoVBE:       dw .padrao
-.padrao         = 118h
 .maxColunas:    dw 0
 .maxLinhas:     dw 0
 .bitsPorPixel:  db 0
@@ -105,20 +106,21 @@ Hexagon.Video.Memoria:
 
 ;; Endereços de memória para operações de vídeo
 
-.bufferVideo1:      dd 100000h
-.bufferVideo2:      dd 100000h
-.bufferVideoKernel: dd 300000h
-.enderecoLFB:       dd 0 ;; Endereço do LFB (Linear Frame Buffer)
+.bufferConsolePrincipal:  dd 100000h
+.bufferConsoleSecundario: dd 100000h
+.bufferConsoleKernel:     dd 300000h
+.enderecoLFB: dd 0 ;; Endereço do LFB (Linear Frame Buffer)
 
 Hexagon.Video.modoTexto:
 
-.corAtual:      db .corPadrao
 .corPadrao      = 0xF0
-.cursor.X:      db 0
-.cursor.Y:      db 0
 .maximoLinhas   = 24 ;; Contando de 0
 .maximoColunas  = 79 ;; Contando de 0
 .memoriaDeVideo = 0xB8000
+
+.corAtual:      db .corPadrao
+.cursor.X:      db 0
+.cursor.Y:      db 0
 
 ;;************************************************************************************
 
@@ -336,7 +338,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.definirModoGrafico:
     mov dword[Hexagon.Graficos.bytesPorLinha], eax
 
     mov eax, [Hexagon.Video.Memoria.enderecoLFB]
-    mov [Hexagon.Video.Memoria.bufferVideo1], eax ;; Salvar endereço original
+    mov [Hexagon.Video.Memoria.bufferConsolePrincipal], eax ;; Salvar endereço original
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.limparConsole
 
@@ -1582,5 +1584,118 @@ Hexagon.Kernel.Dev.Gen.Console.Console.alterarFonte:
 .erroFonte:
 
     stc
+
+    ret
+
+;;************************************************************************************
+
+;; Usar buffer para armazenamento de mensagens e relatórios do kernel
+
+Hexagon.Kernel.Dev.Gen.Console.Console.usarConsoleKernel:
+
+    mov eax, [Hexagon.Video.Memoria.enderecoLFB]
+    mov [Hexagon.Video.Memoria.bufferConsolePrincipal], eax ;; Salvar endereço original
+
+    mov eax, [Hexagon.Video.Memoria.bufferConsoleKernel]
+    mov [Hexagon.Video.Memoria.enderecoLFB], eax
+
+    ret
+
+;;************************************************************************************
+
+;; Usar console principal (buffer principal)
+
+Hexagon.Kernel.Dev.Gen.Console.Console.usarConsolePrincipal:
+
+    mov eax, [Hexagon.Video.Memoria.bufferConsolePrincipal]
+    mov [Hexagon.Video.Memoria.enderecoLFB], eax ;; Restaurar endereço original
+
+    ret
+
+;;************************************************************************************
+
+;; Usar console secundário (double buffering, buffer secundário)
+
+Hexagon.Kernel.Dev.Gen.Console.Console.usarConsoleSecundario:
+
+    mov eax, [Hexagon.Video.Memoria.enderecoLFB]
+    mov [Hexagon.Video.Memoria.bufferConsolePrincipal], eax ;; Salvar endereço original
+
+    mov eax, [Hexagon.Video.Memoria.bufferConsoleSecundario]
+    mov [Hexagon.Video.Memoria.enderecoLFB], eax
+
+    ret
+
+;;************************************************************************************
+
+;; Copiar buffer para a memória de vídeo
+
+Hexagon.Kernel.Dev.Gen.Console.Console.atualizarConsole:
+
+    cmp byte[Hexagon.Video.modoGrafico], 1
+    jne .nadaAFazer
+
+    mov eax, dword[Hexagon.Video.tamanhoVideo]
+    mov ecx, eax
+    shr ecx, 7 ;; Dividir por 128
+
+    cmp ebx, 01h
+    je .bufferKernel
+
+.bufferUsuario:
+
+    mov edi, dword[Hexagon.Video.Memoria.bufferConsolePrincipal]
+    mov esi, dword[Hexagon.Video.Memoria.bufferConsoleSecundario]
+
+    jmp .continuar
+
+.bufferKernel:
+
+    mov edi, dword[Hexagon.Video.Memoria.bufferConsolePrincipal]
+    mov esi, dword[Hexagon.Video.Memoria.bufferConsoleKernel]
+
+.continuar:
+
+    push es
+    push ds
+
+    mov ax, 18h ;; Segmento linear do kernel
+    mov es, ax
+    mov ds, ax
+
+.loopAtualizar:
+
+    prefetchnta [esi+128]
+    prefetchnta [esi+160]
+    prefetchnta [esi+192]
+    prefetchnta [esi+224]
+
+    movdqa xmm0, [esi+0]
+    movdqa xmm1, [esi+16]
+    movdqa xmm2, [esi+32]
+    movdqa xmm3, [esi+48]
+    movdqa xmm4, [esi+64]
+    movdqa xmm5, [esi+80]
+    movdqa xmm6, [esi+96]
+    movdqa xmm7, [esi+112]
+
+    movdqa [edi+0], xmm0
+    movdqa [edi+16], xmm1
+    movdqa [edi+32], xmm2
+    movdqa [edi+48], xmm3
+    movdqa [edi+64], xmm4
+    movdqa [edi+80], xmm5
+    movdqa [edi+96], xmm6
+    movdqa [edi+112], xmm7
+
+    add edi, 128
+    add esi, 128
+
+    loop .loopAtualizar
+
+    pop ds
+    pop es
+
+.nadaAFazer:
 
     ret

@@ -503,13 +503,13 @@ Hexagon.Kernel.Dev.Dev.abrir:
 
 .tty0: ;; Console principal
 
-    call Hexagon.Kernel.Lib.Graficos.usarBufferVideo1
+    call Hexagon.Kernel.Dev.Gen.Console.Console.usarConsolePrincipal
 
     jmp .retorno
 
 .tty1: ;; Primeiro console virtual
 
-    call Hexagon.Kernel.Lib.Graficos.usarBufferVideo2
+    call Hexagon.Kernel.Dev.Gen.Console.Console.usarConsoleSecundario
 
     jmp .retorno
 
@@ -517,7 +517,7 @@ Hexagon.Kernel.Dev.Dev.abrir:
 
     mov ebx, 1h
 
-    call Hexagon.Kernel.Lib.Graficos.atualizarConsole
+    call Hexagon.Kernel.Dev.Gen.Console.Console.atualizarConsole
 
     jmp .retorno
 
