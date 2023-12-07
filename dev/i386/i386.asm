@@ -93,9 +93,9 @@ Hexagon.Dev.codigoDispositivos:
 
 ;; Portas paralelas e impressoras
 
-.imp0: dw 3BCh
-.imp1: dw 378h
-.imp2: dw 278h
+.lpt0: dw 3BCh
+.lpt1: dw 378h
+.lpt2: dw 278h
 
 ;; Dispositivos de saída
 
@@ -106,7 +106,7 @@ Hexagon.Dev.codigoDispositivos:
 ;; Dispositivos de entrada
 
 .mouse0: dw 51h
-.tecla0: dw 52h
+.kbd0: dw 52h
 
 ;; Processadores:
 

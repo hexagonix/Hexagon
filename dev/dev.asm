@@ -121,14 +121,14 @@ db "com3", 0 ;; Terceira porta serial
 .com4:
 db "com4", 0 ;; Quarta porta serial
 
-;; Portas paralelas e impressoras
+;; Portas paralelas
 
-.imp0:
-db "imp0", 0 ;; Primeira porta paralela
-.imp1:
-db "imp1", 0 ;; Segunda porta paralela
-.imp2:
-db "imp2", 0 ;; Terceira porta paralela
+.lpt0:
+db "lpt0", 0 ;; Primeira porta paralela
+.lpt1:
+db "ltp1", 0 ;; Segunda porta paralela
+.lpt2:
+db "lpt2", 0 ;; Terceira porta paralela
 
 ;; Dispositivos de saída
 
@@ -146,8 +146,8 @@ db "au0", 0 ;; Alto-falante interno
 
 .mouse0:
 db "mouse0", 0 ;; Mouse conectado ao computador
-.tecla0:
-db "tecla0", 0 ;; Teclado conectado ao computador
+.kbd0:
+db "kbd0", 0 ;; Teclado conectado ao computador
 
 ;; Processadores:
 
@@ -601,17 +601,17 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
     jc .com4
 
-    mov edi, Hexagon.Dev.Dispositivos.imp0
+    mov edi, Hexagon.Dev.Dispositivos.lpt0
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
-    jc .imp0
+    jc .lpt0
 
-    mov edi, Hexagon.Dev.Dispositivos.imp1
+    mov edi, Hexagon.Dev.Dispositivos.lpt1
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
-    jc .imp1
+    jc .lpt1
 
-    mov edi, Hexagon.Dev.Dispositivos.imp2
+    mov edi, Hexagon.Dev.Dispositivos.lpt2
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
-    jc .imp2
+    jc .lpt2
 
     mov edi, Hexagon.Dev.Dispositivos.tty0
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
@@ -633,9 +633,9 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
     jc .mouse0
 
-    mov edi, Hexagon.Dev.Dispositivos.tecla0
+    mov edi, Hexagon.Dev.Dispositivos.kbd0
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
-    jc .tecla0
+    jc .kbd0
 
     mov edi, Hexagon.Dev.Dispositivos.proc0
     call Hexagon.Kernel.Lib.String.compararPalavrasNaString
@@ -724,29 +724,29 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
 
     ret
 
-.imp0:
+.lpt0:
 
-    mov bx, word [Hexagon.Dev.codigoDispositivos.imp0]
+    mov bx, word [Hexagon.Dev.codigoDispositivos.lpt0]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
-    movzx ecx, word [Hexagon.Dev.codigoDispositivos.imp0]
+    movzx ecx, word [Hexagon.Dev.codigoDispositivos.lpt0]
     mov dl, 03h
 
     ret
 
-.imp1:
+.lpt1:
 
-    mov bx, word [Hexagon.Dev.codigoDispositivos.imp1]
+    mov bx, word [Hexagon.Dev.codigoDispositivos.lpt1]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
-    movzx ecx, word [Hexagon.Dev.codigoDispositivos.imp1]
+    movzx ecx, word [Hexagon.Dev.codigoDispositivos.lpt1]
     mov dl, 03h
 
     ret
 
-.imp2:
+.lpt2:
 
-    mov bx, word [Hexagon.Dev.codigoDispositivos.imp2]
+    mov bx, word [Hexagon.Dev.codigoDispositivos.lpt2]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
-    movzx ecx, word [Hexagon.Dev.codigoDispositivos.imp2]
+    movzx ecx, word [Hexagon.Dev.codigoDispositivos.lpt2]
     mov dl, 03h
 
     ret
@@ -797,10 +797,10 @@ Hexagon.Kernel.Dev.Dev.converterDispositivo:
 
     ret
 
-.tecla0:
+.kbd0:
 
     mov ah, 00h
-    mov bx, word [Hexagon.Dev.codigoDispositivos.tecla0]
+    mov bx, word [Hexagon.Dev.codigoDispositivos.kbd0]
     mov word[Hexagon.Dev.Controle.idDispositivo], bx
     mov dl, 00h
 
@@ -938,34 +938,34 @@ Hexagon.Kernel.Dev.Dev.paraDispositivo:
 
 .paralelas:
 
-    cmp ax, word [Hexagon.Dev.codigoDispositivos.imp0]
-    je .imp0
+    cmp ax, word [Hexagon.Dev.codigoDispositivos.lpt0]
+    je .lpt0
 
-    cmp ax, word [Hexagon.Dev.codigoDispositivos.imp1]
-    je .imp1
+    cmp ax, word [Hexagon.Dev.codigoDispositivos.lpt1]
+    je .lpt1
 
-    cmp ax, word [Hexagon.Dev.codigoDispositivos.imp2]
-    je .imp2
+    cmp ax, word [Hexagon.Dev.codigoDispositivos.lpt2]
+    je .lpt2
 
     stc
 
     ret
 
-.imp0:
+.lpt0:
 
-    mov esi, Hexagon.Dev.Dispositivos.imp0
-
-    ret
-
-.imp1:
-
-    mov esi, Hexagon.Dev.Dispositivos.imp1
+    mov esi, Hexagon.Dev.Dispositivos.lpt0
 
     ret
 
-.imp2:
+.lpt1:
 
-    mov esi, Hexagon.Dev.Dispositivos.imp2
+    mov esi, Hexagon.Dev.Dispositivos.lpt1
+
+    ret
+
+.lpt2:
+
+    mov esi, Hexagon.Dev.Dispositivos.lpt2
 
     ret
 
