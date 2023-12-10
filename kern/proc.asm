@@ -421,7 +421,6 @@ Hexagon.Kernel.Kernel.Proc.criarProcesso:
     pop esi
 
     push eax
-    push ebx
 
     jc .imagemAusente
 
@@ -437,7 +436,6 @@ Hexagon.Kernel.Kernel.Proc.criarProcesso:
 
 .imagemAusente:
 
-    pop ebx
     pop eax
 
 ;; A imagem que contêm o código executável não foi localizada no disco
@@ -454,7 +452,6 @@ Hexagon.Kernel.Kernel.Proc.criarProcesso:
 
 .imagemIncompativel:
 
-    pop ebx
     pop eax
 
 ;; A imagem que contêm o código executável não apresenta um formato compatível
@@ -483,11 +480,9 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcesso:
 
 ;; Serão restaurados dados passados pela pilha
 
-    pop ebx
     pop eax
 
     push eax
-    push ebx
 
     mov ebx, dword[Hexagon.Processos.BCP.PID]
     inc ebx
@@ -496,7 +491,6 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcesso:
     call Hexagon.Kernel.Arch.Gen.Mm.confirmarUsoMemoria
 
     pop ebx
-    pop eax
 
     add ebx, [Hexagon.Processos.BCP.tamanhoUltimoProcesso]
 
@@ -716,7 +710,7 @@ Hexagon.Kernel.Kernel.Proc.removerProcesso:
 
     mov ebx, dword[Hexagon.Processos.BCP.PID]
     mov eax, dword[Hexagon.Processos.BCP.tamanhoImagem+ebx*4]
-    mov dword[Hexagon.Processos.BCP.tamanhoImagem+ebx], 00h
+    mov dword[Hexagon.Processos.BCP.tamanhoImagem+ebx*4], 00h
 
     call Hexagon.Kernel.Arch.Gen.Mm.liberarUsoMemoria
 
@@ -738,7 +732,7 @@ Hexagon.Kernel.Kernel.Proc.removerProcesso:
     mov ebx, dword[Hexagon.Processos.BCP.PID]
 
     mov eax, [Hexagon.Processos.BCP.baseProcessos]
-    add eax, [Hexagon.Processos.BCP.tamanhoImagem+ebx]
+    add eax, [Hexagon.Processos.BCP.tamanhoImagem+ebx*4]
 
     mov byte[Hexagon.Processos.BCP.modoTerminar], 00h
 
