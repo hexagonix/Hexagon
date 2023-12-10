@@ -114,13 +114,13 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
 
     mov dword[Hexagon.Syscall.Controle.eax], eax
 
-    add esi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
+    add esi, dword[Hexagon.Processos.BCP.baseProcessos]
 
 ;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
 
     sub esi, 500h
 
-    add edi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
+    add edi, dword[Hexagon.Processos.BCP.baseProcessos]
 
 ;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
 
@@ -179,13 +179,13 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
     push dword[Hexagon.Syscall.Controle.cs]
     push dword[Hexagon.Syscall.Controle.eip]
 
-    sub esi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
+    sub esi, dword[Hexagon.Processos.BCP.baseProcessos]
 
 ;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
 
     add esi, 500h
 
-    sub edi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
+    sub edi, dword[Hexagon.Processos.BCP.baseProcessos]
 
 ;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
 
@@ -233,13 +233,13 @@ Hexagon.Syscall.Syscall.manipuladorHXUnix:
 
     mov dword[Hexagon.Syscall.Controle.eax], eax
 
-    add esi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
+    add esi, dword[Hexagon.Processos.BCP.baseProcessos]
 
 ;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
 
     sub esi, 500h
 
-    add edi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
+    add edi, dword[Hexagon.Processos.BCP.baseProcessos]
 
 ;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
 
@@ -296,13 +296,13 @@ Hexagon.Syscall.Syscall.manipuladorHXUnix:
     push dword[Hexagon.Syscall.Controle.cs]
     push dword[Hexagon.Syscall.Controle.eip]
 
-    sub esi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
+    sub esi, dword[Hexagon.Processos.BCP.baseProcessos]
 
 ;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
 
     add esi, 500h
 
-    sub edi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
+    sub edi, dword[Hexagon.Processos.BCP.baseProcessos]
 
 ;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
 

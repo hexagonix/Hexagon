@@ -73,7 +73,8 @@
 
 use32
 
-Hexagon.Arch.Gen.Memoria.memoriaReservadaHexagon = 16777216
+Hexagon.Arch.Gen.Memoria.memoriaReservadaHexagon   = 3145728
+Hexagon.Arch.Gen.Memoria.memoriaReservadaProcessos = 16777216
 
 struc Hexagon.Arch.Gen.Memoria enderecoInicial
 {
@@ -109,11 +110,9 @@ struc Hexagon.Arch.Gen.Memoria.Alocador tamanhoEspacoProcessos
 ;; os processos. Então, essa área é alocada e é gerenciada pelo kernel.
 
 Hexagon.Memoria          Hexagon.Arch.Gen.Memoria Hexagon.Arch.Gen.Memoria.memoriaReservadaHexagon
-Hexagon.Memoria.Alocador Hexagon.Arch.Gen.Memoria.Alocador Hexagon.Arch.Gen.Memoria.memoriaReservadaHexagon
+Hexagon.Memoria.Alocador Hexagon.Arch.Gen.Memoria.Alocador Hexagon.Arch.Gen.Memoria.memoriaReservadaProcessos
 
 ;;************************************************************************************
-
-align 4
 
 ;; Retorna a quantidade de memória utilizada pelos processos
 ;;
@@ -201,24 +200,24 @@ Hexagon.Kernel.Arch.Gen.Mm.liberarUsoMemoria:
 
 Hexagon.Kernel.Arch.Gen.Mm.iniciarMemoria:
 
-;; Primeiramente, o endereço inicial para a alocação de processos e dados se dará após os 16 Mb
-;; reservados para o kernel e estruturas dele
+;; Primeiramente, o endereço inicial para a alocação de processos e dados se dará após o
+;; espaço reservado para o kernel e estruturas dele
 
-    mov ebx, Hexagon.Memoria.enderecoInicial ;; Após os 16 MB iniciais reservados
+    mov ebx, Hexagon.Memoria.enderecoInicial ;; Após o espaço reservado
 
 ;; Total de memória livre após o endereço, até o final da memória detectada. Essa será a área
 ;; de alocação
 
     mov ecx, [Hexagon.Memoria.memoriaTotal]
 
-    sub ecx, [Hexagon.Memoria.enderecoInicial]
+    sub ecx, Hexagon.Memoria.enderecoInicial
 
     call Hexagon.Kernel.Arch.Gen.Mm.configurarMemoria ;; Iniciar o manipulador de memória
 
 ;; Agora, o espaço reservado para os processos será definido, utilizando o padrão estabelecido
 ;; Hexagon.Memoria.Alocador.reservadoInicial
 
-    mov ebx, [Hexagon.Memoria.Alocador.reservadoProcessos]
+    mov ebx, Hexagon.Memoria.Alocador.reservadoInicial
 
     call Hexagon.Kernel.Arch.Gen.Mm.alocarMemoria ;; Alocar memória para os processos
 

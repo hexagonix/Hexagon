@@ -115,7 +115,7 @@ use32
 
 ;;************************************************************************************
 
-struc Hexagon.Gerenciamento.Tarefas maxProcessos
+struc Hexagon.Gerenciamento.Tarefas
 {
 
 .processoVazio: ;; Conteúdo de um processo vazio
@@ -146,10 +146,10 @@ times Hexagon.Processos.BCP.limiteProcessos dd 0
 
 Hexagon.Processos.BCP:
 .codigoErro:            dd 0 ;; Código de erro emitido pelo último processo
-.tamanhoProcessos:      dd 0 ;; Endereço base de carregamento de processos, fornececido pelo alocador
+.baseProcessos:         dd 0 ;; Endereço base de carregamento de processos, fornececido pelo alocador
 .modoTerminar:          db 0 ;; Marca se o processo deve ficar residente ou não
 .processoBloqueado:     dd 0 ;; Marca se o processo pode ser finalizado por uma tecla ou combinação
-.limiteProcessos        = 23 ;; Número limite de processos carregados (n-1)
+.limiteProcessos        = 31 ;; Número limite de processos carregados (n-1)
 .contagemProcessos:     dd 0 ;; Número de processos atualmente na pilha de execução
 .PID:                   dd 0 ;; PID
 .tamanhoUltimoProcesso: dd 0 ;; Tamanho do último processo
@@ -161,7 +161,7 @@ Hexagon.Processos.BCP:
 .entradaHAPP:           dd 0 ;; Entrada da imagem HAPP
 .tipoImagem:            db 0 ;; Tipo executável da imagem
 .tamanhoImagem: ;; Tamanho do programa atual na pilha de execução
-times Hexagon.Processos.BCP.limiteProcessos dd 0
+times Hexagon.Processos.BCP.limiteProcessos -1  dd 0
 .nomeProcesso: ;; Armazena o nome do processo
 times 11 db 0
 
@@ -254,7 +254,7 @@ Hexagon.Kernel.Kernel.Proc.iniciarEscalonador:
 
 Hexagon.Kernel.Kernel.Proc.configurarAlocacaoProcessos:
 
-    mov dword[Hexagon.Processos.BCP.tamanhoProcessos], ebx
+    mov dword[Hexagon.Processos.BCP.baseProcessos], ebx
 
     ret
 
@@ -510,9 +510,9 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcesso:
 
     add dword[Hexagon.Processos.BCP.tamanho.ponteiro], 4
 
-    add dword[Hexagon.Processos.BCP.tamanhoProcessos], ebx
+    add dword[Hexagon.Processos.BCP.baseProcessos], ebx
 
-    mov edi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
+    mov edi, dword[Hexagon.Processos.BCP.baseProcessos]
 
 ;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
 
@@ -557,7 +557,7 @@ Hexagon.Kernel.Kernel.Proc.executarProcesso:
 ;; Agora devemos calcular os endereços base de código e dados do programa, os colocando
 ;; na entrada da GDT do programa
 
-    mov eax, dword[Hexagon.Processos.BCP.tamanhoProcessos]
+    mov eax, dword[Hexagon.Processos.BCP.baseProcessos]
     mov edx, eax
     and eax, 0xFFFF
 
@@ -599,7 +599,7 @@ Hexagon.Kernel.Kernel.Proc.executarProcesso:
 
     mov edi, Hexagon.Heap.ArgProc
 
-    sub edi, dword[Hexagon.Processos.BCP.tamanhoProcessos]
+    sub edi, dword[Hexagon.Processos.BCP.baseProcessos]
 
     mov ax, 38h ;; Segmento de dados do ambiente de usuário (processo)
     mov ds, ax
@@ -673,20 +673,20 @@ Hexagon.Kernel.Kernel.Proc.removerProcesso:
 
     mov ebx, dword[eax]
 
-    sub dword[Hexagon.Processos.BCP.tamanhoProcessos], ebx
+    sub dword[Hexagon.Processos.BCP.baseProcessos], ebx
 
     sub dword[Hexagon.Processos.BCP.tamanho.ponteiro], 4
 
     mov eax, dword[Hexagon.Memoria.bytesAlocados]
 
-    sub dword[Hexagon.Processos.BCP.tamanhoProcessos], eax
+    sub dword[Hexagon.Processos.BCP.baseProcessos], eax
 
     mov dword[Hexagon.Memoria.bytesAlocados], 0
 
 ;; Agora devemos calcular os endereços base de código e dados do programa, os colocando
 ;; na entrada da GDT do programa
 
-    mov eax, dword[Hexagon.Processos.BCP.tamanhoProcessos]
+    mov eax, dword[Hexagon.Processos.BCP.baseProcessos]
     mov edx, eax
     and eax, 0xFFFF
 
@@ -737,7 +737,7 @@ Hexagon.Kernel.Kernel.Proc.removerProcesso:
 
     mov ebx, dword[Hexagon.Processos.BCP.PID]
 
-    mov eax, [Hexagon.Processos.BCP.tamanhoProcessos]
+    mov eax, [Hexagon.Processos.BCP.baseProcessos]
     add eax, [Hexagon.Processos.BCP.tamanhoImagem+ebx]
 
     mov byte[Hexagon.Processos.BCP.modoTerminar], 00h
