@@ -1571,7 +1571,8 @@ Hexagon.Kernel.Dev.Gen.Console.Console.obterCorConsole:
 
 ;;************************************************************************************
 
-;; Altera a fonte utilizada para exibir informações na tela
+;; Altera a fonte utilizada para exibir informações no console, validando o tamanho máximo
+;; determinado de 2 Kb
 ;;
 ;; Entrada:
 ;;
@@ -1579,13 +1580,41 @@ Hexagon.Kernel.Dev.Gen.Console.Console.obterCorConsole:
 ;;
 ;; Saída:
 ;;
+;; EAX - Código de erro:
+;;       01h para fonte não encontrada; 02h para fonte não compatível
+;;
 ;; CF definido em caso de erro
 
 Hexagon.Kernel.Dev.Gen.Console.Console.alterarFonte:
 
     call Hexagon.Kernel.FS.VFS.arquivoExiste
 
-    jc .erroFonte
+    jc .fonteAusente
+
+    mov ebx, 2000
+
+    cmp eax, ebx
+    jng .continuar
+
+    jmp .fonteIncompativel
+
+.continuar:
+
+    mov edi, Hexagon.Heap.Temp + 500
+
+    call Hexagon.Kernel.FS.VFS.carregarArquivo
+
+    cmp byte[edi+0], "H"
+    jne .fonteIncompativel
+
+    cmp byte[edi+1], "F"
+    jne .fonteIncompativel
+
+    cmp byte[edi+2], "N"
+    jne .fonteIncompativel
+
+    cmp byte[edi+3], "T"
+    jne .fonteIncompativel
 
     mov edi, Hexagon.Fontes.espacoFonte
 
@@ -1593,9 +1622,19 @@ Hexagon.Kernel.Dev.Gen.Console.Console.alterarFonte:
 
     ret
 
-.erroFonte:
+.fonteAusente:
 
     stc
+
+    mov eax, 01h
+
+    ret
+
+.fonteIncompativel:
+
+    stc
+
+    mov eax, 02h
 
     ret
 
