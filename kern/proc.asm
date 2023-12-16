@@ -592,16 +592,19 @@ Hexagon.Kernel.Kernel.Proc.executarProcesso:
     inc dword[Hexagon.Processos.BCP.PID]
 
 ;; Agora vamos passar os parâmetros para o processo. Primeiro, pegamos o offset da estrutura
-;; dentro do endereço do kernel e depois obtemos o endereço absoluto subtraindo um endereço
-;; conhecido, como o endereço do processo. O sinal ficaria negativo, mas endereços de memória
-;; não apresentam sinal (-100h e 100h são tratados como 100h). A arquitetura trata com simetria
-;; em 0 os endereços, e normalmente endereços do kernel (com offset menor em relação ao início da
-;; memória) aparecem como endereços negativos para o ambiente de usuário, como é observado neste
-;; caso
+;; dentro do endereço do kernel e depois obtemos o endereço relativo subtraindo um endereço
+;; conhecido, como o endereço do processo, gerando o offset no segmento para o endereço de memória.
+;; O sinal ficaria negativo, mas endereços de memória não apresentam sinal (-100h e 100h são
+;; tratados como 100h). A arquitetura trata com simetria em 0 os endereços, e normalmente endereços
+;; do kernel (com offset menor em relação ao início da memória) aparecem como endereços negativos
+;; para o ambiente de usuário, como é observado neste caso. A arquitetura suporta offsets negativos
+;; relativos ao segmento (complemento de dois), realizando a tradução transparente para um endereço
+;; físico. No caso abaixo, teremos um offset negativo que será traduzido como um offset positivo
+;; relativo ao início do segmento apontado por DS
 
     mov edi, Hexagon.Heap.ArgProc ;; Offset, dentro do kernel, da estrutura
 
-    sub edi, dword[Hexagon.Processos.BCP.baseProcessos] ;; Obter endereço absoluto
+    sub edi, dword[Hexagon.Processos.BCP.baseProcessos] ;; Obter endereço relativo (offset)
 
     mov ax, 38h ;; Segmento de dados do ambiente de usuário (processo)
     mov ds, ax

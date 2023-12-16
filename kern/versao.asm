@@ -83,7 +83,7 @@ use32
 
 Hexagon.Arquitetura.suporte = 1 ;; Arquitetura desta imagem
 
-Hexagon.Versao.definicao equ "1.0.1-beta21"
+Hexagon.Versao.definicao equ "1.0.1-beta22"
 
 Hexagon.Versao:
 
