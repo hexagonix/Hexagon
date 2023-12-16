@@ -594,7 +594,10 @@ Hexagon.Kernel.Kernel.Proc.executarProcesso:
 ;; Agora vamos passar os parâmetros para o processo. Primeiro, pegamos o offset da estrutura
 ;; dentro do endereço do kernel e depois obtemos o endereço absoluto subtraindo um endereço
 ;; conhecido, como o endereço do processo. O sinal ficaria negativo, mas endereços de memória
-;; não apresentam sinal (-100h e 100h são tratados como 100h)
+;; não apresentam sinal (-100h e 100h são tratados como 100h). A arquitetura trata com simetria
+;; em 0 os endereços, e normalmente endereços do kernel (com offset menor em relação ao início da
+;; memória) aparecem como endereços negativos para o ambiente de usuário, como é observado neste
+;; caso
 
     mov edi, Hexagon.Heap.ArgProc ;; Offset, dentro do kernel, da estrutura
 
