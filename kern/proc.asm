@@ -555,22 +555,22 @@ Hexagon.Kernel.Kernel.Proc.executarProcesso:
     mov edx, eax
     and eax, 0xFFFF
 
-    mov word[GDT.codigoProcessos+2], ax
-    mov word[GDT.dadosProcessos+2], ax
+    mov word[GDT.codigoProcessos+2], ax ;; Base
+    mov word[GDT.dadosProcessos+2], ax  ;; Base
 
     mov eax, edx
     shr eax, 16
     and eax, 0xFF
 
-    mov byte[GDT.codigoProcessos+4], al
-    mov byte[GDT.dadosProcessos+4], al
+    mov byte[GDT.codigoProcessos+4], al ;; Base
+    mov byte[GDT.dadosProcessos+4], al  ;; Base
 
     mov eax, edx
     shr eax, 24
     and eax, 0xFF
 
-    mov byte[GDT.codigoProcessos+7], al
-    mov byte[GDT.dadosProcessos+7], al
+    mov byte[GDT.codigoProcessos+7], al ;; Base
+    mov byte[GDT.dadosProcessos+7], al  ;; Base
 
     lgdt[GDTReg] ;; Carregar a GDT contendo a entrada do processo
 
@@ -591,20 +591,33 @@ Hexagon.Kernel.Kernel.Proc.executarProcesso:
     inc dword[Hexagon.Processos.BCP.contagemProcessos]
     inc dword[Hexagon.Processos.BCP.PID]
 
-;; Agora vamos passar os parâmetros para o processo. Primeiro, pegamos o offset da estrutura
-;; dentro do endereço do kernel e depois obtemos o endereço relativo subtraindo um endereço
-;; conhecido, como o endereço do processo, gerando o offset no segmento para o endereço de memória.
-;; O sinal ficaria negativo, mas endereços de memória não apresentam sinal (-100h e 100h são
-;; tratados como 100h). A arquitetura trata com simetria em 0 os endereços, e normalmente endereços
+;; Documentação da resolução de endereço para os parâmetros que serão passados ao novo processo:
+;;
+;; Primeiro, pegamos o offset da estrutura dentro do endereço do kernel. Esse valor deve estar
+;; próximo do tamanho em bytes do arquivo que contêm o kernel. Esse valor é relativo ao kernel, não
+;; ao segmento de memória. Para obtermos o endereço efetivo, pegamos o offset em relação ao kernel
+;; e subtraímos pelo endreço base do processo, gerando um offset em relação ao segmento de memória.
+;; Neste caso, temos um endereço negativo, pois o kernel se encontra em uma região de memória
+;; inferior à região do processo. Na resolução de endereços, é feito um complemento de dois com o
+;; valor negativo (um valor possível e provavel de −2C9C6E é representado como 6392h ou 25490),
+;; sendo utilizado como offset no segmento ES, formando o endereço lógico ES:25490, que apontaria
+;; corretamente para a estrutura no kernel que contêm os argumentos do processo. Desta forma, o
+;; processo com o offset em EDI = -2C9C6E consegue apontar corretamente para a área esperada
+;; no kernel.
+;;
+;; Mais informações sobre o processo:
+;;
+;; A arquitetura trata com simetria em 0 os endereços, e normalmente endereços
 ;; do kernel (com offset menor em relação ao início da memória) aparecem como endereços negativos
 ;; para o ambiente de usuário, como é observado neste caso. A arquitetura suporta offsets negativos
-;; relativos ao segmento (complemento de dois), realizando a tradução transparente para um endereço
-;; físico. No caso abaixo, teremos um offset negativo que será traduzido como um offset positivo
-;; relativo ao início do segmento apontado por DS
+;; relativos ao segmento (via complemento de dois), realizando a tradução transparente para um
+;; endereço físico. No caso abaixo, teremos um offset negativo apontando para uma região anterior
+;; da memória que será traduzido para um endereço lógico que será, por sua vez, traduzido em um
+;; endereço físico pelo processador utilizando a tabela presente na GDT
 
-    mov edi, Hexagon.Heap.ArgProc ;; Offset, dentro do kernel, da estrutura
+    mov edi, Hexagon.Heap.ArgProc ;; Offset, dentro do kernel
 
-    sub edi, dword[Hexagon.Processos.BCP.baseProcessos] ;; Obter endereço relativo (offset)
+    sub edi, dword[Hexagon.Processos.BCP.baseProcessos] ;; Obter endereço efetivo (offset)
 
     mov ax, 38h ;; Segmento de dados do ambiente de usuário (processo)
     mov ds, ax
