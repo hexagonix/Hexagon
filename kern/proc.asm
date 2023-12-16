@@ -591,9 +591,14 @@ Hexagon.Kernel.Kernel.Proc.executarProcesso:
     inc dword[Hexagon.Processos.BCP.contagemProcessos]
     inc dword[Hexagon.Processos.BCP.PID]
 
-    mov edi, Hexagon.Heap.ArgProc
+;; Agora vamos passar os parâmetros para o processo. Primeiro, pegamos o offset da estrutura
+;; dentro do endereço do kernel e depois obtemos o endereço absoluto subtraindo um endereço
+;; conhecido, como o endereço do processo. O sinal ficaria negativo, mas endereços de memória
+;; não apresentam sinal (-100h e 100h são tratados como 100h)
 
-    sub edi, dword[Hexagon.Processos.BCP.baseProcessos]
+    mov edi, Hexagon.Heap.ArgProc ;; Offset, dentro do kernel, da estrutura
+
+    sub edi, dword[Hexagon.Processos.BCP.baseProcessos] ;; Obter endereço absoluto
 
     mov ax, 38h ;; Segmento de dados do ambiente de usuário (processo)
     mov ds, ax
