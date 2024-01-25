@@ -84,7 +84,7 @@ Hexagon.Fontes:
 
 ;; Agora vamos incluir aqui uma fonte padrão, em formato de fonte Hexagonix
 
-include "../../Fontes/aurora.asm"
+include "../../Fonts/aurora.asm"
 
 ;;************************************************************************************
 
