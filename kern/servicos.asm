@@ -75,8 +75,7 @@ use32
 
 Hexagon.Int:
 
-.interrupcaoHexagon  = 69h ;; Interrupção do Hexagon
-.interrupcaoHXUnix   = 80h ;; Interrupção do Hexagon para funções Unix-like
+.interrupcaoHexagon  = 80h ;; Interrupção do Hexagon
 .interrupcaoTimer    = 08h ;; Interrupção reservada ao timer
 .interrupcaoTeclado  = 09h ;; Interrupção reservada ao teclado
 .interrupcaoMouse    = 74h ;; Interrupção reservada ao dispositivo apontador
@@ -110,11 +109,6 @@ Hexagon.Int.instalarInterrupcoes:
 
     mov esi, Hexagon.Syscall.Syscall.manipuladorHexagon ;; Serviços do Hexagon
     mov eax, Hexagon.Int.interrupcaoHexagon ;; Número da interrupção
-
-    call Hexagon.Int.instalarISR
-
-    mov esi, Hexagon.Syscall.Syscall.manipuladorHXUnix ;; Serviços do Hexagon
-    mov eax, Hexagon.Int.interrupcaoHXUnix ;; Número da interrupção
 
     call Hexagon.Int.instalarISR
 
