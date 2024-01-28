@@ -67,7 +67,7 @@
 
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon
+;;                     This file is part of the Hexagon kernel
 ;;
 ;;************************************************************************************
 
@@ -132,7 +132,7 @@ Hexagon.Int.manipuladorTimer:
 
     push ds
 
-    mov ax, 10h ;; Segmento de dados do Kernel
+    mov ax, 10h ;; Kernel data segment
     mov ds, ax
 
 ;; Atualizar o relógio em tempo real a cada intervalo
@@ -167,7 +167,7 @@ Hexagon.Int.manipuladorTeclado:
 
     push ds
 
-    mov ax, 10h ;; Segmento de dados do kernel
+    mov ax, 10h ;; Kernel data segment
     mov ds, ax
 
     xor eax,eax

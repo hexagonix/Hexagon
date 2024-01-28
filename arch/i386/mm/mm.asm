@@ -67,7 +67,7 @@
 
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon
+;;                     This file is part of the Hexagon kernel
 ;;
 ;;************************************************************************************
 
@@ -75,7 +75,7 @@ use16
 
 ;; Obtem a quantidade total de memória instalada em ambiente de modo real
 
-Hexagon.Kernel.Arch.i386.Mm.Mm.obterMemoriaTotal:
+Hexagon.Kernel.Arch.i386.Mm.Mm.obtertotalMemory:
 
     push edx
     push ecx
@@ -132,6 +132,6 @@ Hexagon.Kernel.Arch.i386.Mm.Mm.obterMemoriaTotal:
 
     add eax, 1048576 ;; Adicionar o 1 Mb de memória baixa (modo real)
 
-    mov dword[Hexagon.Memoria.memoriaTotal], eax ;; Fornecer memória total, em bytes
+    mov dword[Hexagon.Memory.totalMemory], eax ;; Fornecer memória total, em bytes
 
     ret

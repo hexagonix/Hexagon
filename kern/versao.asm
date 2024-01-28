@@ -67,7 +67,7 @@
 
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon
+;;                     This file is part of the Hexagon kernel
 ;;
 ;;************************************************************************************
 
@@ -83,7 +83,7 @@ use32
 
 Hexagon.Arquitetura.suporte = 1 ;; Arquitetura desta imagem
 
-Hexagon.Versao.definicao equ "1.0.1-beta27"
+Hexagon.Versao.definicao equ "1.0.1-beta28"
 
 Hexagon.Versao:
 

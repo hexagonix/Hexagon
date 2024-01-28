@@ -67,7 +67,7 @@
 
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon
+;;                     This file is part of the Hexagon kernel
 ;;
 ;;************************************************************************************
 
@@ -194,7 +194,7 @@ Hexagon.Autoconfig:
 
     call Hexagon.Kernel.Arch.i386.CPU.CPU.configurarProcessador ;; Configura a operação do processador
 
-    call Hexagon.Kernel.Arch.Gen.Mm.iniciarMemoria ;; Inicia o alocador de memória do Hexagon
+    call Hexagon.Kernel.Arch.Gen.Mm.initMemory ;; Inicia o alocador de memória do Hexagon
 
     call Hexagon.Kernel.Dev.Gen.Teclado.Teclado.iniciarTeclado ;; Iniciar o serviço de teclado do Hexagon
 
@@ -226,9 +226,9 @@ Hexagon.Autoconfig:
 
     kprint Hexagon.Dmesg.identificadorHexagon
 
-    kprint Hexagon.Verbose.memoriaTotal
+    kprint Hexagon.Verbose.totalMemory
 
-    call Hexagon.Kernel.Arch.Gen.Mm.usoMemoria
+    call Hexagon.Kernel.Arch.Gen.Mm.memoryUse
 
     mov eax, ecx
 
@@ -236,7 +236,7 @@ Hexagon.Autoconfig:
 
     kprint Hexagon.Verbose.megabytes
 
-    call Hexagon.Kernel.Arch.Gen.Mm.usoMemoria
+    call Hexagon.Kernel.Arch.Gen.Mm.memoryUse
 
     mov eax, ebx
 

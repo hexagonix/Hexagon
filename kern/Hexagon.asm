@@ -67,7 +67,7 @@
 
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon
+;;                     This file is part of the Hexagon kernel
 ;;
 ;;************************************************************************************
 
@@ -139,11 +139,11 @@ cabecalhoHexagon:
 
 ;; Salvar o endereço do BPB (BIOS Parameter Block) do volume utilizado para a inicialização
 
-    mov dword[Hexagon.Memoria.enderecoBPB], ebp
+    mov dword[Hexagon.Memory.addressBPB], ebp
 
 ;; Armazenar o tamanho da memória RAM disponível, fornecido pelo HBoot
 
-    mov word[Hexagon.Memoria.memoriaCMOS], cx
+    mov word[Hexagon.Memory.memoryCMOS], cx
 
 ;; Agora vamos salvar a localização da estrutura de parâmetros fornecida pelo HBoot
 
@@ -157,7 +157,7 @@ cabecalhoHexagon:
 
     call Hexagon.Kernel.Arch.i386.CPU.CPU.ativarA20 ;; Ativar A20, necessário para o modo protegido
 
-    call Hexagon.Kernel.Arch.i386.Mm.Mm.obterMemoriaTotal ;; Obtem o total de memória instalada
+    call Hexagon.Kernel.Arch.i386.Mm.Mm.obtertotalMemory ;; Obtem o total de memória instalada
 
     call Hexagon.Kernel.Arch.i386.CPU.CPU.irPara32 ;; Configurar modo protegido 32 bits
 

@@ -67,7 +67,7 @@
 
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon
+;;                     This file is part of the Hexagon kernel
 ;;
 ;;************************************************************************************
 
@@ -102,7 +102,7 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
 
     mov ebp, esp
 
-    push 10h ;; Segmento de dados do kernel
+    push 10h ;; Kernel data segment
     pop ds
 
     mov [Hexagon.Syscall.Controle.es], es

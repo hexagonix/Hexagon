@@ -67,7 +67,7 @@
 
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon
+;;                     This file is part of the Hexagon kernel
 ;;
 ;;************************************************************************************
 
@@ -188,7 +188,7 @@ Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterString:
     mov byte[.string], 0
     mov byte[.charAtual], 0
 
-    push ds ;; Segmento de dados do kernel
+    push ds ;; Kernel data segment
     pop es
 
     mov ecx, 0 ;; Contador de caracteres

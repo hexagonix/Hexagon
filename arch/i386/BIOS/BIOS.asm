@@ -67,7 +67,7 @@
 
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon
+;;                     This file is part of the Hexagon kernel
 ;;
 ;;************************************************************************************
 
@@ -112,7 +112,7 @@ use16
 
 use32
 
-    mov ax, 10h ;; Segmento de dados do kernel
+    mov ax, 10h ;; Kernel data segment
     mov ds, ax
     mov ax, 18h ;; Definir a base de ES, SS e GS base para 0 - segmento linear do kernel
     mov ss, ax
@@ -175,7 +175,7 @@ use16
 
 use32
 
-    mov ax, 10h ;; Segmento de dados do kernel
+    mov ax, 10h ;; Kernel data segment
     mov ds, ax
     mov ax, 18h ;; Definir base de ES, GS e SS para 0 - segmento linear do kernel
     mov ss, ax
@@ -243,7 +243,7 @@ use16
 
 use32
 
-    mov ax, 10h ;; Segmento de dados do kernel
+    mov ax, 10h ;; Kernel data segment
     mov ds, ax
     mov ax, 18h ;; Definir a base de ES, SS e GS para 0 - segmento linear do kernel
     mov ss, ax

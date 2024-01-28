@@ -67,7 +67,7 @@
 
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon
+;;                     This file is part of the Hexagon kernel
 ;;
 ;;************************************************************************************
 
@@ -225,7 +225,7 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.pararDisco:
 
 Hexagon.Kernel.Dev.i386.Disco.Disco.lerMBR:
 
-    push ds ;; Segmento de dados do kernel
+    push ds ;; Kernel data segment
     pop es
 
 ;; Primeiro devemos carregar a MBR na memória
@@ -266,7 +266,7 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.lerMBR:
 
 Hexagon.Kernel.Dev.i386.Disco.Disco.lerBPB:
 
-    push ds ;; Segmento de dados do kernel
+    push ds ;; Kernel data segment
     pop es
 
 ;; Primeiro devemos carregar a MBR na memória

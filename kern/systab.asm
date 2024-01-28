@@ -67,7 +67,7 @@
 
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon
+;;                     This file is part of the Hexagon kernel
 ;;
 ;;************************************************************************************
 
@@ -80,12 +80,12 @@ Hexagon.Syscall.Syscall.servicosHexagon:
 ;; Gerenciamento de memória e processos
 
     dd Hexagon.Syscall.Syscall.Nulo                                    ;; 0 - função nula, apenas retorna
-    dd Hexagon.Kernel.Arch.Gen.Mm.alocarMemoria                        ;; 1
-    dd Hexagon.Kernel.Arch.Gen.Mm.liberarMemoria                       ;; 2
+    dd Hexagon.Kernel.Arch.Gen.Mm.malloc                        ;; 1
+    dd Hexagon.Kernel.Arch.Gen.Mm.free                       ;; 2
     dd Hexagon.Syscall.Syscall.criarNovoProcesso                       ;; 3
     dd Hexagon.Kernel.Kernel.Proc.encerrarProcesso                     ;; 4
     dd Hexagon.Kernel.Kernel.Proc.obterPID                             ;; 5
-    dd Hexagon.Kernel.Arch.Gen.Mm.usoMemoria                           ;; 6
+    dd Hexagon.Kernel.Arch.Gen.Mm.memoryUse                           ;; 6
     dd Hexagon.Kernel.Kernel.Proc.obterListaProcessos                  ;; 7
     dd Hexagon.Kernel.Kernel.Proc.obterCodigoErro                      ;; 8
 

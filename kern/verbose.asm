@@ -67,7 +67,7 @@
 
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon
+;;                     This file is part of the Hexagon kernel
 ;;
 ;;************************************************************************************
 
@@ -123,7 +123,7 @@ db "Looking for /init...", 0
 db "/init not found at the root of the volume. Trying /sh...", 0
 .modoUsuario:
 db "Going to user mode...", 0
-.memoriaTotal:
+.totalMemory:
 db "Total memory installed and available: ", 0
 .megabytes:
 db " Mb (", 0

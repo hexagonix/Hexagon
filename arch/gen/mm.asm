@@ -67,99 +67,100 @@
 
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon
+;;                     This file is part of the Hexagon kernel
 ;;
 ;;************************************************************************************
 
 use32
 
-Hexagon.Arch.Gen.Memoria.memoriaReservadaHexagon   = 3145728
-Hexagon.Arch.Gen.Memoria.memoriaReservadaProcessos = 16777216
+Hexagon.Arch.Gen.Memory.kernelReservedMemory  = 3145728
+Hexagon.Arch.Gen.Memory.processReservedMemory = 16777216
 
-struc Hexagon.Arch.Gen.Memoria enderecoInicial
+struc Hexagon.Arch.Gen.Memory initialAddress
 {
 
-.enderecoInicial    = enderecoInicial
-.memoriaCMOS:       dw 0 ;; Armazena a quantidade de memória obtida na inicialização
-.memoriaTotal:      dd 0 ;; Armazena a memória total obtida, em bytes
-.enderecoBPB:       dd 0 ;; Endereço em memória do BIOS Parameter Block
-.memoriaUsada:      dd 0 ;; Armazena a quantidade de memória usada por processos do usuário
-.bytesAlocados:     dd 0 ;; Bytes alocados
+.initialAddress  = initialAddress
+.memoryCMOS:     dw 0 ;; Stores the amount of memory obtained at startup
+.totalMemory:    dd 0 ;; Stores the total memory obtained, in bytes
+.addressBPB:     dd 0 ;; BIOS Parameter Block memory address
+.usedMemory:     dd 0 ;; Stores the amount of memory used by user processes
+.bytesAllocated: dd 0 ;; Bytes allocated
 
 }
 
-struc Hexagon.Arch.Gen.Memoria.Alocador tamanhoEspacoProcessos
+struc Hexagon.Arch.Gen.Memory.Allocator processSpaceSize
 {
 
-.primeiroBlocoLivre dd 0
-.ponteiroAnterior   dd 0
-.tamanhoBloco       dd 0
-.proximoPonteiro    dd 0
-.reservadoInicial   = tamanhoEspacoProcessos
-.reservadoProcessos dd .reservadoInicial
+.firstFreeBlock  dd 0
+.previousPointer dd 0
+.blockSize       dd 0
+.nextPointer     dd 0
+.initialReserved = processSpaceSize
+.processReserved dd .initialReserved
 
 }
 
-;; Criar instâncias das estruturas, com os nomes adequados que indiquem sua localização
+;; Create instances of structures, with appropriate names that indicate their location
 ;;
-;; Atualmente, 16 Mb reservados para o Hexagon e suas estruturas e 16 Mb reservados para
-;; o carregamentos de executáveis na memória. Essas informações estão disponíveis no
-;; ato de se criar o objeto instanciado e pode ser alterado. A primeira instância determina
-;; onde começa o espaço de memória que pode ser utilizado pelos processos, após o espaço
-;; reservado ao kernel. Já a segunda, determina qual o tamanho de memória a ser alocada para
-;; os processos. Então, essa área é alocada e é gerenciada pelo kernel.
+;; Currently, 3 Mb are reserved for Hexagon and its structures and 16 Mb reserved for
+;; loading executables into memory.
+;; This information is available when creating the instantiated object and can be changed.
+;; The first instance determines where the memory space that can be used by processes begins,
+;; after the space reserved for the kernel.
+;; The second determines the size of memory to be allocated to the processes. So, this area is
+;; allocated and is managed by the kernel.
 
-Hexagon.Memoria          Hexagon.Arch.Gen.Memoria Hexagon.Arch.Gen.Memoria.memoriaReservadaHexagon
-Hexagon.Memoria.Alocador Hexagon.Arch.Gen.Memoria.Alocador Hexagon.Arch.Gen.Memoria.memoriaReservadaProcessos
+Hexagon.Memory           Hexagon.Arch.Gen.Memory Hexagon.Arch.Gen.Memory.kernelReservedMemory
+Hexagon.Memory.Allocator Hexagon.Arch.Gen.Memory.Allocator Hexagon.Arch.Gen.Memory.processReservedMemory
 
 ;;************************************************************************************
 
-;; Retorna a quantidade de memória utilizada pelos processos
+;; Returns the amount of memory used by processes
 ;;
-;; Saída:
+;; Output:
 ;;
-;; EAX - Quantidade de memória utilizada pelos processos na pilha
-;; EBX - Memória total encontrada e disponível para uso, em bytes
-;; ECX - Memória total encontrada e disponível para uso, em Mbytes (menos preciso)
-;; EDX - Memória reservada ao Hexagon, em bytes
-;; ESI - Memória total alocada (reservado+processos), em kbytes
+;; EAX - Amount of memory used by processes on the stack
+;; EBX - Total memory found and available for use, in bytes
+;; ECX - Total memory found and available for use, in Mbytes (less precise)
+;; EDX - Memory reserved for Hexagon, in bytes
+;; ESI - Total allocated memory (reserved+processes), in kbytes
 
-Hexagon.Kernel.Arch.Gen.Mm.usoMemoria:
+Hexagon.Kernel.Arch.Gen.Mm.memoryUse:
 
-    push ds ;; Segmento de dados do kernel
+    push ds ;; Kernel data segment
     pop es
 
-    mov eax, dword[Hexagon.Memoria.memoriaUsada]
+    mov eax, dword[Hexagon.Memory.usedMemory]
 
-    mov ebx, dword[Hexagon.Memoria.memoriaTotal]
+    mov ebx, dword[Hexagon.Memory.totalMemory]
 
-.fornecerMB: ;; Fornecer também a quantidade total em Mbytes
+.provideMB: ;; Also provide the total amount in Mbytes
 
-    mov ecx, dword[Hexagon.Memoria.memoriaTotal]
-
-    shr ecx, 10 ;; ECX = ECX/1024
+    mov ecx, dword[Hexagon.Memory.totalMemory]
 
     shr ecx, 10 ;; ECX = ECX/1024
 
-.fornecerMemoriaReservada:
+    shr ecx, 10 ;; ECX = ECX/1024
 
-    mov edx, Hexagon.Arch.Gen.Memoria.memoriaReservadaHexagon
+.provideReservedMemory:
 
-.fornecerMemoriaAlocada:
+    mov edx, Hexagon.Arch.Gen.Memory.kernelReservedMemory
 
-;; Adicionar a memória resevada do Hexagon
+.provideAllocatedMemory:
+
+;; Add Hexagon reserved memory
 
     push eax
     push ebx
 
-    mov eax, Hexagon.Arch.Gen.Memoria.memoriaReservadaHexagon
+    mov eax, Hexagon.Arch.Gen.Memory.kernelReservedMemory
 
-;; Converter de bytes para kbytes agora
+;; Convert from bytes to kbytes now
 
     shr eax, 10 ;; EAX/1024
     shr eax, 10 ;; EAX/1024
 
-    mov ebx, dword[Hexagon.Memoria.memoriaUsada]
+    mov ebx, dword[Hexagon.Memory.usedMemory]
     add ebx, eax
     mov esi, ebx
 
@@ -170,89 +171,89 @@ Hexagon.Kernel.Arch.Gen.Mm.usoMemoria:
 
 ;;************************************************************************************
 
-;; Confirma o uso de determinada quantidade de memória para processos do usuário
+;; Confirms the use of a given amount of memory for user processes
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; EAX - Quantidade de memória à ser utilizada
+;; EAX - Amount of memory to be used
 
-Hexagon.Kernel.Arch.Gen.Mm.confirmarUsoMemoria:
+Hexagon.Kernel.Arch.Gen.Mm.confirmMemoryUsage:
 
-    add dword[Hexagon.Memoria.memoriaUsada], eax
+    add dword[Hexagon.Memory.usedMemory], eax
 
     ret
 
 ;;************************************************************************************
 
-;; Libera o uso de determinada quantidade de memória para processos do usuário
+;; Releases the use of a certain amount of memory for user processes
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; EAX - Quantidade de memória à ser liberada
+;; EAX - Amount of memory to be freed
 
-Hexagon.Kernel.Arch.Gen.Mm.liberarUsoMemoria:
+Hexagon.Kernel.Arch.Gen.Mm.freeMemoryUsage:
 
-    sub dword[Hexagon.Memoria.memoriaUsada], eax
+    sub dword[Hexagon.Memory.usedMemory], eax
 
     ret
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Arch.Gen.Mm.iniciarMemoria:
+Hexagon.Kernel.Arch.Gen.Mm.initMemory:
 
-;; Primeiramente, o endereço inicial para a alocação de processos e dados se dará após o
-;; espaço reservado para o kernel e estruturas dele
+;; Firstly, the starting address for allocating processes and data will be after the
+;; space reserved for the kernel and its structures
 
-    mov ebx, Hexagon.Memoria.enderecoInicial ;; Após o espaço reservado
+    mov ebx, Hexagon.Memory.initialAddress ;; After the reserved space
 
-;; Total de memória livre após o endereço, até o final da memória detectada. Essa será a área
-;; de alocação
+;; Total free memory after the address, until the end of detected memory.
+;; This will be the allocation area
 
-    mov ecx, [Hexagon.Memoria.memoriaTotal]
+    mov ecx, [Hexagon.Memory.totalMemory]
 
-    sub ecx, Hexagon.Memoria.enderecoInicial
+    sub ecx, Hexagon.Memory.initialAddress
 
-    call Hexagon.Kernel.Arch.Gen.Mm.configurarMemoria ;; Iniciar o manipulador de memória
+    call Hexagon.Kernel.Arch.Gen.Mm.configMemory ;; Start the memory handler
 
-;; Agora, o espaço reservado para os processos será definido, utilizando o padrão estabelecido
-;; Hexagon.Memoria.Alocador.reservadoInicial
+;; Now, the space reserved for processes will be defined, using the established standard
+;; Hexagon.Memory.Allocator.initialReserved
 
-    mov ebx, Hexagon.Memoria.Alocador.reservadoInicial
+    mov ebx, Hexagon.Memory.Allocator.initialReserved
 
-    call Hexagon.Kernel.Arch.Gen.Mm.alocarMemoria ;; Alocar memória para os processos
+    call Hexagon.Kernel.Arch.Gen.Mm.malloc ;; Allocate memory to processes
 
-    call Hexagon.Kernel.Kernel.Proc.configurarAlocacaoProcessos ;; Salvar o endereço usado para a alocação
+    call Hexagon.Kernel.Kernel.Proc.configureProcessAllocation ;; Save the address used for allocation
 
     ret
 
 ;;************************************************************************************
 
-;; Iniciar a memória
+;; Start memory
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; EBX - Início da memória livre
-;; ECX - Tamanho total da memória livre
+;; EBX - Start of free memory
+;; ECX - Total free memory size
 
-Hexagon.Kernel.Arch.Gen.Mm.configurarMemoria:
+Hexagon.Kernel.Arch.Gen.Mm.configMemory:
 
     push ecx
 
-    mov [Hexagon.Memoria.Alocador.primeiroBlocoLivre], ebx
+    mov [Hexagon.Memory.Allocator.firstFreeBlock], ebx
 
     sub ecx, ebx
 
-    mov [Hexagon.Memoria.Alocador.tamanhoBloco], ecx
-    mov [Hexagon.Memoria.Alocador.ponteiroAnterior], 0
-    mov [Hexagon.Memoria.Alocador.proximoPonteiro], 0
+    mov [Hexagon.Memory.Allocator.blockSize], ecx
+    mov [Hexagon.Memory.Allocator.previousPointer], 0
+    mov [Hexagon.Memory.Allocator.nextPointer], 0
 
-    mov ecx, [Hexagon.Memoria.Alocador.ponteiroAnterior]
+    mov ecx, [Hexagon.Memory.Allocator.previousPointer]
     mov [ebx], ecx
 
-    mov ecx, [Hexagon.Memoria.Alocador.tamanhoBloco]
+    mov ecx, [Hexagon.Memory.Allocator.blockSize]
     mov [ebx+4], ecx
 
-    mov ecx, [Hexagon.Memoria.Alocador.proximoPonteiro]
+    mov ecx, [Hexagon.Memory.Allocator.nextPointer]
     mov [ebx+8], ecx
 
     pop ecx
@@ -261,239 +262,238 @@ Hexagon.Kernel.Arch.Gen.Mm.configurarMemoria:
 
 ;;************************************************************************************
 
-;; Alocar memória
+;; Allocate memory
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; EBX - Tamanho da memória solicitada, em bytes
+;; EBX - Size of requested memory, in bytes
 ;;
-;; Saída:
+;; Exit:
 ;;
-;; EAX - 0 se falha
-;; EBX - Ponteiro para a memória alocada, se sucesso
+;; EAX - 0 if failed
+;; EBX - Pointer to allocated memory, if successful
 
-Hexagon.Kernel.Arch.Gen.Mm.alocarMemoria:
+Hexagon.Kernel.Arch.Gen.Mm.malloc:
 
     push ecx
     push edx
 
-    mov eax, [Hexagon.Memoria.Alocador.primeiroBlocoLivre]
+    mov eax, [Hexagon.Memory.Allocator.firstFreeBlock]
 
 .loop:
 
     mov ecx, [eax]
-    mov [Hexagon.Memoria.Alocador.ponteiroAnterior], ecx
+    mov [Hexagon.Memory.Allocator.previousPointer], ecx
 
     mov ecx, [eax+4]
-    mov [Hexagon.Memoria.Alocador.tamanhoBloco], ecx
+    mov [Hexagon.Memory.Allocator.blockSize], ecx
 
     mov ecx, [eax+8]
-    mov [Hexagon.Memoria.Alocador.proximoPonteiro], ecx
+    mov [Hexagon.Memory.Allocator.nextPointer], ecx
 
-    cmp [Hexagon.Memoria.Alocador.tamanhoBloco], ebx
-    jae .blocoEncontrado
+    cmp [Hexagon.Memory.Allocator.blockSize], ebx
+    jae .blockFound
 
-    cmp [Hexagon.Memoria.Alocador.proximoPonteiro], 0
-    je .erro
+    cmp [Hexagon.Memory.Allocator.nextPointer], 0
+    je .error
 
-    mov eax, [Hexagon.Memoria.Alocador.proximoPonteiro]
+    mov eax, [Hexagon.Memory.Allocator.nextPointer]
 
     jmp .loop
 
-.erro:
+.error:
 
     xor eax, eax
 
-    jmp .fim
+    jmp .end
 
-.blocoEncontrado:
+.blockFound:
 
-    mov ecx, [Hexagon.Memoria.Alocador.tamanhoBloco]
+    mov ecx, [Hexagon.Memory.Allocator.blockSize]
 
     sub ecx, ebx
 
-    jz .igual
+    jz .equal
 
-    cmp [Hexagon.Memoria.Alocador.proximoPonteiro], 0
-    jne .proximoExiste
+    cmp [Hexagon.Memory.Allocator.nextPointer], 0
+    jne .nextPointerExists
 
-    cmp [Hexagon.Memoria.Alocador.ponteiroAnterior], 0
-    jne .anteriorNaoProximo
+    cmp [Hexagon.Memory.Allocator.previousPointer], 0
+    jne .previousnotNextPointer
 
-;; Nenhum outro bloco livre existe. Adicionar outro e mover o ponteiro de primeiro
-;; bloco livre para lá
+;; No other free blocks exist. Add another and move the first free block pointer there
 
-    mov ecx, eax ;; Mover o endereço para ECX
+    mov ecx, eax ;; Move address to ECX
 
     add ecx, ebx
 
-    mov dword [ecx], 0 ;; Definir bloco anterior para 0
-    mov edx, [Hexagon.Memoria.Alocador.tamanhoBloco]
+    mov dword [ecx], 0 ;; Set previous block to 0
+    mov edx, [Hexagon.Memory.Allocator.blockSize]
 
-    sub edx, ebx ;; Espaço restante em EDX
+    sub edx, ebx ;; Remaining space on EDX
 
-    mov [ecx+4], edx ;; Salvar no cabeçalho
-    mov dword [ecx+8], 0 ;; Sem ponteiro para o próximo bloco
+    mov [ecx+4], edx ;; Save to header
+    mov dword [ecx+8], 0 ;; No pointer to next block
 
-    mov [Hexagon.Memoria.Alocador.primeiroBlocoLivre], ecx
-    mov ebx, eax ;; EAX inalterado
+    mov [Hexagon.Memory.Allocator.firstFreeBlock], ecx
+    mov ebx, eax ;; EAX unchanged
 
-    jmp .fim
+    jmp .end
 
-;; O próximo bloco não está disponível/existe. Desta forma, um novo cabeçalho no
-;; fim do tamanho solicitado deve ser criado, com o tamanho livre, além da atualização
-;; do próximo ponteiro no cabeçalho anterior
+;; The next block is not available/exists.
+;; This way, a new header at the end of the requested size must be created, with the free size,
+;; in addition to updating the next pointer in the previous header
 
-.anteriorNaoProximo:
+.previousnotNextPointer:
 
-    mov ecx, eax ;; Mover o endereço para ECX
+    mov ecx, eax ;; Move address to ECX
 
-    add ecx, ebx ;; Adicionar a tamanhoBloco o que foi solicitado
+    add ecx, ebx ;; Add to blocksize what was requested
 
-    mov edx, [Hexagon.Memoria.Alocador.ponteiroAnterior] ;; Definir o ponteiro para o cabeçalho anterior no novo
-    mov [ecx], edx                ;; Definir novo cabeçalho para 0
-    mov edx, [Hexagon.Memoria.Alocador.tamanhoBloco]
+    mov edx, [Hexagon.Memory.Allocator.previousPointer] ;; Set pointer to previous header in new
+    mov [ecx], edx                ;; Set new header to 0
+    mov edx, [Hexagon.Memory.Allocator.blockSize]
 
-    sub edx, ebx ;; Espaço anterior em EDX
+    sub edx, ebx ;; Previous space in EDX
 
-    mov [ecx+4], edx ;; Salvar no novo cabeçalho
-    mov dword [ecx+8], 0 ;; Sem próximo ponteiro
+    mov [ecx+4], edx ;; Save in new header
+    mov dword [ecx+8], 0 ;; No next pointer
 
-    mov [Hexagon.Memoria.Alocador.ponteiroAnterior+8], ecx
+    mov [Hexagon.Memory.Allocator.previousPointer+8], ecx
     mov ebx, eax
 
-    jmp .fim
+    jmp .end
 
-;; O bloco anterior e o próximo existem, então fazer novo cabeçalho
-;; no fim do bloco requisitado com o espaço livre. Mover dados do próximo
-;; bloco para um novo e adicionar o tamanho do bloco, atualizando todos os
-;; ponteiros anteriores e próximos para 3 blocos
+;; The previous and next blocks exist, so make a new header at the end of the requested block
+;; with the free space.
+;; Move data from next block to new one and add block size, updating all previous and next
+;; pointers to 3 blocks
 
-.proximoExiste:
+.nextPointerExists:
 
-    cmp [Hexagon.Memoria.Alocador.ponteiroAnterior], 0
-    je .proximoMasNaoAnterior
+    cmp [Hexagon.Memory.Allocator.previousPointer], 0
+    je .nextNotPrevious
 
     mov ecx, eax
 
     add ecx, ebx
 
-    mov edx, [Hexagon.Memoria.Alocador.ponteiroAnterior]
+    mov edx, [Hexagon.Memory.Allocator.previousPointer]
     mov [ecx], edx
-    mov edx, [Hexagon.Memoria.Alocador.tamanhoBloco]
+    mov edx, [Hexagon.Memory.Allocator.blockSize]
 
     sub edx, ebx
 
-    mov ebx, [Hexagon.Memoria.Alocador.proximoPonteiro+4]
+    mov ebx, [Hexagon.Memory.Allocator.nextPointer+4]
 
     add edx, ebx
 
     mov [ecx+4], edx
-    mov edx, [Hexagon.Memoria.Alocador.proximoPonteiro] ;; Endereço do próximo bloco livre
+    mov edx, [Hexagon.Memory.Allocator.nextPointer] ;; Address of the next free block
 
     cmp dword [edx], 0
-    je .naoOProximo
+    je .notNextPointer
 
     mov dword [edx], ecx
-    mov dword [ecx+8], edx ;; Endereço para o próximo ponteiro
+    mov dword [ecx+8], edx ;; Address to next pointer
 
-    mov [Hexagon.Memoria.Alocador.ponteiroAnterior+8], ecx
+    mov [Hexagon.Memory.Allocator.previousPointer+8], ecx
     mov ebx, eax
 
-    jmp .fim
+    jmp .end
 
-.naoOProximo:
+.notNextPointer:
 
     mov dword [edx], 0
     mov dword [ecx+8], 0
-    mov [Hexagon.Memoria.Alocador.ponteiroAnterior+8], ecx
+    mov [Hexagon.Memory.Allocator.previousPointer+8], ecx
     mov ebx, eax
 
-    jmp .fim
+    jmp .end
 
-;; O primeiro bloco livre foi alocado. Fazer o mesmo que antes, ignorando o bloco anterior
-;; e movendo o ponteiro de próximo bloco livre
+;; The first free block has been allocated. Do the same as before, skipping the previous block
+;; and moving the pointer to the next free block
 
-.proximoMasNaoAnterior:
+.nextNotPrevious:
 
     mov ecx, eax
 
     add ecx, ebx
 
     mov dword [ecx], 0
-    mov edx, [Hexagon.Memoria.Alocador.tamanhoBloco]
+    mov edx, [Hexagon.Memory.Allocator.blockSize]
 
     sub edx, ebx
 
-    mov ebx, [Hexagon.Memoria.Alocador.proximoPonteiro+4]
+    mov ebx, [Hexagon.Memory.Allocator.nextPointer+4]
 
     add edx, ebx
 
     mov [ecx+4], edx
-    mov edx, [Hexagon.Memoria.Alocador.proximoPonteiro]
+    mov edx, [Hexagon.Memory.Allocator.nextPointer]
 
     cmp dword [edx], 0
-    je .naoProximo
+    je .notNext
 
     mov dword [edx], ecx
     mov dword [ecx+8], edx
 
-    mov [Hexagon.Memoria.Alocador.primeiroBlocoLivre], ecx ;; Zerar e atualizar primeiro bloco livre
+    mov [Hexagon.Memory.Allocator.firstFreeBlock], ecx ;; Zero and update first free block
     mov ebx, eax
 
-    jmp .fim
+    jmp .end
 
-.naoProximo:
+.notNext:
 
     mov dword [edx], 0
     mov ecx, [ecx+8]
     mov dword [ecx], 0
-    mov [Hexagon.Memoria.Alocador.ponteiroAnterior+8], ecx
+    mov [Hexagon.Memory.Allocator.previousPointer+8], ecx
     mov ebx, eax
 
-    jmp .fim
+    jmp .end
 
-.igual:
+.equal:
 
-    cmp [Hexagon.Memoria.Alocador.proximoPonteiro], 0
-    jne .proximoExiste2
+    cmp [Hexagon.Memory.Allocator.nextPointer], 0
+    jne .nextPointerExists2
 
-    cmp [Hexagon.Memoria.Alocador.ponteiroAnterior], 0
-    jne .anteriorNaoProximo2
+    cmp [Hexagon.Memory.Allocator.previousPointer], 0
+    jne .previousnotNextPointer2
 
-    mov [Hexagon.Memoria.Alocador.primeiroBlocoLivre], 0
+    mov [Hexagon.Memory.Allocator.firstFreeBlock], 0
     mov ebx, eax
 
-    jmp .fim
+    jmp .end
 
-.anteriorNaoProximo2:
+.previousnotNextPointer2:
 
-    mov dword [Hexagon.Memoria.Alocador.ponteiroAnterior+8], 0
+    mov dword [Hexagon.Memory.Allocator.previousPointer+8], 0
     mov ebx, eax
 
-    jmp .fim
+    jmp .end
 
-.proximoExiste2:
+.nextPointerExists2:
 
-    cmp [Hexagon.Memoria.Alocador.ponteiroAnterior], 0
-    je .proximoMasNaoAnterior2
+    cmp [Hexagon.Memory.Allocator.previousPointer], 0
+    je .nextNotPrevious2
 
-    mov ecx, [Hexagon.Memoria.Alocador.ponteiroAnterior]
-    mov edx, [Hexagon.Memoria.Alocador.proximoPonteiro]
+    mov ecx, [Hexagon.Memory.Allocator.previousPointer]
+    mov edx, [Hexagon.Memory.Allocator.nextPointer]
     mov [ecx+8], edx
     mov [edx], ecx
     mov ebx, eax
 
-    jmp .fim
+    jmp .end
 
-.proximoMasNaoAnterior2:
+.nextNotPrevious2:
 
-    mov ecx, [eax+8] ;; Obter endereço do próximo cabeçalho
-    mov dword [ecx], 0 ;; Definir cabeçalho anterior para 0 e atualizar
-    mov [Hexagon.Memoria.Alocador.primeiroBlocoLivre], ecx ;; Atualizar também o primeiro bloco livre
+    mov ecx, [eax+8] ;; Get address from next header
+    mov dword [ecx], 0 ;; Set previous header to 0 and update
+    mov [Hexagon.Memory.Allocator.firstFreeBlock], ecx ;; Also update the first free block
     mov ebx, eax
 
-.fim:
+.end:
 
     pop edx
     pop ecx
@@ -502,63 +502,63 @@ Hexagon.Kernel.Arch.Gen.Mm.alocarMemoria:
 
 ;;************************************************************************************
 
-;; Libera a memória alocada
+;; Frees allocated memory
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; EBX - Ponteiro para a memória previamente alocada
-;; ECX - Tamanho da memória alocada anteriormente, em bytes
+;; EBX - Pointer to previously allocated memory
+;; ECX - Size of previously allocated memory, in bytes
 
-Hexagon.Kernel.Arch.Gen.Mm.liberarMemoria:
+Hexagon.Kernel.Arch.Gen.Mm.free:
 
     push eax
     push ebx
     push ecx
     push edx
 
-    cmp ebx, [Hexagon.Memoria.Alocador.primeiroBlocoLivre]
-    jb .novoPrimeiroLivre
+    cmp ebx, [Hexagon.Memory.Allocator.firstFreeBlock]
+    jb .newFirstFree
 
-    cmp [Hexagon.Memoria.Alocador.primeiroBlocoLivre], 0
-    je .novoPrimeiroLivre
+    cmp [Hexagon.Memory.Allocator.firstFreeBlock], 0
+    je .newFirstFree
 
-;; O bloco que queremos esta entre dois blocos livres ou antes do último bloco livre,
-;; em algum lugar. Procurar por EBX - endereço, para que saibamos onde estão os
-;; ponteiros para os blocos anterior ou próximo, para saber se podem ser mesclados
+;; The block we want is between two free blocks or before the last free block, somewhere.
+;; Search by EBX - address, so we know where the pointers to the previous or next blocks are,
+;; to know if they can be merged
 
-    mov eax, [Hexagon.Memoria.Alocador.primeiroBlocoLivre] ;; Bloco livre atual
-    mov edx, [eax+8] ;; Próximo bloco livre
+    mov eax, [Hexagon.Memory.Allocator.firstFreeBlock] ;; Current free block
+    mov edx, [eax+8] ;; Next free block
 
-.encontrarPosicao:
+.nextPosition:
 
-    cmp edx, 0 ;; Checar o próximo
-    je .blocoEncontradoFimRAM ;; Existe bloco livre
+    cmp edx, 0 ;; Check next
+    je .blockFoundAtEnd ;; Is there a free block
 
-    cmp ebx, edx ;; EBX está abaixo de EDX?
-    jb .blocoEncontradoEntre ;; EBX encontrado no meio
+    cmp ebx, edx ;; Is EBX below EDX?
+    jb .blockFoundBetween ;; EBX found in the middle
 
-    mov eax, edx ;; Atualizar ponteiros para outro loop
+    mov eax, edx ;; Update pointers to another loop
     mov edx, [eax+8]
 
-    jmp .encontrarPosicao
+    jmp .nextPosition
 
-;; O bloco está entre outros dois blocos
+;; The block is between two other blocks
 
-.blocoEncontradoEntre:
+.blockFoundBetween:
 
-    mov [ebx], eax ;; Criar cabeçalho
+    mov [ebx], eax ;; Create header
     mov [ebx+4], ecx
     mov [ebx+8], edx
 
-    mov [eax+8], ebx ;; Atualizar cabeçalho anterior
-    mov [edx], ebx ;; Atualizar próximo cabeçalho
+    mov [eax+8], ebx ;; Update previous header
+    mov [edx], ebx ;; Update next header
 
-;; Checar se os blocos podem ser mescaldos
+;; Check if the blocks can be merged
 
     add ecx, ebx
 
     cmp edx, ecx
-    jne .mesclarApenasPrimeiro
+    jne .mergeOnlyFirst
 
     push eax
 
@@ -568,46 +568,46 @@ Hexagon.Kernel.Arch.Gen.Mm.liberarMemoria:
 
     pop eax
 
-    jne .mesclarApenasUltimo
+    jne .mergeOnlyLast
 
-;; O anterior e o próximo podem ser mescaldos
+;; The previous and next can be merged
 
-    mov ecx, [ebx+4] ;; Obter o tamanho do bloco atual
+    mov ecx, [ebx+4] ;; Get current block size
 
-    add [eax+4], ecx ;; Adicionar isso ao tamanho do anterior
+    add [eax+4], ecx ;; Add this to the size of the previous one
 
-    mov ecx, [edx+4] ;; Obter o tamanho do próximo bloco
+    mov ecx, [edx+4] ;; Get the size of the next block
 
-    add [eax+4], ecx ;; Adicionar isso ao tamanho anterior
+    add [eax+4], ecx ;; Add this to the previous size
 
-    mov ecx, [edx+8] ;; Obter o próximo ponteiro
-    mov [eax+8], ecx ;; Armazená-lo
+    mov ecx, [edx+8] ;; Get the next pointer
+    mov [eax+8], ecx ;; Store it
 
     cmp ecx, 0
-    je .fim
+    je .end
 
     mov [ecx], eax
 
-    jmp .fim
+    jmp .end
 
-.mesclarApenasPrimeiro:
+.mergeOnlyFirst:
 
     cmp ebx, eax
-    jne .fim
+    jne .end
 
-    mov ecx, [ebx+4] ;; Obter o tamanho do bloco atual
+    mov ecx, [ebx+4] ;; Get current block size
 
-    add [eax+4], ecx ;; Adicionar isso ao tamanho do anterior
+    add [eax+4], ecx ;; Add this to the size of the previous one
 
-    mov [edx], eax ;; Atualizar o anterior e o próximo ponteiros
+    mov [edx], eax ;; Update the previous and next pointers
     mov [eax+8], edx
 
-    jmp .fim
+    jmp .end
 
-.mesclarApenasUltimo:
+.mergeOnlyLast:
 
     cmp edx, ecx
-    jne .fim
+    jne .end
 
     mov ecx, [edx+4]
 
@@ -617,30 +617,30 @@ Hexagon.Kernel.Arch.Gen.Mm.liberarMemoria:
     mov [ebx+8], ecx
 
     cmp ecx, 0
-    je .fim
+    je .end
 
     mov [ecx], ebx
 
-    jmp .fim
+    jmp .end
 
-;; O bloco está após todos os blocos livres
+;; The block is after all free blocks
 
-.blocoEncontradoFimRAM:
+.blockFoundAtEnd:
 
-    mov [ebx], eax ;; Criar cabeçalho
+    mov [ebx], eax ;; Create header
     mov [ebx+4], ecx
     mov [ebx+8], edx
 
-    mov [eax+8], ebx ;; Atualizar cabeçalho anterior
+    mov [eax+8], ebx ;; Update previous header
 
-;; Checar se os blocos podem ser mesclados
+;; Check if blocks can be merged
 
     mov ecx, eax
 
     add ecx, [eax+4]
 
     cmp ebx, ecx
-    jne .fim
+    jne .end
 
     mov ecx, [ebx+4]
 
@@ -649,56 +649,56 @@ Hexagon.Kernel.Arch.Gen.Mm.liberarMemoria:
     mov ecx, [ebx+8]
     mov [eax+8], ecx
 
-    jmp .fim
+    jmp .end
 
-;; O bloco está antes dos outros livres
+;; The block is before the other free ones
 
-.novoPrimeiroLivre:
+.newFirstFree:
 
     mov dword [ebx], 0
-    mov [ebx+4], ecx ;; Criar o novo cabeçalho
-    mov edx, [Hexagon.Memoria.Alocador.primeiroBlocoLivre]
+    mov [ebx+4], ecx ;; Create the new header
+    mov edx, [Hexagon.Memory.Allocator.firstFreeBlock]
     mov [ebx+8], edx
 
     mov edx, ebx
 
-    add edx, [ebx+4] ;; Checar se o primeiro bloco bate
+    add edx, [ebx+4] ;; Check if the first block hits
 
-    cmp edx, [Hexagon.Memoria.Alocador.primeiroBlocoLivre] ;; Posição atual + tamanhoBloco?
-    je .mesclarPrimeiroLivre ;; Se sim, mesclar os dois
+    cmp edx, [Hexagon.Memory.Allocator.firstFreeBlock] ;; Current position + blocksize?
+    je .mergeFirstFree ;; If yes, merge the two
 
-    cmp [Hexagon.Memoria.Alocador.primeiroBlocoLivre], 0 ;; Se não, checar se o primeiro bloco existe
+    cmp [Hexagon.Memory.Allocator.firstFreeBlock], 0 ;; If not, check if the first block exists
     je .cont1
 
-    mov edx, [ebx+8] ;; Se sim, atualizar o ponteiro anterior
+    mov edx, [ebx+8] ;; If yes, update the previous pointer
     mov [edx], ebx
 
 .cont1:
 
-    mov [Hexagon.Memoria.Alocador.primeiroBlocoLivre], ebx ;; Se não, criar novo
+    mov [Hexagon.Memory.Allocator.firstFreeBlock], ebx ;; If not, create new
 
-    jmp .fim ;; Primeira limpeza
+    jmp .end ;; First cleaning
 
-.mesclarPrimeiroLivre: ;; Mesclar os dois primeiros
+.mergeFirstFree: ;; Merge the first two
 
-    mov edx, [ebx+8] ;; Adicionar o tamanho do bloco com o anterior no novo
+    mov edx, [ebx+8] ;; Add the block size with the previous one into the new one
     mov ecx, [edx+4]
 
     add [ebx+4], ecx
 
-    mov ecx, [edx+8] ;; Obter o próximo ponteiro do bloco anterior
+    mov ecx, [edx+8] ;; Get the next pointer from the previous block
     mov [ebx+8], ecx
 
     cmp ecx, 0
     je .cont2
 
-    mov [ecx], ebx ;; Ataulizar isso mais o próximo
+    mov [ecx], ebx ;; Update this in the next one
 
 .cont2:
 
-    mov [Hexagon.Memoria.Alocador.primeiroBlocoLivre], ebx ;; Atualizar o primeiro bloco livre
+    mov [Hexagon.Memory.Allocator.firstFreeBlock], ebx ;; Update the first free block
 
-.fim:
+.end:
 
     pop edx
     pop ecx
@@ -711,30 +711,30 @@ Hexagon.Kernel.Arch.Gen.Mm.liberarMemoria:
 
 align 32
 
-;; Dilata o espaço de memória reservado aos processos. AVISO! Todos os dados após o espaço
-;; anteriormente alocado serão perdidos!
+;; Expands the memory space reserved for processes. NOTICE! All data after space
+;; previously allocated will be lost!
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; EAX - Tamanho em bytes para dilatar
+;; EAX - Size in bytes to expand
 ;;
-;; Saída:
+;; Output:
 ;;
-;; EAX - 0 se erro
+;; EAX - 0 if error
 ;;
-;; Essa é uma função exclusiva do kernel!
+;; This is a kernel-exclusive function!
 
-Hexagon.Kernel.Arch.Gen.Mm.dilatarEspacoMemoria:
+Hexagon.Kernel.Arch.Gen.Mm.dilateMemorySpace:
 
     mov ebx, eax
     mov ecx, eax
 
     push ecx
 
-    call Hexagon.Kernel.Arch.Gen.Mm.alocarMemoria
+    call Hexagon.Kernel.Arch.Gen.Mm.malloc
 
     pop ecx
 
-    add dword[Hexagon.Memoria.Alocador.reservadoProcessos], ecx
+    add dword[Hexagon.Memory.Allocator.processReserved], ecx
 
     ret

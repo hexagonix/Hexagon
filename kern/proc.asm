@@ -67,7 +67,7 @@
 
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon
+;;                     This file is part of the Hexagon kernel
 ;;
 ;;************************************************************************************
 
@@ -252,7 +252,7 @@ Hexagon.Kernel.Kernel.Proc.iniciarEscalonador:
 ;; Agora o espaço de memória alocado para os processos será salvo na estrutura de controle
 ;; do escalonador de processos do Hexagon
 
-Hexagon.Kernel.Kernel.Proc.configurarAlocacaoProcessos:
+Hexagon.Kernel.Kernel.Proc.configureProcessAllocation:
 
     mov dword[Hexagon.Processos.BCP.baseProcessos], ebx
 
@@ -488,7 +488,7 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcesso:
     inc ebx
     mov dword[Hexagon.Processos.BCP.tamanhoImagem+ebx*4], eax
 
-    call Hexagon.Kernel.Arch.Gen.Mm.confirmarUsoMemoria
+    call Hexagon.Kernel.Arch.Gen.Mm.confirmMemoryUsage
 
     pop ebx
 
@@ -654,7 +654,7 @@ Hexagon.Kernel.Kernel.Proc.removerProcesso:
 
     call Hexagon.Kernel.Kernel.Proc.removerProcessoPilha
 
-    mov ax, 10h ;; Segmento de dados do kernel
+    mov ax, 10h ;; Kernel data segment
     mov ds, ax
 
     mov eax, [Hexagon.Processos.BCP.tamanho.ponteiro]
@@ -669,11 +669,11 @@ Hexagon.Kernel.Kernel.Proc.removerProcesso:
 
     sub dword[Hexagon.Processos.BCP.tamanho.ponteiro], 4
 
-    mov eax, dword[Hexagon.Memoria.bytesAlocados]
+    mov eax, dword[Hexagon.Memory.bytesAllocated]
 
     sub dword[Hexagon.Processos.BCP.baseProcessos], eax
 
-    mov dword[Hexagon.Memoria.bytesAlocados], 0
+    mov dword[Hexagon.Memory.bytesAllocated], 0
 
 ;; Agora devemos calcular os endereços base de código e dados do programa, os colocando
 ;; na entrada da GDT do programa
@@ -710,7 +710,7 @@ Hexagon.Kernel.Kernel.Proc.removerProcesso:
     mov eax, dword[Hexagon.Processos.BCP.tamanhoImagem+ebx*4]
     mov dword[Hexagon.Processos.BCP.tamanhoImagem+ebx*4], 00h
 
-    call Hexagon.Kernel.Arch.Gen.Mm.liberarUsoMemoria
+    call Hexagon.Kernel.Arch.Gen.Mm.freeMemoryUsage
 
     pop ebx
     pop eax
@@ -799,7 +799,7 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcessoPilha:
 
     mov dword[Hexagon.Processos.BCP.nomeProcesso], esi
 
-    push ds ;; Segmento de dados do kernel
+    push ds ;; Kernel data segment
     pop es
 
     mov eax, dword[Hexagon.Processos.BCP.contagemProcessos]
@@ -887,7 +887,7 @@ Hexagon.Kernel.Kernel.Proc.calcularEnderecoArgumentos:
 
 Hexagon.Kernel.Kernel.Proc.removerProcessoPilha:
 
-    push ds ;; Segmento de dados do kernel
+    push ds ;; Kernel data segment
     pop es
 
     mov eax, dword[Hexagon.Processos.BCP.contagemProcessos]
@@ -931,7 +931,7 @@ Hexagon.Kernel.Kernel.Proc.obterListaProcessos:
 ;; Vamos iniciar a área de memória do heap do kernel que vai armazenar o nome dos
 ;; processos em execução
 
-    push ds ;; Segmento de dados do kernel
+    push ds ;; Kernel data segment
     pop es
 
 .loop:

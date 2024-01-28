@@ -67,7 +67,7 @@
 
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon
+;;                     This file is part of the Hexagon kernel
 ;;
 ;;************************************************************************************
 
@@ -452,7 +452,7 @@ TSS:
     .ebp         dd 0
     .esi         dd 0
     .edi         dd 0
-    .es          dd 10h ;; Segmento de dados do kernel
+    .es          dd 10h ;; Kernel data segment
     .cs          dd 08h
     .ss          dd 10h
     .ds          dd 10h

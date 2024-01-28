@@ -67,7 +67,7 @@
 
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon
+;;                     This file is part of the Hexagon kernel
 ;;
 ;;************************************************************************************
 
@@ -318,7 +318,7 @@ Hexagon.Kernel.FS.FAT16.nomeArquivoParaFAT:
 
     push es
 
-    push ds ;; Segmento de dados do kernel
+    push ds ;; Kernel data segment
     pop es
 
 ;; Ter certeza que o nome possui exatamente 11 caracteres
@@ -1545,7 +1545,7 @@ Hexagon.Kernel.FS.FAT16.iniciarVolumeFAT16B:
 
     call Hexagon.Kernel.Dev.i386.Disco.Disco.lerBPB
 
-    mov esi, dword[Hexagon.Memoria.enderecoBPB]
+    mov esi, dword[Hexagon.Memory.addressBPB]
 
     call Hexagon.Kernel.FS.FAT16.obterInfoFAT16B
 

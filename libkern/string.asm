@@ -67,7 +67,7 @@
 
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon
+;;                     This file is part of the Hexagon kernel
 ;;
 ;;************************************************************************************
 
@@ -96,7 +96,7 @@ Hexagon.Kernel.Lib.String.tamanhoString:
     push edi
     push es
 
-    push ds ;; Segmento de dados do kernel
+    push ds ;; Kernel data segment
     pop es
 
     mov edi, esi
@@ -384,7 +384,7 @@ Hexagon.Kernel.Lib.String.cortarString:
 
     push es
 
-    push ds ;; Segmento de dados do kernel
+    push ds ;; Kernel data segment
     pop es
 
 ;; Primeiro precisamos tirar os espaços da esquerda e depois da direita
@@ -683,7 +683,7 @@ Hexagon.Kernel.Lib.String.removerCaractereNaString:
 
     push es
 
-    push ds ;; Segmento de dados do kernel
+    push ds ;; Kernel data segment
     pop es
 
     mov edi, esi
@@ -739,7 +739,7 @@ Hexagon.Kernel.Lib.String.inserirCaractereNaString:
 
     push es
 
-    push ds ;; Segmento de dados do kernel
+    push ds ;; Kernel data segment
     pop es
 
     std ;; Direção reversa em rep movsb
@@ -791,7 +791,7 @@ Hexagon.Kernel.Lib.String.paraString:
 
     push es
 
-    push ds ;; Segmento de dados do kernel
+    push ds ;; Kernel data segment
     pop es
 
     push eax

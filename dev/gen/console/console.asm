@@ -67,7 +67,7 @@
 
 ;;************************************************************************************
 ;;
-;;                     Este arquivo faz parte do kernel Hexagon
+;;                     This file is part of the Hexagon kernel
 ;;
 ;;************************************************************************************
 
@@ -668,7 +668,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.rolarConsole:
 
     rep movsw ;; Repetir ECX vezes (mov word[ES:EDI], word[DS:ESI])
 
-    mov ax, 10h ;; Segmento de dados do kernel
+    mov ax, 10h ;; Kernel data segment
     mov ds, ax
 
     mov eax, Hexagon.Console.modoTexto.maximoLinhas ;; Limpar última linha
@@ -722,7 +722,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.rolarConsole:
 
     loop .copiar
 
-    mov ax, 10h ;; Segmento de dados do kernel
+    mov ax, 10h ;; Kernel data segment
     mov ds, ax
 
     movzx eax, word[Hexagon.Console.maxLinhas]
