@@ -81,7 +81,7 @@ use32
 
 align 4
 
-match =SIM, VERBOSE {
+match =YES, VERBOSE {
 
 Hexagon.Verbose:
 

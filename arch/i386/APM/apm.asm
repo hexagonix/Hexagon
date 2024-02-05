@@ -93,7 +93,7 @@ Hexagon.Arch.i386.APM:
 
 Hexagon.Kernel.Arch.i386.APM.Energia.reiniciarPC:
 
-match =SIM, VERBOSE
+match =YES, VERBOSE
 {
 
     mov esi, Hexagon.Verbose.APM.servicoAPM
@@ -133,7 +133,7 @@ match =SIM, VERBOSE
 
 Hexagon.Kernel.Arch.i386.APM.Energia.desligarPC:
 
-match =SIM, VERBOSE
+match =YES, VERBOSE
 {
 
     mov esi, Hexagon.Verbose.APM.servicoAPM
@@ -200,7 +200,7 @@ match =SIM, VERBOSE
 
 .falhaComandoAPM: ;; Chamado caso o comando de desligamento (código 3) não seja executado
 
-match =SIM, VERBOSE
+match =YES, VERBOSE
 {
 
     mov esi, Hexagon.Verbose.APM.erroComandoAPM
@@ -216,7 +216,7 @@ match =SIM, VERBOSE
 
 .falhaAoInstalarAPM: ;; Chamado caso ocorra falha na instalação
 
-match =SIM, VERBOSE
+match =YES, VERBOSE
 {
 
     mov esi, Hexagon.Verbose.APM.erroInstalacaoAPM
@@ -232,7 +232,7 @@ match =SIM, VERBOSE
 
 .falhaAoConectarAPM: ;; Chamado caso ocorra falha na conexão de interface de Modo Real
 
-match =SIM, VERBOSE
+match =YES, VERBOSE
 {
 
     mov esi, Hexagon.Verbose.APM.erroConexaoAPM
@@ -252,7 +252,7 @@ match =SIM, VERBOSE
 
 .desligamentoFalhouAPM: ;; Retorna a função que a chamou
 
-match =SIM, VERBOSE
+match =YES, VERBOSE
 {
 
     mov esi, Hexagon.Verbose.APM.sucessoDesligamentoAPM

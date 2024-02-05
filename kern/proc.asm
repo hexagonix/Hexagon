@@ -280,7 +280,7 @@ Hexagon.Kernel.Kernel.Proc.matarProcesso:
     cmp byte[Hexagon.Processos.BCP.contagemProcessos], 0 ;; Não exite processo para ser fechado
     je .fim
 
-match =SIM, VERBOSE
+match =YES, VERBOSE
 {
 
     mov esi, Hexagon.Verbose.Servicos.matarProcesso
