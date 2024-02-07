@@ -190,9 +190,9 @@ Hexagon.init:
 
 Hexagon.Autoconfig:
 
-    call Hexagon.Kernel.Arch.i386.CPU.CPU.identificarProcessador ;; Identifica o processador instalado
+    call Hexagon.Kernel.Arch.i386.CPU.CPU.identifyProcessor ;; Identifica o processador instalado
 
-    call Hexagon.Kernel.Arch.i386.CPU.CPU.configurarProcessador ;; Configura a operação do processador
+    call Hexagon.Kernel.Arch.i386.CPU.CPU.setupProcessor ;; Configura a operação do processador
 
     call Hexagon.Kernel.Arch.Gen.Mm.initMemory ;; Inicia o alocador de memória do Hexagon
 
@@ -252,7 +252,7 @@ Hexagon.Autoconfig:
 
     logHexagon Hexagon.Verbose.mouse, Hexagon.Dmesg.Prioridades.p5
 
-    call Hexagon.Kernel.Arch.i386.Timer.Timer.iniciarTimer ;; Inicializa o serviço de timer do sistema
+    call Hexagon.Kernel.Arch.i386.Timer.Timer.setupTimer ;; Inicializa o serviço de timer do sistema
 
     call Hexagon.Kernel.Kernel.Proc.iniciarEscalonador ;; Inicia o escalonador de processos do Hexagon
 

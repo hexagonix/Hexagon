@@ -75,9 +75,7 @@ use32
 
 ;;*********************************************************************
 ;;
-;;                   Implementação APM do Hexagon
-;;
-;;          Copyright (c) 2016-2024 Felipe Miguel Nery Lunkes
+;;                    Hexagon APM implementation
 ;;
 ;;*********************************************************************
 
@@ -89,9 +87,9 @@ Hexagon.Arch.i386.APM:
 
 ;;************************************************************************************
 
-;; Reiniciar o computador
+;; Restart the device
 
-Hexagon.Kernel.Arch.i386.APM.Energia.reiniciarPC:
+Hexagon.Kernel.Arch.i386.APM.reboot:
 
 match =YES, VERBOSE
 {
@@ -108,16 +106,16 @@ match =YES, VERBOSE
 
 }
 
-.aguardarLoop:
+.waitLoop:
 
-    in al, 64h ;; 64h é o registrador de estado
+    in al, 64h ;; 64h is the state registrar
 
-    bt ax, 1 ;; Checar segundo bit até se tornar 0
-    jnc .OK
+    bt ax, 1 ;; Check second bit until it becomes 0
+    jnc .end
 
-    jmp .aguardarLoop
+    jmp .waitLoop
 
-.OK:
+.end:
 
     mov al, 0xFE
 
@@ -131,7 +129,7 @@ match =YES, VERBOSE
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Arch.i386.APM.Energia.desligarPC:
+Hexagon.Kernel.Arch.i386.APM.shutdown:
 
 match =YES, VERBOSE
 {
@@ -148,57 +146,57 @@ match =YES, VERBOSE
 
 }
 
-    call Hexagon.Kernel.Dev.i386.Disco.Disco.pararDisco ;; Primeiro, vamos parar os discos
+    call Hexagon.Kernel.Dev.i386.Disco.Disco.pararDisco ;; First, let's stop the disks
 
 ;;*********************************************************************
 ;;
-;; Esta função pode retornar códigos de erro, os quais se seguem:
+;; This function can return error codes, which are as follows:
 ;;
 ;;
-;; Retorno em AX - código de erro:
+;; Return in AX - error code:
 ;;
-;; 0 = Falha na instalação do Driver
-;; 1 = Falha na conexão de interface de Modo Real
-;; 2 = Driver APM versão 1.2 não suportado
-;; 3 = Falha ao alterar o status para "off"
+;; 0 = Driver installation failed
+;; 1 = Real Mode interface connection failure
+;; 2 = APM driver version 1.2 not supported
+;; 3 = Failed to change status to "off"
 ;;
 ;;*********************************************************************
 
     push bx
     push cx
 
-    mov ax, 5300h ;; Função de checagem da instalação
-    mov bx, 0 ;; O ID do dispositivo (APM BIOS)
+    mov ax, 5300h ;; Installation check function
+    mov bx, 0 ;; The device ID (APM BIOS)
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h ;; Chamar interrupção APM
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h ;; Call APM interrupt
 
-    jc .falhaAoInstalarAPM
+    jc .failedToInstallAPM
 
-    mov ax, 5301h ;; Função de interface de conexão em modo real
-    mov bx, 0 ;; O ID do dispositivo (APM BIOS)
+    mov ax, 5301h ;; Real mode connection interface function
+    mov bx, 0 ;; The device ID (APM BIOS)
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h ;; Chamar interrupção APM
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h ;; Call APM interrupt
 
-    jc .falhaAoConectarAPM
+    jc .failedToConnectAPM
 
-    mov ax, 530Eh ;; Função de seleção de versão do Driver
-    mov bx, 0     ;; O ID do dispositivo (APM BIOS)
-    mov cx, 0102h ;; Selecionar APM versão 1.2
-                  ;; A funcionalidade está presente após a versão 1.2
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h ;; Chamar interrupção APM
+    mov ax, 530Eh ;; Driver version selection function
+    mov bx, 0     ;; The device ID (APM BIOS)
+    mov cx, 0102h ;; Select APM version 1.2
+                  ;; The functionality is present after version 1.2
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h ;; Call APM interrupt
 
-    jc .falhaSelecionarVersaoAPM
+    jc .failedToSelectAPMVersion
 
-    mov ax, 5307h ;; Função de definir estado
-    mov cx, 0003h ;; Estado de desligar
-    mov bx, 0001h ;; Todos os dispositivos tem ID 1
+    mov ax, 5307h ;; Set state function
+    mov cx, 0003h ;; Power off state
+    mov bx, 0001h ;; All devices have ID 1
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h ;; Chamar interrupção APM
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h ;; Call APM interrupt
 
-;; Caso o sistema não desligue de forma apropriada, serão retornados códigos de erro ao
-;; programa que chamou a função de desligamento.
+;; If the system does not shut down properly, error codes will be returned to the
+;; program that called the shutdown function.
 
-.falhaComandoAPM: ;; Chamado caso o comando de desligamento (código 3) não seja executado
+.commandFailure: ;; Called if the shutdown command (code 3) is not executed
 
 match =YES, VERBOSE
 {
@@ -214,7 +212,7 @@ match =YES, VERBOSE
 
     jmp .desligamentoFalhouAPM
 
-.falhaAoInstalarAPM: ;; Chamado caso ocorra falha na instalação
+.failedToInstallAPM: ;; Called if installation fails
 
 match =YES, VERBOSE
 {
@@ -230,7 +228,7 @@ match =YES, VERBOSE
 
     jmp .desligamentoFalhouAPM
 
-.falhaAoConectarAPM: ;; Chamado caso ocorra falha na conexão de interface de Modo Real
+.failedToConnectAPM: ;; Called if the Real Mode interface connection fails
 
 match =YES, VERBOSE
 {
@@ -246,11 +244,11 @@ match =YES, VERBOSE
 
     jmp .desligamentoFalhouAPM
 
-.falhaSelecionarVersaoAPM: ;; Chamado quando a versão APM é inferior a 1.2
+.failedToSelectAPMVersion: ;; Called when APM version is less than 1.2
 
     mov ax, 2
 
-.desligamentoFalhouAPM: ;; Retorna a função que a chamou
+.desligamentoFalhouAPM: ;; Returns the function that called it
 
 match =YES, VERBOSE
 {

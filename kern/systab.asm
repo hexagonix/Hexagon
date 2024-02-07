@@ -117,13 +117,13 @@ Hexagon.Syscall.Syscall.servicosHexagon:
     dd Hexagon.Kernel.Kernel.Uname.retornarVersao                      ;; 23
     dd Hexagon.Kernel.Lib.Num.obterAleatorio                           ;; 24
     dd Hexagon.Kernel.Lib.Num.alimentarAleatorios                      ;; 25
-    dd Hexagon.Kernel.Arch.i386.Timer.Timer.causarAtraso               ;; 26
+    dd Hexagon.Kernel.Arch.i386.Timer.Timer.sleep               ;; 26
     dd Hexagon.Syscall.Syscall.intalarInterrupcao                      ;; 27
 
 ;; Gerenciamento de energia do Hexagon
 
-    dd Hexagon.Kernel.Arch.i386.APM.Energia.reiniciarPC                ;; 28
-    dd Hexagon.Kernel.Arch.i386.APM.Energia.desligarPC                 ;; 29
+    dd Hexagon.Kernel.Arch.i386.APM.reboot                ;; 28
+    dd Hexagon.Kernel.Arch.i386.APM.shutdown                 ;; 29
 
 ;; Funções de saída em console e gráficos do Hexagon
 

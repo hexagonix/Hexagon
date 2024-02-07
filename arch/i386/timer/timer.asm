@@ -73,17 +73,17 @@
 
 use32
 
-;; Inicializa o timer, utilizando os parâmetros apropriados
+;; Initializes the timer, using the appropriate parameters
 
-Hexagon.Kernel.Arch.i386.Timer.Timer.iniciarTimer:
+Hexagon.Kernel.Arch.i386.Timer.Timer.setupTimer:
 
-;; Definir frequência do contador
+;; Set timer frequency
 
-    mov eax, 100 ;; Definir frequência para 1.19 mhz / EAX
+    mov eax, 100 ;; Set frequency to 1.19 MHz / EAX
 
-    out 40h, al ;; Primeiro enviar byte menos significante
+    out 40h, al ;; First send least significant byte
 
-    mov al, ah ;; Agora o byte mais significante
+    mov al, ah ;; Now the most significant byte
 
     out 40h, al
 
@@ -93,36 +93,36 @@ Hexagon.Kernel.Arch.i386.Timer.Timer.iniciarTimer:
 
 ;;************************************************************************************
 
-;; Pausa a execução de uma tarefa durante o tempo especificado
+;; Pauses the execution of a task for the specified time
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; ECX - Tempo para gerar atraso, em unidades de contagem
+;; ECX - Time to generate delay, in counting units
 
-Hexagon.Kernel.Arch.i386.Timer.Timer.causarAtraso:
+Hexagon.Kernel.Arch.i386.Timer.Timer.sleep:
 
     pusha
 
-    sti ;; Habilitar as interrupções para que se possa atualizar o contador
+    sti ;; Enable interrupts so that the counter can be updated
 
     mov ebx, dword[Hexagon.Int.manipuladorTimer.contagemTimer]
 
-.aguardarUm: ;; Vamos aguardar até o contador mudar
+.waitOne: ;; Let's wait until the counter changes
 
     cmp ebx, dword[Hexagon.Int.manipuladorTimer.contagemTimer]
-    je .aguardarUm
+    je .waitOne
 
-.aguardarMudanca:
+.waitChange:
 
     cmp ebx, dword[Hexagon.Int.manipuladorTimer.contagemTimer]
-    je .aguardarMudanca ;; Enquanto o contador não tiver seu valor alterado, continue aqui
+    je .waitChange ;; As long as the counter has not changed its value, continue here
 
     dec ecx
 
     mov ebx, dword[Hexagon.Int.manipuladorTimer.contagemTimer]
 
     cmp ecx, 0
-    ja .aguardarUm ;; Se não tiver acabado, continue contando...
+    ja .waitOne ;; If it's not over, keep counting...
 
     popa
 

@@ -91,15 +91,15 @@ Hexagon.Kernel.Lib.Num.obterAleatorio:
 
     push ecx
 
-    movzx ecx, byte[Hexagon.Arch.i386.CMOS.hora]
+    movzx ecx, byte[Hexagon.Arch.i386.CMOS.hour]
 
     add eax, ecx
 
-    movzx ecx, byte[Hexagon.Arch.i386.CMOS.minuto]
+    movzx ecx, byte[Hexagon.Arch.i386.CMOS.minute]
 
     add eax, ecx
 
-    movzx ecx, byte[Hexagon.Arch.i386.CMOS.segundo]
+    movzx ecx, byte[Hexagon.Arch.i386.CMOS.second]
 
     add eax, ecx
 

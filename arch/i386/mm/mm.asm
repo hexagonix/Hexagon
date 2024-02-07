@@ -73,9 +73,9 @@
 
 use16
 
-;; Obtem a quantidade total de memória instalada em ambiente de modo real
+;; Gets the total amount of memory installed in real mode environment
 
-Hexagon.Kernel.Arch.i386.Mm.Mm.obtertotalMemory:
+Hexagon.Kernel.Arch.i386.Mm.Mm.getInstalledMemory:
 
     push edx
     push ecx
@@ -91,26 +91,26 @@ Hexagon.Kernel.Arch.i386.Mm.Mm.obtertotalMemory:
 
     int 15h
 
-    jnc .processar
+    jnc .process
 
     xor eax, eax
 
-    jmp .fim ;; Erro
+    jmp .end ;; Error
 
-.quantificar:
+.quantify:
 
     mov si, ax
 
     or si, bx
-    jne .quantificar
+    jne .quantify
 
     mov ax, cx
     mov bx, dx
 
-.processar:
+.process:
 
     cmp ax, 0x3C00
-    jb .abaixoDe16MB
+    jb .below16BM
 
     movzx eax, bx
 
@@ -118,20 +118,20 @@ Hexagon.Kernel.Arch.i386.Mm.Mm.obtertotalMemory:
 
     shl eax, 16 ;; EAX = EAX*65536
 
-    jmp .fim
+    jmp .end
 
-.abaixoDe16MB:
+.below16BM:
 
     shl eax, 10 ;; EAX = EAX*1024
 
-.fim:
+.end:
 
     pop ebx
     pop ecx
     pop edx
 
-    add eax, 1048576 ;; Adicionar o 1 Mb de memória baixa (modo real)
+    add eax, 1048576 ;; Add 1 Mb of low memory (real mode)
 
-    mov dword[Hexagon.Memory.totalMemory], eax ;; Fornecer memória total, em bytes
+    mov dword[Hexagon.Memory.totalMemory], eax ;; Provide total memory, in bytes
 
     ret

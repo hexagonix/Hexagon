@@ -137,7 +137,7 @@ Hexagon.Int.manipuladorTimer:
 
 ;; Atualizar o relógio em tempo real a cada intervalo
 
-    call Hexagon.Kernel.Arch.i386.CMOS.CMOS.atualizarDadosCMOS
+    call Hexagon.Kernel.Arch.i386.CMOS.CMOS.updateCMOSData
 
     inc dword[.contagemTimer] ;; Incrementa o contador
     inc dword[.contadorRelativo]
@@ -620,7 +620,7 @@ Hexagon.Int.manipuladorTouchpad:
 
 ;; Manipulador para outras interrupções, quando as mesmas não estiverem disponíveis
 
-Hexagon.Int.intVazia:
+Hexagon.Int.nullHandler:
 
     push eax
 

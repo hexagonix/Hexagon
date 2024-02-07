@@ -153,27 +153,9 @@ Hexagon.Kernel.Kernel.Dmesg.dataParaRelatorio:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
 
-    call Hexagon.Kernel.Arch.i386.CMOS.CMOS.obterDadosCMOS
+    call Hexagon.Kernel.Arch.i386.CMOS.CMOS.getCMOSData
 
-    mov al, [Hexagon.Arch.i386.CMOS.dia]
-
-    call Hexagon.Kernel.Lib.String.BCDParaASCII
-
-    push eax
-
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
-
-    pop eax
-
-    mov al, ah
-
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
-
-    mov al, '/'
-
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
-
-    mov al, [Hexagon.Arch.i386.CMOS.mes]
+    mov al, [Hexagon.Arch.i386.CMOS.day]
 
     call Hexagon.Kernel.Lib.String.BCDParaASCII
 
@@ -191,7 +173,7 @@ Hexagon.Kernel.Kernel.Dmesg.dataParaRelatorio:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
 
-    mov al, [Hexagon.Arch.i386.CMOS.seculo]
+    mov al, [Hexagon.Arch.i386.CMOS.month]
 
     call Hexagon.Kernel.Lib.String.BCDParaASCII
 
@@ -205,7 +187,25 @@ Hexagon.Kernel.Kernel.Dmesg.dataParaRelatorio:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
 
-    mov al, [Hexagon.Arch.i386.CMOS.ano]
+    mov al, '/'
+
+    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+
+    mov al, [Hexagon.Arch.i386.CMOS.century]
+
+    call Hexagon.Kernel.Lib.String.BCDParaASCII
+
+    push eax
+
+    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+
+    pop eax
+
+    mov al, ah
+
+    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+
+    mov al, [Hexagon.Arch.i386.CMOS.year]
 
     call Hexagon.Kernel.Lib.String.BCDParaASCII
 
@@ -237,27 +237,9 @@ Hexagon.Kernel.Kernel.Dmesg.horaParaRelatorio:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
 
-    call Hexagon.Kernel.Arch.i386.CMOS.CMOS.obterDadosCMOS
+    call Hexagon.Kernel.Arch.i386.CMOS.CMOS.getCMOSData
 
-    mov al, [Hexagon.Arch.i386.CMOS.hora]
-
-    call Hexagon.Kernel.Lib.String.BCDParaASCII
-
-    push eax
-
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
-
-    pop eax
-
-    mov al, ah
-
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
-
-    mov al, ':'
-
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
-
-    mov al, [Hexagon.Arch.i386.CMOS.minuto]
+    mov al, [Hexagon.Arch.i386.CMOS.hour]
 
     call Hexagon.Kernel.Lib.String.BCDParaASCII
 
@@ -275,7 +257,25 @@ Hexagon.Kernel.Kernel.Dmesg.horaParaRelatorio:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
 
-    mov al, [Hexagon.Arch.i386.CMOS.segundo]
+    mov al, [Hexagon.Arch.i386.CMOS.minute]
+
+    call Hexagon.Kernel.Lib.String.BCDParaASCII
+
+    push eax
+
+    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+
+    pop eax
+
+    mov al, ah
+
+    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+
+    mov al, ':'
+
+    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+
+    mov al, [Hexagon.Arch.i386.CMOS.second]
 
     call Hexagon.Kernel.Lib.String.BCDParaASCII
 

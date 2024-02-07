@@ -75,86 +75,86 @@ struc Hexagon.Arch.i386.Regs
 
 {
 
-.registradorAX:    dw 0
-.registradorBX:    dw 0
-.registradorCX:    dw 0
-.registradorDX:    dw 0
-.registradorSI:    dw 0
-.registradorDI:    dw 0
-.registradorEBP:   dd 0
-.registradorESP:   dd 0
-.registradorFlags: dd 0
+.registerAX:    dw 0
+.registerBX:    dw 0
+.registerCX:    dw 0
+.registerDX:    dw 0
+.registerSI:    dw 0
+.registerDI:    dw 0
+.registerEBP:   dd 0
+.registerESP:   dd 0
+.registerFlags: dd 0
 
 }
 
 ;;************************************************************************************
 
-;; Comuta o processador para o modo protegido 32 bits
+;; Switches the processor to 32-bit protected mode
 
-Hexagon.Kernel.Arch.i386.CPU.CPU.irPara32:
+Hexagon.Kernel.Arch.i386.CPU.CPU.goToProtectedMode32:
 
 use16
 
     cli
 
-    pop bp ;; Endereço de retorno
+    pop bp ;; Return address
 
-;; Carregar descriptores
+;; Load descriptors
 
-    lgdt[GDTReg] ;; Carregar GDT
+    lgdt[GDTReg] ;; Load GDT
 
-    lidt[IDTReg] ;; Carregar IDT
+    lidt[IDTReg] ;; Load IDT
 
-;; Agora iremos entrar em modo protegido
+;; Now we will enter protected mode
 
     mov eax, cr0
-    or eax, 1 ;; Comutar para modo protegido - bit 1
+    or eax, 1 ;; Switch to protected mode - bit 1
     mov cr0, eax
 
-;; Retornar
+;; Return
 
-    push 08h ;; Segmento de código do kernel
-    push bp  ;; Endereço de retorno (primeira intrução em modo 32-bit)
+    push 08h ;; Kernel code segment
+    push bp  ;; Return address (first instruction in 32-bit mode)
 
-    retf ;; Ir para código 32-bit
+    retf ;; Go to 32-bit code
 
 ;;************************************************************************************
 
 use32
 
-;; Comuta o processador de volta ao modo real
+;; Switches the processor back to real mode
 
-Hexagon.Kernel.Arch.i386.CPU.CPU.irPara16:
+Hexagon.Kernel.Arch.i386.CPU.CPU.goToRealMode:
 
-    cli ;; Limpar interrupções
+    cli ;; Clear interrupts
 
-    pop edx ;; Salvar local de retorno em EDX
+    pop edx ;; Save return location in EDX
 
-    jmp 20h:Hexagon.Kernel.Arch.i386.CPU.CPU.modoProtegido16 ;; Carregar CS com seletor 20h
+    jmp 20h:Hexagon.Kernel.Arch.i386.CPU.CPU.protectedMode16 ;; Load CS with 20h selector
 
-;; Para ir ao modo real 16-bit, temos de passar pelo modo protegido 16-bit
+;; To go to 16-bit real mode, we have to go through 16-bit protected mode
 
 use16
 
-Hexagon.Kernel.Arch.i386.CPU.CPU.modoProtegido16:
+Hexagon.Kernel.Arch.i386.CPU.CPU.protectedMode16:
 
-    mov ax, 28h ;; 28h é o seletor de dados do modo protegido 16-bit
+    mov ax, 28h ;; 28h is the 16-bit protected mode data selector
     mov ss, ax
-    mov sp, 5000h ;; Pilha
+    mov sp, 5000h ;; Stack
 
     mov eax, cr0
-    and eax, 0xFFFFFFFE ;; Limpar bit de ativação do modo protegido em cr0
-    mov cr0, eax ;; Desativar modo 32 bits
+    and eax, 0xFFFFFFFE ;; Clear protected mode enable bit in cr0
+    mov cr0, eax ;; Disable 32-bit mode
 
-    jmp 50h:Hexagon.Kernel.Arch.i386.CPU.CPU.modoReal ;; Carregar par CS e IP (segmento:instrução)
+    jmp 50h:Hexagon.Kernel.Arch.i386.CPU.CPU.realMode ;; Load CS and IP pair (segment:instruction)
 
-Hexagon.Kernel.Arch.i386.CPU.CPU.modoReal:
+Hexagon.Kernel.Arch.i386.CPU.CPU.realMode:
 
-;; Carregar registradores de segmento com valores de 16 bits
+;; Load segment registers with 16-bit values
 
-    mov ax, 50h ;; Segmento de modo real a ser utilizado (segmento usado pelo kernel)
+    mov ax, 50h ;; Real mode thread to use (thread used by the kernel)
     mov ds, ax
-    mov ax, 6000h ;; Pilha
+    mov ax, 6000h ;; Stack
     mov ss, ax
     mov ax, 0
     mov es, ax
@@ -162,54 +162,53 @@ Hexagon.Kernel.Arch.i386.CPU.CPU.modoReal:
 
     cli
 
-    lidt[.idtR] ;; Carregar tabela de vetores de interrupção de modo real
+    lidt[.idtR] ;; Load real mode interrupt vector table
 
     sti
 
-    push 50h ;; Segmento de código a ser utilizado
-    push dx  ;; Retornar para a localização presente em EDX (primeira instrução em modo real)
+    push 50h ;; Code segment to be used
+    push dx  ;; Return to the location present in EDX (first instruction in real mode)
 
-    retf ;; Iniciar modo real (ir para código 16-bit de modo real)
+    retf ;; Start real mode (go to 16-bit real mode code)
 
-;; Tabela de vetores de interrupção de modo real (o limite do modo com base 0)
+;; Real mode interrupt vector table (the 0-based mode limit)
 
-.idtR:  dw 0xFFFF ;; Limite (limite do modo de operação)
-        dd 0      ;; Base (base zero, sem deslocamento)
+.idtR:  dw 0xFFFF ;; Limit (operation mode limit)
+        dd 0      ;; Base (zero base, no offset)
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Arch.i386.CPU.CPU.ativarA20:
+Hexagon.Kernel.Arch.i386.CPU.CPU.enableA20Gate:
 
-match =A20NAOSEGURO, A20
+match =A20_NOT_SAFE, A20
 {
 
-;; Aqui temos um método para checar se o A20 está habilitado. Entretanto, o código
-;; parece gerar erros dependendo da plataforma (máquina física, KVM, etc)
+;; Here we have a method to check if the A20 is enabled
 
- .testarA20:
+.testA20:
 
-    mov edi, 112345h ;; Endereço par
-    mov esi, 012345h ;; Endereço ímpar
-    mov [esi], esi   ;; Os dois endereços apresentam valores diferentes
+    mov edi, 112345h ;; Even address
+    mov esi, 012345h ;; Odd address
+    mov [esi], esi   ;; The two addresses have different values
     mov [edi], edi
 
-;; Se A20 não definido, os dois ponteiros apontarão para 012345h, que contêm 112345h (EDI)
+;; If A20 not activated, the two hands will point to 012345h, which contain 112345h (EDI)
 
-    cmpsd ;; Comparar para ver se são equivalentes
+    cmpsd ;; Compare to see if they are equivalent
 
-    jne .A20Pronto ;; Se não, o A20 já está habilitado
+    jne .done ;; If not, the A20 is already enabled
 
 }
 
-;; Aqui temos o método mais seguro de ativar a linha A20
+;; Here we have the safest method of activating the A20 line
 
-.habilitarA20:
+.enableA20:
 
-    mov ax, 2401h ;; Solicitar a ativação do A20
+    mov ax, 2401h ;; Request A20 activation
 
-    int 15h ;; Interrupção do BIOS
+    int 15h ;; BIOS Interrupt
 
-.A20Pronto:
+.done:
 
     ret
 
@@ -217,24 +216,24 @@ match =A20NAOSEGURO, A20
 
 use32
 
-Hexagon.Kernel.Arch.i386.CPU.CPU.configurarProcessador:
+Hexagon.Kernel.Arch.i386.CPU.CPU.setupProcessor:
 
-;; Habilitar SSE
+;; Enable SSE
 
     mov eax, cr0
-    or eax, 10b ;; Monitor do coprocessador
-    and ax, 1111111111111011b ;; Desativar emulação do coprocessador
+    or eax, 10b ;; Coprocessor monitor
+    and ax, 1111111111111011b ;; Disable coprocessor emulation
     mov cr0, eax
 
     mov eax, cr4
 
-;; Exceções de ponto flutuante
+;; Floating Point Exceptions
 
     or ax, 001000000000b
     or ax, 010000000000b
     mov cr4, eax
 
-;; Agora vamos iniciar a unidade de ponto flutuante
+;; Now let's start the floating point unit
 
     finit
     fwait
@@ -243,11 +242,11 @@ Hexagon.Kernel.Arch.i386.CPU.CPU.configurarProcessador:
 
 ;;************************************************************************************
 
-;; Essa função obtêm informações do processador instalado e salva em um buffer que
-;; será utilizado em váriso pontos por funções do kernel ou copiado para o ambiente
-;; de usuário, para ser usado pelos processos
+;; This function obtains information from the installed processor and saves it in
+;; a buffer that will be used at various points by kernel functions or copied to the
+;;  user environment, to be used by processes
 
-Hexagon.Kernel.Arch.i386.CPU.CPU.identificarProcessador:
+Hexagon.Kernel.Arch.i386.CPU.CPU.identifyProcessor:
 
     mov esi, Hexagon.Dev.codigoDispositivos.proc0
 
@@ -255,7 +254,7 @@ Hexagon.Kernel.Arch.i386.CPU.CPU.identificarProcessador:
 
     mov ecx, 3
 
-.loopIdentificar:
+.identifyLoop:
 
     push ecx
 
@@ -274,7 +273,7 @@ Hexagon.Kernel.Arch.i386.CPU.CPU.identificarProcessador:
 
     pop ecx
 
-    loop .loopIdentificar
+    loop .identifyLoop
 
     mov eax, 0
     mov [esi+1], eax
@@ -285,148 +284,152 @@ Hexagon.Kernel.Arch.i386.CPU.CPU.identificarProcessador:
 
 ;;************************************************************************************
 ;;
-;;            GDT (Tabela de Descriptores Global - Global Descriptor Table)
+;;                         GDT (Global Descriptor Table)
 ;;
 ;;************************************************************************************
 
-;; O alinhamento aqui deve ser de 32
+;; The alignment here should be 32
 
 align 32
 
-;; Cada entrada da GDT tem 8 bytes, com o limite, a base do seletor (onde o seletor começa na
-;; memória física), os bytes de acesso e as flags
+;; Each GDT entry is 8 bytes, with the limit, the selector base (where the selector starts
+;; in physical memory), the access bytes and the flags
 
 GDT:
 
-    dd 0, 0 ;; Descriptor nulo - Seletor 00h
+    dd 0, 0 ;; Null descriptor - Selector 00h
 
-;; Endereço físico = endereço + base do respectivo seletor
+;; Physical address = address + base of the respective selector
 
-.codigoKernel: ;; Seletor 08h
+.kernelCode: ;; Selector 08h
 
-    dw 0xFFFF    ;; Limite (0:15)
+    dw 0xFFFF    ;; Limit (0:15)
     dw 500h      ;; Base (0:15)
     db 0         ;; Base (16:23)
-    db 10011010b ;; Presente=1, Privilégio=00, Reservado=1, Executável=1, C=0, L&E=1, Acessado=0
-    db 11001111b ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
+    db 10011010b ;; Present=1, Privilege=00, Reserved=1, Executable=1, C=0, L&E=1, Accessed=0
+    db 11001111b ;; Granularity=1, Size=1, Reserved=00, Limit (16:19)
     db 0         ;; Base (24:31)
 
-;; Descriptor de dados com base em 500h
+;; 500h-based data descriptor
 
-.dadosKernel: ;; Seletor 10h
+.kernelData: ;; Selector 10h
 
-    dw 0xFFFF    ;; Limite (0:15)
+    dw 0xFFFF    ;; Limit (0:15)
     dw 500h      ;; Base (0:15)
     db 0         ;; Base (16:23)
-    db 10010010b ;; Presente=1, Privilégio=00, Reservado=1, Executável=0, D=0, W=1, Acessado=0
-    db 11001111b ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
+    db 10010010b ;; Present=1, Privilege=00, Reserved=1, Executable=0, D=0, W=1, Accessed=0
+    db 11001111b ;; Granularity=1, Size=1, Reserved=00, Limit (16:19)
     db 0         ;; Base (24:31)
 
-;; Descriptor de dados com base em 0h
+;; 0h-based data descriptor
 
-.linearKernel: ;; Seletor 18h
+.kernelLinear: ;; Selector 18h
 
-    dw 0xFFFF    ;; Limite (0:15)
+    dw 0xFFFF    ;; Limit (0:15)
     dw 0         ;; Base (0:15)
     db 0         ;; Base (16:23)
-    db 10010010b ;; Presente=1, Privilégio=00, Reservado=1, Executável=0, D=0, W=1, Acessado=0
-    db 11001111b ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
+    db 10010010b ;; Present=1, Privilege=00, Reserved=1, Executable=0, D=0, W=1, Accessed=0
+    db 11001111b ;; Granularity=1, Size=1, Reserved=00, Limit (16:19)
     db 0         ;; Base (24:31)
 
-;; Descriptor de código para modo protegido 16 bits
+;; Code descriptor for 16-bit protected mode
 
-.codigoMP16: ;; Seletor 20h
+.pm16Code: ;; Selector 20h
 
-    dw 0xFFFF    ;; Limite (0:15)
+    dw 0xFFFF    ;; Limit (0:15)
     dw 0500h     ;; Base (0:15)
     db 0         ;; Base (16:23)
-    db 10011010b ;; Presente=1, Privilégio=00, Reservado=1, Executável=1, C=0, L&E=1, Acessado=0
-    db 0         ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
+    db 10011010b ;; Present=1, Privilege=00, Reserved=1, Executable=1, C=0, L&E=1, Accessed=0
+    db 0         ;; Granularity=1, Size=1, Reserved=00, Limit (16:19)
     db 0         ;; Base (24:31)
 
-;; Descriptor de dados para modo protegido 16 bits
+;; Data descriptor for 16-bit protected mode
 
-.dadosPM16: ;; Seletor 28h
+.pm16Data: ;; Selector 28h
 
-    dw 0xFFFF    ;; Limite (0:15)
+    dw 0xFFFF    ;; Limit (0:15)
     dw 0         ;; Base (0:15)
     db 0         ;; Base (16:23)
-    db 10010010b ;; Presente=1, Privilégio=00, Reservado=1, Executável=0, D=0, W=1, Acessado=0
-    db 0         ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
+    db 10010010b ;; Present=1, Privilege=00, Reserved=1, Executable=0, D=0, W=1, Accessed=0
+    db 0         ;; Granularity=1, Size=1, Reserved=00, Limit (16:19)
     db 0         ;; Base (24:31)
 
-;; Código do programa
+;; User code
 
-.codigoProcessos: ;; Seletor 30h -> Seletor usado para a área de código dos processos
+.userCode: ;; Selector 30h -> Selector used for the user process code area
 
-    dw 0xFFFF    ;; Limite (0:15)
+    dw 0xFFFF    ;; Limit (0:15)
     dw 0         ;; Base (0:15)
     db 0         ;; Base (16:23)
-    db 10011010b ;; Presente=1, Privilégio=00, Reservado=1, Executável=1, C=0, L&E=1, Acessado=0
-    db 11001111b ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
+    db 10011010b ;; Present=1, Privilege=00, Reserved=1, Executable=1, C=0, L&E=1, Accessed=0
+    db 11001111b ;; Granularity=1, Size=1, Reserved=00, Limit (16:19)
     db 0         ;; Base (24:31)
 
-;; Dados do programa
+;; User data
 
-.dadosProcessos: ;; Seletor 38h -> Seletor para a área de dados dos processos
+.userData: ;; Selector 38h -> Selector for the process data area
 
-    dw 0xFFFF    ;; Limite (0:15)
+    dw 0xFFFF    ;; Limit (0:15)
     dw 0         ;; Base (0:15)
     db 0         ;; Base (16:23)
-    db 10010010b ;; Presente=1, Privilégio=00, Reservado=1, Executável=0, D=0, W=1, Acessado=0
-    db 11001111b ;; Granularidade=1, Tamanho=1, Reservado=00, Limite (16:19)
+    db 10010010b ;; Present=1, Privilege=00, Reserved=1, Executable=0, D=0, W=1, Accessed=0
+    db 11001111b ;; Granularity=1, Size=1, Reserved=00, Limit (16:19)
     db 0         ;; Base (24:31)
 
 ;; TSS (Task State Segment)
 
 .TSS:
 
-    dw 104       ;; Limite inferior
+    dw 104       ;; Inferior limit
     dw TSS       ;; Base
     db 0         ;; Base
-    db 11101001b ;; Acesso
-    db 0         ;; Bandeiras e limite superior
+    db 11101001b ;; Access
+    db 0         ;; Flags and upper limit
     db 0         ;; Base
 
-terminoGDT:
+endGDT:
 
 GDTReg:
 
-.tamanho: dw terminoGDT - GDT - 1 ;; Tamanho GDT - 1
-.local:   dd GDT + 500h ;; Deslocamento da GDT
+.size:
+dw endGDT - GDT - 1 ;; GDT size - 1
+.location:
+dd GDT + 500h ;; GDT offset
 
 ;;************************************************************************************
 
 ;;************************************************************************************
 ;;
-;;     IDT (Tabela de Descriptores de Interrupção - Interrupt Descriptor Table)
+;;                          IDT (Interrupt Descriptor Table)
 ;;
 ;;************************************************************************************
 
-;; Primeiramente todas as interrupções serão redirecionadas para naoManipulado durante a inicialização
-;; do Sistema. Após, as interrupções de sistema serão instaladas, sobrescrevendo naoManipulado.
+;; Firstly, all interrupts will be redirected to nullHandler during system startup.
+;; Afterwards, system interrupts will be installed, overriding nullHandler.
 
 align 32
 
-IDT: times 256 dw Hexagon.Int.intVazia, 0x0008, 0x8e00, 0
+IDT: times 256 dw Hexagon.Int.nullHandler, 0x0008, 0x8e00, 0
 
-;; naoManipulado: deslocamento (0:15)
-;; 0x0008:  0x08 é um seletor
-;; 0x8e00:  8 é Presente=1, Privilégio=00, Tamanho=1, e é interrupção 386, 00 é reservado
+;; nullHandler: offset (0:15)
+;; 0x0008:  0x08 is a selector
+;; 0x8e00:  8 is Present=1, Privilege=00, Size=1, and it's interrupt 386, 00 is reserved
 ;; 0:       Offset (16:31)
 
-terminoIDT:
+endIDT:
 
 IDTReg:
 
-.tamanho: dw terminoIDT - IDT - 1 ;; Tamanho IDT - 1
-.local:   dd IDT + 500h ;; Deslocamento da IDT
+.size:
+dw endIDT - IDT - 1 ;; IDT size - 1
+.location:
+dd IDT + 500h ;; IDT offset
 
 ;;************************************************************************************
 
 ;;************************************************************************************
 ;;
-;;     TSS (Segmento de Estado da Tarefa - Task State Segment)
+;;                              TSS (Task State Segment)
 ;;
 ;;************************************************************************************
 
@@ -435,8 +438,8 @@ align 32
 TSS:
 
     .tssAnterior dd 0
-    .esp0        dd 10000h ;; Pilha do kernel
-    .ss0         dd 10h    ;; Segmento da pilha do kernel
+    .esp0        dd 10000h ;; Kernel stack
+    .ss0         dd 10h    ;; Kernel stack segment
     .esp1        dd 0
     .ss1         dd 0
     .esp2        dd 0

@@ -83,49 +83,49 @@ use32
 
     cli
 
-    mov word[Hexagon.Arch.i386.BIOS.registradorAX], ax
-    mov word[Hexagon.Arch.i386.BIOS.registradorBX], bx
-    mov word[Hexagon.Arch.i386.BIOS.registradorCX], cx
-    mov word[Hexagon.Arch.i386.BIOS.registradorDX], dx
-    mov word[Hexagon.Arch.i386.BIOS.registradorDI], di
-    mov word[Hexagon.Arch.i386.BIOS.registradorSI], si
-    mov dword[Hexagon.Arch.i386.BIOS.registradorEBP], ebp
-    mov dword[Hexagon.Arch.i386.BIOS.registradorESP], esp
+    mov word[Hexagon.Arch.i386.BIOS.registerAX], ax
+    mov word[Hexagon.Arch.i386.BIOS.registerBX], bx
+    mov word[Hexagon.Arch.i386.BIOS.registerCX], cx
+    mov word[Hexagon.Arch.i386.BIOS.registerDX], dx
+    mov word[Hexagon.Arch.i386.BIOS.registerDI], di
+    mov word[Hexagon.Arch.i386.BIOS.registerSI], si
+    mov dword[Hexagon.Arch.i386.BIOS.registerEBP], ebp
+    mov dword[Hexagon.Arch.i386.BIOS.registerESP], esp
 
     push eax
     push edx
 
-    call Hexagon.Kernel.Arch.i386.CPU.CPU.irPara16 ;; Ir para o modo real para solicitar os serviços BIOS
+    call Hexagon.Kernel.Arch.i386.CPU.CPU.goToRealMode ;; Go to real mode to request BIOS services
 
 use16
 
-    mov ax, word[Hexagon.Arch.i386.BIOS.registradorAX]
-    mov bx, word[Hexagon.Arch.i386.BIOS.registradorBX]
-    mov cx, word[Hexagon.Arch.i386.BIOS.registradorCX]
-    mov dx, word[Hexagon.Arch.i386.BIOS.registradorDX]
-    mov si, word[Hexagon.Arch.i386.BIOS.registradorSI]
-    mov di, word[Hexagon.Arch.i386.BIOS.registradorDI]
+    mov ax, word[Hexagon.Arch.i386.BIOS.registerAX]
+    mov bx, word[Hexagon.Arch.i386.BIOS.registerBX]
+    mov cx, word[Hexagon.Arch.i386.BIOS.registerCX]
+    mov dx, word[Hexagon.Arch.i386.BIOS.registerDX]
+    mov si, word[Hexagon.Arch.i386.BIOS.registerSI]
+    mov di, word[Hexagon.Arch.i386.BIOS.registerDI]
 
     int 10h
 
-    call Hexagon.Kernel.Arch.i386.CPU.CPU.irPara32 ;; Voltar para o modo protegido, para a segurança!
+    call Hexagon.Kernel.Arch.i386.CPU.CPU.goToProtectedMode32 ;; Return to protected mode, to safety!
 
 use32
 
     mov ax, 10h ;; Kernel data segment
     mov ds, ax
-    mov ax, 18h ;; Definir a base de ES, SS e GS base para 0 - segmento linear do kernel
+    mov ax, 18h ;; Set ES, SS and GS segment base to 0 - kernel linear segment
     mov ss, ax
     mov es, ax
     mov gs, ax
-    mov esp, dword[Hexagon.Arch.i386.BIOS.registradorESP]
+    mov esp, dword[Hexagon.Arch.i386.BIOS.registerESP]
 
     sub esp, 4*2
 
     pop edx
     pop eax
 
-    mov ebp, dword[Hexagon.Arch.i386.BIOS.registradorEBP]
+    mov ebp, dword[Hexagon.Arch.i386.BIOS.registerEBP]
 
     sti
 
@@ -139,28 +139,28 @@ use32
 
     cli
 
-    mov word[Hexagon.Arch.i386.BIOS.registradorAX], ax
-    mov word[Hexagon.Arch.i386.BIOS.registradorBX], bx
-    mov word[Hexagon.Arch.i386.BIOS.registradorCX], cx
-    mov word[Hexagon.Arch.i386.BIOS.registradorDX], dx
-    mov word[Hexagon.Arch.i386.BIOS.registradorDI], di
-    mov word[Hexagon.Arch.i386.BIOS.registradorSI], si
-    mov dword[Hexagon.Arch.i386.BIOS.registradorEBP], ebp
-    mov dword[Hexagon.Arch.i386.BIOS.registradorESP], esp
+    mov word[Hexagon.Arch.i386.BIOS.registerAX], ax
+    mov word[Hexagon.Arch.i386.BIOS.registerBX], bx
+    mov word[Hexagon.Arch.i386.BIOS.registerCX], cx
+    mov word[Hexagon.Arch.i386.BIOS.registerDX], dx
+    mov word[Hexagon.Arch.i386.BIOS.registerDI], di
+    mov word[Hexagon.Arch.i386.BIOS.registerSI], si
+    mov dword[Hexagon.Arch.i386.BIOS.registerEBP], ebp
+    mov dword[Hexagon.Arch.i386.BIOS.registerESP], esp
 
     push eax
     push edx
 
-    call Hexagon.Kernel.Arch.i386.CPU.CPU.irPara16
+    call Hexagon.Kernel.Arch.i386.CPU.CPU.goToRealMode
 
 use16
 
-    mov bx, word[Hexagon.Arch.i386.BIOS.registradorBX]
-    mov cx, word[Hexagon.Arch.i386.BIOS.registradorCX]
-    mov dx, word[Hexagon.Arch.i386.BIOS.registradorDX]
-    mov si, word[Hexagon.Arch.i386.BIOS.registradorSI]
-    mov di, word[Hexagon.Arch.i386.BIOS.registradorDI]
-    mov ax, word[Hexagon.Arch.i386.BIOS.registradorAX]
+    mov bx, word[Hexagon.Arch.i386.BIOS.registerBX]
+    mov cx, word[Hexagon.Arch.i386.BIOS.registerCX]
+    mov dx, word[Hexagon.Arch.i386.BIOS.registerDX]
+    mov si, word[Hexagon.Arch.i386.BIOS.registerSI]
+    mov di, word[Hexagon.Arch.i386.BIOS.registerDI]
+    mov ax, word[Hexagon.Arch.i386.BIOS.registerAX]
 
     int 13h
 
@@ -168,39 +168,39 @@ use16
 
     pop ax
 
-    mov word[Hexagon.Arch.i386.BIOS.registradorFlags], ax ;; Salvar flags (para checagem de erros)
-    mov word[Hexagon.Arch.i386.BIOS.registradorAX], ax
+    mov word[Hexagon.Arch.i386.BIOS.registerFlags], ax ;; Save flags (for error checking)
+    mov word[Hexagon.Arch.i386.BIOS.registerAX], ax
 
-    call Hexagon.Kernel.Arch.i386.CPU.CPU.irPara32
+    call Hexagon.Kernel.Arch.i386.CPU.CPU.goToProtectedMode32
 
 use32
 
     mov ax, 10h ;; Kernel data segment
     mov ds, ax
-    mov ax, 18h ;; Definir base de ES, GS e SS para 0 - segmento linear do kernel
+    mov ax, 18h ;; Set ES, SS and GS segment base to 0 - kernel linear segment
     mov ss, ax
     mov gs, ax
     mov es, ax
-    mov esp, dword[Hexagon.Arch.i386.BIOS.registradorESP]
+    mov esp, dword[Hexagon.Arch.i386.BIOS.registerESP]
 
     sub esp, 4*2
 
     pop edx
     pop eax
 
-    mov ebp, dword[Hexagon.Arch.i386.BIOS.registradorEBP]
+    mov ebp, dword[Hexagon.Arch.i386.BIOS.registerEBP]
 
     pushfd
 
     pop eax
 
-    or ax, word[Hexagon.Arch.i386.BIOS.registradorFlags]
+    or ax, word[Hexagon.Arch.i386.BIOS.registerFlags]
 
     push eax
 
     popfd
 
-    mov ax, word[Hexagon.Arch.i386.BIOS.registradorAX]
+    mov ax, word[Hexagon.Arch.i386.BIOS.registerAX]
 
     sti
 
@@ -214,49 +214,49 @@ use32
 
     cli
 
-    mov word[Hexagon.Arch.i386.BIOS.registradorAX], ax
-    mov word[Hexagon.Arch.i386.BIOS.registradorBX], bx
-    mov word[Hexagon.Arch.i386.BIOS.registradorCX], cx
-    mov word[Hexagon.Arch.i386.BIOS.registradorDX], dx
-    mov word[Hexagon.Arch.i386.BIOS.registradorDI], di
-    mov word[Hexagon.Arch.i386.BIOS.registradorSI], si
-    mov dword[Hexagon.Arch.i386.BIOS.registradorEBP], ebp
-    mov dword[Hexagon.Arch.i386.BIOS.registradorESP], esp
+    mov word[Hexagon.Arch.i386.BIOS.registerAX], ax
+    mov word[Hexagon.Arch.i386.BIOS.registerBX], bx
+    mov word[Hexagon.Arch.i386.BIOS.registerCX], cx
+    mov word[Hexagon.Arch.i386.BIOS.registerDX], dx
+    mov word[Hexagon.Arch.i386.BIOS.registerDI], di
+    mov word[Hexagon.Arch.i386.BIOS.registerSI], si
+    mov dword[Hexagon.Arch.i386.BIOS.registerEBP], ebp
+    mov dword[Hexagon.Arch.i386.BIOS.registerESP], esp
 
     push eax
     push edx
 
-    call Hexagon.Kernel.Arch.i386.CPU.CPU.irPara16
+    call Hexagon.Kernel.Arch.i386.CPU.CPU.goToRealMode
 
 use16
 
-    mov ax, word[Hexagon.Arch.i386.BIOS.registradorAX]
-    mov bx, word[Hexagon.Arch.i386.BIOS.registradorBX]
-    mov cx, word[Hexagon.Arch.i386.BIOS.registradorCX]
-    mov dx, word[Hexagon.Arch.i386.BIOS.registradorDX]
-    mov si, word[Hexagon.Arch.i386.BIOS.registradorSI]
-    mov di, word[Hexagon.Arch.i386.BIOS.registradorDI]
+    mov ax, word[Hexagon.Arch.i386.BIOS.registerAX]
+    mov bx, word[Hexagon.Arch.i386.BIOS.registerBX]
+    mov cx, word[Hexagon.Arch.i386.BIOS.registerCX]
+    mov dx, word[Hexagon.Arch.i386.BIOS.registerDX]
+    mov si, word[Hexagon.Arch.i386.BIOS.registerSI]
+    mov di, word[Hexagon.Arch.i386.BIOS.registerDI]
 
     int 15h
 
-    call Hexagon.Kernel.Arch.i386.CPU.CPU.irPara32
+    call Hexagon.Kernel.Arch.i386.CPU.CPU.goToProtectedMode32
 
 use32
 
     mov ax, 10h ;; Kernel data segment
     mov ds, ax
-    mov ax, 18h ;; Definir a base de ES, SS e GS para 0 - segmento linear do kernel
+    mov ax, 18h ;; Set ES, SS and GS segment base to 0 - kernel linear segment
     mov ss, ax
     mov es, ax
     mov gs, ax
-    mov esp, dword[Hexagon.Arch.i386.BIOS.registradorESP]
+    mov esp, dword[Hexagon.Arch.i386.BIOS.registerESP]
 
     sub esp, 4*2
 
     pop edx
     pop eax
 
-    mov ebp, dword[Hexagon.Arch.i386.BIOS.registradorEBP]
+    mov ebp, dword[Hexagon.Arch.i386.BIOS.registerEBP]
 
     sti
 

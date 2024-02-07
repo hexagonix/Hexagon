@@ -73,91 +73,91 @@
 
 use32
 
-;; Variáveis onde os dados obtidos do CMOS serão armazenados
+;; Variables where data obtained from CMOS will be stored
 
 Hexagon.Arch.i386.CMOS:
 
-.seculo    db 0
-.ano       db 0
-.mes       db 0
-.dia       db 0
-.hora      db 0
-.minuto    db 0
-.segundo   db 0
-.diaSemana db 0
+.century   db 0
+.year      db 0
+.month     db 0
+.day       db 0
+.hour      db 0
+.minute    db 0
+.second    db 0
+.dayOfWeek db 0
 
 ;;************************************************************************************
 
-;; Essa função é solicitada pelo manipulador do timer a cada intervalo de tempo, mantendo
-;; o relógio em tempo real do Hexagon atualizado.
+;; This function is requested by the timer handler at each time interval,
+;; keeping the Hexagon's real-time clock updated.
 
-Hexagon.Kernel.Arch.i386.CMOS.CMOS.atualizarDadosCMOS:
+Hexagon.Kernel.Arch.i386.CMOS.CMOS.updateCMOSData:
 
     push ax
 
-    mov al, 00h ;; Obter o byte de segundos
+    mov al, 00h ;; Get the seconds byte
 
     out 70h, al
 
     in al, 71h
 
-    mov [Hexagon.Arch.i386.CMOS.segundo], al ;; Armazenar essa informação
+    mov [Hexagon.Arch.i386.CMOS.second], al ;; Store this information
 
-    mov al, 02h ;; Obter o byte de minutos
-
-    out 70h, al
-
-    in al, 71h
-
-    mov [Hexagon.Arch.i386.CMOS.minuto], al
-
-    mov al, 04h ;; Obter o byte de horas
+    mov al, 02h ;; Get the minutes byte
 
     out 70h, al
 
     in al, 71h
 
-    mov [Hexagon.Arch.i386.CMOS.hora], al
+    mov [Hexagon.Arch.i386.CMOS.minute], al
 
-    mov al, 06h ;; Obter o byte de dia da semana
-
-    out 70h, al
-
-    in al, 71h
-
-    mov [Hexagon.Arch.i386.CMOS.diaSemana], al
-
-    mov al, 07h ;; Obter o byte de dia
+    mov al, 04h ;; Get the hours byte
 
     out 70h, al
 
     in al, 71h
 
-    mov [Hexagon.Arch.i386.CMOS.dia], al
+    mov [Hexagon.Arch.i386.CMOS.hour], al
 
-    mov al, 08h ;; Obter o byte de mês
-
-    out 70h, al
-
-    in al, 71h
-
-    mov [Hexagon.Arch.i386.CMOS.mes], al
-
-    mov al, 09h ;; Obter o byte de ano
+    mov al, 06h ;; Get the day of the week byte
 
     out 70h, al
 
     in al, 71h
 
-    mov [Hexagon.Arch.i386.CMOS.ano], al
+    mov [Hexagon.Arch.i386.CMOS.dayOfWeek], al
 
-    mov al, 32h ;; Obter o byte de século
+    mov al, 07h ;; Get the day byte
 
     out 70h, al
 
     in al, 71h
 
-    mov [Hexagon.Arch.i386.CMOS.seculo], al
+    mov [Hexagon.Arch.i386.CMOS.day], al
+
+    mov al, 08h ;; Get the month byte
+
+    out 70h, al
+
+    in al, 71h
+
+    mov [Hexagon.Arch.i386.CMOS.month], al
+
+    mov al, 09h ;; Get the year byte
+
+    out 70h, al
+
+    in al, 71h
+
+    mov [Hexagon.Arch.i386.CMOS.year], al
+
+    mov al, 32h ;; Get the century byte
+
+    out 70h, al
+
+    in al, 71h
+
+    mov [Hexagon.Arch.i386.CMOS.century], al
 
     pop ax
 
@@ -165,11 +165,11 @@ Hexagon.Kernel.Arch.i386.CMOS.CMOS.atualizarDadosCMOS:
 
 ;;************************************************************************************
 
-;; Chamado por instâncias do Hexagon para obtenção direta, independente de atualização
-;; por timer. Função com nome mantido para garantir compatibilidade com o código fonte
+;; Called by Hexagon instances for direct retrieval, independent of timer update.
+;; Function with name kept to ensure compatibility with source code
 
-Hexagon.Kernel.Arch.i386.CMOS.CMOS.obterDadosCMOS:
+Hexagon.Kernel.Arch.i386.CMOS.CMOS.getCMOSData:
 
-    call Hexagon.Kernel.Arch.i386.CMOS.CMOS.atualizarDadosCMOS
+    call Hexagon.Kernel.Arch.i386.CMOS.CMOS.updateCMOSData
 
     ret
