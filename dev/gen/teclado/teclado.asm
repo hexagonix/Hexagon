@@ -194,11 +194,11 @@ Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterString:
     mov ecx, 0 ;; Contador de caracteres
     movzx ebx, al ;; Máximo de caracteres
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.obterCursor
+    call Hexagon.Kernel.Dev.Gen.Console.Console.getCursor
 
 .obterTecla:
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor
+    call Hexagon.Kernel.Dev.Gen.Console.Console.positionCursor
 
     cmp dword[.eco], 1234h
     je .continuar
@@ -207,11 +207,11 @@ Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterString:
 
     mov esi, .string
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
     mov al, ' '
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
 .continuar:
 
@@ -222,7 +222,7 @@ Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterString:
     cmp dword[.eco], 1234h
     je .semMoverCursor
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor
+    call Hexagon.Kernel.Dev.Gen.Console.Console.positionCursor
 
 .semMoverCursor:
 

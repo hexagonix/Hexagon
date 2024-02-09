@@ -71,12 +71,12 @@
 ;;
 ;;************************************************************************************
 
-;; Informações úteis para utilização do modo gráfico
-;; Implementação de modo gráfico do Hexagon
+;; Useful information for using graphical mode
+;; Hexagon graphics mode implementation
 
-;; A implementação de modo gráfico se baseia nas especificações VESA 3.0.
+;; Graphics mode implementation is based on VESA 3.0 specifications.
 
-;; Visualizar especificações VESA 3.0 para mais informações
+;; View VESA 3.0 specifications for more information
 ;; VBE = VESA BIOS Extensions
 
 use32
@@ -85,132 +85,132 @@ use32
 
 Hexagon.Console:
 
-.padrao = 118h
+.default = 118h
 
-.modoUsuario:           db 0
-.modoGrafico:           db 0
-.tamanhoVideo:          dd 0
-.modoVBE:               dw .padrao
-.maxColunas:            dw 0
-.maxLinhas:             dw 0
-.bitsPorPixel:          db 0
-.bytesPorPixel:         dd 0
-.bytesPorLinha:         dd 0
-.bytesPorLinhaGraficos: dd 0
+.userMode:            db 0
+.graphicMode:         db 0
+.consoleSize:         dd 0
+.modeVBE:             dw .default
+.maxColumns:          dw 0
+.maxRows:             dw 0
+.bitsPerPixel:        db 0
+.bytesPerPixel:       dd 0
+.bytesPerRow:         dd 0
+.bytesPerRowGraphics: dd 0
 
-;; Use as definições presentes em libkern/macros.s para definir o esquema de cores
-;; aplicadas na inicialização
+;; Use the settings in libkern/macros.s to define the color
+;; scheme applied at startup
 
-.corFundoPadrao = HEXAGONIX_BLOSSOM_CINZA
-.corFontePadrao = HEXAGONIX_BLOSSOM_AMARELO
+.defaultBackgroundColor = HEXAGONIX_BLOSSOM_CINZA
+.defaultFontColor       = HEXAGONIX_BLOSSOM_AMARELO
 
-.corFundo:      dd .corFundoPadrao
-.corFonte:      dd .corFontePadrao
-.corFundoTema:  dd .corFundoPadrao
-.corFonteTema:  dd .corFontePadrao
+.backgroundColor:      dd .defaultBackgroundColor
+.fontColor:            dd .defaultFontColor
+.backgroundThemeColor: dd .defaultBackgroundColor
+.fontThemeColor:       dd .defaultFontColor
 
-Hexagon.Console.Resolucao:
+Hexagon.Console.Resolution:
 
 .x: dw 1024
 .y: dw 768
 
-Hexagon.Console.Memoria:
+Hexagon.Console.Memory:
 
-;; Endereços de memória para operações de vídeo
+;; Memory addresses for video operations
 
-.bufferConsolePrincipal:  dd 100000h
-.bufferConsoleSecundario: dd 100000h
-.bufferConsoleKernel:     dd 300000h
-.enderecoLFB: dd 0 ;; Endereço do LFB (Linear Frame Buffer)
+.mainConsoleBuffer:      dd 100000h
+.secondaryConsoleBuffer: dd 100000h
+.kernelConsoleBuffer:    dd 300000h
+.addressLFB: dd 0 ;; LFB (Linear Frame Buffer) address
 
-Hexagon.Console.modoTexto:
+Hexagon.Console.textMode:
 
-.corPadrao      = 0xF0
-.maximoLinhas   = 24 ;; Contando de 0
-.maximoColunas  = 79 ;; Contando de 0
-.memoriaDeVideo = 0xB8000
+.defaultColor = 0xF0
+.maxRows      = 24 ;; Counting from 0
+.maxColumns   = 79 ;; Counting from 0
+.videoMemory  = 0xB8000
 
-.corAtual:      db .corPadrao
+.currentColor:  db .defaultColor
 .cursor.X:      db 0
 .cursor.Y:      db 0
 
 ;;************************************************************************************
 
-;; Define a resolução à ser utilizada para a exibição
+;; Defines the resolution to be used for display
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; EAX - Número relativo a resolução à ser utilizada
-;;       1 - Resolução de 800x600 pixels
-;;       2 - Resolução de 1024x768 pixels
-;;       3 - Alterar para modo texto
+;; EAX - Number relating to the resolution to be used
+;; 1 - Resolution of 800x600 pixels
+;; 2 - Resolution of 1024x768 pixels
+;; 3 - Change to text mode
 
-Hexagon.Kernel.Dev.Gen.Console.Console.definirResolucao:
+Hexagon.Kernel.Dev.Gen.Console.Console.setResolution:
 
     cmp eax, 01h ;; 800x600 pixels
-    je .modoGrafico1
+    je .graphicMode1
 
     cmp eax, 02h ;; 1024x768
-    je .modoGrafico2
+    je .graphicMode2
 
-    cmp eax, 03h ;; Modo texto legado (será removido)
-    je .modoTexto
+    cmp eax, 03h ;; Text mode
+    je .textMode
 
-    jmp .fim
+    jmp .end
 
-.modoGrafico1:
+.graphicMode1: ;; Resolution of 800x600 pixels according to VESA 3.0 specification
 
-    mov word[Hexagon.Console.modoVBE], 0x115 ;; Resolução de 800x600 pixels segundo especificação VESA 3.0
+    mov word[Hexagon.Console.modeVBE], 0x115
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.definirModoGrafico
+    call Hexagon.Kernel.Dev.Gen.Console.Console.setGraphicMode
 
-    jmp .fim
+    jmp .end
 
-.modoGrafico2:
+.graphicMode2: ;; Resolution of 1024x768 pixels according to VESA 3.0 specification
 
-    mov word[Hexagon.Console.modoVBE], 0x118 ;; Resolução de 1024x768 pixels segundo especificação VESA 3.0
+    mov word[Hexagon.Console.modeVBE], 0x118
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.definirModoGrafico
+    call Hexagon.Kernel.Dev.Gen.Console.Console.setGraphicMode
 
-    jmp .fim
+    jmp .end
 
-.modoTexto:
+.textMode:
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.definirModoTexto
+    call Hexagon.Kernel.Dev.Gen.Console.Console.setTextMode
 
-.fim:
+.end:
 
     ret
 
 ;;************************************************************************************
 
-;; Retorna o número relativo à resolução atual do vídeo
+;; Returns the number relative to the current resolution of the video
 ;;
-;; Saída:
+;; Output:
 ;;
-;; EAX - Número relativo a resolução atualmente utilizada
-;;       1 - Resolução de 800x600 pixels
-;;       2 - Resolução de 1024x768 pixels
+;; EAX - Number relative to the resolution currently used
+;; 1 - Resolution of 800x600 pixels
+;; 2 - Resolution of 1024x768 pixels
 
-Hexagon.Kernel.Dev.Gen.Console.Console.obterResolucao:
+Hexagon.Kernel.Dev.Gen.Console.Console.getResolution:
 
-    mov ax, word[Hexagon.Console.modoVBE]
+    mov ax, word[Hexagon.Console.modeVBE]
 
     cmp ax, 115h
-    je .modoGrafico1
+    je .graphicMode1
 
     cmp ax, 118h
-    je .modoGrafico2
+    je .graphicMode2
 
     ret
 
-.modoGrafico1:
+.graphicMode1:
 
     mov eax, 1
 
     ret
 
-.modoGrafico2:
+.graphicMode2:
 
     mov eax, 2
 
@@ -218,23 +218,23 @@ Hexagon.Kernel.Dev.Gen.Console.Console.obterResolucao:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Dev.Gen.Console.Console.definirModoTexto:
+Hexagon.Kernel.Dev.Gen.Console.Console.setTextMode:
 
     push eax
 
-    mov ah, 0 ;; Função para definir modo de vídeo
-    mov al, 3 ;; Vídeo em modo texto
+    mov ah, 0 ;; Function to set video mode
+    mov al, 3 ;; Video in text mode
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int10h ;; Chamar interrupção BIOS de modo real
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int10h ;; Call real mode BIOS interrupt
 
     mov ax, 1003h
     mov bx, 0
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int10h ;; Desligar blinking
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int10h ;; Turn off blinking
 
-    mov byte[Hexagon.Console.modoGrafico], 0
+    mov byte[Hexagon.Console.graphicMode], 0
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.limparConsole
+    call Hexagon.Kernel.Dev.Gen.Console.Console.clearConsole
 
     pop eax
 
@@ -242,54 +242,54 @@ Hexagon.Kernel.Dev.Gen.Console.Console.definirModoTexto:
 
 ;;************************************************************************************
 
-;; Colocar computador em modo gráfico
+;; Configure graphics mode
 ;;
-;; Saída:
+;; Output:
 ;;
-;; ESI - Ponteiro para a memória de vídeo
+;; ESI - Pointer to video memory
 
-Hexagon.Kernel.Dev.Gen.Console.Console.definirModoGrafico:
+Hexagon.Kernel.Dev.Gen.Console.Console.setGraphicMode:
 
     push eax
     push ebx
     push ecx
     push edi
 
-    mov ax, word[Hexagon.Console.modoVBE] ;; O padrão é 1024*768*24
+    mov ax, word[Hexagon.Console.modeVBE] ;; The default is 1024*768*24
 
-    mov cx, ax ;; CX: modo de obter informações
-    mov ax, 0x4F01 ;; Função para obter informações de vídeo
-    mov di, Hexagon.Heap.VBE + 500h ;; Endereço onde são armazenados os dados
+    mov cx, ax ;; CX: way to obtain information
+    mov ax, 0x4F01 ;; Function to obtain video information
+    mov di, Hexagon.Heap.VBE + 500h ;; Address where data is stored
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int10h ;; Chamar interrupção BIOS em modo real
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int10h ;; Call BIOS interrupt in real mode
 
-    mov esi, dword[Hexagon.Heap.VBE+40] ;; Ponteiro para a base da memória de vídeo
-    mov dword[Hexagon.Console.Memoria.enderecoLFB], esi
+    mov esi, dword[Hexagon.Heap.VBE+40] ;; Pointer to the base of the video memory
+    mov dword[Hexagon.Console.Memory.addressLFB], esi
 
-    or cx, 100000000000000b ;; Definir bit 14 para obter frame buffer linear
+    or cx, 100000000000000b ;; Set bit 14 to get linear frame buffer
 
     mov bx, cx
-    mov ax, 0x4F02 ;; Função para definir modo de vídeo
+    mov ax, 0x4F02 ;; Function to set video mode
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int10h ;; Chamar interrupção BIOS em modo real
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int10h ;; Call BIOS interrupt in real mode
 
     mov ax, word[Hexagon.Heap.VBE+16]
-    mov word[Hexagon.Console.bytesPorLinha], ax
+    mov word[Hexagon.Console.bytesPerRow], ax
 
-    mov al, byte[Hexagon.Heap.VBE+25] ;; Obter bits por pixel
+    mov al, byte[Hexagon.Heap.VBE+25] ;; Get bits per pixel
 
     cmp al, 0
-    jne .bitsPorPixelOK
+    jne .bitsPerPixelOK
 
     mov al, 24
 
-.bitsPorPixelOK:
+.bitsPerPixelOK:
 
-    mov byte[Hexagon.Console.bitsPorPixel], al ;; Salvar bits por pixel
-    shr al, 3 ;; Divide por 8
-    mov byte[Hexagon.Console.bytesPorPixel], al
+    mov byte[Hexagon.Console.bitsPerPixel], al ;; Save bits per pixel
+    shr al, 3 ;; Divide by 8
+    mov byte[Hexagon.Console.bytesPerPixel], al
 
-    mov ax, word[Hexagon.Heap.VBE+18] ;; Obter resolução X
+    mov ax, word[Hexagon.Heap.VBE+18] ;; Get resolution
 
     cmp ax, 0
     jne .xResOK
@@ -298,9 +298,8 @@ Hexagon.Kernel.Dev.Gen.Console.Console.definirModoGrafico:
 
 .xResOK:
 
-    mov word[Hexagon.Console.Resolucao.x], ax ;; Salvar resolução X
-
-    mov ax, word[Hexagon.Heap.VBE+20] ;; Obter resolução Y
+    mov word[Hexagon.Console.Resolution.x], ax ;; Save resolution
+    mov ax, word[Hexagon.Heap.VBE+20] ;; Get resolution Y
 
     cmp ax, 0
     jne .yResOK
@@ -309,50 +308,50 @@ Hexagon.Kernel.Dev.Gen.Console.Console.definirModoGrafico:
 
 .yResOK:
 
-    mov word[Hexagon.Console.Resolucao.y], ax ;; Salvar resolução Y
+    mov word[Hexagon.Console.Resolution.y], ax ;; Save resolution Y
 
-    movzx eax, word[Hexagon.Console.Resolucao.x]
+    movzx eax, word[Hexagon.Console.Resolution.x]
     mov ebx, Hexagon.Fontes.largura
 
     xor edx, edx
 
     div ebx
 
-    dec ax ;; Contando de 0
+    dec ax ;; Counting from 0
 
-    mov word[Hexagon.Console.maxColunas], ax
+    mov word[Hexagon.Console.maxColumns], ax
 
-    movzx eax, word[Hexagon.Console.Resolucao.y]
+    movzx eax, word[Hexagon.Console.Resolution.y]
     mov ebx, Hexagon.Fontes.altura
 
     xor edx, edx
 
     div ebx
 
-    dec ax ;; Contando de 0
+    dec ax ;; Counting from 0
 
-    mov word[Hexagon.Console.maxLinhas], ax
+    mov word[Hexagon.Console.maxRows], ax
 
-    mov byte[Hexagon.Console.modoGrafico], 1
+    mov byte[Hexagon.Console.graphicMode], 1
 
-    mov eax, dword[Hexagon.Console.bytesPorLinha]
-    movzx ebx, word[Hexagon.Console.Resolucao.y]
+    mov eax, dword[Hexagon.Console.bytesPerRow]
+    movzx ebx, word[Hexagon.Console.Resolution.y]
 
     mul ebx
 
-    mov dword[Hexagon.Console.tamanhoVideo], eax
+    mov dword[Hexagon.Console.consoleSize], eax
 
-    mov eax, dword[Hexagon.Console.bytesPorLinha]
+    mov eax, dword[Hexagon.Console.bytesPerRow]
     mov ebx, Hexagon.Fontes.altura
 
     mul ebx
 
-    mov dword[Hexagon.Console.bytesPorLinhaGraficos], eax
+    mov dword[Hexagon.Console.bytesPerRowGraphics], eax
 
-    mov eax, [Hexagon.Console.Memoria.enderecoLFB]
-    mov [Hexagon.Console.Memoria.bufferConsolePrincipal], eax ;; Salvar endereço original
+    mov eax, [Hexagon.Console.Memory.addressLFB]
+    mov [Hexagon.Console.Memory.mainConsoleBuffer], eax ;; Save original address
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.limparConsole
+    call Hexagon.Kernel.Dev.Gen.Console.Console.clearConsole
 
     pop edi
     pop ecx
@@ -363,42 +362,42 @@ Hexagon.Kernel.Dev.Gen.Console.Console.definirModoGrafico:
 
 ;;************************************************************************************
 
-;; Obter informações de vídeo
+;; Get video information
 ;;
-;; Saída:
+;; Output:
 ;;
-;; EAX - Resolução de X (bits 0-15), Y (bits 16-31)
-;; EBX - Colunas (bits 0-7), Linhas (8-15), Bits por Pixel (16-23)
-;; EDX - Endereço inicial do buffer
-;; CF definido quando em modo texto
+;; EAX - Resolution of X (bits 0-15), Y (bits 16-31)
+;; EBX - Columns (bits 0-7), Rows (8-15), Bits per Pixel (16-23)
+;; EDX - Buffer starting address
+;; CF defined when in text mode
 
-Hexagon.Kernel.Dev.Gen.Console.Console.obterInfoConsole:
+Hexagon.Kernel.Dev.Gen.Console.Console.getConsoleInfo:
 
-    cmp byte[Hexagon.Console.modoGrafico], 0
-    je .modoTextoVideo
+    cmp byte[Hexagon.Console.graphicMode], 0
+    je .textModeVideo
 
-.modoGraficoVideo:
+.graphicModeVideo:
 
     push ecx
 
-    mov bl, byte[Hexagon.Console.bitsPorPixel]
+    mov bl, byte[Hexagon.Console.bitsPerPixel]
     shl ebx, 8
 
-    mov bl, byte[Hexagon.Console.maxLinhas]
+    mov bl, byte[Hexagon.Console.maxRows]
 
-    inc bl ;; Contando de 1
+    inc bl ;; Counting from 1
 
     shl ebx, 8
 
-    mov bl, byte[Hexagon.Console.maxColunas]
+    mov bl, byte[Hexagon.Console.maxColumns]
 
-    inc bl ;; Contando de 1
+    inc bl ;; Counting from 1
 
-    mov ax, word[Hexagon.Console.Resolucao.y]
+    mov ax, word[Hexagon.Console.Resolution.y]
     shl eax, 16
-    mov ax, word[Hexagon.Console.Resolucao.x]
+    mov ax, word[Hexagon.Console.Resolution.x]
 
-    mov edx, dword[Hexagon.Console.Memoria.enderecoLFB]
+    mov edx, dword[Hexagon.Console.Memory.addressLFB]
 
     pop ecx
 
@@ -406,15 +405,15 @@ Hexagon.Kernel.Dev.Gen.Console.Console.obterInfoConsole:
 
     ret
 
-.modoTextoVideo:
+.textModeVideo:
 
-    mov bl, Hexagon.Console.modoTexto.maximoColunas+1
-    mov bh, Hexagon.Console.modoTexto.maximoLinhas+1
+    mov bl, Hexagon.Console.textMode.maxColumns+1
+    mov bh, Hexagon.Console.textMode.maxRows+1
 
     and ebx, 0xFFFF
 
     mov eax, 0
-    mov edx, Hexagon.Console.modoTexto.memoriaDeVideo
+    mov edx, Hexagon.Console.textMode.videoMemory
 
     stc
 
@@ -422,76 +421,76 @@ Hexagon.Kernel.Dev.Gen.Console.Console.obterInfoConsole:
 
 ;;************************************************************************************
 
-;; Limpa a tela
+;; Clean the console
 
-Hexagon.Kernel.Dev.Gen.Console.Console.limparConsole:
+Hexagon.Kernel.Dev.Gen.Console.Console.clearConsole:
 
-    cmp byte[Hexagon.Console.modoGrafico], 1 ;; Checar modo gráfico
-    je .graficos
+    cmp byte[Hexagon.Console.graphicMode], 1 ;; Check graphics mode
+    je .graphicsMode
 
-.texto:
+.textMode:
 
     xor edx, edx
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor
+    call Hexagon.Kernel.Dev.Gen.Console.Console.positionCursor
 
-    mov edi, Hexagon.Console.modoTexto.memoriaDeVideo
-    mov ecx, (Hexagon.Console.modoTexto.maximoLinhas+1) * (Hexagon.Console.modoTexto.maximoColunas+1)
-    mov ah, byte[Hexagon.Console.modoTexto.corAtual] ;; Cor
-    mov al, ' ' ;; Caractere para preencher a tela
+    mov edi, Hexagon.Console.textMode.videoMemory
+    mov ecx, (Hexagon.Console.textMode.maxRows+1) * (Hexagon.Console.textMode.maxColumns+1)
+    mov ah, byte[Hexagon.Console.textMode.currentColor] ;; Color
+    mov al, ' ' ;; Character to fill the screen
 
-    rep stosw ;; Realizar loop para preencher (limpar) a memória de vídeo
+    rep stosw ;; Loop to fill (clear) video memory
 
-    jmp .fim
+    jmp .end
 
 align 16
 
-.graficos:
+.graphicsMode:
 
-    mov ebx, Hexagon.Console.corFundoPadrao
+    mov ebx, Hexagon.Console.defaultBackgroundColor
 
-    cmp dword[Hexagon.Console.corFundo], ebx
-    je .sseLimpar
+    cmp dword[Hexagon.Console.backgroundColor], ebx
+    je .clearBySSE
 
-    mov esi, dword[Hexagon.Console.Memoria.enderecoLFB]
+    mov esi, dword[Hexagon.Console.Memory.addressLFB]
 
-    mov eax, dword[Hexagon.Console.tamanhoVideo]
-    mov ebx, dword[Hexagon.Console.bytesPorPixel]
+    mov eax, dword[Hexagon.Console.consoleSize]
+    mov ebx, dword[Hexagon.Console.bytesPerPixel]
     xor edx, edx
 
     div ebx
 
     mov ecx, eax
 
-    mov ebx, dword[Hexagon.Console.bytesPorPixel]
-    mov edx, dword[Hexagon.Console.corFundo]
+    mov ebx, dword[Hexagon.Console.bytesPerPixel]
+    mov edx, dword[Hexagon.Console.backgroundColor]
 
-.limparLoop:
+.clearLoop:
 
     mov dword[gs:esi], edx
 
     add esi, ebx
 
-    loop .limparLoop
+    loop .clearLoop
 
     mov dx, 0
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor
+    call Hexagon.Kernel.Dev.Gen.Console.Console.positionCursor
 
     ret
 
-.sseLimpar:
+.clearBySSE:
 
-    mov edi, dword[Hexagon.Console.Memoria.enderecoLFB]
+    mov edi, dword[Hexagon.Console.Memory.addressLFB]
 
-    movdqa xmm0, [.bytesLimpos]
+    movdqa xmm0, [.clearBytes]
 
-    mov ecx, dword[Hexagon.Console.tamanhoVideo]
+    mov ecx, dword[Hexagon.Console.consoleSize]
     shr ecx, 7
 
     push ds
 
-    mov ax, 18h ;; Segmento linear do kernel
+    mov ax, 18h ;; Kernel linear segment
     mov ds, ax
 
 .loop:
@@ -513,28 +512,28 @@ align 16
 
     mov dx, 0
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor
+    call Hexagon.Kernel.Dev.Gen.Console.Console.positionCursor
 
-.fim:
+.end:
 
     ret
 
 align 16
 
-.bytesLimpos: times 4 dd Hexagon.Console.corFundoPadrao
+.clearBytes: times 4 dd Hexagon.Console.defaultBackgroundColor
 
 ;;************************************************************************************
 
-;; Limpar linha específica na tela
+;; Clear specific row on screen
 ;;
-;; Entrada:
+;; Output:
 ;;
-;; AL - Linha para limpar
+;; AL - Row to clean
 
-Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha:
+Hexagon.Kernel.Dev.Gen.Console.Console.clearRow:
 
-    cmp byte[Hexagon.Console.modoGrafico], 1
-    je .graficos
+    cmp byte[Hexagon.Console.graphicMode], 1
+    je .graphicsMode
 
     push eax
     push ecx
@@ -543,30 +542,30 @@ Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha:
 
     push es
 
-    push 18h ;; Segmento linear do kernel
+    push 18h ;; Kernel linear segment
     pop es
 
     mov dl, 0
     mov dh, al
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor
+    call Hexagon.Kernel.Dev.Gen.Console.Console.positionCursor
 
-    movzx eax, al ;; Calcular posição
+    movzx eax, al ;; Calculate position
     mov ecx, 160
 
     xor edx, edx
 
     mul cx
 
-    mov edi, Hexagon.Console.modoTexto.memoriaDeVideo
+    mov edi, Hexagon.Console.textMode.videoMemory
     add edi, eax
 
-    shr ecx, 2 ;; Dividir ECX por 4
+    shr ecx, 2 ;; Divide ECX by 4
 
-    mov ah, [Hexagon.Console.modoTexto.corAtual] ;; Cor
+    mov ah, [Hexagon.Console.textMode.currentColor] ;; Color
     mov al, ' '
     shl eax, 16
-    mov ah, [Hexagon.Console.modoTexto.corAtual] ;; Cor
+    mov ah, [Hexagon.Console.textMode.currentColor] ;; Color
     mov al, ' '
 
     rep stosd
@@ -580,7 +579,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha:
 
     ret
 
-.graficos:
+.graphicsMode:
 
     push eax
     push ebx
@@ -591,42 +590,42 @@ Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha:
     xor dl, dl
     mov dh, al
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor
+    call Hexagon.Kernel.Dev.Gen.Console.Console.positionCursor
 
-    mov esi, dword[Hexagon.Console.Memoria.enderecoLFB]
+    mov esi, dword[Hexagon.Console.Memory.addressLFB]
 
     and eax, 0xFF
     mov ebx, Hexagon.Fontes.altura
 
     mul ebx
 
-    mov ebx, dword[Hexagon.Console.bytesPorLinha]
+    mov ebx, dword[Hexagon.Console.bytesPerRow]
 
     mul ebx
 
     add esi, eax
 
-    movzx eax, word[Hexagon.Console.bytesPorLinha]
+    movzx eax, word[Hexagon.Console.bytesPerRow]
     mov ebx, Hexagon.Fontes.altura
 
     mul ebx
 
-    mov ebx, dword[Hexagon.Console.bytesPorPixel]
+    mov ebx, dword[Hexagon.Console.bytesPerPixel]
     xor edx, edx
 
     div ebx
 
     mov ecx, eax
 
-    mov ebx, dword[Hexagon.Console.bytesPorPixel]
-    mov edx, dword[Hexagon.Console.corFundo]
+    mov ebx, dword[Hexagon.Console.bytesPerPixel]
+    mov edx, dword[Hexagon.Console.backgroundColor]
 
-.limparLoop:
+.clearLoop:
 
     mov dword[gs:esi], edx
     add esi, ebx
 
-    loop .limparLoop
+    loop .clearLoop
 
     pop esi
     pop edx
@@ -638,9 +637,9 @@ Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha:
 
 ;;************************************************************************************
 
-;; Rolar a tela para baixo
+;; Scroll down
 
-Hexagon.Kernel.Dev.Gen.Console.Console.rolarConsole:
+Hexagon.Kernel.Dev.Gen.Console.Console.scrollConsole:
 
     push eax
     push ecx
@@ -651,48 +650,48 @@ Hexagon.Kernel.Dev.Gen.Console.Console.rolarConsole:
     push ds
     push es
 
-    cmp byte[Hexagon.Console.modoGrafico], 1
-    je .graficos
+    cmp byte[Hexagon.Console.graphicMode], 1
+    je .graphicsMode
 
-.texto:
+.textMode:
 
-;; Mover todo o conteúdo da tela uma linha acima
+;; Move all screen content one line up
 
-    mov ax, 18h ;; Segmento linear do kernel
+    mov ax, 18h ;; Kernel linear segment
     mov es, ax
     mov ds, ax
 
-    mov esi, Hexagon.Console.modoTexto.memoriaDeVideo
-    mov edi, Hexagon.Console.modoTexto.memoriaDeVideo-160 ;; Uma linha acima
+    mov esi, Hexagon.Console.textMode.videoMemory
+    mov edi, Hexagon.Console.textMode.videoMemory-160 ;; One row above
     mov ecx, 2000
 
-    rep movsw ;; Repetir ECX vezes (mov word[ES:EDI], word[DS:ESI])
+    rep movsw ;; Repeat ECX times (mov word[ES:EDI], word[DS:ESI])
 
     mov ax, 10h ;; Kernel data segment
     mov ds, ax
 
-    mov eax, Hexagon.Console.modoTexto.maximoLinhas ;; Limpar última linha
+    mov eax, Hexagon.Console.textMode.maxRows ;; Clear last row
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha
+    call Hexagon.Kernel.Dev.Gen.Console.Console.clearRow
 
-    jmp .fim
+    jmp .end
 
-.graficos:
+.graphicsMode:
 
-    mov esi, dword[Hexagon.Console.Memoria.enderecoLFB]
+    mov esi, dword[Hexagon.Console.Memory.addressLFB]
 
     mov edi, esi
 
-    sub edi, dword[Hexagon.Console.bytesPorLinhaGraficos]
+    sub edi, dword[Hexagon.Console.bytesPerRowGraphics]
 
-    mov ecx, [Hexagon.Console.tamanhoVideo]
-    shr ecx, 7 ;; Dividir por 128
+    mov ecx, [Hexagon.Console.consoleSize]
+    shr ecx, 7 ;; Divide by 128
 
-    mov ax, 18h ;; Segmento linear do kernel
+    mov ax, 18h ;; Kernel linear segment
     mov es, ax
     mov ds, ax
 
-.copiar:
+.copy:
 
     prefetchnta [esi+0]
     prefetchnta [esi+32]
@@ -720,16 +719,16 @@ Hexagon.Kernel.Dev.Gen.Console.Console.rolarConsole:
     add edi, 128
     add esi, 128
 
-    loop .copiar
+    loop .copy
 
     mov ax, 10h ;; Kernel data segment
     mov ds, ax
 
-    movzx eax, word[Hexagon.Console.maxLinhas]
+    movzx eax, word[Hexagon.Console.maxRows]
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha
+    call Hexagon.Kernel.Dev.Gen.Console.Console.clearRow
 
-.fim:
+.end:
 
     pop es
     pop ds
@@ -744,31 +743,31 @@ Hexagon.Kernel.Dev.Gen.Console.Console.rolarConsole:
 
 ;;************************************************************************************
 
-;; Central de solicitações de saída para dispositivos do sistema
+;; Dispatcher to send content to the console
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; EAX - Conteúdo numérico
-;; EBX - Tipo de entrada, que pode ser:
-;;       01 - Inteiro decimal
-;;       02 - Inteiro hexadecimal
-;;       03 - Inteiro binário
-;;       04 - String
-;; ESI - Ponteiro para a string à ser impressa
+;; EAX - Numerical content
+;; EBX - Entry type, which can be:
+;;  01 - Decimal integer
+;;  02 - Hexadecimal integer
+;;  03 - Binary integer
+;;  04 - String
+;; ESI - Pointer to the string to be printed
 
-Hexagon.Kernel.Dev.Gen.Console.Console.imprimir:
+Hexagon.Kernel.Dev.Gen.Console.Console.print:
 
     cmp ebx, 01h
-    je Hexagon.Kernel.Dev.Gen.Console.Console.imprimirDecimal
+    je Hexagon.Kernel.Dev.Gen.Console.Console.printDecimal
 
     cmp ebx, 02h
-    je Hexagon.Kernel.Dev.Gen.Console.Console.imprimirHexadecimal
+    je Hexagon.Kernel.Dev.Gen.Console.Console.printHexadecimal
 
     cmp ebx, 03h
-    je Hexagon.Kernel.Dev.Gen.Console.Console.imprimirBinario
+    je Hexagon.Kernel.Dev.Gen.Console.Console.printBinary
 
     cmp ebx, 04h
-    je Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
+    je Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
     stc
 
@@ -776,13 +775,13 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimir:
 
 ;;************************************************************************************
 
-;; Imprime um inteiro com decimal
+;; Print an integer
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; EAX - Inteiro
+;; EAX - Integer
 
-Hexagon.Kernel.Dev.Gen.Console.Console.imprimirDecimal:
+Hexagon.Kernel.Dev.Gen.Console.Console.printDecimal:
 
     push eax
     push ebx
@@ -791,56 +790,56 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirDecimal:
     push esi
     push edi
 
-;; Checar se negativo
+;; Check if negative
 
     cmp eax, 0
-    jge .positivo
+    jge .positive
 
-.nagativo:
+.negative:
 
     push eax
 
-    mov al, '-' ;; Imprimir menos
+    mov al, '-' ;; Print "-"
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     pop eax
 
     neg eax
 
-.positivo:
+.positive:
 
-;; Converter inteiro para string para poder imprimir
+;; Convert integer to string to be able to print
 
-    mov ebx, 10  ;; Decimais estão na base 10
+    mov ebx, 10  ;; Decimals are in base 10
     xor ecx, ecx ;; mov ECX, 0
 
-.loopConverter:
+.convertLoop:
 
     xor edx, edx ;; mov EDX, 0
 
     div ebx
 
-    add dl, 30h ;; Converter para ASCII
+    add dl, 30h ;; Convert to ASCII
 
     push edx
 
     inc ecx
 
     or eax, eax ;; cmp EAX, 0
-    jne .loopConverter
+    jne .convertLoop
 
     mov edx, esi
 
-.loopImprimir:
+.printLoop:
 
     pop eax
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
-    loop .loopImprimir
+    loop .printLoop
 
-.fim:
+.end:
 
     pop edi
     pop esi
@@ -853,13 +852,13 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirDecimal:
 
 ;;************************************************************************************
 
-;; Imprimir um inteiro como binário
+;; Print an integer as binary
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; EAX - Inteiro
+;; EAX - Integer
 
-Hexagon.Kernel.Dev.Gen.Console.Console.imprimirBinario:
+Hexagon.Kernel.Dev.Gen.Console.Console.printBinary:
 
     push eax
     push ebx
@@ -868,60 +867,60 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirBinario:
     push esi
     push edi
 
-;; Checar por negativo
+;; Check for negative
 
     cmp eax, 0
-    jge .positivo
+    jge .positive
 
-.nagativo:
+.negative:
 
     push eax
 
-    mov al, '-' ;; Imprimir menos
+    mov al, '-' ;; Print "-"
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     pop eax
 
     neg eax
 
-.positivo:
+.positive:
 
-;; Converter inteiro para string para que possa ser impresso
+;; Convert integer to string so it can be printed
 
-    mov ebx, 2   ;; Números em binário tem base 2
+    mov ebx, 2   ;; Binary numbers have base 2
     xor ecx, ecx ;; mov ECX, 0
 
-.loopConverter:
+.convertLoop:
 
     xor edx, edx ;; mov EDX, 0
 
     div ebx
 
-    add dl, 30h ;; Converter isso para ASCII
+    add dl, 30h ;; Convert this to ASCII
 
     push edx
 
     inc ecx
 
     or eax, eax ;; cmp EAX, 0
-    jne .loopConverter
+    jne .convertLoop
 
     mov edx, esi
 
-.loopImprimir:
+.printLoop:
 
     pop eax
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
-    loop .loopImprimir
+    loop .printLoop
 
-.fim:
+.end:
 
     mov al, 'b'
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     pop edi
     pop esi
@@ -934,13 +933,13 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirBinario:
 
 ;;************************************************************************************
 
-;; Imprimir um inteiro como hexadecimal
+;; Print an integer as hexadecimal
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; EAX - Inteiro
+;; EAX - Integer
 
-Hexagon.Kernel.Dev.Gen.Console.Console.imprimirHexadecimal:
+Hexagon.Kernel.Dev.Gen.Console.Console.printHexadecimal:
 
     push eax
     push ebx
@@ -949,43 +948,43 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirHexadecimal:
     push esi
     push edi
 
-;; Checar por negativo
+;; Check for negative
 
     cmp eax, 0
-    jge .positivo
+    jge .positive
 
-.nagativo:
+.negative:
 
     push eax
 
-    mov al, '-' ;; Imprimir negativo
+    mov al, '-' ;; Print "-"
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     pop eax
 
     neg eax
 
-.positivo:
+.positive:
 
     push eax
 
     mov al, '0'
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     mov al, 'x'
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     pop eax
 
-;; Converter inteiro para hexadecimal
+;; Convert integer to hexadecimal
 
-    mov ebx, 16  ;; Números hexadecimais tem base 16
+    mov ebx, 16  ;; Hexadecimal numbers have base 16
     xor ecx, ecx ;; mov ECX, 0
 
-.loopConverter:
+.convertLoop:
 
     xor edx, edx ;; mov EDX, 0
 
@@ -994,34 +993,34 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirHexadecimal:
     add dl, 30h
 
     cmp dl, 39h
-    ja .adicionar
+    ja .add
 
-    jmp short .proximo
+    jmp short .next
 
-.adicionar:
+.add:
 
-    add dl, 7 ;; Converter isso para ASCII
+    add dl, 7 ;; Convert this to ASCII
 
-.proximo:
+.next:
 
     push edx
 
     inc ecx
 
     or eax, eax ;; cmp EAX, 0
-    jne .loopConverter
+    jne .convertLoop
 
     mov edx, esi
 
-.loopImprimir:
+.printLoop:
 
     pop eax
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
-    loop .loopImprimir
+    loop .printLoop
 
-.fim:
+.end:
 
     pop edi
     pop esi
@@ -1034,67 +1033,68 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirHexadecimal:
 
 ;;************************************************************************************
 
-;; Realiza a mesma função que Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere, mas não move o cursor
+;; Performs the same function as Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter,
+;; but does not move the cursor
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; AL - Caractere
+;; AL - Character
 
-Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractereBase:
+Hexagon.Kernel.Dev.Gen.Console.Console.printCharacterBase:
 
-    cmp byte[Hexagon.Console.modoGrafico], 1
-    je Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere.graficos
+    cmp byte[Hexagon.Console.graphicMode], 1
+    je Hexagon.Kernel.Dev.Gen.Console.Console.printCharacterGraphicMode
 
-    mov dl, byte[Hexagon.Console.modoTexto.cursor.X]
-    mov dh, byte[Hexagon.Console.modoTexto.cursor.Y]
+    mov dl, byte[Hexagon.Console.textMode.cursor.X]
+    mov dh, byte[Hexagon.Console.textMode.cursor.Y]
 
     cmp al, 10 ;; Caractere de nova linha
-    je .novaLinha
+    je .newLine
 
     cmp al, 9
     je .tab
 
-    cmp al, ' ' ;; Primeiro caractere imprimível
-    jb .naoImprimivel
+    cmp al, ' ' ;; First printable character
+    jb .notPrintable
 
-    cmp al, '~' ;; Último caractere imprimível
-    ja .naoImprimivel
+    cmp al, '~' ;; Last printable character
+    ja .notPrintable
 
-    jmp .proximo
+    jmp .next
 
 .tab:
 
     mov al, ' '
 
-    jmp .proximo
+    jmp .next
 
-.novaLinha:
+.newLine:
 
     inc dh
 
     mov dl, 0
     mov al, 0xFF
 
-    jmp .proximo
+    jmp .next
 
-.naoImprimivel:
+.notPrintable:
 
     mov al, 0xFF
 
-.proximo:
+.next:
 
-;; Consertar X e Y
+;; Fix X and Y
 
-    cmp dh, Hexagon.Console.modoTexto.maximoLinhas
+    cmp dh, Hexagon.Console.textMode.maxRows
     jna .yOK
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.rolarConsole
+    call Hexagon.Kernel.Dev.Gen.Console.Console.scrollConsole
 
-    mov dh, Hexagon.Console.modoTexto.maximoLinhas
+    mov dh, Hexagon.Console.textMode.maxRows
 
 .yOK:
 
-    cmp dl, Hexagon.Console.modoTexto.maximoColunas
+    cmp dl, Hexagon.Console.textMode.maxColumns
     jna .xOK
 
     mov dl, 0
@@ -1106,95 +1106,97 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractereBase:
     push edx
     push eax
 
-;; Calcular posição do caractere na tela
+;; Calculate character position on screen
 
     mov eax, 0
     mov al, dl
-    shl ax, 1    ;; Multiplicar X por 2
-    mov edi, eax ;; Adicionar isso ao índice
-    mov al, (Hexagon.Console.modoTexto.maximoColunas+1)*2 ;; Contando de 1
+    shl ax, 1    ;; Multiply X by 2
+    mov edi, eax ;; Add this to the index
+    mov al, (Hexagon.Console.textMode.maxColumns+1) * 2 ;; Counting from 1
 
-    mul dh ;; Multiplica Y por maximoColunas*2
+    mul dh ;; Multiply Y by maxColumns*2
 
-    add edi, eax ;; Adicionar isso ao índice
+    add edi, eax ;; Add this to the index
 
     pop eax
 
-;; Colocar caractere
+;; Put character
 
     pop edx
 
     cmp al, 0xFF
-    je .caractereNaoImprimivel
+    je .characterNotPrintable
 
     inc dl
 
-    mov ah, byte[Hexagon.Console.modoTexto.corAtual]
+    mov ah, byte[Hexagon.Console.textMode.currentColor]
 
-;; Se o caractere já existe
+;; If the character already exists
 
-    cmp word[gs:Hexagon.Console.modoTexto.memoriaDeVideo + edi], ax
-    je .fim
+    cmp word[gs:Hexagon.Console.textMode.videoMemory + edi], ax
+    je .end
 
-    mov word[gs:Hexagon.Console.modoTexto.memoriaDeVideo + edi], ax
+    mov word[gs:Hexagon.Console.textMode.videoMemory + edi], ax
 
-.caractereNaoImprimivel:
+.characterNotPrintable:
 
-.fim:
+.end:
 
-;; Atualizar o cursor
+;; Update the cursor
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor
+    call Hexagon.Kernel.Dev.Gen.Console.Console.positionCursor
 
     ret
 
-Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere.graficos:
+;;************************************************************************************
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.obterCursor
+Hexagon.Kernel.Dev.Gen.Console.Console.printCharacterGraphicMode:
+
+    call Hexagon.Kernel.Dev.Gen.Console.Console.getCursor
 
     cmp al, 9
     je .tab
 
     cmp al, 10
-    je .retorno
+    je .return
 
     cmp al, '~'
-    ja .naoImprimivel
+    ja .notPrintable
 
     cmp al, ' '
-    jl .naoImprimivel
+    jl .notPrintable
 
-    jmp .consertarXeY
+    jmp .fixXandY
 
 .tab:
 
     mov al, ' '
 
-    jmp .consertarXeY
+    jmp .fixXandY
 
-.naoImprimivel:
+.notPrintable:
 
     mov al, ' '
 
-    jmp .consertarXeY
+    jmp .fixXandY
 
-.retorno:
+.return:
 
-    movzx eax, word[Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursorModoGrafico.Xanterior]
-    movzx ebx, word[Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursorModoGrafico.Yanterior]
+    movzx eax, word[Hexagon.Kernel.Dev.Gen.Console.Console.positionCursorGraphicMode.previousX]
+    movzx ebx, word[Hexagon.Kernel.Dev.Gen.Console.Console.positionCursorGraphicMode.previousY]
 
     push edx
 
     mov ecx, Hexagon.Fontes.altura
-    mov edx, [Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursorModoGrafico.corCursorAnterior]
+    mov edx, [Hexagon.Kernel.Dev.Gen.Console.Console.positionCursorGraphicMode.previousCursorColor]
 
-.limparCursorAnterior:
+.clearPreviousCursor:
 
     call Hexagon.Kernel.Lib.Graficos.colocarPixel
 
     inc ebx
 
-    loop .limparCursorAnterior
+    loop .clearPreviousCursor
 
     pop edx
 
@@ -1202,11 +1204,11 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere.graficos:
 
     inc dh
 
-    mov al, 0 ;; Marcar como não imprimível
+    mov al, 0 ;; Mark as unprintable
 
-.consertarXeY:
+.fixXandY:
 
-    cmp dl, byte[Hexagon.Console.maxColunas]
+    cmp dl, byte[Hexagon.Console.maxColumns]
     jna .yOK
 
     mov dl, 0
@@ -1215,20 +1217,20 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere.graficos:
 
 .yOK:
 
-    cmp dh, byte[Hexagon.Console.maxLinhas]
+    cmp dh, byte[Hexagon.Console.maxRows]
     jna .xOK
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.rolarConsole
+    call Hexagon.Kernel.Dev.Gen.Console.Console.scrollConsole
 
-    mov dh, byte[Hexagon.Console.maxLinhas]
+    mov dh, byte[Hexagon.Console.maxRows]
     mov dl, 0
 
 .xOK:
 
     cmp al, 0
-    je .proximo
+    je .next
 
-.imprimivel:
+.printable:
 
     push edx
 
@@ -1238,44 +1240,44 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere.graficos:
 
     inc dl
 
-    jmp .proximo
+    jmp .next
 
-.proximo:
+.next:
 
-    mov byte[Hexagon.Console.modoTexto.cursor.X], dl
-    mov byte[Hexagon.Console.modoTexto.cursor.Y], dh
+    mov byte[Hexagon.Console.textMode.cursor.X], dl
+    mov byte[Hexagon.Console.textMode.cursor.Y], dh
 
     ret
 
 ;;************************************************************************************
 
-;; Escrever um caractere na posição do cursor
+;; Write a character at the cursor position
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; AL - Caractere
-;; EBX - 01h para posicionar o cursor e diferente disso para não alterar a posição
+;; AL  - Character
+;; EBX - 01h to position the cursor and other than that to not change the position
 
-Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere:
+Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter:
 
     pushad
 
     push ebx
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractereBase
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacterBase
 
     pop ebx
 
     cmp ebx, 01h
-    je .alterarCursor
+    je .changeCursor
 
-    jmp .fim
+    jmp .end
 
-.alterarCursor:
+.changeCursor:
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor
+    call Hexagon.Kernel.Dev.Gen.Console.Console.positionCursor
 
-.fim:
+.end:
 
     popad
 
@@ -1283,65 +1285,66 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere:
 
 ;;************************************************************************************
 
-;; Obter posição do cursor
+;; Get cursor position
 ;;
-;; Saída:
+;; Output:
+;;
 ;; DL - X
 ;; DH - Y
 
-Hexagon.Kernel.Dev.Gen.Console.Console.obterCursor:
+Hexagon.Kernel.Dev.Gen.Console.Console.getCursor:
 
-    mov dl, byte[Hexagon.Console.modoTexto.cursor.X]
-    mov dh, byte[Hexagon.Console.modoTexto.cursor.Y]
+    mov dl, byte[Hexagon.Console.textMode.cursor.X]
+    mov dh, byte[Hexagon.Console.textMode.cursor.Y]
 
     ret
 
 ;;************************************************************************************
 
-;; Mover o cursor para a posição específica
+;; Move cursor to specific position
 ;;
-;; Entrada:
+;; Input:
 ;;
 ;; DL - X
 ;; DH - Y
 
-Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor:
+Hexagon.Kernel.Dev.Gen.Console.Console.positionCursor:
 
-    cmp byte[Hexagon.Console.modoGrafico], 1
-    je Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursorModoGrafico
+    cmp byte[Hexagon.Console.graphicMode], 1
+    je Hexagon.Kernel.Dev.Gen.Console.Console.positionCursorGraphicMode
 
     push eax
     push ebx
     push edx
 
-    mov byte[Hexagon.Console.modoTexto.cursor.X], dl
-    mov byte[Hexagon.Console.modoTexto.cursor.Y], dh
+    mov byte[Hexagon.Console.textMode.cursor.X], dl
+    mov byte[Hexagon.Console.textMode.cursor.Y], dh
 
-;; Consertar X e Y
+;; Fix X and Y
 
-    cmp dh, Hexagon.Console.modoTexto.maximoLinhas
+    cmp dh, Hexagon.Console.textMode.maxRows
     jna .yOK
 
-    mov dh, Hexagon.Console.modoTexto.maximoLinhas
+    mov dh, Hexagon.Console.textMode.maxRows
 
 .yOK:
 
-    cmp dl, Hexagon.Console.modoTexto.maximoColunas
+    cmp dl, Hexagon.Console.textMode.maxColumns
     jna .xOK
 
-    mov dl, Hexagon.Console.modoTexto.maximoColunas
+    mov dl, Hexagon.Console.textMode.maxColumns
 
 .xOK:
 
-;; Agora devemos multiplicar Y pelo total de colunas de X
+;; Now we must multiply Y by the total number of columns of X
 
     movzx eax, dh
-    mov bl, Hexagon.Console.modoTexto.maximoColunas+1 ;; Contando de 1
+    mov bl, Hexagon.Console.textMode.maxColumns+1 ;; Counting from 1
 
-    mul bl ;; Multiplicando Y pelas colunas
+    mul bl ;; Multiplying Y by columns
 
     movzx ebx, dl
-    add eax, ebx ;; Adicionar X para isso
+    add eax, ebx ;; Add X to this
 
     mov ebx, eax
 
@@ -1350,10 +1353,10 @@ Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor:
 
     out dx, al
 
-;; Enviar byte menos significante para a porta VGA
+;; Send least significant byte to VGA port
 
-    mov al, bl ;; BL é o byte menos significante
-    mov dx, 0x3D5 ;; Porta VGA
+    mov al, bl ;; BL is the least significant byte
+    mov dx, 0x3D5 ;; VGA port
 
     out dx, al
 
@@ -1362,10 +1365,10 @@ Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor:
 
     out dx, ax
 
-;; Enviar byte mais significante para a porta VGA
+;; Send most significant byte to VGA port
 
-    mov al, bh    ;; BH é o byte mais significante
-    mov dx, 0x3D5 ;; Porta VGA
+    mov al, bh    ;; BH is the most significant byte
+    mov dx, 0x3D5 ;; VGA port
 
     out dx, al
 
@@ -1377,15 +1380,15 @@ Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursorModoGrafico:
+Hexagon.Kernel.Dev.Gen.Console.Console.positionCursorGraphicMode:
 
     push eax
     push ebx
     push ecx
     push edx
 
-    mov byte[Hexagon.Console.modoTexto.cursor.X], dl
-    mov byte[Hexagon.Console.modoTexto.cursor.Y], dh
+    mov byte[Hexagon.Console.textMode.cursor.X], dl
+    mov byte[Hexagon.Console.textMode.cursor.Y], dh
 
     push edx
 
@@ -1405,39 +1408,39 @@ Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursorModoGrafico:
 
     mov word[.y], ax
 
-    movzx eax, word[.Xanterior]
-    movzx ebx, word[.Yanterior]
+    movzx eax, word[.previousX]
+    movzx ebx, word[.previousY]
 
     mov ecx, Hexagon.Fontes.altura
-    mov edx, [.corCursorAnterior]
+    mov edx, [.previousCursorColor]
 
-.limparCursorAnterior:
+.clearPreviousCursor:
 
     call Hexagon.Kernel.Lib.Graficos.colocarPixel
 
     inc ebx
 
-    loop .limparCursorAnterior
+    loop .clearPreviousCursor
 
     movzx eax, word[.x]
     movzx ebx, word[.y]
 
-    mov word[.Xanterior], ax
-    mov word[.Yanterior], bx
+    mov word[.previousX], ax
+    mov word[.previousY], bx
 
-    mov edx, dword[Hexagon.Console.corFundo]
-    mov dword[.corCursorAnterior], edx
+    mov edx, dword[Hexagon.Console.backgroundColor]
+    mov dword[.previousCursorColor], edx
 
     mov ecx, Hexagon.Fontes.altura
-    mov edx, dword[Hexagon.Console.corFonte]
+    mov edx, dword[Hexagon.Console.fontColor]
 
-.desenharCursor:
+.drawCursor:
 
     call Hexagon.Kernel.Lib.Graficos.colocarPixel
 
     inc ebx
 
-    loop .desenharCursor
+    loop .drawCursor
 
     pop edx
     pop ecx
@@ -1446,48 +1449,48 @@ Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursorModoGrafico:
 
     ret
 
-.Xanterior: dw 0
-.Yanterior: dw 0
-.corCursorAnterior: dd Hexagon.Console.corFundoPadrao
+.previousX: dw 0
+.previousY: dw 0
+.previousCursorColor: dd Hexagon.Console.defaultBackgroundColor
 .x: dw 0
 .y: dw 0
 
 ;;************************************************************************************
 
-;; Imprimir uma string terminada em 0 na posição do cursor
+;; Print a string ending in 0 at the cursor position
 ;;
-;; Entrada:
+;; Input:
 ;;
 ;; ESI - String
 
-Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString:
+Hexagon.Kernel.Dev.Gen.Console.Console.printString:
 
     push esi
     push eax
     push ecx
 
-;; Checar por nulo
+;; Check for null
 
     cmp byte[esi], 0
-    je .fim
+    je .end
 
-;; Obter tamanho da string
+;; Get string size
 
     call Hexagon.Kernel.Lib.String.tamanhoString
 
     mov ecx, eax
 
-;; Escrever todos os caracteres
+;; Write all characters
 
-.imprimirStringLoop:
+.printStringLoop:
 
     lodsb ;; mov AL, byte[ESI] & inc ESI
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
-    loop .imprimirStringLoop
+    loop .printStringLoop
 
-.fim:
+.end:
 
     pop ecx
     pop eax
@@ -1497,124 +1500,125 @@ Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString:
 
 ;;************************************************************************************
 
-;; Alterar o esquema de cores do console
+;; Change the console color scheme
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; EAX - Cor da fonte (hex RGB)
-;; EBX - Cor do plano de fundo (hex RGB)
-;; ECX - 1234h para alterar o tema padrão com base no que foi inserido
+;; EAX - Font color (RGB hex)
+;; EBX - Background color (RGB hex)
+;; ECX - 1234h to change the default theme based on what was entered
 ;;
-;; O modo texto tem de ser apenas preto e branco
+;; Text mode must be black and white only
 
-Hexagon.Kernel.Dev.Gen.Console.Console.definirCorConsole:
+Hexagon.Kernel.Dev.Gen.Console.Console.setConsoleColor:
 
-    cmp byte[Hexagon.Console.modoGrafico], 1
-    je .graficos
+    cmp byte[Hexagon.Console.graphicMode], 1
+    je .graphicsMode
 
-.modoTextoVideo:
+.textModeVideo:
 
-    mov byte[Hexagon.Console.modoTexto.corAtual], Hexagon.Console.modoTexto.corPadrao
+    mov byte[Hexagon.Console.textMode.currentColor], Hexagon.Console.textMode.defaultColor
 
     ret
 
-.graficos:
+.graphicsMode:
 
-    mov dword[Hexagon.Console.corFonte], eax
-    mov dword[Hexagon.Console.corFundo], ebx
+    mov dword[Hexagon.Console.fontColor], eax
+    mov dword[Hexagon.Console.backgroundColor], ebx
 
     cmp ecx, 1234h
-    je .definirTema
+    je .setTheme
 
-    jmp .fim
+    jmp .end
 
-.definirTema:
+.setTheme:
 
-    mov dword[Hexagon.Console.corFonteTema], eax
-    mov dword[Hexagon.Console.corFundoTema], ebx
+    mov dword[Hexagon.Console.fontThemeColor], eax
+    mov dword[Hexagon.Console.backgroundThemeColor], ebx
 
-.fim:
-
-    ret
-
-;;************************************************************************************
-
-;; Obter o esquema de cores do console
-;;
-;; Saída:
-;;
-;; EAX - Primeiro plano (hex RGB) -
-;; EBX - Plano de fundo (hex RGB)
-;; ECX - Cor definida para a fonte segundo o tema escolhido
-;; EDX - Cor definida para o plano de fundo de acordo com o tema
-
-Hexagon.Kernel.Dev.Gen.Console.Console.obterCorConsole:
-
-    cmp byte[Hexagon.Console.modoGrafico], 1
-    je .graficos
-
-.modoTextoVideo:
-
-    mov al, Hexagon.Console.modoTexto.corPadrao
-
-    ret
-
-.graficos:
-
-    mov eax, dword[Hexagon.Console.corFonte]
-    mov ebx, dword[Hexagon.Console.corFundo]
-
-    mov ecx, dword[Hexagon.Console.corFonteTema]
-    mov edx, dword[Hexagon.Console.corFundoTema]
+.end:
 
     ret
 
 ;;************************************************************************************
 
-;; Altera a fonte utilizada para exibir informações no console, validando o tamanho máximo
-;; determinado de 2 Kb
+;; Get the console color scheme
 ;;
-;; Entrada:
+;; Output:
 ;;
-;; ESI - Ponteiro para o buffer contendo o nome da fonte
-;;
-;; Saída:
-;;
-;; EAX - Código de erro:
-;;       01h para fonte não encontrada; 02h para fonte não compatível
-;;
-;; CF definido em caso de erro
+;; EAX - Foreground (RGB hex)
+;; EBX - Background (RGB hex)
+;; ECX - Color defined for the font according to the chosen theme
+;; EDX - Color set for the background according to the theme
 
-Hexagon.Kernel.Dev.Gen.Console.Console.alterarFonte:
+Hexagon.Kernel.Dev.Gen.Console.Console.getConsoleColor:
+
+    cmp byte[Hexagon.Console.graphicMode], 1
+    je .graphicsMode
+
+.textModeVideo:
+
+    mov al, Hexagon.Console.textMode.defaultColor
+
+    ret
+
+.graphicsMode:
+
+    mov eax, dword[Hexagon.Console.fontColor]
+    mov ebx, dword[Hexagon.Console.backgroundColor]
+
+    mov ecx, dword[Hexagon.Console.fontThemeColor]
+    mov edx, dword[Hexagon.Console.backgroundThemeColor]
+
+    ret
+
+;;************************************************************************************
+
+;; Changes the font used to display information in the console, validating the determined
+;; maximum size of 2 Kb
+;;
+;; Input:
+;;
+;; ESI - Pointer to the buffer containing the font filename
+;;
+;; Output:
+;;
+;; EAX - Error code:
+;;  01h for source not found
+;;  02h for unsupported source
+;;
+;; CF set in case of error
+
+Hexagon.Kernel.Dev.Gen.Console.Console.changeFont:
 
     call Hexagon.Kernel.FS.VFS.arquivoExiste
 
-    jc .fonteAusente
+    jc .fileNotFound
 
     mov ebx, 2000
 
     cmp eax, ebx
-    jng .continuar
+    jng .continue
 
-    jmp .fonteIncompativel
+    jmp .incompatibleFont
 
-.continuar:
+.continue:
 
     mov edi, Hexagon.Heap.Temp + 500
 
     call Hexagon.Kernel.FS.VFS.carregarArquivo
 
     cmp byte[edi+0], "H"
-    jne .fonteIncompativel
+    jne .incompatibleFont
 
     cmp byte[edi+1], "F"
-    jne .fonteIncompativel
+    jne .incompatibleFont
 
     cmp byte[edi+2], "N"
-    jne .fonteIncompativel
+    jne .incompatibleFont
 
     cmp byte[edi+3], "T"
-    jne .fonteIncompativel
+    jne .incompatibleFont
 
     mov edi, Hexagon.Fontes.espacoFonte
 
@@ -1622,7 +1626,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.alterarFonte:
 
     ret
 
-.fonteAusente:
+.fileNotFound:
 
     stc
 
@@ -1630,7 +1634,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.alterarFonte:
 
     ret
 
-.fonteIncompativel:
+.incompatibleFont:
 
     stc
 
@@ -1640,81 +1644,81 @@ Hexagon.Kernel.Dev.Gen.Console.Console.alterarFonte:
 
 ;;************************************************************************************
 
-;; Usar buffer para armazenamento de mensagens e relatórios do kernel
+;; Use buffer for storing kernel messages and reports
 
-Hexagon.Kernel.Dev.Gen.Console.Console.usarConsoleKernel:
+Hexagon.Kernel.Dev.Gen.Console.Console.useKernelConsole:
 
-    mov eax, [Hexagon.Console.Memoria.enderecoLFB]
-    mov [Hexagon.Console.Memoria.bufferConsolePrincipal], eax ;; Salvar endereço original
+    mov eax, [Hexagon.Console.Memory.addressLFB]
+    mov [Hexagon.Console.Memory.mainConsoleBuffer], eax ;; Save original address
 
-    mov eax, [Hexagon.Console.Memoria.bufferConsoleKernel]
-    mov [Hexagon.Console.Memoria.enderecoLFB], eax
-
-    ret
-
-;;************************************************************************************
-
-;; Usar console principal (buffer principal)
-
-Hexagon.Kernel.Dev.Gen.Console.Console.usarConsolePrincipal:
-
-    mov eax, [Hexagon.Console.Memoria.bufferConsolePrincipal]
-    mov [Hexagon.Console.Memoria.enderecoLFB], eax ;; Restaurar endereço original
+    mov eax, [Hexagon.Console.Memory.kernelConsoleBuffer]
+    mov [Hexagon.Console.Memory.addressLFB], eax
 
     ret
 
 ;;************************************************************************************
 
-;; Usar console secundário (double buffering, buffer secundário)
+;; Use main console (main buffer)
 
-Hexagon.Kernel.Dev.Gen.Console.Console.usarConsoleSecundario:
+Hexagon.Kernel.Dev.Gen.Console.Console.useMainConsole:
 
-    mov eax, [Hexagon.Console.Memoria.enderecoLFB]
-    mov [Hexagon.Console.Memoria.bufferConsolePrincipal], eax ;; Salvar endereço original
-
-    mov eax, [Hexagon.Console.Memoria.bufferConsoleSecundario]
-    mov [Hexagon.Console.Memoria.enderecoLFB], eax
+    mov eax, [Hexagon.Console.Memory.mainConsoleBuffer]
+    mov [Hexagon.Console.Memory.addressLFB], eax ;; Restore original address
 
     ret
 
 ;;************************************************************************************
 
-;; Copiar buffer para a memória de vídeo
+;; Use secondary console (double buffering)
 
-Hexagon.Kernel.Dev.Gen.Console.Console.atualizarConsole:
+Hexagon.Kernel.Dev.Gen.Console.Console.useSecondaryConsole:
 
-    cmp byte[Hexagon.Console.modoGrafico], 1
-    jne .nadaAFazer
+    mov eax, [Hexagon.Console.Memory.addressLFB]
+    mov [Hexagon.Console.Memory.mainConsoleBuffer], eax ;; Save original address
 
-    mov eax, dword[Hexagon.Console.tamanhoVideo]
+    mov eax, [Hexagon.Console.Memory.secondaryConsoleBuffer]
+    mov [Hexagon.Console.Memory.addressLFB], eax
+
+    ret
+
+;;************************************************************************************
+
+;; Copy buffer to video memory
+
+Hexagon.Kernel.Dev.Gen.Console.Console.updateConsole:
+
+    cmp byte[Hexagon.Console.graphicMode], 1
+    jne .nothingToDo
+
+    mov eax, dword[Hexagon.Console.consoleSize]
     mov ecx, eax
-    shr ecx, 7 ;; Dividir por 128
+    shr ecx, 7 ;; Divide by 128
 
     cmp ebx, 01h
-    je .bufferKernel
+    je .kernelBuffer
 
-.bufferUsuario:
+.userBuffer:
 
-    mov edi, dword[Hexagon.Console.Memoria.bufferConsolePrincipal]
-    mov esi, dword[Hexagon.Console.Memoria.bufferConsoleSecundario]
+    mov edi, dword[Hexagon.Console.Memory.mainConsoleBuffer]
+    mov esi, dword[Hexagon.Console.Memory.secondaryConsoleBuffer]
 
-    jmp .continuar
+    jmp .continue
 
-.bufferKernel:
+.kernelBuffer:
 
-    mov edi, dword[Hexagon.Console.Memoria.bufferConsolePrincipal]
-    mov esi, dword[Hexagon.Console.Memoria.bufferConsoleKernel]
+    mov edi, dword[Hexagon.Console.Memory.mainConsoleBuffer]
+    mov esi, dword[Hexagon.Console.Memory.kernelConsoleBuffer]
 
-.continuar:
+.continue:
 
     push es
     push ds
 
-    mov ax, 18h ;; Segmento linear do kernel
+    mov ax, 18h ;; Kernel linear segment
     mov es, ax
     mov ds, ax
 
-.loopAtualizar:
+.updateLoop:
 
     prefetchnta [esi+128]
     prefetchnta [esi+160]
@@ -1742,25 +1746,25 @@ Hexagon.Kernel.Dev.Gen.Console.Console.atualizarConsole:
     add edi, 128
     add esi, 128
 
-    loop .loopAtualizar
+    loop .updateLoop
 
     pop ds
     pop es
 
-.nadaAFazer:
+.nothingToDo:
 
     ret
 
 ;;************************************************************************************
 
-;; Configura a resolução e configurações padrão de console durante a inicialização
+;; Configures default console resolution and settings during startup
 
-Hexagon.Kernel.Dev.Gen.Console.Console.configurarConsole:
+Hexagon.Kernel.Dev.Gen.Console.Console.setupConsole:
 
-.modoGrafico1:
+.graphicMode1:
 
     mov eax, 01h
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.definirResolucao
+    call Hexagon.Kernel.Dev.Gen.Console.Console.setResolution
 
     ret

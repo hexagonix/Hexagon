@@ -127,28 +127,28 @@ Hexagon.Syscall.Syscall.servicosHexagon:
 
 ;; Funções de saída em console e gráficos do Hexagon
 
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.imprimir                 ;; 30
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.limparConsole            ;; 31
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha              ;; 32
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.rolarConsole             ;; 33
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor         ;; 34
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.print                 ;; 30
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.clearConsole            ;; 31
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.clearRow              ;; 32
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.scrollConsole             ;; 33
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.positionCursor         ;; 34
     dd Hexagon.Kernel.Lib.Graficos.colocarPixel                        ;; 35
     dd Hexagon.Kernel.Lib.Graficos.desenharBlocoSyscall                ;; 36
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere        ;; 37
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.definirCorConsole        ;; 38
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.obterCorConsole          ;; 39
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.obterInfoConsole         ;; 40
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.atualizarConsole         ;; 41
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.definirResolucao         ;; 42
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.obterResolucao           ;; 43
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.obterCursor              ;; 44
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter        ;; 37
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.setConsoleColor        ;; 38
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.getConsoleColor          ;; 39
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.getConsoleInfo         ;; 40
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.updateConsole         ;; 41
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.setResolution         ;; 42
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.getResolution           ;; 43
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.getCursor              ;; 44
 
 ;; Serviços de entrada por teclado do Hexagon
 
     dd Hexagon.Kernel.Dev.Gen.Teclado.Teclado.aguardarTeclado          ;; 45
     dd Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterString              ;; 46
     dd Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterEstadoTeclas        ;; 47
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.alterarFonte             ;; 48
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.changeFont             ;; 48
     dd Hexagon.Kernel.Dev.Gen.Teclado.Teclado.alterarLeiaute           ;; 49
 
 ;; Serviços de entrada de mouse PS/2 do Hexagon

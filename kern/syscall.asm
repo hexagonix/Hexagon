@@ -107,7 +107,7 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
 
     mov [Hexagon.Syscall.Controle.es], es
 
-    push 18h ;; Segmento linear do kernel
+    push 18h ;; Kernel linear segment
     pop es
 
     cld

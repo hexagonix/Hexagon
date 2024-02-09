@@ -200,7 +200,7 @@ Hexagon.Autoconfig:
 
     call Hexagon.Kernel.Dev.Gen.Mouse.Mouse.iniciarMouse ;; Iniciar o serviço de mouse do Hexagon
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.configurarConsole ;; Configura a resolução e configurações padrão de vídeo
+    call Hexagon.Kernel.Dev.Gen.Console.Console.setupConsole ;; Configura a resolução e configurações padrão de vídeo
 
     call Hexagon.Kernel.Kernel.Dmesg.iniciarRelatorio ;; Inicia o relatório de componentes do Hexagon
 
@@ -208,9 +208,9 @@ Hexagon.Autoconfig:
 
 ;; Aqui se iniciam as mensagens de aviso junto à inicialização do Hexagon
 
-    call Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarSerial ;; Iniciar corretamente a interface serial
+    call Hexagon.Kernel.Dev.Gen.COM.Serial.setupSerialPort ;; Iniciar corretamente a interface serial
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.limparConsole
+    call Hexagon.Kernel.Dev.Gen.Console.Console.clearConsole
 
     kprint Hexagon.Verbose.Hexagon
 
@@ -232,7 +232,7 @@ Hexagon.Autoconfig:
 
     mov eax, ecx
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirDecimal
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printDecimal
 
     kprint Hexagon.Verbose.megabytes
 
@@ -240,7 +240,7 @@ Hexagon.Autoconfig:
 
     mov eax, ebx
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirDecimal
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printDecimal
 
     kprint Hexagon.Verbose.bytes
 
@@ -256,7 +256,7 @@ Hexagon.Autoconfig:
 
     call Hexagon.Kernel.Kernel.Proc.iniciarEscalonador ;; Inicia o escalonador de processos do Hexagon
 
-    call Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarCOM1 ;; Iniciar primeira porta serial para debug
+    call Hexagon.Kernel.Dev.Gen.COM.Serial.setupCOM1 ;; Iniciar primeira porta serial para debug
 
     call Hexagon.Kernel.FS.VFS.definirVolumeBoot ;; Define o volume com base em informações da inicialização
 
@@ -270,7 +270,7 @@ Hexagon.Autoconfig:
 
     call Hexagon.Kernel.FS.VFS.obterVolume ;; Obter o identificador do volume
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString ;; Exibir
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printString ;; Exibir
 
     kprint Hexagon.Verbose.montagemRealizada
 
@@ -292,11 +292,11 @@ Hexagon.Autoconfig:
     mov al, ah
     xor ah, ah
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirHexadecimal
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printHexadecimal
 
     mov al, 10
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     kprint Hexagon.Dmesg.identificadorHexagon
 
@@ -307,11 +307,11 @@ Hexagon.Autoconfig:
 
     mov esi, edi
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
     mov al, 10
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
 ;;************************************************************************************
 
@@ -338,7 +338,7 @@ Hexagon.Autoconfig:
 
 ;;************************************************************************************
 
-Hexagon.ModoUsuario:
+Hexagon.userMode:
 
 ;; Agora, devemos ir para o modo usuário, executando o primeiro processo, init. Caso
 ;; init não esteja presente no volume, tentar executar o shell padrão

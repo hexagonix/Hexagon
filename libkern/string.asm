@@ -811,7 +811,7 @@ Hexagon.Kernel.Lib.String.paraString:
 
     mov al, '-' ;; Imprimir menos
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     pop eax
 

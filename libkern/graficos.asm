@@ -90,9 +90,9 @@ Hexagon.Kernel.Lib.Graficos.calcularDeslocamentoPixel:
 
     push eax ;; X
 
-    mov esi, dword[Hexagon.Console.Memoria.enderecoLFB] ;; Ponteiro para a memória de vídeo
+    mov esi, dword[Hexagon.Console.Memory.addressLFB] ;; Ponteiro para a memória de vídeo
 
-    movzx eax, word[Hexagon.Console.bytesPorLinha]
+    movzx eax, word[Hexagon.Console.bytesPerRow]
 
     mul ebx ;; Y * bytes por linha
 
@@ -100,7 +100,7 @@ Hexagon.Kernel.Lib.Graficos.calcularDeslocamentoPixel:
 
     pop eax ;; X
 
-    movzx ebx, byte[Hexagon.Console.bytesPorPixel]
+    movzx ebx, byte[Hexagon.Console.bytesPerPixel]
 
     mul ebx ;; X * Bytes por pixel
 
@@ -153,7 +153,7 @@ Hexagon.Kernel.Lib.Graficos.colocarCaractereBitmap:
     mov word[.y], ax
 
     mov eax, Hexagon.Fontes.largura
-    mov ebx, dword[Hexagon.Console.bytesPorPixel]
+    mov ebx, dword[Hexagon.Console.bytesPerPixel]
 
     mul ebx
 
@@ -186,17 +186,17 @@ Hexagon.Kernel.Lib.Graficos.colocarCaractereBitmap:
 
 .colocarPlanodeFundo:
 
-    mov edx, dword[Hexagon.Console.corFundo]
+    mov edx, dword[Hexagon.Console.backgroundColor]
 
     jmp .colocarLinha.proximo
 
 .colocarPrimeiroPlano:
 
-    mov edx, dword[Hexagon.Console.corFonte]
+    mov edx, dword[Hexagon.Console.fontColor]
 
 .colocarLinha.proximo:
 
-    add esi, dword[Hexagon.Console.bytesPorPixel]
+    add esi, dword[Hexagon.Console.bytesPerPixel]
 
     mov word[gs:esi], dx
     shr edx, 8
@@ -208,7 +208,7 @@ Hexagon.Kernel.Lib.Graficos.colocarCaractereBitmap:
 
     pop ecx
 
-    add esi, dword[Hexagon.Console.bytesPorLinha]
+    add esi, dword[Hexagon.Console.bytesPerRow]
     sub esi, dword[.proximaLinha]
 
     loop .colocarColuna
@@ -307,7 +307,7 @@ Hexagon.Kernel.Lib.Graficos.desenharBloco:
     push ebx
     push ecx
 
-    cmp byte[Hexagon.Console.modoGrafico], 1
+    cmp byte[Hexagon.Console.graphicMode], 1
     jne .fim
 
     mov ecx, edi ;; Largura

@@ -124,7 +124,7 @@ Hexagon.Kernel.Kernel.Panico.panico:
 
     pop esi
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
     mov ebx, Hexagon.Dmesg.Prioridades.p4
 
@@ -146,7 +146,7 @@ Hexagon.Kernel.Kernel.Panico.panico:
 
     pop esi
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
     mov ebx, Hexagon.Dmesg.Prioridades.p4
 
@@ -182,12 +182,12 @@ Hexagon.Kernel.Kernel.Panico.prepararPanico:
     mov eax, HEXAGONIX_CLASSICO_BRANCO
     mov ebx, HEXAGONIX_BLOSSOM_AZUL
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.definirCorConsole
+    call Hexagon.Kernel.Dev.Gen.Console.Console.setConsoleColor
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.limparConsole ;; Limpar saída de vídeo padrão
+    call Hexagon.Kernel.Dev.Gen.Console.Console.clearConsole ;; Limpar saída de vídeo padrão
 
     mov dx, 0
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.posicionarCursor
+    call Hexagon.Kernel.Dev.Gen.Console.Console.positionCursor
 
     ret ;; Retornar à rotina principal

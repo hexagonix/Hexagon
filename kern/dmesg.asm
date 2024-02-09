@@ -113,17 +113,17 @@ Hexagon.Dmesg.Prioridades:
 
 Hexagon.Kernel.Kernel.Dmesg.iniciarRelatorio:
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.usarConsoleKernel
+    call Hexagon.Kernel.Dev.Gen.Console.Console.useKernelConsole
 
     mov esi, Hexagon.Info.sobreHexagon
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
     call Hexagon.Kernel.Kernel.Dmesg.dataParaRelatorio
 
     call Hexagon.Kernel.Kernel.Dmesg.horaParaRelatorio
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.usarConsolePrincipal
+    call Hexagon.Kernel.Dev.Gen.Console.Console.useMainConsole
 
     ret
 
@@ -133,11 +133,11 @@ Hexagon.Kernel.Kernel.Dmesg.iniciarRelatorio:
 
 Hexagon.Kernel.Kernel.Dmesg.adicionarMensagem:
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.usarConsoleKernel
+    call Hexagon.Kernel.Dev.Gen.Console.Console.useKernelConsole
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.usarConsolePrincipal
+    call Hexagon.Kernel.Dev.Gen.Console.Console.useMainConsole
 
     ret
 
@@ -151,7 +151,7 @@ Hexagon.Kernel.Kernel.Dmesg.dataParaRelatorio:
 
     mov esi, Hexagon.Dmesg.dataInicio
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
     call Hexagon.Kernel.Arch.i386.CMOS.CMOS.getCMOSData
 
@@ -161,17 +161,17 @@ Hexagon.Kernel.Kernel.Dmesg.dataParaRelatorio:
 
     push eax
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     pop eax
 
     mov al, ah
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     mov al, '/'
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     mov al, [Hexagon.Arch.i386.CMOS.month]
 
@@ -179,17 +179,17 @@ Hexagon.Kernel.Kernel.Dmesg.dataParaRelatorio:
 
     push eax
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     pop eax
 
     mov al, ah
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     mov al, '/'
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     mov al, [Hexagon.Arch.i386.CMOS.century]
 
@@ -197,13 +197,13 @@ Hexagon.Kernel.Kernel.Dmesg.dataParaRelatorio:
 
     push eax
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     pop eax
 
     mov al, ah
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     mov al, [Hexagon.Arch.i386.CMOS.year]
 
@@ -211,13 +211,13 @@ Hexagon.Kernel.Kernel.Dmesg.dataParaRelatorio:
 
     push eax
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     pop eax
 
     mov al, ah
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     pop esi
     pop ebx
@@ -235,7 +235,7 @@ Hexagon.Kernel.Kernel.Dmesg.horaParaRelatorio:
 
     mov al, ' '
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     call Hexagon.Kernel.Arch.i386.CMOS.CMOS.getCMOSData
 
@@ -245,17 +245,17 @@ Hexagon.Kernel.Kernel.Dmesg.horaParaRelatorio:
 
     push eax
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     pop eax
 
     mov al, ah
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     mov al, ':'
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     mov al, [Hexagon.Arch.i386.CMOS.minute]
 
@@ -263,17 +263,17 @@ Hexagon.Kernel.Kernel.Dmesg.horaParaRelatorio:
 
     push eax
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     pop eax
 
     mov al, ah
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     mov al, ':'
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     mov al, [Hexagon.Arch.i386.CMOS.second]
 
@@ -281,17 +281,17 @@ Hexagon.Kernel.Kernel.Dmesg.horaParaRelatorio:
 
     push eax
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     pop eax
 
     mov al, ah
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirCaractere
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
     mov esi, Hexagon.Dmesg.infoData
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
     pop esi
     pop ebx
@@ -335,7 +335,7 @@ Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon:
 
     call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
     jmp .mensagemRecebida
 
@@ -345,7 +345,7 @@ Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon:
 
     call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
 ;; O PID do processo será exibido na tela
 
@@ -355,13 +355,13 @@ Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon:
 
     call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
     mov esi, Hexagon.Dmesg.identificadorUsuarioFinal
 
     call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
     jmp .mensagemRecebida
 
@@ -371,13 +371,13 @@ Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon:
 
     call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
     mov esi, Hexagon.Dmesg.novaLinha
 
     call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
     ret
 

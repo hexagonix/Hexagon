@@ -110,7 +110,7 @@ macro kprint string
 
     mov esi, string
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirString
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
 }
 

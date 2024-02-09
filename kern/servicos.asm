@@ -373,24 +373,24 @@ Hexagon.Int.manipuladorMousePS2:
 
 ;; Ter certeza que X e Y não são maiores que a resolução do vídeo
 
-    cmp ax, word[Hexagon.Console.Resolucao.x]
+    cmp ax, word[Hexagon.Console.Resolution.x]
     jng .xNaoMaior
 
-    mov ax, word[Hexagon.Console.Resolucao.x]
+    mov ax, word[Hexagon.Console.Resolution.x]
     mov word[.mouseX], ax
 
 .xNaoMaior:
 
-    cmp bx, word[Hexagon.Console.Resolucao.y]
+    cmp bx, word[Hexagon.Console.Resolution.y]
     jng .yNaoMaior
 
-    mov bx, word[Hexagon.Console.Resolucao.y]
+    mov bx, word[Hexagon.Console.Resolution.y]
     mov word[.mouseY], bx
 
 .yNaoMaior:
 
     push edx
-    movzx edx, word[Hexagon.Console.Resolucao.y]
+    movzx edx, word[Hexagon.Console.Resolution.y]
     sub dx, word[.mouseY]
     mov ebx, edx
     pop edx
@@ -452,7 +452,7 @@ Hexagon.Int.manipuladorTouchpad:
 
     mov al, 0
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha
+    call Hexagon.Kernel.Dev.Gen.Console.Console.clearRow
 
     in al, 60h
 
@@ -460,7 +460,7 @@ Hexagon.Int.manipuladorTouchpad:
     mov dl, 0
     mov dh, 0
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirBinario
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printBinary
 
     mov byte[.estado], 1
 
@@ -470,7 +470,7 @@ Hexagon.Int.manipuladorTouchpad:
 
     mov al, 1
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha
+    call Hexagon.Kernel.Dev.Gen.Console.Console.clearRow
 
     in al, 60h
 
@@ -492,7 +492,7 @@ Hexagon.Int.manipuladorTouchpad:
     mov dl, 0
     mov dh, 1
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirBinario
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printBinary
 
     mov byte[.estado], 2
 
@@ -502,7 +502,7 @@ Hexagon.Int.manipuladorTouchpad:
 
     mov al, 2
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha
+    call Hexagon.Kernel.Dev.Gen.Console.Console.clearRow
 
     in al, 60h
 
@@ -510,7 +510,7 @@ Hexagon.Int.manipuladorTouchpad:
     mov dl, 0
     mov dh, 2
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirDecimal
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printDecimal
 
     mov byte[.estado], 3
 
@@ -520,7 +520,7 @@ Hexagon.Int.manipuladorTouchpad:
 
     mov al, 3
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha
+    call Hexagon.Kernel.Dev.Gen.Console.Console.clearRow
 
     in al, 60h
 
@@ -544,7 +544,7 @@ Hexagon.Int.manipuladorTouchpad:
     mov dl, 0
     mov dh, 3
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirBinario
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printBinary
 
     mov byte[.estado], 4
 
@@ -554,7 +554,7 @@ Hexagon.Int.manipuladorTouchpad:
 
     mov al, 4
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha
+    call Hexagon.Kernel.Dev.Gen.Console.Console.clearRow
 
     in al, 60h
 
@@ -568,7 +568,7 @@ Hexagon.Int.manipuladorTouchpad:
     mov dl, 0
     mov dh, 4
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirDecimal
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printDecimal
 
     mov byte[.estado], 5
 
@@ -578,7 +578,7 @@ Hexagon.Int.manipuladorTouchpad:
 
     mov al, 5
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.limparLinha
+    call Hexagon.Kernel.Dev.Gen.Console.Console.clearRow
 
     in al, 60h
 
@@ -592,7 +592,7 @@ Hexagon.Int.manipuladorTouchpad:
     mov dl, 0
     mov dh, 5
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.imprimirDecimal
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printDecimal
 
     mov byte[.estado], 0
 

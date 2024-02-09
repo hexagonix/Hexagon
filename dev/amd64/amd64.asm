@@ -73,45 +73,45 @@
 
 use32
 
-;; Os códigos à seguir são dependentes de arquitetura
+;; The following codes are architecture dependent
 
-Hexagon.Dev.codigoDispositivos:
+Hexagon.Dev.deviceCodes:
 
-;; Dispositivos de armazenamento
+;; Storage Devices
 
 .hd0: db 80h
 .hd1: db 81h
 .hd2: db 82h
 .hd3: db 83h
 
-;; Portas seriais
+;; Serial ports
 
 .com1: dw 3F8h
 .com2: dw 2F8h
 .com3: dw 3E8h
 .com4: dw 2E8h
 
-;; Portas paralelas e impressoras
+;; Parallel ports
 
 .lpt0: dw 3BCh
 .lpt1: dw 378h
 .lpt2: dw 278h
 
-;; Dispositivos de saída
+;; Output devices
 
 .tty0: dw 44h ;; Console
 .tty1: dw 45h ;; Console
 .tty2: dw 46h ;; Console
 
-;; Dispositivos de entrada
+;; Input devices
 
 .mouse0: dw 51h
 .kbd0: dw 52h
 
-;; Processadores:
+;; Processors
 
 .proc0: times 100 db 0
 
-;; Dispositivo de som
+;; Sound device
 
-.au0: dw 10h ;; Áudio
+.au0: dw 10h ;; Audio

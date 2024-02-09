@@ -121,7 +121,7 @@ db "Volume successfully mounted on /.", 0
 db "Looking for /init...", 0
 .semInit:
 db "/init not found at the root of the volume. Trying /sh...", 0
-.modoUsuario:
+.userMode:
 db "Going to user mode...", 0
 .totalMemory:
 db "Total memory installed and available: ", 0

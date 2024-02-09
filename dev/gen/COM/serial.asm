@@ -73,34 +73,34 @@
 
 use32
 
-;; Realiza o envio de dados via porta serial
+;; Sends data via serial port
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; SI - Ponteiro para o buffer que contêm os dados a serem enviados
+;; SI - Pointer to the buffer containing the data to be sent
+;;
+;; The following function is used to transfer data over the open serial port
 
-;; A função a seguir é usada para transferir dados pela porta serial aberta
+Hexagon.Kernel.Dev.Gen.COM.Serial.sendViaSerial:
 
-Hexagon.Kernel.Dev.Gen.COM.Serial.enviarSerial:
+    lodsb ;; Load the next character to be sent
 
-    lodsb ;; Carrega o próximo caractere à ser enviado
+    or al, al ;; Compares the character with the end of the message
+    jz .done ;; If equal to end, jump to .done
 
-    or al, al ;; Compara o caractere com o fim da mensagem
-    jz .pronto ;; Se igual ao fim, pula para .pronto
+    call Hexagon.Kernel.Dev.Gen.COM.Serial.performSend
 
-    call Hexagon.Kernel.Dev.Gen.COM.Serial.serialRealizarEnvio
+    jc near .error
 
-    jc near .erro
+;; If it is not finished, return to the function and load the next character
 
-;; Se não tiver acabado, volta à função e carrega o próximo caractere
+    jmp Hexagon.Kernel.Dev.Gen.COM.Serial.sendViaSerial
 
-    jmp Hexagon.Kernel.Dev.Gen.COM.Serial.enviarSerial
+.done: ;; If it's over...
 
-.pronto: ;; Se tiver acabado...
+    ret ;; Return
 
-    ret ;; Retorna a função que o chamou
-
-.erro:
+.error:
 
     stc
 
@@ -108,40 +108,40 @@ Hexagon.Kernel.Dev.Gen.COM.Serial.enviarSerial:
 
 ;;************************************************************************************
 
-;; Bloqueia o envio de dados pela porta serial até  a mesma estar pronta.
-;; Se pronta, envia um byte
+;; Blocks data from being sent via the serial port until it is ready.
+;; If ready, send a byte
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; AL - Byte para enviar
-;; BX - Registro contendo o número da porta
+;; AL - Byte to send
+;; BX - Register containing port number
 
-Hexagon.Kernel.Dev.Gen.COM.Serial.serialRealizarEnvio:
+Hexagon.Kernel.Dev.Gen.COM.Serial.performSend:
 
     pusha
 
-    push ax ;; Salvar entrada do usuário
+    push ax ;; Save user input
 
-    mov bx, word[portaSerialAtual]
+    mov bx, word[Hexagon.Kernel.Dev.Gen.COM.Serial.Ports.currentSerialPort]
 
-serialAguardarEnviar:
+.waitSend:
 
     mov dx, bx
 
-    add dx, 5 ;; Porta + 5
+    add dx, 5 ;; Port + 5
 
     in al, dx
 
-    test al, 00100000b ;; Bit 5 do Registro de status da linha (Line Status Register)
-                       ;; "Registro de espera do transmissor vazio"
+    test al, 00100000b ;; Bit 5 of the Line Status Register
+                       ;; Empty transmitter wait register
 
-    jz serialAguardarEnviar ;; Enquanto não vazio...
+    jz .waitSend ;; While not empty...
 
-    pop ax ;; Restaurar entrada do usuário
+    pop ax ;; Restore user input
 
-    mov dx, bx ;; Porta aberta
+    mov dx, bx ;; Open port
 
-    out dx, al ;; Enviar dados à porta solicitada
+    out dx, al ;; Send data to the requested port
 
     popa
 
@@ -149,15 +149,16 @@ serialAguardarEnviar:
 
 ;;************************************************************************************
 
-;; Inicializa e abre para leitura e escrita uma determinada porta serial solicitada pelo sistema
+;; Initializes and opens a specific serial port requested by the system for
+;; reading and writing
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; BX - Registro contendo o número da porta
+;; BX - Register containing port number
 
-Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarSerial:
+Hexagon.Kernel.Dev.Gen.COM.Serial.setupSerialPort:
 
-    mov bx, word[portaSerialAtual]
+    mov bx, word[Hexagon.Kernel.Dev.Gen.COM.Serial.Ports.currentSerialPort]
 
     pusha
 
@@ -169,101 +170,101 @@ Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarSerial:
     mov al, 0
     mov dx, bx
 
-    inc dx ;; Porta + 1
+    inc dx ;; Port + 1
 
-    out dx, al ;; Desativar interrupções
+    out dx, al ;; Disable interrupts
 
     mov dx, bx
 
-    add dx, 3 ;; Porta + 3
+    add dx, 3 ;; Port + 3
 
     mov al, 10000000b
 
-    out dx, al ;; Habilitar o DLAB (bit mais significativo), para que seja possível
-               ;; iniciar a definição do divisor da taxa de transmissão
+    out dx, al ;; Enable DLAB (most significant bit), so that it is possible to
+               ;; start defining the transmission rate divider
 
-;; Bits 7-7 : Habilitar DLAB
-;; Bits 6-6 : Parar transmissão enquanto 1
-;; Bits 3-5 : Paridade (0=nenhum)
-;; Bits 2-2 : Contagem de bit de parada (0=1 bit de parada)
-;; Bits 0-1 : Tamanho do caractere (5 a 8)
+;; Bits 7-7: Enable DLAB
+;; Bits 6-6: Stop transmission while 1
+;; Bits 3-5: Parity (0=none)
+;; Bits 2-2: Stop bit count (0=1 stop bit)
+;; Bits 0-1: Character size (5 to 8)
 
     mov al, 12
-    mov dx, bx ;; Porta + 0
+    mov dx, bx ;; Port + 0
 
-    out dx, al ;; Byte menos significativo do divisor
+    out dx, al ;; Least significant byte of the divisor
 
     mov al, 0
 
     mov dx, bx
 
-    add dx, 1 ;; Porta + 1
+    add dx, 1 ;; Port + 1
 
-    out dx, al ;; Byte mais significante do divisor
-               ;; Isto produz uma taxa de 115200/12 = 9600
+    out dx, al ;; Most significant byte of the divider
+               ;; This produces a rate of 115200/12 = 9600
 
     mov al, 11000111b
     mov dx, bx
 
-    add dx, 2 ;; Porta + 2
+    add dx, 2 ;; Port + 2
 
-    out dx, al ;; Manipulador de 14 bytes, habilitar FIFOs
-               ;; Limpar FIFO recebido, limpar FIFO transmitido
+    out dx, al ;; 14 byte handler, enable FIFOs
+               ;; Clear received FIFO, clear transmitted FIFO
 
-;; Bits 7-6 : Nível do manipulador de interrupção
-;; Bits 5-5 : Habilitar FIFO de 64 bytes
-;; Bits 4-4 : Reservado
-;; Bits 3-3 : Seletor de modo
-;; Bits 2-2 : Limpar FIFO transmitido
-;; Bits 1-1 : Limpar FIFO recebido
-;; Bits 0-0 : Habilitar FIFOs
+;; Bits 7-6: Interrupt handler level
+;; Bits 5-5: Enable 64-byte FIFO
+;; Bits 4-4: Reserved
+;; Bits 3-3: Mode selector
+;; Bits 2-2: Clear transmitted FIFO
+;; Bits 1-1: Clear received FIFO
+;; Bits 0-0: Enable FIFOs
 
     mov al, 00000011b
     mov dx, bx
 
-    add dx, 3 ;; Porta + 3
+    add dx, 3 ;; Port + 3
 
     out dx, al
 
-;; Desativar DLAB, e definir:
+;; Disable DLAB, and set:
 ;;
-;;  - Caractere de tamanho de 8 bits
-;;  - Sem paridade
-;;  - 1 bit de parada
+;; - 8-bit size character
+;; - No parity
+;; - 1 stop bit
 
-;; Bits 7-7 : Habilitar DLAB
-;; Bits 6-6 : Parar transmissão enquanto 1
-;; Bits 3-5 : Paridade (0=nenhum)
-;; Bits 2-2 : Contagem de bit de parada (0=1 bit de parada)
-;; Bits 0-1 : Tamanho do caractere (5 a 8)
+;; Bits 7-7: Enable DLAB
+;; Bits 6-6: Stop transmission while 1
+;; Bits 3-5: Parity (0=none)
+;; Bits 2-2: Stop bit count (0=1 stop bit)
+;; Bits 0-1: Character size (5 to 8)
 
     mov al, 00001011b
     mov dx, bx
 
-    add dx, 4 ;; Porta + 4
+    add dx, 4 ;; Port + 4
 
-    out dx, al ;; Habilitar saída auxiliar 2 (também chamado de "ativar IRQ")
+    out dx, al ;; Enable auxiliary output 2 (also called "enable IRQ")
 
-;; Bits 7-6 - Reservado
-;; Bits 5-5 - Controle de fluxo automático ativado
-;; Bits 4-4 - Modo de loopback
-;; Bits 3-3 - Saída auxiliar 2
-;; Bits 2-2 - Saída auxiliar 1
-;; Bits 1-1 - Solicitação para enviar (RTS)
-;; Bits 0-0 - Terminal de dados pronto (DTR)
+;; Bits 7-6: Reserved
+;; Bits 5-5: Automatic Flow Control Enabled
+;; Bits 4-4: Loopback Mode
+;; Bits 3-3: Auxiliary Output 2
+;; Bits 2-2: Auxiliary Output 1
+;; Bits 1-1: Request to send (RTS)
+;; Bits 0-0: Data Terminal Ready (DTR)
 
-    in al, 21h ;; Ler bits de máscara IRQ do PIC principal
+    in al, 21h ;; Read IRQ mask bits from main PIC
 
-    and al, 11101111b ;; Habilitar IRQ4, mantendo todos os outros IRQs inalterados
+    and al, 11101111b ;; Enable IRQ4, leaving all other IRQs unchanged
 
-    out 21h, al ;; Escrever bits de máscara de IRQ para PIC principal
+    out 21h, al ;; Write IRQ mask bits to main PIC
 
     mov al, 1
     mov dx, bx
 
-    add dx, 1 ;; Porta + 1
+    add dx, 1 ;; Port + 1
 
-    out dx, al ;; Habilitar interrupções
+    out dx, al ;; Enable interrupts
 
     pop ds
 
@@ -273,24 +274,24 @@ Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarSerial:
 
 ;;************************************************************************************
 
-;; Inicializar a primeira porta serial para debug e emissão de mensagens
+;; Initialize the first serial port for debugging and sending messages
 
-Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarCOM1:
+Hexagon.Kernel.Dev.Gen.COM.Serial.setupCOM1:
 
     push eax
     push ebx
     push ecx
 
-    mov bx, word[portaSerialAtual]
-    mov word[portaSerialAnterior], bx
+    mov bx, word[Hexagon.Kernel.Dev.Gen.COM.Serial.Ports.currentSerialPort]
+    mov word[Hexagon.Kernel.Dev.Gen.COM.Serial.Ports.previousSerialPort], bx
 
-    mov bx, Hexagon.Dev.codigoDispositivos.com1
-    mov word[portaSerialAtual], bx
+    mov bx, Hexagon.Dev.deviceCodes.com1
+    mov word[Hexagon.Kernel.Dev.Gen.COM.Serial.Ports.currentSerialPort], bx
 
-    call Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarSerial
+    call Hexagon.Kernel.Dev.Gen.COM.Serial.setupSerialPort
 
-    mov bx, word[portaSerialAnterior]
-    mov word[portaSerialAtual], bx
+    mov bx, word[Hexagon.Kernel.Dev.Gen.COM.Serial.Ports.previousSerialPort]
+    mov word[Hexagon.Kernel.Dev.Gen.COM.Serial.Ports.currentSerialPort], bx
 
     pop ecx
     pop ebx
@@ -302,5 +303,7 @@ Hexagon.Kernel.Dev.Gen.COM.Serial.iniciarCOM1:
 
 ;;************************************************************************************
 
-portaSerialAtual:    db 0
-portaSerialAnterior: db 0
+Hexagon.Kernel.Dev.Gen.COM.Serial.Ports:
+
+.currentSerialPort:  db 0
+.previousSerialPort: db 0

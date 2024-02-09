@@ -73,7 +73,7 @@
 
 Hexagon.Init.iniciarModoUsuario:
 
-    logHexagon Hexagon.Verbose.modoUsuario, Hexagon.Dmesg.Prioridades.p5
+    logHexagon Hexagon.Verbose.userMode, Hexagon.Dmesg.Prioridades.p5
 
 .iniciarInit:
 

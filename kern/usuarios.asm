@@ -92,14 +92,14 @@ Hexagon.Usuarios.ID:
 .Hexagon    = 000
 .root       = 777
 .supervisor = 699
-.padrao     = 555
+.default     = 555
 
 Hexagon.Usuarios.Grupos:
 
 .Hexagon    = 00h
 .root       = 01h
 .supervisor = 02h
-.padrao     = 03h
+.default     = 03h
 .admin      = 04h
 
 ;;************************************************************************************
@@ -199,7 +199,7 @@ Hexagon.Kernel.Kernel.Usuarios.verificarPermissoes:
     cmp eax, Hexagon.Usuarios.ID.supervisor
     je .supervisor
 
-    mov eax, Hexagon.Usuarios.Grupos.padrao
+    mov eax, Hexagon.Usuarios.Grupos.default
 
     ret
 

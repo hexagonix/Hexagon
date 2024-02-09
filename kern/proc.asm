@@ -298,26 +298,26 @@ match =YES, VERBOSE
     mov ax, 18h
     mov es, ax
 
-    mov eax, dword[Hexagon.Console.corFonte]
-    mov ebx, dword[Hexagon.Console.corFundo]
+    mov eax, dword[Hexagon.Console.fontColor]
+    mov ebx, dword[Hexagon.Console.backgroundColor]
 
 ;; Definir cor padrão do console
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.definirCorConsole
+    call Hexagon.Kernel.Dev.Gen.Console.Console.setConsoleColor
 
 ;; Atualizar buffer de vídeo (console seundário -> console principal)
 ;; Essa atualização não é obrigatória, só é útil para utilitários que
 ;; utilizam double buffering
 
-    ;; call Hexagon.Kernel.Dev.Gen.Console.Console.atualizarConsole
+    ;; call Hexagon.Kernel.Dev.Gen.Console.Console.updateConsole
 
 ;; Usar console principal
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.usarConsolePrincipal
+    call Hexagon.Kernel.Dev.Gen.Console.Console.useMainConsole
 
 ;; Rolar console
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.rolarConsole
+    call Hexagon.Kernel.Dev.Gen.Console.Console.scrollConsole
 
     mov al, 20h
 
@@ -391,7 +391,7 @@ Hexagon.Kernel.Kernel.Proc.criarProcesso:
 
     inc ecx
 
-    push 18h ;; Segmento linear do kernel
+    push 18h ;; Kernel linear segment
     pop es
 
 ;; Copiar argumentos para um endereço conhecido
@@ -612,7 +612,7 @@ Hexagon.Kernel.Kernel.Proc.encerrarProcesso:
     mov ax, 10h
     mov ds, ax
 
-    cmp byte[Hexagon.Console.modoGrafico], 0
+    cmp byte[Hexagon.Console.graphicMode], 0
     je naoModoGrafico
 
 naoModoGrafico:
