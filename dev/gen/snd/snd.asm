@@ -73,19 +73,19 @@
 
 use32
 
-;; Emite um som utilizando o alto-falante interno do computador
+;; Emits sound using the computer's internal speaker
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; AX - Tom à ser reproduzido
+;; AX - Tone to be played
 
-Hexagon.Kernel.Dev.Gen.Som.Som.emitirSom: ;; Mova para AX o tom a ser emitido pelo sistema
+Hexagon.Kernel.Dev.Gen.Snd.Snd.playSound:
 
     pushad
 
-    mov cx, ax ;; Som a ser emitido
+    mov cx, ax ;; Sound to be played
 
-    mov al, 182 ;; Dado a ser enviado
+    mov al, 182 ;; Data to be sent
 
     out 43h, al
 
@@ -109,9 +109,9 @@ Hexagon.Kernel.Dev.Gen.Som.Som.emitirSom: ;; Mova para AX o tom a ser emitido pe
 
 ;;*******************************************************************
 
-;; Desativa o alto-falante interno do computador
+;; Disables the computer's internal speaker
 
-Hexagon.Kernel.Dev.Gen.Som.Som.desligarSom: ;; Desliga o alto-falante interno do computador
+Hexagon.Kernel.Dev.Gen.Snd.Snd.stopSound:
 
     pushad
 

@@ -73,16 +73,16 @@
 
 use32
 
-Hexagon.Teclado.Codigo: ;; Keycodes
+Hexagon.Keyboard.keyCodes: ;; Keycodes
 
-.ESC       = 01h
+.esc       = 01h
 .backspace = 08h
 .tab       = 15h
 .enter     = 0x1C
 .ctrl      = 0x1D
 .shiftE    = 0x2A
 .shiftD    = 0x36
-.espaco    = 0x39
+.space     = 0x39
 .capsLock  = 0x3A
 .F1        = 0x3B
 .F2        = 0x3C
@@ -96,8 +96,8 @@ Hexagon.Teclado.Codigo: ;; Keycodes
 .F10       = 0x44
 .home      = 0x47
 .end       = 0x49
-.esquerda  = 0x4B
-.direita   = 0x4D
+.leftKey   = 0x4B
+.rightKey  = 0x4D
 .delete    = 0x53
 .print     = 0x54
 .F11       = 0x57
@@ -107,57 +107,57 @@ Hexagon.Teclado.Codigo: ;; Keycodes
 
 ;;************************************************************************************
 
-;; Inicializar o teclado, configurando os LEDS, taxa de repetição e delay
+;; Initialize the keyboard, configuring the LEDS, repetition rate and delay
 
-Hexagon.Kernel.Dev.Gen.Teclado.Teclado.iniciarTeclado:
+Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.setupKeyboard:
 
     push eax
 
-;; Primeiro precisamos enviar comandos e depois configurar os LEDs
+;; First we need to send commands and then configure the LEDs
 
-    mov al, 0xED ;; 0xED é o comando para configurar LEDs
+    mov al, 0xED ;; 0xED is the command to configure LEDs
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Write
 
-    out 60h, al ;; Enviar comando
+    out 60h, al ;; Send command
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
-
-    in al, 60h
-
-    mov al, 000b ;; 000 define todos os LEDs como desligados
-
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2
-
-    out 60h, al ;; Enviar dados
-
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Read
 
     in al, 60h
 
-;; Definir taxa de repetição e delay
+    mov al, 000b ;; 000 sets all LEDs to off
 
-    mov al, 0xF3 ;; 0xF3 é o comando para ajustar a taxa de repetição e delay
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Write
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2
+    out 60h, al ;; Send data
 
-    out 60h, al ;; Enviar comando
-
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Read
 
     in al, 60h
 
-    mov al, 00000000b ;; 0 é sempre 0, 00 é para delay e 250 ms, 00000 é taxa de repetição de 30 hz
+;; Set repetition rate and delay
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2
+    mov al, 0xF3 ;; 0xF3 is the command to adjust the repetition rate and delay
 
-    out 60h, al ;; Agora enviar dados
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Write
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
+    out 60h, al ;; Send command
+
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Read
 
     in al, 60h
 
-.fim:
+    mov al, 00000000b ;; 0 is always 0, 00 is for delay and 250 ms, 00000 is 30 hz repetition rate
+
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Write
+
+    out 60h, al ;; Now send data
+
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Read
+
+    in al, 60h
+
+.end:
 
     pop eax
 
@@ -165,17 +165,18 @@ Hexagon.Kernel.Dev.Gen.Teclado.Teclado.iniciarTeclado:
 
 ;;************************************************************************************
 
-;; Obter string pelo teclado
+;; Get string from keyboard
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; AL  - Tamanho máximo da string para se obter
-;; EBX - Eco do que foi digitado (1234h = sem eco, <> 1234h = com eco)
-;; Saída:
+;; AL  - Maximum string length to obtain
+;; EBX - Echo of what was typed (1234h = without echo, <> 1234h = with echo)
+;;
+;; Output:
 ;;
 ;; ESI - String
 
-Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterString:
+Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.getString:
 
     push eax
     push ecx
@@ -183,27 +184,27 @@ Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterString:
 
     push es
 
-    mov dword[.eco], ebx
+    mov dword[.echo], ebx
 
     mov byte[.string], 0
-    mov byte[.charAtual], 0
+    mov byte[.currentCharacter], 0
 
     push ds ;; Kernel data segment
     pop es
 
-    mov ecx, 0 ;; Contador de caracteres
-    movzx ebx, al ;; Máximo de caracteres
+    mov ecx, 0 ;; Character counter
+    movzx ebx, al ;; Maximum characters
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.getCursor
 
-.obterTecla:
+.getKey:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.positionCursor
 
-    cmp dword[.eco], 1234h
-    je .continuar
+    cmp dword[.echo], 1234h
+    je .continue
 
-.comEco:
+.withEcho:
 
     mov esi, .string
 
@@ -213,56 +214,56 @@ Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterString:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
-.continuar:
+.continue:
 
     push edx
 
-    add dl, byte[.charAtual]
+    add dl, byte[.currentCharacter]
 
-    cmp dword[.eco], 1234h
-    je .semMoverCursor
+    cmp dword[.echo], 1234h
+    je .withoutMoveCursor
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.positionCursor
 
-.semMoverCursor:
+.withoutMoveCursor:
 
     pop edx
 
-    call Hexagon.Kernel.Dev.Gen.Teclado.Teclado.aguardarTeclado ;; Obter caractere
+    call Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.waitKeyboard ;; Get character
 
-    cmp ah, Hexagon.Teclado.Codigo.home ;; Código
-    je .teclaHome
+    cmp ah, Hexagon.Keyboard.keyCodes.home ;; Code
+    je .homeKey
 
-    cmp ah, Hexagon.Teclado.Codigo.end
-    je .teclaEnd
+    cmp ah, Hexagon.Keyboard.keyCodes.end
+    je .endKey
 
-    cmp ah, Hexagon.Teclado.Codigo.delete
-    je .teclaDelete
+    cmp ah, Hexagon.Keyboard.keyCodes.delete
+    je .deleteKey
 
-    cmp ah, Hexagon.Teclado.Codigo.esquerda
-    je .teclaEsquerda
+    cmp ah, Hexagon.Keyboard.keyCodes.leftKey
+    je .leftKey
 
-    cmp ah, Hexagon.Teclado.Codigo.direita
-    je .teclaDireita
+    cmp ah, Hexagon.Keyboard.keyCodes.rightKey
+    je .rightKey
 
-    cmp al, 10 ;; Código ASCII
-    je .fim
+    cmp al, 10 ;; ASCII code
+    je .end
 
-    cmp al, Hexagon.Teclado.Codigo.backspace
-    je .teclaBackspace
+    cmp al, Hexagon.Keyboard.keyCodes.backspace
+    je .backspaceKey
 
     cmp al, ' '
-    jb .obterTecla ;; Não utilizar esta tecla
+    jb .getKey ;; Do not use this key
 
     cmp al, '~'
-    ja .obterTecla ;; Não utilizar esta tecla
+    ja .getKey ;; Do not use this key
 
     cmp cl, bl
-    je .obterTecla
+    je .getKey
 
     push edx
 
-    movzx esi, byte[.charAtual]
+    movzx esi, byte[.currentCharacter]
 
     add esi, .string
 
@@ -272,22 +273,22 @@ Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterString:
 
     pop edx
 
-    inc byte[.charAtual]
+    inc byte[.currentCharacter]
 
     inc cl
 
-    jmp .obterTecla
+    jmp .getKey
 
-.teclaBackspace:
+.backspaceKey:
 
-    cmp byte[.charAtual], 0 ;; Não permitido
-    je .obterTecla
+    cmp byte[.currentCharacter], 0 ;; Not allowed
+    je .getKey
 
-    dec byte[.charAtual]
+    dec byte[.currentCharacter]
 
     push ecx
 
-    movzx esi, byte[.charAtual]
+    movzx esi, byte[.currentCharacter]
 
     add esi, .string
 
@@ -299,16 +300,16 @@ Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterString:
 
     dec cl
 
-    jmp .obterTecla
+    jmp .getKey
 
-.teclaDelete:
+.deleteKey:
 
-    cmp byte[.charAtual], cl ;; Não permitido
-    je .obterTecla
+    cmp byte[.currentCharacter], cl ;; Not allowed
+    je .getKey
 
     push ecx
 
-    movzx esi, byte[.charAtual]
+    movzx esi, byte[.currentCharacter]
 
     add esi, .string
 
@@ -320,39 +321,39 @@ Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterString:
 
     dec cl
 
-    jmp .obterTecla
+    jmp .getKey
 
-.teclaHome:
+.homeKey:
 
-    mov byte[.charAtual], 0
+    mov byte[.currentCharacter], 0
 
-    jmp .obterTecla
+    jmp .getKey
 
-.teclaEnd:
+.endKey:
 
-    mov byte[.charAtual], cl
+    mov byte[.currentCharacter], cl
 
-    jmp .obterTecla
+    jmp .getKey
 
-.teclaEsquerda:
+.leftKey:
 
-    cmp byte[.charAtual], 0 ;; Não permitido
-    je .obterTecla
+    cmp byte[.currentCharacter], 0 ;; Not allowed
+    je .getKey
 
-    dec byte[.charAtual]
+    dec byte[.currentCharacter]
 
-    jmp .obterTecla
+    jmp .getKey
 
-.teclaDireita:
+.rightKey:
 
-    cmp byte[.charAtual], cl ;; Não permitido
-    je .obterTecla
+    cmp byte[.currentCharacter], cl ;; Not allowed
+    je .getKey
 
-    inc byte[.charAtual]
+    inc byte[.currentCharacter]
 
-    jmp .obterTecla
+    jmp .getKey
 
-.fim:
+.end:
 
     and ecx, 0x0F
     mov esi, .string
@@ -363,59 +364,59 @@ Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterString:
     pop ecx
     pop eax
 
-    mov dword[.eco], 00h
+    mov dword[.echo], 00h
 
     ret
 
-.string: times 256 db 0 ;; Buffer para armazenar caracteres
-.charAtual: db 0
-.eco: dd 0 ;; Registra se a tecla pressionada deve ou não ser exibida (eco)
+.string: times 256 db 0 ;; Buffer to store characters
+.currentCharacter: db 0
+.echo: dd 0 ;; Registers whether or not the pressed key should be displayed (echo)
 
 ;;************************************************************************************
 
-;; Obter status de teclas especiais
+;; Get special key status
 ;;
-;; Saída:
+;; Output:
 ;;
-;; EAX - Estado das teclas
+;; EAX - Key status
 ;;
-;;  Formato:
+;; Format:
 ;;
-;; Bit 0: Tecla Control
-;; Bit 1: Tecla Shift
-;; Bit 2-31: Reservado
+;; Bit 0: Control Key
+;; Bit 1: Shift Key
+;; Bit 2-31: Reserved
 
-Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterEstadoTeclas:
+Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.getSpecialKeysStatus:
 
-    mov eax, [estadoTeclas]
+    mov eax, [keyStatus]
 
     ret
 
 ;;************************************************************************************
 
-;; Altera o leiaute do dispositivo de entrada (teclado)
+;; Changes the layout of the input device (keyboard)
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; ESI - Ponteiro para o buffer contendo o nome do arquivo que contêm o leiaute à ser usado
+;; ESI - Pointer to the buffer containing the name of the file containing the layout to be used
 ;;
-;; Saída:
+;; Output:
 ;;
-;; CF definido em caso de erro
+;; CF set in case of error
 
-Hexagon.Kernel.Dev.Gen.Teclado.Teclado.alterarLeiaute:
+Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.changeLayout:
 
     call Hexagon.Kernel.FS.VFS.arquivoExiste
 
-    jc .erroLeiaute
+    jc .layoutError
 
-    mov edi, Hexagon.Teclado.leiauteTeclado
+    mov edi, Hexagon.Keyboard.keyboardDefaultLayout
 
     call Hexagon.Kernel.FS.VFS.carregarArquivo
 
     ret
 
-.erroLeiaute:
+.layoutError:
 
     stc
 
@@ -423,75 +424,75 @@ Hexagon.Kernel.Dev.Gen.Teclado.Teclado.alterarLeiaute:
 
 ;;************************************************************************************
 
-;; Aguardar por teclas no teclado
+;; Wait for keys on the keyboard
 ;;
-;; Saída:
+;; Input:
 ;;
-;; AL - Caractere ASCII
-;; AH - Código
+;; AL - ASCII Character
+;; AH - Code
 
-Hexagon.Kernel.Dev.Gen.Teclado.Teclado.aguardarTeclado:
+Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.waitKeyboard:
 
     push ebx
 
     sti
 
-.loopTeclas:
+.keyLoop:
 
-    mov al, byte[.indiceCodigosAtual]
+    mov al, byte[.currentCodesIndex]
 
     cmp byte[Hexagon.Int.manipuladorTeclado.codigosEscaneamento.indice], al
-    je .loopTeclas
+    je .keyLoop
 
     mov ebx, Hexagon.Int.manipuladorTeclado.codigosEscaneamento
 
-    add bl, byte[.indiceCodigosAtual]
+    add bl, byte[.currentCodesIndex]
 
     mov ah, byte[ebx]
     mov al, ah
 
-    cmp byte[.indiceCodigosAtual], 31
-    jl .incrementarIndice
+    cmp byte[.currentCodesIndex], 31
+    jl .incrementIndex
 
-    mov byte[.indiceCodigosAtual], -1
+    mov byte[.currentCodesIndex], -1
 
-.incrementarIndice:
+.incrementIndex:
 
-    inc byte[.indiceCodigosAtual]
+    inc byte[.currentCodesIndex]
 
     bt ax, 7
-    jc .loopTeclas
+    jc .keyLoop
 
-;; Checar Shift
+;; Check Shift
 
     cmp byte[Hexagon.Int.manipuladorTeclado.sinalShift], 1
-    je .usarCaracteresShift
+    je .useShiftCharacters
 
-    mov ebx, Hexagon.Teclado.leiauteTeclado.teclas ;; Vetor de códigos de escaneamento
-
-    xlatb
-
-    jmp .fim
-
-.usarCaracteresShift:
-
-    mov ebx, Hexagon.Teclado.leiauteTeclado.teclasShift ;; Vetor de códigos com shift
+    mov ebx, Hexagon.Keyboard.keyboardDefaultLayout.keys ;; Scan code vector
 
     xlatb
 
-.fim:
+    jmp .end
+
+.useShiftCharacters:
+
+    mov ebx, Hexagon.Keyboard.keyboardDefaultLayout.shiftKeys ;; Shift code vector
+
+    xlatb
+
+.end:
 
     pop ebx
 
     ret
 
-.indiceCodigosAtual: db 0
+.currentCodesIndex: db 0
 
 ;;************************************************************************************
 
-Hexagon.Teclado.leiauteTeclado:
+Hexagon.Keyboard.keyboardDefaultLayout:
 
-.teclas:
+.keys:
 
     db 27, 0, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 8, ' ', 'q', 'w', 'e'
     db 'r', 't', 'y', 'u', 'i', 'o', 'p', "'", '[', 10, 29, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k'
@@ -504,7 +505,7 @@ Hexagon.Teclado.leiauteTeclado:
     db 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, '/', 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
     db 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 
-.teclasShift:
+.shiftKeys:
 
     db 27, 0, '!', '@', '#', '$', '%', '?', '&', '*', '(', ')', '_', '+', 8, 9, 'Q', 'W', 'E', 'R'
     db 'T', 'Y', 'U', 'I', 'O', 'P', '`', '{', 10, 29, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'

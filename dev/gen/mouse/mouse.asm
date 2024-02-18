@@ -73,89 +73,89 @@
 
 use32
 
-Hexagon.Mouse:
+Hexagon.Kernel.Dev.Gen.Mouse:
 
 .mouseX: dd 0
 .mouseY: dd 0
 
 ;;************************************************************************************
 
-;; Inicializar o mouse PS/2
+;; Initialize the PS/2 mouse
 
-Hexagon.Kernel.Dev.Gen.Mouse.Mouse.iniciarMouse:
+Hexagon.Kernel.Dev.Gen.Mouse.Mouse.setupMouse:
 
     push eax
 
-;; Habilitar IRQ para o mouse
+;; Enable IRQ for the mouse
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2 ;; Esperar se PS/2 estiver ocupado
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Write ;; Wait if PS/2 is busy
 
-    mov al, 20h ;; Obter bit de status Compaq
+    mov al, 20h ;; Get Compaq Status Bit
 
-    out 64h, al ;; 64h é o registrador de estado
+    out 64h, al ;; 64h is the state register
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Read
 
     in al, 60h
 
-    or al, 2   ;; Definir segundo bit para 1 pra habilitar IRQ12
-    mov bl, al ;; Salvar bit modificado
+    or al, 2   ;; Set second bit to 1 to enable IRQ12
+    mov bl, al ;; Save modified bit
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Write
 
-    mov al, 60h ;; Definir byte de estado Compaq
+    mov al, 60h ;; Set Compaq state byte
 
     out 64h, al
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Write
 
-    mov al, bl ;; Enviar byte modificado
+    mov al, bl ;; Send modified byte
 
     out 60h, al
 
-;; Habilitar dispositivo auxiliar (Mouse)
+;; Enable auxiliary device (mouse)
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Write
 
-    mov al, 0xA8 ;; Habilitar dispositivo auxiliar
+    mov al, 0xA8 ;; Enable auxiliary device
 
     out 64h, al
 
-;; Usar configurações padrão
+;; Use default settings
 
-    mov al, 0xF6 ;; Definir como padrão
+    mov al, 0xF6 ;; Set as dafault
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.sendPS2
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Read
 
     in al, 60h
 
-;; Definir resolução
+;; Set resolution
 
     mov al, 0xE8
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.sendPS2
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
-
-    in al, 60h
-
-    mov al, 3 ;; 8 contagens/mm
-
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
-
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Read
 
     in al, 60h
 
-;; Habilitar pacotes
+    mov al, 3 ;; 8 counts/mm
 
-    mov al, 0xF4 ;; Habilitar pacotes
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.sendPS2
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Read
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
+    in al, 60h
+
+;; Enable packages
+
+    mov al, 0xF4 ;; Enable packages
+
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.sendPS2
+
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Read
 
     in al, 60h
 
@@ -168,143 +168,143 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.iniciarMouse:
 
 ;;************************************************************************************
 
-;; Obter posição atual do mouse e estado dos botões
+;; Get current mouse position and button state
 ;;
-;; Saída:
+;; Input:
 ;;
-;; EAX - Posição X do mouse
-;; EBX - Posição Y do mouse
-;; EDX - Botões do mouse (bit #0 = botão esquerdo, bit #1 = botão direito)
+;; EAX - Mouse X Position
+;; EBX - Mouse Y Position
+;; EDX - Mouse buttons (bit #0 = left button, bit #1 = right button)
 
-Hexagon.Kernel.Dev.Gen.Mouse.Mouse.obterDoMouse:
+Hexagon.Kernel.Dev.Gen.Mouse.Mouse.getFromMouse:
 
-    mov eax, [Hexagon.Mouse.mouseX]
-    mov ebx, [Hexagon.Mouse.mouseY]
+    mov eax, [Hexagon.Kernel.Dev.Gen.Mouse.mouseX]
+    mov ebx, [Hexagon.Kernel.Dev.Gen.Mouse.mouseY]
     mov edx, 0 ;; byte[manipuladorMousePS2.dados]
 
     ret
 
 ;;************************************************************************************
 
-;; Definir nova posição do mouse
+;; Set new mouse position
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; EAX - Posição X do mouse
-;; EBX - Posição Y do mouse
+;; EAX - Mouse X Position
+;; EBX - Mouse Y Position
 
-Hexagon.Kernel.Dev.Gen.Mouse.Mouse.configurarMouse:
+Hexagon.Kernel.Dev.Gen.Mouse.Mouse.setMouse:
 
-    mov [Hexagon.Mouse.mouseX], eax
-    mov [Hexagon.Mouse.mouseY], ebx
+    mov [Hexagon.Kernel.Dev.Gen.Mouse.mouseX], eax
+    mov [Hexagon.Kernel.Dev.Gen.Mouse.mouseY], ebx
     mov byte[Hexagon.Int.manipuladorMousePS2.dados], 0
 
     ret
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Dev.Gen.Mouse.Mouse.iniciarTouchPad:
+Hexagon.Kernel.Dev.Gen.Mouse.Mouse.setupTouchpad:
 
     push eax
 
-    mov al, 0xF5 ;; Desativar
+    mov al, 0xF5 ;; Disable
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.sendPS2
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Read
 
     in al, 60h
 
     mov al, 0xE8
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.sendPS2
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Read
 
     in al, 60h
 
     mov al, 0x03
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.sendPS2
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Read
 
     in al, 60h
 
     mov al, 0xE8
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.sendPS2
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Read
 
     in al, 60h
 
     mov al, 0x00
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.sendPS2
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Read
 
     in al, 60h
 
     mov al, 0xE8
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.sendPS2
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Read
 
     in al, 60h
 
     mov al, 00h
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.sendPS2
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Read
 
     in al, 60h
 
     mov al, 0xE8
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.sendPS2
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Read
 
     in al, 60h
 
     mov al, 01h
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.sendPS2
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Read
 
     in al, 60h
 
     mov al, 0xF3
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.sendPS2
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Read
 
     in al, 60h
 
     mov al, 0x14
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.sendPS2
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Read
 
     in al, 60h
 
-    mov al, 0xF4 ;; Habilitar
+    mov al, 0xF4 ;; Enable
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.sendPS2
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Read
 
     in al, 60h
 
     mov esi, Hexagon.Int.manipuladorTouchpad ;; IRQ 12
-    mov eax, 74h ;; Número da interrupção
+    mov eax, 74h ;; Interruption number
 
     call Hexagon.Int.instalarISR
 
@@ -314,40 +314,32 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.iniciarTouchPad:
 
 ;;************************************************************************************
 
-;; Aguardar por eventos do mouse e obter seus valores
+;; Wait for mouse events and get their values
 ;;
-;; Saída:
+;; Input:
 ;;
-;; EAX - Posição X do mouse
-;; EBX - Posição Y do mouse
-;; EDX - Botões do mouse (bit #0 = botão esquerdo, bit #1 = botão direito)
+;; EAX - Mouse X Position
+;; EBX - Mouse Y Position
+;; EDX - Mouse Buttons (bit #0 = left button, bit #1 = right button)
 
-;; Aguardar por eventos do mouse e obter seus valores
-;;
-;; Saída:
-;;
-;; EAX - Posição X do mouse
-;; EBX - Posição Y do mouse
-;; EDX - Botões do mouse (bit #0 = botão esquerdo, bit #1 = botão direito)
-
-Hexagon.Kernel.Dev.Gen.Mouse.Mouse.aguardarMouse:
+Hexagon.Kernel.Dev.Gen.Mouse.Mouse.waitMouseEvent:
 
     sti
 
     mov byte[Hexagon.Int.manipuladorMousePS2.alterado], 0
 
-.aguardar:
+.Wait:
 
-;; Checar se o estado do mouse foi alterado
+;; Check if the mouse state has changed
 
     cmp byte[Hexagon.Int.manipuladorMousePS2.alterado], 1
 
     hlt
 
-    jne .aguardar
+    jne .Wait
 
-    mov eax, [Hexagon.Mouse.mouseX]
-    mov ebx, [Hexagon.Mouse.mouseY]
+    mov eax, [Hexagon.Kernel.Dev.Gen.Mouse.mouseX]
+    mov ebx, [Hexagon.Kernel.Dev.Gen.Mouse.mouseY]
     movzx edx, byte[Hexagon.Int.manipuladorMousePS2.dados]
 
     ret

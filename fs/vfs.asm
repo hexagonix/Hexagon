@@ -362,13 +362,13 @@ Hexagon.Kernel.FS.VFS.montarVolume:
 
     mov dl, 01h ;; Classe de dispositivo de armazenamento
 
-    call Hexagon.Kernel.Dev.Dev.paraDispositivo ;; Converter para nome de dispositivo
+    call Hexagon.Kernel.Dev.Dev.convertDeviceToDeviceName ;; Converter para nome de dispositivo
 
 ;; Habilitar os privilégios do kernel para solicitação privilegiada
 
     mov dword[ordemKernel], ordemKernelExecutar
 
-    call Hexagon.Kernel.Dev.Dev.abrir ;; Abrir o dispositivo para leitura/escrita com privilégios
+    call Hexagon.Kernel.Dev.Dev.open ;; Abrir o dispositivo para leitura/escrita com privilégios
 
 ;; Desabilitar os privilégios do kernel, uma vez que já não são necessários
 
@@ -491,9 +491,9 @@ Hexagon.Kernel.FS.VFS.definirVolumeBoot:
 Hexagon.Kernel.FS.VFS.obterVolume:
 
     mov ah, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual] ;; Número do dispositivo de armazenamento
-    mov dl, [Hexagon.Dev.Classes.bloco] ;; Classe do dispositivo
+    mov dl, [Hexagon.Dev.DeviceClasses.block] ;; Classe do dispositivo
 
-    call Hexagon.Kernel.Dev.Dev.paraDispositivo
+    call Hexagon.Kernel.Dev.Dev.convertDeviceToDeviceName
 
     mov edi, Hexagon.VFS.Controle.rotuloVolume
     mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]

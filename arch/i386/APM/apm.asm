@@ -108,7 +108,7 @@ match =YES, VERBOSE
 
 .waitLoop:
 
-    in al, 64h ;; 64h is the state registrar
+    in al, 64h ;; 64h is the state register
 
     bt ax, 1 ;; Check second bit until it becomes 0
     jnc .end

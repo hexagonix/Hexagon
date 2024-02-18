@@ -91,9 +91,9 @@ Hexagon.Syscall.Syscall.servicosHexagon:
 
 ;; Gerenciamento de arquivos e dispositivos
 
-    dd Hexagon.Kernel.Dev.Dev.abrir                                    ;; 9
-    dd Hexagon.Kernel.Dev.Dev.escrever                                 ;; 10
-    dd Hexagon.Kernel.Dev.Dev.fechar                                   ;; 11
+    dd Hexagon.Kernel.Dev.Dev.open                                    ;; 9
+    dd Hexagon.Kernel.Dev.Dev.write                                 ;; 10
+    dd Hexagon.Kernel.Dev.Dev.close                                   ;; 11
 
 ;; Gerenciamento do Sistema de Arquivos e de volumes
 
@@ -145,17 +145,17 @@ Hexagon.Syscall.Syscall.servicosHexagon:
 
 ;; Serviços de entrada por teclado do Hexagon
 
-    dd Hexagon.Kernel.Dev.Gen.Teclado.Teclado.aguardarTeclado          ;; 45
-    dd Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterString              ;; 46
-    dd Hexagon.Kernel.Dev.Gen.Teclado.Teclado.obterEstadoTeclas        ;; 47
+    dd Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.waitKeyboard          ;; 45
+    dd Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.getString              ;; 46
+    dd Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.getSpecialKeysStatus        ;; 47
     dd Hexagon.Kernel.Dev.Gen.Console.Console.changeFont             ;; 48
-    dd Hexagon.Kernel.Dev.Gen.Teclado.Teclado.alterarLeiaute           ;; 49
+    dd Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.changeLayout           ;; 49
 
 ;; Serviços de entrada de mouse PS/2 do Hexagon
 
-    dd Hexagon.Kernel.Dev.Gen.Mouse.Mouse.aguardarMouse                ;; 50
-    dd Hexagon.Kernel.Dev.Gen.Mouse.Mouse.obterDoMouse                 ;; 51
-    dd Hexagon.Kernel.Dev.Gen.Mouse.Mouse.configurarMouse              ;; 52
+    dd Hexagon.Kernel.Dev.Gen.Mouse.Mouse.waitMouseEvent                ;; 50
+    dd Hexagon.Kernel.Dev.Gen.Mouse.Mouse.getFromMouse                 ;; 51
+    dd Hexagon.Kernel.Dev.Gen.Mouse.Mouse.setMouse              ;; 52
 
 ;; Serviços de manipulação de dados do Hexagon
 
@@ -173,8 +173,8 @@ Hexagon.Syscall.Syscall.servicosHexagon:
 
 ;; Serviços de saída por som do Hexagon
 
-    dd Hexagon.Kernel.Dev.Gen.Som.Som.emitirSom                        ;; 64
-    dd Hexagon.Kernel.Dev.Gen.Som.Som.desligarSom                      ;; 65
+    dd Hexagon.Kernel.Dev.Gen.Snd.Snd.playSound                        ;; 64
+    dd Hexagon.Kernel.Dev.Gen.Snd.Snd.stopSound                      ;; 65
 
 ;; Serviço de mensagens do Hexagon
 

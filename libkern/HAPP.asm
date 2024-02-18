@@ -264,7 +264,7 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
 
 ;; Vamos checar se a arquitetura da imagem é a mesma do Hexagon
 
-    cmp byte[edi+4], Hexagon.Arquitetura.suporte ;; Arquitetura suportada
+    cmp byte[edi+4], Hexagon.Arch.support ;; Arquitetura suportada
     jne .cabecalhoInvalido
 
     mov ah, byte[edi+4]
@@ -272,16 +272,16 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
 
 ;; Pronto, agora vamos chegar as versões do kernel necessárias como dependências da imagem
 
-    cmp byte[edi+5], Hexagon.Versao.numeroVersao ;; Versão declarada do kernel
+    cmp byte[edi+5], Hexagon.Version.versionNumber ;; Versão declarada do kernel
     jg .cabecalhoInvalido ;; A imagem requer uma versão do Hexagon superior a essa
 
-    cmp byte[edi+5], Hexagon.Versao.numeroVersao ;; Versão declarada do kernel
+    cmp byte[edi+5], Hexagon.Version.versionNumber ;; Versão declarada do kernel
     jl .cabecalhoValido ;; A imagem requer uma versão do Hexagon superior a essa
 
     mov ah, byte[edi+5]
     mov byte[Hexagon.Imagem.Executavel.HAPP.versaoMinima], ah
 
-    cmp byte[edi+6], Hexagon.Versao.numeroSubversao ;; Subversão declarada do kernel
+    cmp byte[edi+6], Hexagon.Version.subversionNumber ;; Subversão declarada do kernel
     jg .cabecalhoInvalido ;; A imagem requer uma versão do Hexagon superior a essa
 
 .cabecalhoValido:

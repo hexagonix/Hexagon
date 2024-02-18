@@ -196,9 +196,9 @@ Hexagon.Autoconfig:
 
     call Hexagon.Kernel.Arch.Gen.Mm.initMemory ;; Inicia o alocador de memória do Hexagon
 
-    call Hexagon.Kernel.Dev.Gen.Teclado.Teclado.iniciarTeclado ;; Iniciar o serviço de teclado do Hexagon
+    call Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.setupKeyboard ;; Iniciar o serviço de teclado do Hexagon
 
-    call Hexagon.Kernel.Dev.Gen.Mouse.Mouse.iniciarMouse ;; Iniciar o serviço de mouse do Hexagon
+    call Hexagon.Kernel.Dev.Gen.Mouse.Mouse.setupMouse ;; Iniciar o serviço de mouse do Hexagon
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.setupConsole ;; Configura a resolução e configurações padrão de vídeo
 

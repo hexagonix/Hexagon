@@ -90,7 +90,7 @@ db "Welcome to Hexagon", 10
 db "Copyright (C) 2015-", __stringano, " Felipe Miguel Nery Lunkes", 10
 db "All rights reserved.", 10, 10, 0
 .versao:
-db "Hexagon kernel version: ", Hexagon.Versao.definicao, 0
+db "Hexagon kernel version: ", Hexagon.Version.definition, 0
 .travando:
 db "Enabling user and security guidelines...", 0
 .timer:

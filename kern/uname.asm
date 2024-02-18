@@ -86,11 +86,11 @@ use32
 
 Hexagon.Kernel.Kernel.Uname.retornarVersao:
 
-    mov eax, Hexagon.Versao.numeroVersao
-    mov ebx, Hexagon.Versao.numeroSubversao
-    mov ecx, Hexagon.Versao.caractereRevisao
-    mov edx, Hexagon.Arquitetura.suporte
-    mov esi, Hexagon.Versao.nomeKernel
-    mov edi, Hexagon.Versao.build
+    mov eax, Hexagon.Version.versionNumber
+    mov ebx, Hexagon.Version.subversionNumber
+    mov ecx, Hexagon.Version.revision
+    mov edx, Hexagon.Arch.support
+    mov esi, Hexagon.Version.kernelName
+    mov edi, Hexagon.Version.kernelBuild
 
     ret

@@ -174,12 +174,12 @@ Hexagon.Int.manipuladorTeclado:
 
     in al, 60h
 
-    cmp al, Hexagon.Teclado.Codigo.F1 ;; Tecla F1
+    cmp al, Hexagon.Keyboard.keyCodes.F1 ;; Tecla F1
     je .terminarTarefa
 
 ;; Checar se a tecla Control foi pressionada
 
-    cmp al, Hexagon.Teclado.Codigo.ctrl
+    cmp al, Hexagon.Keyboard.keyCodes.ctrl
     je .controlPressionada
 
     cmp al, 29+128
@@ -187,10 +187,10 @@ Hexagon.Int.manipuladorTeclado:
 
 ;; Checar pressionamento da tecla Shift
 
-    cmp al, Hexagon.Teclado.Codigo.shiftD ;; Tecla shift da direita
+    cmp al, Hexagon.Keyboard.keyCodes.shiftD ;; Tecla shift da direita
     je .shiftPressionado
 
-    cmp al, Hexagon.Teclado.Codigo.shiftE ;; Tecla shift da esquerda
+    cmp al, Hexagon.Keyboard.keyCodes.shiftE ;; Tecla shift da esquerda
     je .shiftPressionado
 
     cmp al, 54+128 ;; Tecla shift direita liberada
@@ -203,19 +203,19 @@ Hexagon.Int.manipuladorTeclado:
 
 .controlPressionada:
 
-    or dword[estadoTeclas], 0x00000001
+    or dword[keyStatus], 0x00000001
 
     jmp .naoArmazenar
 
 .controlLiberada:
 
-    and dword[estadoTeclas], 0xFFFFFFFE
+    and dword[keyStatus], 0xFFFFFFFE
 
     jmp .naoArmazenar
 
 .shiftPressionado:
 
-    or dword[estadoTeclas], 0x00000002
+    or dword[keyStatus], 0x00000002
 
     mov byte[.sinalShift], 1 ;; Shift pressionada
 
@@ -223,7 +223,7 @@ Hexagon.Int.manipuladorTeclado:
 
 .shiftLiberado:
 
-    and dword[estadoTeclas], 0xFFFFFFFD
+    and dword[keyStatus], 0xFFFFFFFD
 
     mov byte[.sinalShift], 0
 
@@ -279,7 +279,7 @@ times 32 db 0
 ;; Bit 1: Tecla Shift
 ;; Bit 2-31: Reservado
 
-estadoTeclas: dd 0
+keyStatus: dd 0
 
 ;;************************************************************************************
 
@@ -395,8 +395,8 @@ Hexagon.Int.manipuladorMousePS2:
     mov ebx, edx
     pop edx
 
-    mov dword[Hexagon.Mouse.mouseX], eax
-    mov dword[Hexagon.Mouse.mouseY], ebx
+    mov dword[Hexagon.Kernel.Dev.Gen.Mouse.mouseX], eax
+    mov dword[Hexagon.Kernel.Dev.Gen.Mouse.mouseY], ebx
 
 .finalizar:
 

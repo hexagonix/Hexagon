@@ -73,25 +73,25 @@
 
 use32
 
-;; Enviar dados ou comandos para o controlador PS/2
+;; Send data or commands to the PS/2 controller
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; AL - Comando
+;; AL - Command
 
-Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2:
+Hexagon.Kernel.Dev.Gen.PS2.PS2.sendPS2:
 
-    xchg bl, al ;; Salvar AL
+    xchg bl, al ;; Save AL
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Write
 
-    mov al, 0xD4 ;; Estamos enviando um comando
+    mov al, 0xD4 ;; We are sending a command
 
     out 64h, al
 
-    call Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2
+    call Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Write
 
-    xchg bl, al ;; Obter AL de novo
+    xchg bl, al ;; Get AL again
 
     out 60h, al
 
@@ -99,22 +99,22 @@ Hexagon.Kernel.Dev.Gen.PS2.PS2.enviarPS2:
 
 ;;************************************************************************************
 
-;; Esperar o controlador PS/2 para escrever
+;; Wait for the PS/2 controller to write
 
-Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2:
+Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Write:
 
     push eax
 
-.aguardarLoop:
+.waitLoop:
 
-    in al, 64h ;; 64h é o registrador de estado
+    in al, 64h ;; 64h is the state register
 
-    bt ax, 1 ;; Checar segundo bit para torná-lo 0
-    jnc .OK
+    bt ax, 1 ;; Check second bit to make it 0
+    jnc .ok
 
-    jmp .aguardarLoop
+    jmp .waitLoop
 
-.OK:
+.ok:
 
     pop eax
 
@@ -122,22 +122,22 @@ Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarEscritaPS2:
 
 ;;************************************************************************************
 
-;; Esperar o controlador PS/2 para ler
+;; Wait for the PS/2 controller to read
 
-Hexagon.Kernel.Dev.Gen.PS2.PS2.esperarLeituraPS2:
+Hexagon.Kernel.Dev.Gen.PS2.PS2.waitPS2Read:
 
     push eax
 
-.aguardarLoop:
+.waitLoop:
 
     in al, 64h
 
-    bt ax, 0 ;; Checar primeiro bit para torná-lo 1
-    jc .OK
+    bt ax, 0 ;; Check first bit to make it 1
+    jc .ok
 
-    jmp .aguardarLoop
+    jmp .waitLoop
 
-.OK:
+.ok:
 
     pop eax
 

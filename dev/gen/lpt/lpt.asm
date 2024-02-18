@@ -73,27 +73,27 @@
 
 use32
 
-;; Inicializa a porta paralela, utilizando o número da porta fornecido
+;; Initializes the parallel port, using the given port number
 
-Hexagon.Kernel.Dev.Gen.LPT.LPT.iniciarPortaParalela:
+Hexagon.Kernel.Dev.Gen.LPT.LPT.setupParallelPort:
 
     pusha
 
-;; Reiniciar porta através do registrador de controle (base+2)
+;; Reset port via control register (base+2)
 
-    mov dx, word[portaParalelaAtual]
+    mov dx, word[Hexagon.Kernel.Dev.Gen.LPT.LPT.currentParallelPort]
 
-    add dx, 2 ;; Registro de controle (base+2)
+    add dx, 2 ;; Control register (base+2)
 
     in al, dx
 
     mov al, 00001100b
 
-;; Bit 2 - Reiniciar porta
-;; Bit 3 - Selecionar dispositivo
-;; Bit 5 - Habilitar porta bidirecional
+;; Bit 2 - Reset port
+;; Bit 3 - Select device
+;; Bit 5 - Enable bidirectional port
 
-    out dx, al ;; Enviar sinal de reinício
+    out dx, al ;; Send restart signal
 
     popa
 
@@ -101,85 +101,84 @@ Hexagon.Kernel.Dev.Gen.LPT.LPT.iniciarPortaParalela:
 
 ;;************************************************************************************
 
-;; Função que permite o envio de dados para uma porta paralela
+;; Function that allows data to be sent to a parallel port
 
-Hexagon.Kernel.Dev.Gen.LPT.LPT.enviarPortaParalela:
+Hexagon.Kernel.Dev.Gen.LPT.LPT.sendViaParallelPort:
 
-    lodsb ;; Carrega o próximo caractere à ser enviado
+    lodsb ;; Load the next character to be sent
 
-    or al, al ;; Compara o caractere com o fim da mensagem
-    jz .pronto ;; Se igual ao fim, pula para .pronto
+    or al, al ;; Compares the character with the end of the message
+    jz .done ;; If equal to end, jump to .done
 
-;; Chama função que irá executar a entrada e saída
+;; Calls function that will perform input and output
 
-    call Hexagon.Kernel.Dev.Gen.LPT.LPT.realizarEnvioPortaParalela
+    call Hexagon.Kernel.Dev.Gen.LPT.LPT.send
 
-    jc .falhaImpressora
+    jc .parallelPortError
 
-;; Se não tiver acabado, volta à função e carrega o próximo caractere
+;; If it is not finished, return to the function and load the next character
 
-    jmp Hexagon.Kernel.Dev.Gen.LPT.LPT.enviarPortaParalela
+    jmp Hexagon.Kernel.Dev.Gen.LPT.LPT.sendViaParallelPort
 
-.pronto: ;; Se tiver acabado...
+.done: ;; If it's over...
 
-    ret ;; Retorna ao processo que o chamou
+    ret
 
-.falhaImpressora:
+.parallelPortError:
 
-    stc ;; Definir Carry
+    stc ;; Set Carry
 
     ret
 
 ;;************************************************************************************
 
-;; Enviar dados para a porta paralela
+;; Send data to the parallel port
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; AL - byte para enviar
+;; AL - byte to send
 
-Hexagon.Kernel.Dev.Gen.LPT.LPT.realizarEnvioPortaParalela:
+Hexagon.Kernel.Dev.Gen.LPT.LPT.send:
 
     pusha
 
-    push ax ;; Salvar o byte fornecido em AL
+    push ax ;; Save the given byte in AL
 
-;; Reiniciar porta através do registrador de controle (base+2)
+;; Reset port via control register (base+2)
 
-    mov dx, word[portaParalelaAtual]
+    mov dx, word[Hexagon.Kernel.Dev.Gen.LPT.LPT.currentParallelPort]
 
-    add dx, 2 ;; Registro de controle (base+2)
+    add dx, 2 ;; Control register (base+2)
 
     in al, dx
 
     mov al, 00001100b
 
-;; Bit 2 - Reiniciar porta
-;; Bit 3 - Selecionar dispositivo
-;; Bit 5 - Habilitar porta bidirecional
+;; Bit 2 - Reset port
+;; Bit 3 - Select device
+;; Bit 5 - Enable bidirectional port
 
-    out dx, al ;; Enviar sinal de reinício
+    out dx, al ;; Send restart signal
 
-;; Enviar dados para a porta via registrador de dados (base+0)
+;; Send data to port via data logger (base+0)
 
-    pop ax ;; Restaurar dado passado em AL
+    pop ax ;; Restore past data in AL
 
-    mov dx, word[portaParalelaAtual]
+    mov dx, word[Hexagon.Kernel.Dev.Gen.LPT.LPT.currentParallelPort]
 
-    out dx, al ;; Enviar dados
+    out dx, al ;; Send data
 
-;; Enviar sinalização para registrador de controle (base+2), mostrando que os dados
-;; estão disponíveis
+;; Send signaling to control register (base+2), showing that data is available
 
-    mov dx, word [portaParalelaAtual]
+    mov dx, word [Hexagon.Kernel.Dev.Gen.LPT.LPT.currentParallelPort]
 
     add dx, 2
 
     mov al, 1
 
-;; Bit 0 - sinal
+;; Bit 0 - signal
 
-    out dx, al ;; Enviar
+    out dx, al ;; Send
 
     popa
 
@@ -187,4 +186,6 @@ Hexagon.Kernel.Dev.Gen.LPT.LPT.realizarEnvioPortaParalela:
 
 ;;************************************************************************************
 
-portaParalelaAtual dw 0 ;; Armazena o endereço de entrada e saída do dispositivo
+Hexagon.Kernel.Dev.Gen.LPT.LPT:
+
+.currentParallelPort dw 0 ;; Stores the device's input and output address

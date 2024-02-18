@@ -115,7 +115,7 @@ Hexagon.Kernel.Kernel.Dmesg.iniciarRelatorio:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.useKernelConsole
 
-    mov esi, Hexagon.Info.sobreHexagon
+    mov esi, Hexagon.Info.aboutHexagon
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
@@ -443,14 +443,14 @@ Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial:
 
     push esi
 
-    mov esi, Hexagon.Dev.Dispositivos.com1
+    mov esi, Hexagon.Dev.Devices.com1
 
-    call Hexagon.Kernel.Dev.Dev.abrir
+    call Hexagon.Kernel.Dev.Dev.open
 
     pop esi
     push esi
 
-    call Hexagon.Kernel.Dev.Dev.escrever
+    call Hexagon.Kernel.Dev.Dev.write
 
     pop esi
 

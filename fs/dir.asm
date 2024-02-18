@@ -279,7 +279,7 @@ Hexagon.Kernel.FS.Dir.obterPontodeMontagem:
 
     mov dl, 01h ;; Classe de dispositivo de armazenamento
 
-    call Hexagon.Kernel.Dev.Dev.paraDispositivo ;; Converter para nome de dispositivo
+    call Hexagon.Kernel.Dev.Dev.convertDeviceToDeviceName ;; Converter para nome de dispositivo
 
     mov edi, esi
 

@@ -73,34 +73,34 @@
 
 use32
 
-;; Arquitetura do Hexagon
+;; Hexagon architecture support
 ;;
-;; A arquitetura pode ser:
+;; The architecture can be:
 ;;
 ;; 1 - i386
 ;; 2 - x86_x64
-;; 3... Outras arquiteturas (futuras implementações?)
+;; 3... Other architectures (future implementations?)
 
-Hexagon.Arquitetura.suporte = 1 ;; Arquitetura desta imagem
+Hexagon.Arch.support = 1 ;; Architecture of this image
 
-Hexagon.Versao.definicao equ "1.0.1-beta32"
+Hexagon.Version.definition equ "1.0.1-alpha1"
 
-Hexagon.Versao:
+Hexagon.Version:
 
-.numeroVersao     = 1 ;; Número principal de versão do Hexagon
-.numeroSubversao  = 0 ;; Número de subversão (secundária) do Hexagon
-.caractereRevisao = 1 ;; Adicionar caractere de revisão, caso necessário, entre aspas (funciona como caractere)
+.versionNumber     = 1 ;; Hexagon major version number
+.subversionNumber  = 0 ;; Hexagon minor version number
+.revision          = 1 ;; Add revision character (if necessary, between quotation marks)
 
-.nomeKernel:  ;; Nome fornecido ao espaço de usuário
+.kernelName: ;; Name given to userspace
 db "Hexagon", 0
-.build: ;; Informações de build da versão atual
+.kernelBuild: ;; Current version build information
 db __stringdia, "/", __stringmes, "/", __stringano, " "
 db __stringhora, ":", __stringminuto, ":", __stringsegundo, " GMT", 0
 
 Hexagon.Info:
 
-.sobreHexagon:
+.aboutHexagon:
 db 10, 10
-db "Hexagon kernel version ", Hexagon.Versao.definicao, 10
+db "Hexagon kernel version ", Hexagon.Version.definition, 10
 db "Copyright (C) 2015-", __stringano, " Felipe Miguel Nery Lunkes", 10
 db "All rights reserved.", 0

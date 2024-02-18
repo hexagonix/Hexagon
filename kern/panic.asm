@@ -104,7 +104,7 @@ Hexagon.Kernel.Kernel.Panico.panico:
 
     call Hexagon.Kernel.Kernel.Panico.prepararPanico
 
-    kprint Hexagon.Info.sobreHexagon
+    kprint Hexagon.Info.aboutHexagon
 
     pop eax
 
@@ -154,7 +154,7 @@ Hexagon.Kernel.Kernel.Panico.panico:
 
     kprint Hexagon.Panico.erroNaoFatal
 
-    call Hexagon.Kernel.Dev.Gen.Teclado.Teclado.aguardarTeclado
+    call Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.waitKeyboard
 
     ret
 
@@ -171,13 +171,13 @@ Hexagon.Kernel.Kernel.Panico.panico:
 
 Hexagon.Kernel.Kernel.Panico.prepararPanico:
 
-    mov esi, Hexagon.Dev.Dispositivos.tty1 ;; Primeiro, fechar tty1
+    mov esi, Hexagon.Dev.Devices.tty1 ;; Primeiro, fechar tty1
 
-    call Hexagon.Kernel.Dev.Dev.fechar
+    call Hexagon.Kernel.Dev.Dev.close
 
-    mov esi, Hexagon.Dev.Dispositivos.tty0 ;; Abrir a saída de vídeo padrão
+    mov esi, Hexagon.Dev.Devices.tty0 ;; Abrir a saída de vídeo padrão
 
-    call Hexagon.Kernel.Dev.Dev.abrir
+    call Hexagon.Kernel.Dev.Dev.open
 
     mov eax, HEXAGONIX_CLASSICO_BRANCO
     mov ebx, HEXAGONIX_BLOSSOM_AZUL
