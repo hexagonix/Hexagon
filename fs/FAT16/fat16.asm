@@ -75,64 +75,65 @@ use32
 
 ;;************************************************************************************
 ;;
-;;       Informações relevantes para o entendimento do Sistema de Arquivos FAT
-;;                              (especificamente FAT16B)
+;;            Information relevant to understanding the FAT file system
+;;                                (specifically FAT16B)
 ;;
-;;                           FAT16B para Hexagon versão 1.2
+;; FAT16B for Hexagon version 1.2
 ;;
-;; - Cada entrada no diretório raiz tem 32 bytes de tamanho:
-;;   - 11 destes, iniciais, reservam o nome do arquivo. Caso o primeiro caractere
-;;     tenha sido trocado por espaço (' '), ele foi "deletado", e não deve ser exibido
-;;     manipulado pelo Sistema de Arquivos ou pelo próprio Hexagon.
-;; - O cluster inicial de um arquivo é adicionado no entrada no diretório raiz. Ao ler
-;;   o conteúdo do cluster indicado, temos a localização do próximo cluster na cadeia.
-;;   Tanto o valor inicial como o obtido devem ser utilizados para o cálculo físico do
-;;   endereço no disco, carregando o valor de bytes por cluster de uma vez. Um exemplo:
-;;   Se o cluster inicial for dez, o endereço deste cluster é convertido em um endereço
-;;   LBA inicial, carregando quantos bytes por cluster forem necessários, caso a caso.
-;;   Indo até a entrada do décimo cluster na FAT, será possível obter o número do próximo
-;;   cluster na cadeia. Novamente, esse endereço de cluster é convertido em endereço físico
-;;   e n bytes são carregados para a memória. Voltando a FAT, lendo a entrada do número do
-;;   cluster, o próximo pode ser obtido. Caso o valor do cluster seja 0xFFF8, não se trata
-;;   de um número de cluster na cadeia, mas sim que este é o último cluster na cadeia e a
-;;   leitura já pode ser finalizada.
-;; - Alguns atributos são verificados por essa versão do driver FAT16B do Hexagon. São
-;;   lidas informações que indicariam a presença de um subdiretório ou rótulo do volume. Por
-;;   ora, essas informações não são usadas. Entretanto, código para a manipulação de
-;;   diretórios já está sendo escrito, e um dia essa função será incorporada.
-;; - Para facilitar o desenvolvimento, as estruturas e variáveis padrão para sistemas do tipo
-;;   FAT estão declaradas no corpo do Sistema de Arquivos Virtual, e são instanciadas aqui,
-;;   como poderão ser em futuros sistemas FAT12 e FAT32, por exemplo.
-;; - Valores soltos não serão utilizados no código, para aumentar a compreensão. Devem ser
-;;   utilizadas as constantes associadas com a instância, como atributos de entrada e valores
-;;   encontrados nas entradas. Apenas valores de 0 e 1 podem ser utilizados em operações
-;;   lógicas. O resto dos valores devem vir das contantes e dados identificados já com seu
-;;   significado, como Hexagon.VFS.FAT.FAT16B.atributoDeletado, por exemplo, indicando o
-;;   código do caractere inicial que indica que o arquivo foi excluído (espaço).
+;; - Each entry in the root directory is 32 bytes in size:
+;; - 11 of these, initials, reserve the file name. If the first character has been replaced by
+;;   a space (' '), it has been "deleted", and should not be displayed manipulated by the file
+;;   system or by Hexagon itself.
+;; - The initial cluster of a file is added to the entry in the root directory.
+;;   By reading the content of the indicated cluster, we have the location of the next
+;;   cluster in the chain.
+;;   Both the initial and obtained values ​​must be used for the physical calculation of the
+;;   address on disk, loading the value of bytes per cluster at once. An example:
+;;   If the starting cluster is ten, this cluster's address is converted to a starting LBA
+;;   address, carrying as many bytes per cluster as necessary on a case-by-case basis.
+;;   Going to the entry of the tenth cluster in the FAT, it will be possible to obtain
+;;   the number of the next cluster in the chain. Again, this cluster address is converted
+;;   to physical address and n bytes are loaded into memory. Returning to FAT, reading the
+;;   cluster number input, the next one can be obtained. If the cluster value is 0xFFF8,
+;;   it is not a cluster number in the chain, but rather that this is the last cluster in
+;;   the chain and the reading can now be completed.
+;; - Some attributes are checked by this version of Hexagon's FAT16B driver. Information
+;;   is read that would indicate the presence of a subdirectory or volume label.
+;;   For now, this information is not used. However, code for manipulating directories is
+;;   already being written, and one day this function will be incorporated.
+;; - To facilitate development, the standard structures and variables for FAT-type systems
+;;   are declared in the body of the Virtual File System, and are instantiated here, as they
+;;   may be in future FAT12 and FAT32 systems, for example.
+;; - Values ​​not described in constants will not be used in the code, to increase
+;;   understanding. The constants associated with the instance must be used, such as input
+;;   attributes and values ​​found in the inputs. Only values ​​of 0 and 1 can be used in
+;;   logical operations. The rest of the values ​​must come from the constants and data
+;;   already identified with their meaning, such as Hexagon.VFS.FAT.FAT16B.atributoDeletado,
+;;   for example, indicating the initial character code that indicates that the file was
+;;   deleted (space).
 ;;
 ;;************************************************************************************
 
 ;;************************************************************************************
 
-;; Estrutura utilizada para a manipulação de volumes FAT16B, baseada no template
-;; para FAT fornecida pelo VFS
+;; Structure used to manipulate FAT16B volumes, based on the FAT template provided by VFS
 
 Hexagon.VFS.FAT16B Hexagon.VFS.FAT
 
 ;;************************************************************************************
 
-;; Converte o nome no formato FAT a um nome no padrão 8.3
+;; Converts the name in FAT format to a name in the 8.3 standard
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; ESI - Ponteiro para o nome com 11 caracteres
+;; ESI - Pointer to 11-character name
 ;;
-;; Saída:
+;; Output:
 ;;
-;; AVISO! O nome será modificado
-;; CF definido caso o nome do arquivo seja inválido
+;; NOTICE! The name will be changed!
+;; CF defined if file name is invalid
 
-Hexagon.Kernel.FS.FAT16.nomeFATParaNomeArquivo:
+Hexagon.Kernel.FS.FAT16.FATnameToFilename:
 
     push eax
     push ebx
@@ -140,59 +141,59 @@ Hexagon.Kernel.FS.FAT16.nomeFATParaNomeArquivo:
     push edi
     push esi
 
-;; Checar nome vazio
+;; Check empty filename
 
     cmp byte[esi], 0
-    je .nomeArquivoInvalido ;; Se a string estiver vazia
+    je .invalidFilename ;; If the string is empty
 
     cmp byte[esi+8], ' '
-    jne .issoEExtensao
+    jne .thisIsExtension
 
     call Hexagon.Kernel.Lib.String.cortarString
 
-    jmp .sucesso
+    jmp .success
 
-.issoEExtensao:
+.thisIsExtension:
 
-;; Limpar buffer da operação anterior
+;; Clear buffer from previous operation
 
     mov ax, ' '
     mov ecx, 12
-    mov edi, .bufferNomeDeArquivo + 500h ;; Limpar buffer temporário
+    mov edi, .filenameBuffer + 500h ;; Clear temporary buffer
 
     cld
 
     rep stosb
 
-;; Copiar nome para buffer temporário
+;; Copy name to temporary buffer
 
-    pop esi ;; Restaurar ESI
+    pop esi ;; Restore ESI
 
     push esi
 
-    mov edi, .bufferNomeDeArquivo + 500h ;; Corrigir endereço com base do segmento
+    mov edi, .filenameBuffer + 500h ;; Correct address based on segment
     mov ecx, 11
 
-    rep movsb ;; Copiar (ECX) bytes de ESI para EDI
+    rep movsb ;; Copy (ECX) bytes from ESI to EDI
 
-;; Obter nome de arquivo sem extensão
+;; Get filename without extension
 
-    mov esi, .bufferNomeDeArquivo
+    mov esi, .filenameBuffer
     mov byte[esi+8], 0
 
     call Hexagon.Kernel.Lib.String.cortarString
 
-;; Adicionar ponto
+;; Add dot
 
     call Hexagon.Kernel.Lib.String.tamanhoString
 
     mov byte[esi+eax], '.'
 
-;; Obter extensão
+;; Get extension
 
     pop esi
 
-    push esi ;; Restaurar ESI
+    push esi ;; Restore ESI
 
     add esi, 8
 
@@ -200,19 +201,19 @@ Hexagon.Kernel.FS.FAT16.nomeFATParaNomeArquivo:
 
     call Hexagon.Kernel.Lib.String.cortarString
 
-    mov ebx, eax ;; Salvar tamanho do nome de arquivo (sem extensão)
+    mov ebx, eax ;; Save filename size (without extension)
 
     call Hexagon.Kernel.Lib.String.tamanhoString
 
-;; Colocar nome de arquivo e extensão juntos
+;; Put file name and extension together
 
-    lea edi, [.bufferNomeDeArquivo + 500h + ebx + 1]
+    lea edi, [.filenameBuffer + 500h + ebx + 1]
 
     mov ecx, eax
 
-    rep movsb ;; Mover (ECX) bytes de ESI para EDI
+    rep movsb ;; Move (ECX) bytes from ESI to EDI
 
-;; Copiar buffer temporário para o endereço
+;; Copy temporary buffer to address
 
     pop esi
 
@@ -220,11 +221,11 @@ Hexagon.Kernel.FS.FAT16.nomeFATParaNomeArquivo:
 
     mov edi, esi
 
-;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+;; Correct address with segment base (physical address = address + segment base)
 
-    add edi, 500h ;; Segmento ES com base em 500h
+    add edi, 500h ;; ES segment based on 500h
 
-    mov esi, .bufferNomeDeArquivo
+    mov esi, .filenameBuffer
     mov ecx, 12
 
     rep movsb
@@ -233,27 +234,27 @@ Hexagon.Kernel.FS.FAT16.nomeFATParaNomeArquivo:
 
     push esi
 
-    add eax, ebx ;; Tamanho do nome de arquivo + tamanho da extensão
+    add eax, ebx ;; Filename size + extension size
 
-    inc eax ;; Adicionar tamanho de '.'
+    inc eax ;; Add size of '.'
 
     mov byte[esi+eax], 0
 
-.sucesso:
+.success:
 
     pop esi
 
     push esi
 
-    clc ;; Limpar Carry
+    clc ;; Clear Carry
 
-    jmp .fim
+    jmp .end
 
-.nomeArquivoInvalido:
+.invalidFilename:
 
-    stc ;; Definir Carry
+    stc ;; Set Carry
 
-.fim:
+.end:
 
     pop esi
     pop edi
@@ -263,22 +264,22 @@ Hexagon.Kernel.FS.FAT16.nomeFATParaNomeArquivo:
 
     ret
 
-.bufferNomeDeArquivo: times 12 db ' '
+.filenameBuffer: times 12 db ' '
 
 ;;************************************************************************************
 
-;; Converter nome de arquivo no padrão 8.3 para formato FAT
+;; Convert file name in 8.3 standard to FAT format
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; ESI - Nome de arquivo
+;; ESI - Filename
 ;;
-;; Saída:
+;; Output:
 ;;
-;; AVISO! O nome será modificado diretamente no endereço apontado por ESI
-;; CF definido caso o nome do arquivo seja inválido
+;; NOTICE! The name will be modified directly at the address indicated by ESI!
+;; CF defined if file name is invalid
 
-Hexagon.Kernel.FS.FAT16.nomeArquivoParaFAT:
+Hexagon.Kernel.FS.FAT16.filenameToFATName:
 
     push eax
     push ebx
@@ -287,23 +288,23 @@ Hexagon.Kernel.FS.FAT16.nomeArquivoParaFAT:
     push edi
     push esi
 
-;; Checar por string vazia
+;; Check for empty string
 
     cmp byte[esi], 0
-    je .nomeArquivoInvalido ;; Se a string estiver vazia
+    je .invalidFilename ;; If the string is empty
 
-;; Checar ponto
+;; Check dot
 
-    mov al, '.' ;; Caractere para encontrar
+    mov al, '.' ;; Character to find
 
     call Hexagon.Kernel.Lib.String.encontrarCaractereNaString
 
-    jnc .ponto
+    jnc .dot
 
     call Hexagon.Kernel.Lib.String.tamanhoString
 
-    cmp eax, 8 ;; Mais de oito caracteres não são permitidos no formato 8.3
-    ja .nomeArquivoInvalido
+    cmp eax, 8 ;; More than eight characters are not allowed in 8.3 format
+    ja .invalidFilename
 
     call Hexagon.Kernel.Lib.String.stringParaMaiusculo
 
@@ -321,7 +322,7 @@ Hexagon.Kernel.FS.FAT16.nomeArquivoParaFAT:
     push ds ;; Kernel data segment
     pop es
 
-;; Ter certeza que o nome possui exatamente 11 caracteres
+;; Make sure the name has exactly 11 characters
 
     mov edi, esi
 
@@ -335,17 +336,17 @@ Hexagon.Kernel.FS.FAT16.nomeArquivoParaFAT:
 
     clc
 
-    jmp .fim
+    jmp .end
 
-.ponto:
+.dot:
 
     push eax
 
-;; Limpar o buffer temporário da operação anterior
+;; Clear temporary buffer from previous operation
 
     mov al, ' '
     mov ecx, 11
-    mov edi, .bufferNomeDeArquivo + 500h ;; Limpar buffer temporário
+    mov edi, .filenameBuffer + 500h ;; Clear temporary buffer
 
     cld
 
@@ -354,105 +355,105 @@ Hexagon.Kernel.FS.FAT16.nomeArquivoParaFAT:
     pop eax
 
     cmp al, 1
-    ja .nomeArquivoInvalido ;; Se o ponto ocorrer mais de uma vez
+    ja .invalidFilename ;; If the dot occurs more than once
 
-    call Hexagon.Kernel.Lib.String.stringParaMaiusculo ;; Todos os nomes de arquivo FAT são em maiúsculo
+    call Hexagon.Kernel.Lib.String.stringParaMaiusculo ;; All FAT file names are capitalized
 
-;; Checar posição do '.'
+;; Check position of '.'
 
-    mov ebx, 0 ;; EBX é o contador da posição do ponto na string
+    mov ebx, 0 ;; EBX is the point position counter in the string
 
-.encontrarPontoLoop:
+.findDotLoop:
 
     mov al, byte[esi]
 
     cmp al, '.'
-    je .pontoEncontrado
+    je .dotFound
 
     inc esi
     inc ebx
 
-    jmp .encontrarPontoLoop
+    jmp .findDotLoop
 
-.pontoEncontrado:
+.dotFound:
 
     cmp ebx, 8
-    ja .nomeArquivoInvalido ;; Se o nome do arquivo apresenta mais de 8 caracteres
+    ja .invalidFilename ;; If the file name has more than 8 characters
 
     cmp ebx, 1
-    jb .nomeArquivoInvalido ;; Se o nome de arquivo apresenta menos de 1 caractere
+    jb .invalidFilename ;; If the file name has less than 1 character
 
-;; Salvar o nome do arquivo em um buffer temporário (sem extensão)
+;; Save filename to a temporary buffer (no extension)
 
-    pop esi ;; Restaurar ESI
+    pop esi ;; Restore ESI
 
     push esi
 
-;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+;; Correct address with segment base (physical address = address + segment base)
 
-    mov edi, .bufferNomeDeArquivo + 500h
+    mov edi, .filenameBuffer + 500h
     mov ecx, ebx
 
     cld
 
-    rep movsb ;; Move (ECX) caracteres de ESI para o buffer
+    rep movsb ;; Move (ECX) ESI characters to buffer
 
-;; Agora checar extensão
+;; Now check extension
 
-    pop esi ;; Restaurar ESI
+    pop esi ;; Restore ESI
 
     push esi
 
-    add esi, ebx ;; EBX para o tamanho do nome do arquivo
-    add esi, 1   ;; 1 byte para o caractere '.'
+    add esi, ebx ;; EBX for filename length
+    add esi, 1   ;; 1 byte for the character '.'
 
-    call Hexagon.Kernel.Lib.String.tamanhoString ;; Checar tamanho da extensão
+    call Hexagon.Kernel.Lib.String.tamanhoString ;; Check extension size
 
     cmp eax, 1
-    jb .nomeArquivoInvalido ;; Se a extensão tem menos de 1 caractere de tamanho
+    jb .invalidFilename ;; If the extension is less than 1 character in length
 
     cmp eax, 3
-    ja .nomeArquivoInvalido ;; Se a extensão tem mais de 3 caracteres de tamanho
+    ja .invalidFilename ;; If the extension is more than 3 characters in length
 
-;; Salvar extensão em um buffer temporário
+;; Save extension to a temporary buffer
 
-    mov edi, .bufferNomeDeArquivo + 500h + 8
+    mov edi, .filenameBuffer + 500h + 8
     mov ecx, eax
 
     cld
 
-    rep movsb ;; Move (ECX) caracteres de ESI para o buffer
+    rep movsb ;; Move (ECX) ESI characters to buffer
 
-.sucesso:
+.success:
 
-;; Salvar buffer na posição indicada por ESI
+;; Save buffer at position indicated by ESI
 
-    pop esi ;; Salvar ESI
+    pop esi ;; Save ESI
 
     push esi
 
     mov edi, esi
 
-;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+;; Correct address with segment base (physical address = address + segment base)
 
     add edi, 500h
 
-    mov esi, .bufferNomeDeArquivo
+    mov esi, .filenameBuffer
     mov ecx, 11
 
     cld
 
-    rep movsb ;; Mover (ECX) caracteres do buffer para ESI
+    rep movsb ;; Move (ECX) characters from buffer to ESI
 
-    clc ;; Limpar Carry
+    clc ;; Clear Carry
 
-    jmp .fim
+    jmp .end
 
-.nomeArquivoInvalido:
+.invalidFilename:
 
-    stc ;; Definir Carry
+    stc ;; Set Carry
 
-.fim:
+.end:
 
     pop esi
     pop edi
@@ -463,22 +464,22 @@ Hexagon.Kernel.FS.FAT16.nomeArquivoParaFAT:
 
     ret
 
-.bufferNomeDeArquivo: times 11 db ' '
+.filenameBuffer: times 11 db ' '
 
 ;;************************************************************************************
 
-;; Renomear um arquivo existente no disco
+;; Rename an existing file on volume
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; ESI - Nome de arquivo da fonte
-;; EDI - Nome de arquivo do destino
+;; ESI - Source filename
+;; EDI - Destination filename
 ;;
-;; Saída:
+;; Output:
 ;;
-;; CF definido em caso de erro ou limpo em caso de sucesso
+;; CF set on error or cleared on success
 
-Hexagon.Kernel.FS.FAT16.renomearArquivoFAT16B:
+Hexagon.Kernel.FS.FAT16.renameFileFAT16B:
 
     pushad
 
@@ -486,11 +487,11 @@ Hexagon.Kernel.FS.FAT16.renomearArquivoFAT16B:
 
     push edi
 
-;; Checar se o arquivo já existe
+;; Check if the file already exists
 
-    call Hexagon.Kernel.FS.FAT16.arquivoExisteFAT16B
+    call Hexagon.Kernel.FS.FAT16.fileExistsFAT16B
 
-    jc .falha
+    jc .failure
 
     pop edi
 
@@ -498,69 +499,69 @@ Hexagon.Kernel.FS.FAT16.renomearArquivoFAT16B:
 
     push ebx
 
-    call Hexagon.Kernel.FS.FAT16.arquivoExisteFAT16B
+    call Hexagon.Kernel.FS.FAT16.fileExistsFAT16B
 
     pop ebx
 
-    jnc .falha
+    jnc .failure
 
     push ebx
 
-    call Hexagon.Kernel.FS.FAT16.nomeArquivoParaFAT
+    call Hexagon.Kernel.FS.FAT16.filenameToFATName
 
     pop ebx
 
-;; Em EBX, o ponteiro para a entrada no diretório raiz
+;; In EBX, the pointer to the entry in the root directory
 
     mov edi, ebx
 
-;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+;; Correct address with segment base (physical address = address + segment base)
 
     add edi, 500h
 
     mov ecx, 11
 
-    rep movsb ;; Mover (ECX) vezes a string em ESI para EDI
+    rep movsb ;; Move (ECX) times string in ESI to EDI
 
-;; Escrever diretório raiz modificado no disco
+;; Write modified root directory to volume
 
-    movzx eax, word[Hexagon.VFS.FAT16B.tamanhoDirRaiz] ;; Setores para escrever
-    mov esi, dword[Hexagon.VFS.FAT16B.dirRaiz] ;; LBA diretório raiz
-    mov cx, 50h ;; Segmento
-    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Deslocamento
+    movzx eax, word[Hexagon.VFS.FAT16B.tamanhoDirRaiz] ;; Sectors to write
+    mov esi, dword[Hexagon.VFS.FAT16B.dirRaiz] ;; LBA of the root directory
+    mov cx, 50h ;; Segment
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
 
     call Hexagon.Kernel.Dev.i386.Disk.Disk.writeSectors
 
-    jc .falha
+    jc .failure
 
-.fim:
+.end:
 
     popad
 
     ret
 
-.falha:
+.failure:
 
-    stc ;; Definir Carry
+    stc ;; Set Carry
 
-    jmp .fim
+    jmp .end
 
 ;;************************************************************************************
 
-;; Checar se um arquivo existe no disco
+;; Check if a file exists on the volume
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; ESI - Nome do arquivo para checar
+;; ESI - Filename to check
 ;;
-;; Saída:
+;; Output:
 ;;
-;; EAX - Tamanho do arquivo em bytes
-;; EBX - Ponteiro para a entrada no diretório raiz
-;; CF definido caso o arquivo não exista ou tenha nome inválido
+;; EAX - File size in bytes
+;; EBX - Pointer to entry in the root directory
+;; CF defined if the file does not exist or has an invalid name
 
-Hexagon.Kernel.FS.FAT16.arquivoExisteFAT16B:
+Hexagon.Kernel.FS.FAT16.fileExistsFAT16B:
 
     push ecx
     push edx
@@ -570,83 +571,83 @@ Hexagon.Kernel.FS.FAT16.arquivoExisteFAT16B:
     call Hexagon.Kernel.Lib.String.tamanhoString
 
     cmp eax, 12
-    ja .falha ;; Em caso de nome inválido
+    ja .failure ;; In case of invalid filename
 
-    inc eax ;; Nome de arquivo incluindo 0
+    inc eax ;; Filename including 0
 
-;; Copiar nome de arquivo para buffer temporário
+;; Copy file name to temporary buffer
 
-    mov edi, .bufferNomeDeArquivo + 500h
-    mov ecx, eax ;; Tamanho do nome de arquivo
+    mov edi, .filenameBuffer + 500h
+    mov ecx, eax ;; Filename size
 
     cld
 
-    rep movsb ;; Mover (ECX) string em ESI para EDI
+    rep movsb ;; Move (ECX) string in ESI to EDI
 
-;; Tornar nome compatível com FAT
+;; Make name compatible with FAT
 
-    mov esi, .bufferNomeDeArquivo
+    mov esi, .filenameBuffer
 
-    call Hexagon.Kernel.FS.FAT16.nomeArquivoParaFAT
+    call Hexagon.Kernel.FS.FAT16.filenameToFATName
 
-    jc .falha ;; Em caso de nome inválido
+    jc .failure ;; In case of invalid filename
 
-;; Carregar diretório raiz no disco
+;; Load root directory to volume
 
-    movzx eax, word[Hexagon.VFS.FAT16B.tamanhoDirRaiz] ;; Setores para carregar
-    mov esi, dword[Hexagon.VFS.FAT16B.dirRaiz] ;; LBA do diretório raiz
-    mov cx, 50h ;; Segmento
-    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Deslocamento
+    movzx eax, word[Hexagon.VFS.FAT16B.tamanhoDirRaiz] ;; Sectors to read
+    mov esi, dword[Hexagon.VFS.FAT16B.dirRaiz] ;; LBA of the root directory
+    mov cx, 50h ;; Segment
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
 
     call Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors
 
-;; Procurar nome em todas as entradas
+;; Search name in all entries
 
-    movzx edx, word[Hexagon.VFS.FAT16B.entradasRaiz] ;; Total de pastas ou arquivos no diretório raiz
+    movzx edx, word[Hexagon.VFS.FAT16B.entradasRaiz] ;; Total folders or files in the root directory
     mov ebx, Hexagon.Heap.DiskCache + 500h + 20000
 
-    cld ;; Limpar bandeira de direção
+    cld ;; Clear direction flag
 
-.loopBuscaArquivo:
+.findFileLoop:
 
-    mov ecx, 11 ;; 11 caracteres no nome de arquivo
+    mov ecx, 11 ;; 11 characters in file name
     mov edi, ebx
-    mov esi, .bufferNomeDeArquivo
+    mov esi, .filenameBuffer
 
-    rep cmpsb ;; Compara (ECX) caracteres entre EDI e ESI
+    rep cmpsb ;; Compares (ECX) characters between EDI and ESI
 
-    je .arquivoEncontrado
+    je .fileFound
 
     add ebx, 32
 
     dec edx
 
-    jnz .loopBuscaArquivo
+    jnz .findFileLoop
 
-    jmp .falha ;; Arquivo não encontrado
+    jmp .failure ;; File not found
 
-.arquivoEncontrado:
+.fileFound:
 
-    mov eax, dword[es:ebx+28] ;; Tamanho do arquivo
+    mov eax, dword[es:ebx+28] ;; File size
 
-;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+;; Correct address with segment base (physical address = address + segment base)
 
-    sub ebx, 500h ;; Segmento ES
+    sub ebx, 500h ;; ES segment
 
-.sucessoOperacao:
+.operationSuccess:
 
-    clc ;; Limpar Carry
+    clc ;; Clear Carry
 
-    jmp .fim
+    jmp .end
 
-.falha:
+.failure:
 
-    stc ;; Definir Carry
+    stc ;; Set Carry
 
-    jmp .fim
+    jmp .end
 
-.fim:
+.end:
 
     pop esi
     pop edi
@@ -655,23 +656,23 @@ Hexagon.Kernel.FS.FAT16.arquivoExisteFAT16B:
 
     ret
 
-.bufferNomeDeArquivo: times 13 db ' '
+.filenameBuffer: times 13 db ' '
 
 ;;************************************************************************************
 
-;; Carregar arquivo na memória
+;; Load file into memory
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; ESI - Nome do arquivo para carregar
-;; EDI - Endereço do arquivo a ser carregado
+;; ESI - Name of the file to load
+;; EDI - Address of the file to be loaded
 ;;
-;; Saída:
+;; Output:
 ;;
-;; EAX - Tamanho do arquivo em bytes
-;; CF definido em caso de arquivo não encontrado ou nome inválido
+;; EAX - File size in bytes
+;; CF defined in case of file not found or invalid name
 
-Hexagon.Kernel.FS.FAT16.carregarArquivoFAT16B:
+Hexagon.Kernel.FS.FAT16.loadFileFAT16B:
 
     push ebx
     push ecx
@@ -679,43 +680,43 @@ Hexagon.Kernel.FS.FAT16.carregarArquivoFAT16B:
     push edi
     push esi
 
-    mov dword[.enderecoCarregamento], edi
+    mov dword[.loadAddress], edi
 
-;; Checar se o arquivo existe e obter o primeiro cluster do mesmo
+;; Check if the file exists and get the first cluster of it
 
-    call Hexagon.Kernel.FS.FAT16.arquivoExisteFAT16B
+    call Hexagon.Kernel.FS.FAT16.fileExistsFAT16B
 
-    jc .falha
+    jc .failure
 
-    mov [.tamanhoArquivo], eax ;; Salvar tamanho do arquivo
+    mov [.fileSize], eax ;; Save file size
 
-    mov ax, word[ebx+26]   ;; EBX é o ponteiro para a entrada no diretório raiz
-    mov word[.cluster], ax ;; Salvar o primeiro cluster
+    mov ax, word[ebx+26]   ;; EBX is the pointer to the entry in the root directory
+    mov word[.cluster], ax ;; Save the first cluster
 
-;; Carregar FAT do disco para obter os cluster do arquivo
+;; Load FAT from volume to get file clusters
 
-    movzx eax, word[Hexagon.VFS.FAT16B.setoresPorFAT] ;; Setores para carregar
-    mov esi, dword[Hexagon.VFS.FAT16B.FAT] ;; LBA da FAT
-    mov ecx, 50h ;; Segmento
-    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Deslocamento
+    movzx eax, word[Hexagon.VFS.FAT16B.setoresPorFAT] ;; Sectors to read
+    mov esi, dword[Hexagon.VFS.FAT16B.FAT] ;; FAT LBA
+    mov ecx, 50h ;; Segment
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
 
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
 
     call Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors
 
-    mov ebp, dword[Hexagon.VFS.FAT16B.tamanhoCluster] ;; Salvar tamanho do cluster
-    mov cx,  00h ;; Segmento de modo real
-    mov edi, dword[.enderecoCarregamento] ;; Deslocamento
+    mov ebp, dword[Hexagon.VFS.FAT16B.tamanhoCluster] ;; Save cluster size
+    mov cx,  00h ;; Real mode segment
+    mov edi, dword[.loadAddress] ;; Offset
 
-;; Encontrar cluster e carregar a cadeia de clusters
+;; Find cluster and load cluster chain
 
-.loopCarregamentoClusters:
+.loopLoadClusters:
 
-;; Converter endereço lógico [cluster] para LBA (endereço físico)
+;; Convert logical address (cluster) to LBA (physical address)
 ;;
-;; Fórmula:
+;; Formula:
 ;;
-;;((cluster - 2) * setoresPorCluster) + areaDeDados
+;;((cluster - 2) * sectorsPerCluster) + dataArea
 
     movzx esi, word[.cluster]
 
@@ -725,21 +726,21 @@ Hexagon.Kernel.FS.FAT16.carregarArquivoFAT16B:
 
     xor edx, edx ;; DX = 0
 
-    mul esi ;; (cluster - 2) * setoresPorCluster
+    mul esi ;; (cluster - 2) * sectorsPerCluster
 
     mov esi, eax
 
     add esi, dword[Hexagon.VFS.FAT16B.areaDeDados]
 
-    movzx ax, byte[Hexagon.VFS.FAT16B.setoresPorCluster] ;; Total de setores para carregar
+    movzx ax, byte[Hexagon.VFS.FAT16B.setoresPorCluster] ;; Total sectors to load
 
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
 
-;; Carregar o cluster para um buffer temporário
+;; Load the cluster into a temporary buffer
 
     push edi
 
-;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+;; Correct address with segment base (physical address = address + segment base)
 
     mov edi, Hexagon.Heap.DiskCache + 500h
 
@@ -747,61 +748,61 @@ Hexagon.Kernel.FS.FAT16.carregarArquivoFAT16B:
 
     pop edi
 
-;; Copiar o cluster para a sua localização original
+;; Copy the cluster to its original location
 
     push edi
 
-;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+;; Correct address with segment base (physical address = address + segment base)
 
     add edi, 500h
 
     mov esi, Hexagon.Heap.DiskCache
-    mov ecx, ebp ;; EBP possui os bytes por setor
+    mov ecx, ebp ;; EBP has the bytes per sector
 
     cld
 
-    rep movsb ;; Mover (ECX) bytes de ESI para EDI
+    rep movsb ;; Move (ECX) bytes from ESI to EDI
 
     pop edi
 
-;; Obter próximo cluster na tabela FAT
+;; Get next cluster in FAT table
 
     movzx ebx, word[.cluster]
 
-    shl ebx, 1 ;; BX * 2 (2 bytes na entrada)
+    shl ebx, 1 ;; BX * 2 (2 bytes on entry)
 
-    add ebx, Hexagon.Heap.DiskCache + 20000 ;; Localização da FAT
+    add ebx, Hexagon.Heap.DiskCache + 20000 ;; FAT location
 
-    mov si, word[ebx] ;; SI contém o próximo cluster
+    mov si, word[ebx] ;; SI contains the next cluster
 
-    mov word[.cluster], si ;; Salvar
+    mov word[.cluster], si ;; Save
 
-;; 0xFFF8 é o marcador de fim de arquivo (End Of File - EOF)
+;; 0xFFF8 is the end of file marker (End Of File - EOF)
 
     cmp si, Hexagon.VFS.FAT16B.atributoUltimoCluster ;; EOF?
-    jae .sucessoOperacao
+    jae .operationSuccess
 
-;; Adicionar espaço vazio para próximo cluster
+;; Add empty space for next cluster
 
-    add edi, ebp ;; EBP contém bytes por cluster
+    add edi, ebp ;; EBP contains bytes per cluster
 
-    jmp .loopCarregamentoClusters
+    jmp .loopLoadClusters
 
-.sucessoOperacao:
+.operationSuccess:
 
-    mov eax, [.tamanhoArquivo]
+    mov eax, [.fileSize]
 
-    clc ;; Limpar Carry
+    clc ;; Clear Carry
 
-    jmp .fim
+    jmp .end
 
-.falha:
+.failure:
 
-    stc ;; Definir Carry
+    stc ;; Set Carry
 
-    jmp .fim
+    jmp .end
 
-.fim:
+.end:
 
     pop esi
     pop edi
@@ -811,20 +812,20 @@ Hexagon.Kernel.FS.FAT16.carregarArquivoFAT16B:
 
     ret
 
-.cluster               dw 0
-.enderecoCarregamento: dd 0
-.tamanhoArquivo:       dd 0
+.cluster      dw 0
+.loadAddress: dd 0
+.fileSize:    dd 0
 
 ;;************************************************************************************
 
-;; Obter a lista de arquivos no diretório raiz
+;; Get the list of files in the root directory
 ;;
-;; Saída:
+;; Input:
 ;;
-;; ESI - Ponteiro para a lista de arquivos
-;; EAX - Número de arquivos total
+;; ESI - Pointer to file list
+;; EAX - Total number of files
 
-Hexagon.Kernel.FS.FAT16.listarArquivosFAT16B:
+Hexagon.Kernel.FS.FAT16.listFilesFAT16B:
 
     clc
 
@@ -833,97 +834,98 @@ Hexagon.Kernel.FS.FAT16.listarArquivosFAT16B:
     push edx
     push edi
 
-;; Carregar diretório raiz
+;; Load root directory
 
-    movzx eax, word[Hexagon.VFS.FAT16B.tamanhoDirRaiz] ;; Setores para carregar
-    mov esi, dword[Hexagon.VFS.FAT16B.dirRaiz] ;; LBA do diretório raiz
-    mov cx, 50h ;; Segmento
-    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Deslocamento
+    movzx eax, word[Hexagon.VFS.FAT16B.tamanhoDirRaiz] ;; Sectors to read
+    mov esi, dword[Hexagon.VFS.FAT16B.dirRaiz] ;; LBA of the root directory
+    mov cx, 50h ;; Segment
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
 
     call Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors
 
-    jc .erroLista
+    jc .listError
 
-;; Construir a lista
-;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+;; Build the list
+;; Correct address with segment base (physical address = address + segment base)
 
-    mov edx, Hexagon.Heap.DiskCache + 500h ;; Índice na nova lista
-    mov ebx, 0 ;; Contador de arquivos
-    mov esi, Hexagon.Heap.DiskCache + 20000 ;; Deslocamento no diretório raiz
+    mov edx, Hexagon.Heap.DiskCache + 500h ;; Index in new list
+    mov ebx, 0 ;; File counter
+    mov esi, Hexagon.Heap.DiskCache + 20000 ;; Offset in the root directory
 
     sub esi, 32
 
-.loopConstruirLista:
+.buildListLoop:
 
-    add esi, 32 ;; Próxima entrada (32 bytes por entrada)
+    add esi, 32 ;; Next entry (32 bytes per entry)
 
-;; Vamos checar alguns atributos da entrada, como se se trata de um diretório
-;; ou ainda um rótulo de volume. Por hora, caso se trata destas entrada, iremos
-;; pular, até o suporte ser completado.
+;; Let's check some attributes of the entry, such as whether it is a directory or a volume label.
+;; For now, if we are talking about these entries, we will skip until the support is completed.
 
-    mov al, byte[esi+11] ;; Atributos do arquivo
+    mov al, byte[esi+11] ;; File attributes
 
-    bt ax, Hexagon.VFS.FAT16B.bitDiretorio ;; Se subdiretório, pule
-    jc .loopConstruirLista
+    bt ax, Hexagon.VFS.FAT16B.bitDiretorio ;; If subdirectory, skip
+    jc .buildListLoop
 
-    bt ax, Hexagon.VFS.FAT16B.bitNomeVolume ;; Se rótulo do volume, pule
-    jc .loopConstruirLista
+    bt ax, Hexagon.VFS.FAT16B.bitNomeVolume ;; If volume label, skip
+    jc .buildListLoop
 
-;; Agora, vamos obter mais informações sobre a entrada
+;; Now let's get more information about the entry
 
-    cmp byte[esi+11], Hexagon.VFS.FAT16B.atributoLFN ;; Se nome de arquivo longo, pule
-    je .loopConstruirLista ;; Em caso de nome longo, pule a entrada (por hora)
+    cmp byte[esi+11], Hexagon.VFS.FAT16B.atributoLFN ;; If long filename, skip
+    je .buildListLoop
 
-    cmp byte[esi], Hexagon.VFS.FAT16B.atributoDeletado ;; Se arquivo deletado, pule
-    je .loopConstruirLista ;; Em caso de arquivo deletado, pule a entrada
+    cmp byte[esi], Hexagon.VFS.FAT16B.atributoDeletado ;; If file deleted, skip
+    je .buildListLoop
 
-    cmp byte[esi], 0   ;; Se último arquivo, termine
-    je .finalizarLista ;; Se este for o último arquivo, não vamos querer procurar mais
-                       ;; no diretório atrás de algo que não existe ;-)
+;; If this is the last file, we don't want to look any further in the directory for something
+;; that doesn't exist ;-)
 
-    call Hexagon.Kernel.FS.FAT16.nomeFATParaNomeArquivo ;; Converter nome para formato 8.3
+    cmp byte[esi], 0   ;; If last file, finish
+    je .finishList
 
-;; Adicionar entrada de nome de arquivo na lista
+    call Hexagon.Kernel.FS.FAT16.FATnameToFilename ;; Convert name to 8.3 format
 
-    call Hexagon.Kernel.Lib.String.tamanhoString ;; Encontrar tamanho da entrada
+;; Add filename entry to list
+
+    call Hexagon.Kernel.Lib.String.tamanhoString ;; Find entry size
 
     push esi
 
     mov edi, edx
-    mov ecx, eax ;; EAX é o tamanho da primeira string
+    mov ecx, eax ;; EAX is the size of the first string
 
-    rep movsb ;; Move (ECX) bytes de ESI para EDI
+    rep movsb ;; Move (ECX) bytes from ESI to EDI
 
     pop esi
 
-;; Adicionar um espaço entre os nomes de arquivo, útil para a manipulação da lista
+;; Add a space between filenames, useful for list manipulation
 
     mov byte[es:edx+eax], ' '
 
-    inc eax ;; Tamanho da string + 1 caractere
-    inc ebx ;; Atualizar contador de arquivos
+    inc eax ;; String size + 1 character
+    inc ebx ;; Update file counter
 
-    add edx, eax ;; Atualizar índice na lista
+    add edx, eax ;; Update index in list
 
-    jmp .loopConstruirLista ;; Obter próximos arquivos
+    jmp .buildListLoop ;; Get next files
 
-.finalizarLista:
+.finishList:
 
-;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+;; Correct address with segment base (physical address = address + segment base)
 
-    mov byte[edx-500h], 0 ;; Fim da string
+    mov byte[edx-500h], 0 ;; End of string
 
     mov esi, Hexagon.Heap.DiskCache
     mov eax, ebx
 
-    jmp .fim
+    jmp .end
 
-.erroLista:
+.listError:
 
     stc
 
-.fim:
+.end:
 
     pop edi
     pop edx
@@ -934,19 +936,19 @@ Hexagon.Kernel.FS.FAT16.listarArquivosFAT16B:
 
 ;;************************************************************************************
 
-;; Salvar arquivo no disco
+;; Save file to volume
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; ESI - Ponteiro para o nome do arquivo
-;; EDI - Ponteiro para os dados
-;; EAX - Tamanho do arquivo (em bytes)
+;; ESI - Pointer to filename
+;; EDI - Pointer to data
+;; EAX - File size (in bytes)
 ;;
-;; Saída:
+;; Output:
 ;;
-;; CF definido em caso de erro ou arquivo já existente
+;; CF defined in case of error or already existing file
 
-Hexagon.Kernel.FS.FAT16.salvarArquivoFAT16B:
+Hexagon.Kernel.FS.FAT16.saveFileFAT16B:
 
     push eax
     push ebx
@@ -955,70 +957,70 @@ Hexagon.Kernel.FS.FAT16.salvarArquivoFAT16B:
     push edi
     push esi
 
-    mov ebp, edi ;; Salvar EDI
-    mov dword[.tamanhoArquivo], eax ;; Salvar tamanho do arquivo
+    mov ebp, edi ;; Save EDI
+    mov dword[.fileSize], eax ;; Save file size
 
-;; Criar novo arquivo
+;; Create new file
 
-    call Hexagon.Kernel.FS.FAT16.novoArquivoFAT16B
+    call Hexagon.Kernel.FS.FAT16.createEmptyFileFAT16B
 
-    jc .falha ;; Se arquivo já existir, retorne
+    jc .failure ;; If file already exists, return
 
-;; Carregar FAT do disco
+;; Load FAT from volume
 
-    movzx eax, word[Hexagon.VFS.FAT16B.setoresPorFAT] ;; Setores para carregar
-    mov esi, dword[Hexagon.VFS.FAT16B.FAT] ;; LBA do diretório raiz
-    mov ecx, 50h ;; Segmento
-    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Deslocamento
+    movzx eax, word[Hexagon.VFS.FAT16B.setoresPorFAT] ;; Sectors to read
+    mov esi, dword[Hexagon.VFS.FAT16B.FAT] ;; LBA of the root directory
+    mov ecx, 50h ;; Segment
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
 
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
 
     call Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors
 
-;; Calcular número de clusteres necessários
+;; Calculate number of clusters needed
 ;;
-;; Fórmula:
+;; Formula:
 ;;
-;; Número requerido = .tamanhoArquivo / tamanhoCluster
+;; Number required = .fileSize / sizeCluster
 
-    mov eax, dword[.tamanhoArquivo]
+    mov eax, dword[.fileSize]
     mov ebx, dword[Hexagon.VFS.FAT16B.tamanhoCluster]
     mov edx, 0
 
-    div ebx ;; .tamanhoArquivo / tamanhoCluster
+    div ebx ;; .fileSize / clusterSize
 
     inc eax
 
-    mov dword[.clustersNecessarios], eax
+    mov dword[.clustersRequired], eax
 
-    mov ecx, eax ;; Contador do loop
+    mov ecx, eax ;; Loop counter
 
     mov esi, Hexagon.Heap.DiskCache + 20000
 
-    add esi, (3*2) ;; Clusters reservados
+    add esi, (3*2) ;; Reserved clusters
 
-    mov edx, 3 ;; Contador de clusters lógicos
-    mov edi, Hexagon.Heap.DiskCache + 500h ;; Ponteiro para a lista de clusters livres
+    mov edx, 3 ;; Logical cluster counter
+    mov edi, Hexagon.Heap.DiskCache + 500h ;; Pointer to the list of free clusters
     mov eax, 0
 
-;; Obter lista de clusters livres da FAT
+;; Get list of FAT free clusters
 
-.encontrarClustersLivresLoop:
+.findFreeClustersLoop:
 
-    mov ax, word[esi] ;; Carregar entrada FAT
+    mov ax, word[esi] ;; Load FAT input
 
-    or ax, ax ;; Comparar AX com 0
-    jz .clusterLivreEncontrado
+    or ax, ax ;; Compare AX with 0
+    jz .freeClusterFound
 
-    add esi, 2 ;; Próxima entrada FAT
+    add esi, 2 ;; FAT next entry
 
     inc edx
 
-    jmp .encontrarClustersLivresLoop
+    jmp .findFreeClustersLoop
 
-.clusterLivreEncontrado:
+.freeClusterFound:
 
-;; Armazenar clusters livres em uma lista
+;; Store free clusters in a list
 
     mov word[esi], 0xFFFF
 
@@ -1026,97 +1028,97 @@ Hexagon.Kernel.FS.FAT16.salvarArquivoFAT16B:
 
     stosw ;; mov word[ES:EDI], AX & add EDI, 2
 
-    loop .encontrarClustersLivresLoop
+    loop .findFreeClustersLoop
 
     movzx edx, word[Hexagon.Heap.DiskCache]
 
-    push edx ;; Cluster livre
+    push edx ;; Free cluster
 
-;; Tudo requer uma lista de clusters livres
+;; Everything requires a list of free clusters
 
-;; Criar cadeia de clusters na FAT
+;; Create cluster chain in FAT
 
-    mov ecx, dword[.clustersNecessarios]
-    mov esi, Hexagon.Heap.DiskCache ;; Lista de clusters livres (words)
+    mov ecx, dword[.clustersRequired]
+    mov esi, Hexagon.Heap.DiskCache ;; List of free clusters (words)
 
-.criarCadeiaClusters:
+.createClusterChain:
 
-    mov dx, word[esi] ;; Cluster atual
+    mov dx, word[esi] ;; Current cluster
 
-    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Endereço da FAT
-    shl dx, 1 ;; Multiplicar por 2
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; FAT address
+    shl dx, 1 ;; Multiply by 2
 
-    add di, dx ;; EDI é o ponteiro da atual entrada FAT
+    add di, dx ;; EDI is the pointer of the current FAT entry
 
-    cmp ecx, 1 ;; Feito
-    je .cadeiaClustersPronta
+    cmp ecx, 1 ;; Done
+    je .clusterChainReady
 
-    mov ax, word[esi+2] ;; Próximo cluster
-    mov word[edi], ax ;; Salvar próximo cluster da tabela FAT
+    mov ax, word[esi+2] ;; Next cluster
+    mov word[edi], ax ;; Save next FAT table cluster
 
-    add esi, 2 ;; Próximo cluster livre
+    add esi, 2 ;; Next free cluster
 
-    loop .criarCadeiaClusters
+    loop .createClusterChain
 
-.cadeiaClustersPronta:
+.clusterChainReady:
 
-    mov word[edi], 0xFFFF ;; 0xFFFF indica último cluster
+    mov word[edi], 0xFFFF ;; 0xFFFF indicates last cluster
 
-;; Escrever tabela FAT no disco
+;; Write FAT table to volume
 
-    movzx eax, word[Hexagon.VFS.FAT16B.setoresPorFAT] ;; Setores para escrever
-    mov esi, dword[Hexagon.VFS.FAT16B.FAT] ;; LBA do diretório raiz
-    mov ecx, 50h ;; Segmento
-    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Deslocamento
+    movzx eax, word[Hexagon.VFS.FAT16B.setoresPorFAT] ;; Sectors to write
+    mov esi, dword[Hexagon.VFS.FAT16B.FAT] ;; LBA of the root directory
+    mov ecx, 50h ;; Segment
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
 
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
 
     call Hexagon.Kernel.Dev.i386.Disk.Disk.writeSectors
 
-    pop ecx ;; Cluster livre
+    pop ecx ;; Free cluster
 
-;; Obter entrada no diretório raiz
+;; Get entry into root directory
 
-    pop esi ;; Restaurar ESI
+    pop esi ;; Restore ESI
 
     push esi
 
-    call Hexagon.Kernel.FS.FAT16.arquivoExisteFAT16B
+    call Hexagon.Kernel.FS.FAT16.fileExistsFAT16B
 
-    jc .falha
+    jc .failure
 
-;; EBX é um ponteiro para a entrada no diretório raiz
+;; EBX is a pointer to the entry in the root directory
 
-    mov eax, dword[.tamanhoArquivo]
-    mov dword[ebx+28], eax ;; Tamanho
-    mov word[ebx+26], cx ;; Primeiro cluster
+    mov eax, dword[.fileSize]
+    mov dword[ebx+28], eax ;; Size
+    mov word[ebx+26], cx ;; First sector
 
-;; Escrever diretório raiz modificado no disco
+;; Write modified root directory to volume
 
-    movzx eax, word[Hexagon.VFS.FAT16B.tamanhoDirRaiz] ;; Setores para escrever
-    mov esi, dword[Hexagon.VFS.FAT16B.dirRaiz] ;; LBA diretório raiz
-    mov cx, 50h ;; Segmento
-    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Deslocamento
+    movzx eax, word[Hexagon.VFS.FAT16B.tamanhoDirRaiz] ;; Sectors to write
+    mov esi, dword[Hexagon.VFS.FAT16B.dirRaiz] ;; LBA of the root directory
+    mov cx, 50h ;; Segment
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
 
     call Hexagon.Kernel.Dev.i386.Disk.Disk.writeSectors
 
-;; Salvar dados nos clusters livres
+;; Save data to free clusters
 
-    mov ebx, Hexagon.Heap.DiskCache ;; Lista de clusters vazios
-    movzx ecx, word[.clustersNecessarios]
+    mov ebx, Hexagon.Heap.DiskCache ;; Free cluster list
+    movzx ecx, word[.clustersRequired]
 
-;; Converter endereço lógico [cluster] para LBA
+;; Convert logical address (cluster) to LBA
 ;;
-;; Fórmula:
+;; Formula:
 ;;
-;; ((cluster - 2) * setoresPorCluster) + areaDeDados
+;; ((cluster - 2) * sectorsPerCluster) + dataArea
 
-.escreverDadosNosClusters:
+.writeDataToClusters:
 
     push ecx
 
-;; Copiar dados atuais para um buffer temporário
+;; Copy current data to a temporary buffer
 
     mov esi, ebp
     mov edi, Hexagon.Heap.DiskCache + 500h + 20000
@@ -1131,43 +1133,43 @@ Hexagon.Kernel.FS.FAT16.salvarArquivoFAT16B:
     movzx eax, byte[Hexagon.VFS.FAT16B.setoresPorCluster]
     xor edx, edx ;; DX = 0
 
-    mul esi ;; (cluster - 2) * setoresPorCluster
+    mul esi ;; (cluster - 2) * sectorsPerCluster
 
     mov esi, eax
 
     add esi, dword[Hexagon.VFS.FAT16B.areaDeDados]
 
-    movzx ax, byte[Hexagon.VFS.FAT16B.setoresPorCluster] ;; Total de setores a escrever
+    movzx ax, byte[Hexagon.VFS.FAT16B.setoresPorCluster] ;; Total sectors to write
 
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
 
-;; Escrever buffer temporário
+;; Write temporary buffer
 
     mov edi, Hexagon.Heap.DiskCache + 500h + 20000
-    mov ecx, 0 ;; Segmento de modo real
+    mov ecx, 0 ;; Real mode segment
 
     call Hexagon.Kernel.Dev.i386.Disk.Disk.writeSectors
 
     pop ecx
 
-    add ebp, dword[Hexagon.VFS.FAT16B.tamanhoCluster] ;; Próximo bloco de dados
-    add ebx, 2 ;; Próximo cluster livre
+    add ebp, dword[Hexagon.VFS.FAT16B.tamanhoCluster] ;; Next data block
+    add ebx, 2 ;; Next free cluster
 
-    loop .escreverDadosNosClusters
+    loop .writeDataToClusters
 
-.sucessoOperacao:
+.operationSuccess:
 
-    clc ;; Limpar Carry
+    clc ;; Clear Carry
 
-    jmp .fim
+    jmp .end
 
-.falha:
+.failure:
 
-    stc ;; Definir Carry
+    stc ;; Set Carry
 
-    jmp .fim
+    jmp .end
 
-.fim:
+.end:
 
     pop esi
     pop edi
@@ -1178,64 +1180,64 @@ Hexagon.Kernel.FS.FAT16.salvarArquivoFAT16B:
 
     ret
 
-.tamanhoArquivo:      dd 0
-.clustersNecessarios: dd 0
+.fileSize:         dd 0
+.clustersRequired: dd 0
 
 ;;************************************************************************************
 
-;; Remover um arquivo do disco
+;; Unlink a file from volume
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; ESI - Ponteiro para o nome de arquivo
+;; ESI - Pointer to filename
 
-Hexagon.Kernel.FS.FAT16.deletarArquivoFAT16B:
+Hexagon.Kernel.FS.FAT16.unlinkFileFAT16B:
 
     pushad
 
-    call Hexagon.Kernel.FS.FAT16.arquivoExisteFAT16B
+    call Hexagon.Kernel.FS.FAT16.fileExistsFAT16B
 
-    jc .fim
+    jc .end
 
-;; A entrada do diretório raiz já está carregada, devido a Hexagon.Kernel.FS.FAT16.arquivoExisteFAT16B
+;; The root directory entry is already loaded, due to Hexagon.Kernel.FS.FAT16.fileExistsFAT16B
 
-    mov ax, word[ebx+26] ;; Obter o primeiro cluster
-    mov word[.cluster], ax ;; Salvar
+    mov ax, word[ebx+26] ;; Get first cluster
+    mov word[.cluster], ax ;; Save
 
-;; Marcar o arquivo como deletado
+;; Mark the file as deleted
 
     mov byte[ebx], Hexagon.VFS.FAT16B.atributoDeletado
 
-;; Escrever diretório raiz modificado no disco
+;; Write modified root directory to volume
 
-    movzx eax, word[Hexagon.VFS.FAT16B.tamanhoDirRaiz] ;; Setores para escrever
-    mov esi, dword[Hexagon.VFS.FAT16B.dirRaiz] ;; LBA do diretório raiz
-    mov cx, 50h ;; Segmento
-    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Deslocamento
+    movzx eax, word[Hexagon.VFS.FAT16B.tamanhoDirRaiz] ;; Sectors to write
+    mov esi, dword[Hexagon.VFS.FAT16B.dirRaiz] ;; LBA of the root directory
+    mov cx, 50h ;; Segment
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
 
     call Hexagon.Kernel.Dev.i386.Disk.Disk.writeSectors
 
-;; Limpar clusters alocados para o arquivo na FAT
+;; Clear clusters allocated to the file in FAT
 
-;; Carregar FAT no disco
+;; Load FAT to volume
 
-    movzx eax, word[Hexagon.VFS.FAT16B.setoresPorFAT] ;; Setores para carregar
-    mov esi, dword[Hexagon.VFS.FAT16B.FAT] ;; LBA da FAT
-    mov ecx, 50h ;; Segmento
-    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Deslocamento
+    movzx eax, word[Hexagon.VFS.FAT16B.setoresPorFAT] ;; Sectors to read
+    mov esi, dword[Hexagon.VFS.FAT16B.FAT] ;; FAT LBA
+    mov ecx, 50h ;; Segment
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
 
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
 
     call Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors
 
-.proximoCluster:
+.nextCluster:
 
 ;; Calcular próximo cluster
 
-    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Tabela FAT
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; FAT table
     movzx esi, word[.cluster]
-    shl esi, 1 ;; Multiplica por 2
+    shl esi, 1 ;; Multiply by 2
 
     add edi, esi
 
@@ -1243,27 +1245,27 @@ Hexagon.Kernel.FS.FAT16.deletarArquivoFAT16B:
 
     mov word[.cluster], ax
 
-    mov word[edi], 0 ;; Marcar cluster como livre
+    mov word[edi], 0 ;; Mark cluster as free
 
-    cmp ax, Hexagon.VFS.FAT16B.atributoUltimoCluster ;; 0xFFF8 é marcador de fim de arquivo (EOF)
-    jae .todosClustersDeletados
+    cmp ax, Hexagon.VFS.FAT16B.atributoUltimoCluster ;; 0xFFF8 is end of file marker (EOF)
+    jae .allClustersDeleted
 
-    jmp .proximoCluster
+    jmp .nextCluster
 
-.todosClustersDeletados:
+.allClustersDeleted:
 
-;; Escrever FAT no disco
+;; Write FAT to volume
 
-    movzx eax, word[Hexagon.VFS.FAT16B.setoresPorFAT] ;; Setores para escrever
-    mov esi, dword[Hexagon.VFS.FAT16B.FAT] ;; LBA da FAT
-    mov ecx, 50h ;; Segmento
-    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Deslocamento
+    movzx eax, word[Hexagon.VFS.FAT16B.setoresPorFAT] ;; Sectors to write
+    mov esi, dword[Hexagon.VFS.FAT16B.FAT] ;; FAT LAB
+    mov ecx, 50h ;; Segment
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
 
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
 
     call Hexagon.Kernel.Dev.i386.Disk.Disk.writeSectors
 
-.fim:
+.end:
 
     popad
 
@@ -1273,69 +1275,69 @@ Hexagon.Kernel.FS.FAT16.deletarArquivoFAT16B:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.FS.FAT16.obterInfoFAT16B:
+Hexagon.Kernel.FS.FAT16.getFilesystemInfoFAT16B:
 
-    mov ax, word[es:esi+8] ;; Bytes por setor
+    mov ax, word[es:esi+8] ;; Bytes per sector
     mov word[Hexagon.VFS.FAT16B.bytesPorSetor], ax
 
-    mov al, byte[es:esi+10] ;; Setores por cluster
+    mov al, byte[es:esi+10] ;; Sectors per cluster
     mov byte[Hexagon.VFS.FAT16B.setoresPorCluster], al
 
-    mov ax, word[es:esi+11] ;; Setores reservados
+    mov ax, word[es:esi+11] ;; Reserved sectors
     mov word[Hexagon.VFS.FAT16B.setoresReservados], ax
 
-    mov al, byte[es:esi+13] ;; Número de tabelas FAT
+    mov al, byte[es:esi+13] ;; Number of FAT tables
     mov byte[Hexagon.VFS.FAT16B.totalFATs], al
 
-    mov ax, word[es:esi+14] ;; Entradas no diretório raiz
+    mov ax, word[es:esi+14] ;; Entries in the root directory
     mov word[Hexagon.VFS.FAT16B.entradasRaiz], ax
 
-    mov ax, word[es:esi+19] ;; Setores por FAT
+    mov ax, word[es:esi+19] ;; Sectors per FAT
     mov word[Hexagon.VFS.FAT16B.setoresPorFAT], ax
 
-    mov eax, dword[es:esi+29] ;; Total de setores
+    mov eax, dword[es:esi+29] ;; Total sectors
     mov dword[Hexagon.VFS.FAT16B.totalSetores], eax
 
-    mov eax, dword[es:esi+36] ;; Serial do volume
+    mov eax, dword[es:esi+36] ;; Volume serial
     mov dword[Hexagon.VFS.Controle.serialVolume], eax
 
     mov byte[Hexagon.VFS.Controle.serialVolume+4], 0
 
-;; Obter o rótulo do volume utilizado
+;; Get the label of the volume used
 
-    mov eax, dword[es:esi+40] ;; Rótulo do volume
+    mov eax, dword[es:esi+40] ;; Volume label
     mov dword[Hexagon.VFS.Controle.rotuloVolume], eax
 
-    mov eax, dword[es:esi+44] ;; Rótulo do volume
+    mov eax, dword[es:esi+44] ;; Volume label
     mov dword[Hexagon.VFS.Controle.rotuloVolume+4], eax
 
-    mov eax, dword[es:esi+48] ;; Rótulo do volume
+    mov eax, dword[es:esi+48] ;; Volume label
     mov dword[Hexagon.VFS.Controle.rotuloVolume+8], eax
 
-;; Agora devemos terminar a "string" de rótulo do volume
+;; Now we must finish the volume label string
 
     mov byte[Hexagon.VFS.Controle.rotuloVolume+11], 0
 
-;; Calcular o tamanho do diretório raiz
+;; Calculate root directory size
 ;;
-;; Fórmula:
+;; Formula:
 ;;
-;; Tamanho  = (entradasRaiz * 32) / bytesPorSetor
+;; Size = (root entries * 32) / bytesPerSector
 
     mov ax, word[Hexagon.VFS.FAT16B.entradasRaiz]
-    shl ax, 5 ;; Multiplicar por 32
+    shl ax, 5 ;; Multiply by 32
     mov bx, word[Hexagon.VFS.FAT16B.bytesPorSetor]
     xor dx, dx ;; DX = 0
 
     div bx ;; AX = AX / BX
 
-    mov word[Hexagon.VFS.FAT16B.tamanhoDirRaiz], ax ;; Salvar o tamanho do diretório raiz
+    mov word[Hexagon.VFS.FAT16B.tamanhoDirRaiz], ax ;; Save root directory size
 
-;; Calcular o tamanho de todas as tabelas FAT
+;; Calculate size of all FAT tables
 ;;
-;; Fórmula:
+;; Formula:
 ;;
-;; Tamanho  = totalFATs * setoresPorFAT
+;; Size = totalFATs * sectorsPerFAT
 
     mov ax, word[Hexagon.VFS.FAT16B.setoresPorFAT]
     movzx bx, byte[Hexagon.VFS.FAT16B.totalFATs]
@@ -1343,13 +1345,13 @@ Hexagon.Kernel.FS.FAT16.obterInfoFAT16B:
 
     mul bx ;; AX = AX * BX
 
-    mov word[Hexagon.VFS.FAT16B.tamanhoFATs], ax ;; Salvar tamanho da(s) FAT(s)
+    mov word[Hexagon.VFS.FAT16B.tamanhoFATs], ax ;; Save size of FAT(s)
 
-;; Calcular endereço da área de dados
+;; Calculate data area address
 ;;
-;; Fórmula:
+;; Formula:
 ;;
-;; setoresReservados + tamanhoFATs + tamanhoDirRaiz
+;; reservedSectors + sizeFATs + rootDirSize
 
     movzx eax, word[Hexagon.VFS.FAT16B.setoresReservados]
 
@@ -1358,30 +1360,30 @@ Hexagon.Kernel.FS.FAT16.obterInfoFAT16B:
 
     mov dword[Hexagon.VFS.FAT16B.areaDeDados], eax
 
-;; Calcular endereço LBA do diretório raiz
+;; Calculate LBA address of root directory
 ;;
-;; Fórmula:
+;; Formula:
 ;;
-;; LBA  = setoresReservados + tamanhoFATs
+;; LBA = reservedSectors + sizeFATs
 
     movzx esi, word[Hexagon.VFS.FAT16B.setoresReservados]
     add si, word[Hexagon.VFS.FAT16B.tamanhoFATs]
     mov dword[Hexagon.VFS.FAT16B.dirRaiz], esi
 
-;; Calcular endereço LBA da tabela FAT
+;; Calculate LBA address from FAT table
 ;;
-;; Fórmula:
+;; Formula:
 ;;
-;; LBA  = setoresReservados
+;; LBA = reservedSectors
 
     movzx esi, word[Hexagon.VFS.FAT16B.setoresReservados]
     mov dword[Hexagon.VFS.FAT16B.FAT], esi
 
-;; Calcular o tamanho do cluster em bytes
+;; Calculate cluster size in bytes
 ;;
-;; Fórmula:
+;; Formula:
 ;;
-;; setoresPorCluster * bytesPorSetor
+;; sectorsByCluster * bytesBySector
 
     movzx eax, byte[Hexagon.VFS.FAT16B.setoresPorCluster]
     movzx ebx, word[Hexagon.VFS.FAT16B.bytesPorSetor]
@@ -1395,59 +1397,59 @@ Hexagon.Kernel.FS.FAT16.obterInfoFAT16B:
 
 ;;************************************************************************************
 
-;; Criar novo arquivo vazio
+;; Create new empty file
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; ESI - Ponteiro para o nome de arquivo
+;; ESI - Pointer to filename
 ;;
-;; Saída:
+;; Output:
 ;;
-;; EDI - Ponteiro para a entrada no diretório raiz
-;; CF definido em caso de arquivo já existir
+;; EDI - Pointer to entry in the root directory
+;; CF defined if file already exists
 
-Hexagon.Kernel.FS.FAT16.novoArquivoFAT16B:
+Hexagon.Kernel.FS.FAT16.createEmptyFileFAT16B:
 
     pushad
 
-;; Checar se o arquivo já existe
+;; Check if the file already exists
 
-    call Hexagon.Kernel.FS.FAT16.arquivoExisteFAT16B
+    call Hexagon.Kernel.FS.FAT16.fileExistsFAT16B
 
-    jnc .falha
+    jnc .failure
 
     call Hexagon.Kernel.Lib.String.tamanhoString
 
     cmp eax, 12
-    ja .falha ;; Em caso de nome inválido
+    ja .failure ;; In case of invalid filename
 
-    inc eax ;; Nome de arquivo incluindo 0
+    inc eax ;; Filename including 0
 
-;; Copiar o nome de arquivo para um buffer temporário
+;; Copy filename to a temporary buffer
 
-    mov edi, .bufferNomeDeArquivo + 500h
-    mov ecx, eax ;; Tamanho do nome de arquivo
+    mov edi, .filenameBuffer + 500h
+    mov ecx, eax ;; Filename size
 
     cld
 
-    rep movsb ;; Mover (ECX) vezes a string em ESI para EDI
+    rep movsb ;; Move (ECX) times string in ESI to EDI
 
-;; Converter para nome de arquivo compatível FAT
+;; Convert to FAT compatible filename
 
-    mov esi, .bufferNomeDeArquivo
+    mov esi, .filenameBuffer
 
-    call Hexagon.Kernel.FS.FAT16.nomeArquivoParaFAT
+    call Hexagon.Kernel.FS.FAT16.filenameToFATName
 
-    jc .falha ;; Em caso de nome de arquivo inválido
+    jc .failure ;; In case of invalid filename
 
     push esi
 
-;; Carregar diretório raiz do disco
+;; Load root directory from volume
 
-    movzx eax, word[Hexagon.VFS.FAT16B.tamanhoDirRaiz] ;; Setores para carregar
-    mov esi, dword[Hexagon.VFS.FAT16B.dirRaiz] ;; LBA diretório raiz
-    mov cx, 50h ;; Segmento
-    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Deslocamento
+    movzx eax, word[Hexagon.VFS.FAT16B.tamanhoDirRaiz] ;; Sectors to read
+    mov esi, dword[Hexagon.VFS.FAT16B.dirRaiz] ;; LBA of root directory
+    mov cx, 50h ;; Segment
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
 
     call Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors
@@ -1455,98 +1457,98 @@ Hexagon.Kernel.FS.FAT16.novoArquivoFAT16B:
     mov edi, Hexagon.Heap.DiskCache + 20000
     movzx ecx, word[Hexagon.VFS.FAT16B.entradasRaiz]
 
-;; Procurar entrada vazia no diretório raiz
+;; Search for empty entry in root directory
 
-.encontrarEntradaVaziaLoop:
+.findFreeEntryLoop:
 
-    cmp byte[edi], Hexagon.VFS.FAT16B.atributoDeletado ;; Arquivo deletado
-    je .entradaVaziaEncontrada
+    cmp byte[edi], Hexagon.VFS.FAT16B.atributoDeletado ;; File deleted
+    je .emptyEntryFound
 
-    cmp byte[edi], 0 ;; Entrada não usada
-    je .entradaVaziaEncontrada
+    cmp byte[edi], 0 ;; Empty entry
+    je .emptyEntryFound
 
     add edi, 32
 
-    loop .encontrarEntradaVaziaLoop
+    loop .findFreeEntryLoop
 
-.entradaVaziaNaoEncontrada:
+.emptyEntryNotFound:
 
-    jmp .falha
+    jmp .failure
 
-.entradaVaziaEncontrada:
+.emptyEntryFound:
 
-;; Copiar nome de arquivo para o buffer de diretório raiz
+;; Copy filename to root directory buffer
 
-    pop esi ;; Restaurar ESI
+    pop esi ;; Restore ESI
 
-    mov ecx, 11 ;; Tamanho do nome de arquivo
-
-    push edi
-
-;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
-
-    add edi, 500h ;; Segmento ES
-
-    rep movsb ;; Move (ECX) bytes de ESI para EDI
-
-    pop edi ;; Restaurar EDI
+    mov ecx, 11 ;; Filename size
 
     push edi
 
-;; Limpar outros campos da entrada do arquivo no diretório raiz, a partir do nome do arquivo
+;; Correct address with segment base (physical address = address + segment base)
 
-    add edi, 500h + 11 ;; Pular para o término do nome do arquivo
-    mov ecx, 32 - 11   ;; Fazer isso para 32 bytes de entrada menos os primeiros 11 do nome
+    add edi, 500h ;; ES segment
+
+    rep movsb ;; Move (ECX) bytes from ESI to EDI
+
+    pop edi ;; Restore EDI
+
+    push edi
+
+;; Clear other fields of the file entry in the root directory, starting from the filename
+
+    add edi, 500h + 11 ;; Skip to end of filename
+    mov ecx, 32 - 11   ;; Do this for 32 bytes of input minus the first 11 of the name
     mov al, 0
 
     cld
 
-    rep stosb ;; mov AL em (ECX) bytes de EDI
+    rep stosb ;; mov AL in (ECX) EDI bytes
 
-;; Escrever diretório raiz modificado no disco
+;; Write modified root directory to volume
 
-    movzx eax, word[Hexagon.VFS.FAT16B.tamanhoDirRaiz] ;; Setores para escrever
-    mov esi, dword[Hexagon.VFS.FAT16B.dirRaiz] ;; LBA do diretório raiz
-    mov cx, 50h ;; Segmento
-    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Deslocamento
+    movzx eax, word[Hexagon.VFS.FAT16B.tamanhoDirRaiz] ;; Sectors to write
+    mov esi, dword[Hexagon.VFS.FAT16B.dirRaiz] ;; LBA of the root directory
+    mov cx, 50h ;; Segment
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
 
     call Hexagon.Kernel.Dev.i386.Disk.Disk.writeSectors
 
-    pop esi ;; Ponteiro para a entrada do diretório raiz
+    pop esi ;; Pointer to root directory entry
 
-.sucessoOperacao:
+.operationSuccess:
 
-    clc ;; Limpar Carry
+    clc ;; Clear Carry
 
-    jmp .fim
+    jmp .end
 
-.falha:
+.failure:
 
-    stc ;; Definir Carry
+    stc ;; Set Carry
 
-    jmp .fim
+    jmp .end
 
-.fim:
+.end:
 
     popad
 
     ret
 
-.bufferNomeDeArquivo: times 13 db ' '
+.filenameBuffer: times 13 db ' '
 
 ;;************************************************************************************
 
-;; Inicializa os discos
+;; Initialize the volumes
 
-Hexagon.Kernel.FS.FAT16.iniciarVolumeFAT16B:
+Hexagon.Kernel.FS.FAT16.initVolumeFAT16B:
 
-;; Obter informações da BPB e armazenarem estruturas do sistema
+;; Obtain information from BPB and store system structures
 
     call Hexagon.Kernel.Dev.i386.Disk.Disk.readBPB
 
     mov esi, dword[Hexagon.Memory.addressBPB]
 
-    call Hexagon.Kernel.FS.FAT16.obterInfoFAT16B
+    call Hexagon.Kernel.FS.FAT16.getFilesystemInfoFAT16B
 
     ret

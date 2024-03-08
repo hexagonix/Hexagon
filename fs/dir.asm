@@ -73,57 +73,60 @@
 
 use32
 
-;; Variáveis, contantes e estruturas necessárias para o gerenciamento de
-;; diretórios do Sistema de Arquivos Virtual
+;; Variables, constants and structures required for managing Virtual File System directories
 
-Hexagon.VFS.Diretorio:
+Hexagon.VFS.Directory:
 
-.codigo:                     db 0
-.deslocamento:               db 0
-.estado:                     db 0
-.diretorioAtual:    times 64 db " "
-.diretorioAnterior: times 64 db 0
-.tamanhoCaminho              equ 64
+.code:   db 0
+.offset: db 0
+.status: db 0
+.currentDirectory:
+times 64 db " "
+.previousDirectory:
+times 64 db 0
+.pathSize equ 64
 
-Hexagon.VFS.Montagem:
+Hexagon.VFS.Mount:
 
-.pontoMontagem:   times 64 db " "
-.usuarioMontagem: times 32 db 0
-.estado:                   db 0
-.codigoUsuario:            db 0
-.ultimoErro:               db 0
+.mountPoint:
+times 64 db " "
+.mountUser:
+times 32 db 0
+.status:    db 0
+.userCode:  db 0
+.lastError: db 0
 
 ;;************************************************************************************
 
-;; Define um diretório  atual para uso no Sistema de Arquivos
+;; Sets a current directory for use in the filesystem
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; ESI - Caminho completo do diretório à ser utilizado. O caminho deve ter 1 ou mais
-;; caracteres, no mínimo
+;; ESI - Full path of the directory to be used.
+;;       The path must be at least 1 or more characters long
 ;;
-;; Saída:
+;; Output:
 ;;
-;; EAX - Código de erro, dos quais:
-;;       - 01h: Diretório não encontrado no Sistema de Arquivos.
-;;       - 02h: O nome de diretório não bate com as exigências.
-;;       - 03h: Erro desconhecido durante a requisição.
-;; EBX - Tamanho do caminho fornecido
-;; CF definido em caso de erro
+;; EAX - Error code, of which:
+;; - 01h: Directory not found in the File System.
+;; - 02h: The directory name does not match the requirements.
+;; - 03h: Unknown error during the request.
+;; EBX - Size of given path
+;; CF set in case of error
 
-Hexagon.Kernel.FS.Dir.definirDiretorioAtual:
+Hexagon.Kernel.FS.Dir.setCurrentDirectory:
 
-    push esi ;; Primeiro, salvar o caminho fornecido na chamada
+    push esi ; First, save the path provided in the call
 
-;; Agora o tamanho do caminho fornecido será validado para verificar a exigência
+;; Now the given path length will be validated to check the requirement
 
-    call Hexagon.Kernel.Lib.String.tamanhoString ;; Função do Hexagon para verificar o tamanho de uma string
+    call Hexagon.Kernel.Lib.String.tamanhoString ;; Hexagon function to check the size of a string
 
     cmp eax, 2
-    jg .continuar ;; Maior que 2 (Caractere mais null)
+    jg .continue ;; Greater than 2 (Character plus null)
 
     cmp eax, 65
-    jl .continuar ;; Menor que 64
+    jl .continue ;; Less than 64
 
     pop esi
 
@@ -132,13 +135,13 @@ Hexagon.Kernel.FS.Dir.definirDiretorioAtual:
 
     stc
 
-    jmp .fim
+    jmp .end
 
-.continuar: ;; As exigências foram sanadas, continuar com o processo
+.continue: ;; The requirements have been met, continue with the process
 
-;; Primeiro, copiar o caminho do diretório atual para diretório anterior
+;; First, copy the path from current directory to previous directory
 
-    mov esi, Hexagon.VFS.Diretorio.diretorioAtual ;; Armazena esse dado
+    mov esi, Hexagon.VFS.Directory.currentDirectory ;; Store this data
 
     call Hexagon.Kernel.Lib.String.tamanhoString
 
@@ -146,15 +149,15 @@ Hexagon.Kernel.FS.Dir.definirDiretorioAtual:
 
     inc ecx
 
-;; Copiar o caminho agora
+;; Copy path now
 
-    mov edi, Hexagon.VFS.Diretorio.diretorioAnterior
+    mov edi, Hexagon.VFS.Directory.previousDirectory
 
-    mov esi, Hexagon.VFS.Diretorio.diretorioAtual
+    mov esi, Hexagon.VFS.Directory.currentDirectory
 
-    rep movsb ;; Copiar (ECX) caracteres de ESI para EDI
+    rep movsb ;; Copy (ECX) characters from ESI to EDI
 
-;; Agora sim, preencher a variável com o valor fornecido
+;; Now, fill in the variable with the given value
 
     pop esi
 
@@ -164,69 +167,69 @@ Hexagon.Kernel.FS.Dir.definirDiretorioAtual:
 
     inc ecx
 
-;; Copiar agora o nome fornecido para o local adequado
+;; Now copy the given name to the appropriate location
 
-    mov edi, Hexagon.VFS.Diretorio.diretorioAtual
+    mov edi, Hexagon.VFS.Directory.currentDirectory
 
-    rep movsb ;; Copiar (ECX) caracteres de ESI para EDI
+    rep movsb ;; Copy (ECX) characters from ESI to EDI
 
     clc
 
-.fim:
+.end:
 
     ret
 
 ;;************************************************************************************
 
-;; Obtêm o valor de diretório atual, para ser utilizado pelo usuário e pelo
-;; Sistema de Arquivos Virtual
+;; Get the current directory value, to be used by the user and the
+;; Virtual File System
 ;;
-;; Saída:
+;; Output:
 ;;
-;; ESI - Caminho do diretório atual
-;; EDI - Caminho do diretório anterior (antes da última alteração)
+;; ESI - Current directory path
+;; EDI - Previous directory path (before last change)
 
-Hexagon.Kernel.FS.Dir.obterDiretorioAtual:
+Hexagon.Kernel.FS.Dir.getCurrentDirectory:
 
-;; Primeiro, resgatar o caminho de diretório atual para ESI
+;; First, retrieve the current directory path for ESI
 
-    mov esi, Hexagon.VFS.Diretorio.diretorioAtual
+    mov esi, Hexagon.VFS.Directory.currentDirectory
 
-;; Agora, o caminho do diretório anterior, para EDI
+;; Now the previous directory path, for EDI
 
-    mov edi, Hexagon.VFS.Diretorio.diretorioAnterior
+    mov edi, Hexagon.VFS.Directory.previousDirectory
 
     ret
 
 ;;************************************************************************************
 
-;; Define o ponto de montagem atual em um diretório ou na raiz do disco
+;; Sets the current mount point to a directory or the root of the volume
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; ESI - Caminho para o ponto de montagem atual no disco
+;; ESI - Path to current mount point on disk
 ;;
-;; Saída:
+;; Output:
 ;;
-;; EAX - Código de erro, dos quais:
-;;       - 01h: Diretório não encontrado no Sistema de Arquivos.
-;;       - 02h: O nome de diretório não bate com as exigências.
-;;       - 03h: Erro desconhecido durante a requisição.
-;; CF definido em caso de erro
+;; EAX - Error code, of which:
+;; - 01h: Directory not found in the filesystem.
+;; - 02h: The directory name does not match the requirements.
+;; - 03h: Unknown error during the request.
+;; CF set in case of error
 
-Hexagon.Kernel.FS.Dir.definirPontodeMontagem:
+Hexagon.Kernel.FS.Dir.setMountPoint:
 
-    push esi ;; Primeiro, salvar o caminho fornecido na chamada
+    push esi ;; First, save the path provided in the call
 
-;; Agora o tamanho do caminho fornecido será validado para verificar a exigência
+;; Now the given path length will be validated to check the requirement
 
-    call Hexagon.Kernel.Lib.String.tamanhoString ;; Função do Hexagon para verificar o tamanho de uma string
+    call Hexagon.Kernel.Lib.String.tamanhoString ;; Hexagon function to check the size of a string
 
     cmp eax, 2
-    jg .continuar ;; Maior que 2 (Caractere mais null)
+    jg .continue ;; Greater than 2 (Character plus null)
 
     cmp eax, 65
-    jl .continuar ;; Menor que 64
+    jl .continue ;; Less than 64
 
     pop esi
 
@@ -234,11 +237,11 @@ Hexagon.Kernel.FS.Dir.definirPontodeMontagem:
 
     mov eax, 01h
 
-    jmp .fim
+    jmp .end
 
-.continuar:
+.continue:
 
-;; Agora sim, preencher a variável com o valor fornecido
+;; Now, fill in the variable with the given value
 
     pop esi
 
@@ -248,46 +251,45 @@ Hexagon.Kernel.FS.Dir.definirPontodeMontagem:
 
     inc ecx
 
-;; Copiar agora o nome fornecido para o local adequado
+;; Now copy the given name to the appropriate location
 
-    mov edi, Hexagon.VFS.Montagem.pontoMontagem
+    mov edi, Hexagon.VFS.Mount.mountPoint
 
-    rep movsb ;; Copiar (ECX) caracteres de ESI para EDI
+    rep movsb ;; Copy (ECX) characters from ESI to EDI
 
     clc
 
-.fim:
+.end:
 
     ret
 
 ;;************************************************************************************
 
-;; Obtêm o ponto de montagem atual (será expandido quando múltiplos pontos forem
-;; suportados pelo kernel)
+;; Get the current mount point (will be expanded when multiple points are supported by the kernel)
 ;;
-;; Saída:
+;; Output:
 ;;
-;; ESI - Ponto de montagem
-;; EDI - Volume físico montado
-;; EAX - Código do Sistema de Arquivos do volume
+;; ESI - Mounting point
+;; EDI - Volume mounted
+;; EAX - Volume filesystem code
 
-Hexagon.Kernel.FS.Dir.obterPontodeMontagem:
+Hexagon.Kernel.FS.Dir.getMountPoint:
 
-;; Primeiro, resgatar o volume físico montado, para EDI
+;; First, rescue the mounted physical volume, for EDI
 
     mov ah, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
 
-    mov dl, 01h ;; Classe de dispositivo de armazenamento
+    mov dl, 01h ;; Storage device class
 
-    call Hexagon.Kernel.Dev.Dev.convertDeviceToDeviceName ;; Converter para nome de dispositivo
+    call Hexagon.Kernel.Dev.Dev.convertDeviceToDeviceName ;; Convert to device name
 
     mov edi, esi
 
-;; Agora, resgatar o caminho do ponto de montagem para ESI
+;; Now retrieve the mount point path for ESI
 
-    mov esi, Hexagon.VFS.Montagem.pontoMontagem
+    mov esi, Hexagon.VFS.Mount.mountPoint
 
-;; Resgatar também o código do Sistema de Arquivos
+;; Restore the filesystem code
 
     mov eax, [Hexagon.VFS.Controle.tipoSistemaArquivos]
 

@@ -154,7 +154,7 @@ Hexagon.Kernel.FS.VFS.novoArquivo:
 
 .novoArquivoFAT16B:
 
-    call Hexagon.Kernel.FS.FAT16.novoArquivoFAT16B
+    call Hexagon.Kernel.FS.FAT16.createEmptyFileFAT16B
 
     ret
 
@@ -196,7 +196,7 @@ Hexagon.Kernel.FS.VFS.deletarArquivo:
 
 .deletarArquivoFAT16B:
 
-    call Hexagon.Kernel.FS.FAT16.deletarArquivoFAT16B
+    call Hexagon.Kernel.FS.FAT16.unlinkFileFAT16B
 
     ret
 
@@ -240,7 +240,7 @@ Hexagon.Kernel.FS.VFS.salvarArquivo:
 
     popad
 
-    call Hexagon.Kernel.FS.FAT16.salvarArquivoFAT16B
+    call Hexagon.Kernel.FS.FAT16.saveFileFAT16B
 
     ret
 
@@ -264,7 +264,7 @@ Hexagon.Kernel.FS.VFS.listarArquivos:
 
 .listarArquivosFAT16B:
 
-    call Hexagon.Kernel.FS.FAT16.listarArquivosFAT16B
+    call Hexagon.Kernel.FS.FAT16.listFilesFAT16B
 
     ret
 
@@ -292,7 +292,7 @@ Hexagon.Kernel.FS.VFS.renomearArquivo:
 
 .renomearArquivoFAT16B:
 
-    call Hexagon.Kernel.FS.FAT16.renomearArquivoFAT16B
+    call Hexagon.Kernel.FS.FAT16.renameFileFAT16B
 
     ret
 
@@ -321,7 +321,7 @@ Hexagon.Kernel.FS.VFS.carregarArquivo:
 
 .carregarArquivoFAT16B:
 
-    call Hexagon.Kernel.FS.FAT16.carregarArquivoFAT16B
+    call Hexagon.Kernel.FS.FAT16.loadFileFAT16B
 
     ret
 
@@ -350,7 +350,7 @@ Hexagon.Kernel.FS.VFS.arquivoExiste:
 
 .arquivoExisteFAT16B:
 
-    call Hexagon.Kernel.FS.FAT16.arquivoExisteFAT16B
+    call Hexagon.Kernel.FS.FAT16.fileExistsFAT16B
 
     ret
 
@@ -450,7 +450,7 @@ Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos:
 
     push ebx
 
-    call Hexagon.Kernel.FS.FAT16.iniciarVolumeFAT16B
+    call Hexagon.Kernel.FS.FAT16.initVolumeFAT16B
 
     pop ebx
 

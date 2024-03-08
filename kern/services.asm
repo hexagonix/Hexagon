@@ -289,13 +289,13 @@ Hexagon.Int.manipuladorMousePS2:
 
     pusha
 
-    cmp byte[.estado], 0
+    cmp byte[.status], 0
     je .pacoteDeDados
 
-    cmp byte[.estado], 1
+    cmp byte[.status], 1
     je .pacoteX
 
-    cmp byte[.estado], 2
+    cmp byte[.status], 2
     je .pacoteY
 
 .pacoteDeDados:
@@ -304,7 +304,7 @@ Hexagon.Int.manipuladorMousePS2:
 
     mov byte[.dados], al
 
-    mov byte[.estado], 1
+    mov byte[.status], 1
 
     jmp .finalizar
 
@@ -314,7 +314,7 @@ Hexagon.Int.manipuladorMousePS2:
 
     mov byte[.deltaX], al
 
-    mov byte[.estado], 2
+    mov byte[.status], 2
 
     jmp .finalizar
 
@@ -324,7 +324,7 @@ Hexagon.Int.manipuladorMousePS2:
 
     mov byte[.deltaY], al
 
-    mov byte[.estado], 0
+    mov byte[.status], 0
 
     mov byte[.alterado], 1
 
@@ -409,7 +409,7 @@ Hexagon.Int.manipuladorMousePS2:
 
     iret
 
-.estado:   db 0
+.status:   db 0
 .deltaX:   db 0
 .deltaY:   db 0
 .dados:    db 0
@@ -430,22 +430,22 @@ Hexagon.Int.manipuladorTouchpad:
     push eax
     push edx
 
-    cmp byte[.estado], 0
+    cmp byte[.status], 0
     je .pacote0
 
-    cmp byte[.estado], 1
+    cmp byte[.status], 1
     je .pacote1
 
-    cmp byte[.estado], 2
+    cmp byte[.status], 2
     je .pacote2
 
-    cmp byte[.estado], 3
+    cmp byte[.status], 3
     je .pacote3
 
-    cmp byte[.estado], 4
+    cmp byte[.status], 4
     je .pacote4
 
-    cmp byte[.estado], 5
+    cmp byte[.status], 5
     je .pacote5
 
 .pacote0:
@@ -462,7 +462,7 @@ Hexagon.Int.manipuladorTouchpad:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printBinary
 
-    mov byte[.estado], 1
+    mov byte[.status], 1
 
     jmp .fim
 
@@ -494,7 +494,7 @@ Hexagon.Int.manipuladorTouchpad:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printBinary
 
-    mov byte[.estado], 2
+    mov byte[.status], 2
 
     jmp .fim
 
@@ -512,7 +512,7 @@ Hexagon.Int.manipuladorTouchpad:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printDecimal
 
-    mov byte[.estado], 3
+    mov byte[.status], 3
 
     jmp .fim
 
@@ -546,7 +546,7 @@ Hexagon.Int.manipuladorTouchpad:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printBinary
 
-    mov byte[.estado], 4
+    mov byte[.status], 4
 
     jmp .fim
 
@@ -570,7 +570,7 @@ Hexagon.Int.manipuladorTouchpad:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printDecimal
 
-    mov byte[.estado], 5
+    mov byte[.status], 5
 
     jmp .fim
 
@@ -594,7 +594,7 @@ Hexagon.Int.manipuladorTouchpad:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printDecimal
 
-    mov byte[.estado], 0
+    mov byte[.status], 0
 
     jmp .fim
 
@@ -611,7 +611,7 @@ Hexagon.Int.manipuladorTouchpad:
 
     iret
 
-.estado: db 0
+.status: db 0
 .X:      dw 0
 .Y:      dw 0
 .Z:      db 0

@@ -317,7 +317,7 @@ Hexagon.Autoconfig:
 
     mov esi, "/"
 
-    call Hexagon.Kernel.FS.Dir.definirPontodeMontagem
+    call Hexagon.Kernel.FS.Dir.setMountPoint
 
     call Hexagon.Kernel.FS.VFS.montarVolume ;; Monta o volume padrão utilizado para a inicialização
 
