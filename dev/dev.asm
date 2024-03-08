@@ -254,7 +254,7 @@ Hexagon.Kernel.Dev.Dev.write:
 
     call Hexagon.Kernel.Dev.Gen.COM.Serial.sendViaSerial
 
-    jc .erro
+    jc .error
 
     call Hexagon.Kernel.Dev.Dev.close
 
@@ -267,7 +267,7 @@ Hexagon.Kernel.Dev.Dev.write:
 
     call Hexagon.Kernel.Dev.Gen.LPT.LPT.sendViaParallelPort
 
-    jc .erro
+    jc .error
 
     call Hexagon.Kernel.Dev.Dev.close
 
@@ -308,7 +308,7 @@ Hexagon.Kernel.Dev.Dev.write:
 
     ret
 
-.erro:
+.error:
 
     call Hexagon.Kernel.Dev.Dev.close
 
@@ -400,7 +400,7 @@ Hexagon.Kernel.Dev.Dev.open:
 
     pop eax
 
-    mov byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual], ah
+    mov byte[Hexagon.Dev.Gen.Disk.Control.currentDisk], ah
 
     call Hexagon.Kernel.FS.VFS.definirSistemaArquivos
 

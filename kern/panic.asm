@@ -85,7 +85,7 @@ db 10, 10, "Kernel Oops: ", 0
 db "Restart your computer to continue.", 0
 .erroNaoFatal:
 db "Press any key to continue...", 0
-.erroDesconhecido:
+.unknownError:
 db 10, 10, "The severity of the error was not provided or is unknown by the Hexagon.", 10, 10, 0
 
 ;;************************************************************************************
@@ -160,7 +160,7 @@ Hexagon.Kernel.Kernel.Panico.panico:
 
 .desconhecido:
 
-    kprint Hexagon.Panico.erroDesconhecido
+    kprint Hexagon.Panico.unknownError
 
     ret
 

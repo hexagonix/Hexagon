@@ -358,7 +358,7 @@ Hexagon.Kernel.FS.VFS.arquivoExiste:
 
 Hexagon.Kernel.FS.VFS.montarVolume:
 
-    mov ah, byte[Hexagon.Dev.Gen.Disco.Controle.driveBoot]
+    mov ah, byte[Hexagon.Dev.Gen.Disk.Control.bootDisk]
 
     mov dl, 01h ;; Classe de dispositivo de armazenamento
 
@@ -383,7 +383,7 @@ Hexagon.Kernel.FS.VFS.montarVolume:
 
 Hexagon.Kernel.FS.VFS.definirSistemaArquivos:
 
-    call Hexagon.Kernel.Dev.i386.Disco.Disco.lerMBR
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.readMBR
 
     jc .restaurarVolume
 
@@ -393,8 +393,8 @@ Hexagon.Kernel.FS.VFS.definirSistemaArquivos:
 
 .restaurarVolume:
 
-    mov dl, byte [Hexagon.Dev.Gen.Disco.Controle.driveBoot]
-    mov byte [Hexagon.Dev.Gen.Disco.Controle.driveAtual], dl
+    mov dl, byte [Hexagon.Dev.Gen.Disk.Control.bootDisk]
+    mov byte [Hexagon.Dev.Gen.Disk.Control.currentDisk], dl
 
     call Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos
 
@@ -410,7 +410,7 @@ Hexagon.Kernel.FS.VFS.definirSistemaArquivos:
 
 Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos:
 
-    call Hexagon.Kernel.Dev.i386.Disco.Disco.testarVolume
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.testVolume
 
     jc .volumeAusente
 
@@ -427,8 +427,8 @@ Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos:
 
 .volumeAusente:
 
-    mov ah, byte[Hexagon.Dev.Gen.Disco.Controle.driveBoot]
-    mov byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual], ah
+    mov ah, byte[Hexagon.Dev.Gen.Disk.Control.bootDisk]
+    mov byte[Hexagon.Dev.Gen.Disk.Control.currentDisk], ah
 
     mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
 
@@ -470,8 +470,8 @@ Hexagon.Kernel.FS.VFS.definirVolumeBoot:
 
 ;; Irá armazenar o volume a ser utilizado pelo sistema (pode ser alterado)
 
-    mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveBoot]
-    mov byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual], dl
+    mov dl, byte[Hexagon.Dev.Gen.Disk.Control.bootDisk]
+    mov byte[Hexagon.Dev.Gen.Disk.Control.currentDisk], dl
 
     logHexagon Hexagon.Verbose.definirVolume, Hexagon.Dmesg.Prioridades.p5
 
@@ -490,7 +490,7 @@ Hexagon.Kernel.FS.VFS.definirVolumeBoot:
 
 Hexagon.Kernel.FS.VFS.obterVolume:
 
-    mov ah, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual] ;; Número do dispositivo de armazenamento
+    mov ah, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk] ;; Número do dispositivo de armazenamento
     mov dl, [Hexagon.Dev.DeviceClasses.block] ;; Classe do dispositivo
 
     call Hexagon.Kernel.Dev.Dev.convertDeviceToDeviceName

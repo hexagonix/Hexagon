@@ -350,8 +350,8 @@ Hexagon.userMode:
 Hexagon.Heap:
 
 Hexagon.Heap.VBE        = Hexagon.Heap            + 0           ;; Bloco de controle de vídeo
-Hexagon.Heap.CacheDisco = Hexagon.Heap.VBE        + 1200        ;; Buffer de disco
-Hexagon.Heap.BCPs       = Hexagon.Heap.CacheDisco + 200000      ;; Blocos de controle de processos
+Hexagon.Heap.DiskCache = Hexagon.Heap.VBE        + 1200        ;; Buffer de disco
+Hexagon.Heap.BCPs       = Hexagon.Heap.DiskCache + 200000      ;; Blocos de controle de processos
 Hexagon.Heap.ProcTab    = Hexagon.Heap.BCPs       + 5000        ;; Tabela de processos
 Hexagon.Heap.ArgProc    = Hexagon.Heap.ProcTab    + 5000 + 500h ;; Argumentos de um processo
 Hexagon.Heap.Temp       = Hexagon.Heap.ArgProc    + 2000        ;; Dados temporários

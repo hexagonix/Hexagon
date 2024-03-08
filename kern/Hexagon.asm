@@ -135,7 +135,7 @@ cabecalhoHexagon:
 
 ;; Irá armazenar o volume onde o sistema foi iniciado (não pode ser alterado)
 
-    mov byte[Hexagon.Dev.Gen.Disco.Controle.driveBoot], bl
+    mov byte[Hexagon.Dev.Gen.Disk.Control.bootDisk], bl
 
 ;; Salvar o endereço do BPB (BIOS Parameter Block) do volume utilizado para a inicialização
 

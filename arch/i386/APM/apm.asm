@@ -146,7 +146,7 @@ match =YES, VERBOSE
 
 }
 
-    call Hexagon.Kernel.Dev.i386.Disco.Disco.pararDisco ;; First, let's stop the disks
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.stopDisk ;; First, let's stop the disks
 
 ;;*********************************************************************
 ;;

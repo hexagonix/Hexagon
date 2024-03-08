@@ -73,333 +73,331 @@
 
 use32
 
+;;************************************************ ***********************************
+;;
+;; Input and output errors on floppy disks
+;;
+;; Error | Error description
+;; -------------------------------------------------- ---------------------------------
+;;
+;; 00h | No error in previous operation
+;; 01h | Invalid command: incorrect command for controller
+;; 02h | Invalid address
+;; 03h | Write protected: impossible to write to floppy disk
+;; 04h | Invalid or not found sector ID
+;;
+;; 06h | Floppy disk swap is active
+;;
+;; 08h | DMA failure
+;; 09h | DMA: impossible to write beyond the 64 Kbyte limit
+;;
+;; 0ch  | Media type not available
+;; 10h | Invalid CRC: Cyclical Redundancy Code does not agree with the data
+;; 20h | Floppy disk controller failure
+;; 31h | There is no media in the drive
+;; 40h | Requested trail not found
+;; 80h | Time-out
+;;
 ;;************************************************************************************
 ;;
-;; Erros de entrada e saída em disquetes
+;; Input and output errors on hard drives
 ;;
-;; Erro | Descrição do erro
-;; -----------------------------------------------------------------------------------
+;; Returned only if DL > 7FH (requests to hard drives)
 ;;
-;; 00h  | Sem erro na operação anterior
-;; 01h  | Comando inválido: comando incorreto para o controlador
-;; 02h  | Endereço inválido
-;; 03h  | Protegido contra escrita: impossível escrever no disquete
-;; 04h  | ID do setor inválido ou não encontrado
+; Error | Error description
+;; -------------------------------------------------- ---------------------------------
 ;;
-;; 06h  | A troca de disquete está ativa
+;; 00h | No error in previous operation
+;; 01h | Invalid command: Incorrect command for controller
+;; 02h | Invalid address
+;; 03h | Write protected: impossible to write to floppy disk
+;; 04h | Invalid or not found sector ID
+;; 05h | Failed to restart
 ;;
-;; 08h  | Falha no DMA
-;; 09h  | DMA: impossível escrever além do limite de 64 Kbytes
+;; 07h | Disk activity parameter failure
+;; 08h | DMA failure
+;; 09h | DMA: impossible to write beyond the 64 Kbyte limit
+;; 0Ah | Damaged sector flag found
+;; 0Bh | Defective cylinder found
 ;;
-;; 0ch  | Tipo de mídia não disponível
-;; 10h  | CRC inválido: Cyclical Redundancy Code não concorda com os dados
-;; 20h  | Falha no controlador de disquete
-;; 31h  | Não existe mídia no drive
-;; 40h  | Trilha solicitada não encontrada
-;; 80h  | Time-out
-;;
-;;************************************************************************************
-;;
-;; Erros de entrada e saída em discos rígidos
-;;
-;; Retornados apenas se DL > 7fH (requisições para discos rígidos)
-;;
-; Erro | Descrição do erro
-;; -----------------------------------------------------------------------------------
-;;
-;; 00h  | Sem erro na operação anterior
-;; 01h  | Comando inválido: comando incorreto para o controlador
-;; 02h  | Endereço inválido
-;; 03h  | Protegido contra escrita: impossível escrever no disquete
-;; 04h  | ID do setor inválido ou não encontrado
-;; 05h  | Falha ao reiniciar
-;;
-;; 07h  | Falha no parâmetro de atividade do disco
-;; 08h  | Falha no DMA
-;; 09h  | DMA: impossível escrever além do limite de 64 Kbytes
-;; 0Ah  | Bandeira de setor danificado encontrada
-;; 0Bh  | Cilindro defeituoso encontrado
-;;
-;; 0Dh  | Número de setores inválido no formato
-;; 0Eh  | Indicador de endereço de controle de dados encontrado
-;; 0Fh  | Nível de arbitragem DMA fora do intervalo
-;; 10h  | ECC ou CRC incorretos
-;; 11h  | Erro de dados corrigidos do ECC
-;; 20h  | Falha no controlador de disco rígido
-;; 31h  | Não existe mídia no drive
-;; 40h  | Trilha solicitada não encontrada
-;; 80h  | Time-out
-;; AAh  | Drive não pronto
-;; B3h  | Volume em uso
-;; BBh  | Erro indefinido
-;; CCh  | Falha de escrita no drive selecionado
-;; E0h  | Estado de erro
-;; FFh  | Falha na operação de sentido
+;; 0Dh | Invalid number of sectors in format
+;; 0Eh | Data Control Address Found Indicator
+;; 0Fh | DMA Arbitrage Level Out of Range
+;; 10h | Incorrect ECC or CRC
+;; 11h | ECC corrected data error
+;; 20h | Hard disk controller failure
+;; 31h | There is no media in the drive
+;; 40h | Requested trail not found
+;; 80h | Time-out
+;; AAh | Drive not ready
+;; B3h | Volume in use
+;; BBh | Undefined error
+;; CCh | Write failure to selected drive
+;; E0h | Error state
+;; FFh | Sense operation failed
 ;;
 ;;************************************************************************************
 
-;; Estruturas de uso exclusivo para manipulação global de volumes
+;; Exclusive-use structures for global volume manipulation
 
-struc Hexagon.Dev.Gen.Disco.Geral
+struc Hexagon.Dev.Gen.Disk.General
 {
 
-.semErro          = 00h
-.comandoInvalido  = 01h
-.enderecoInvalido = 02h
-.protegidoEscrita = 03h
-.setorInvalido    = 04h
-.falhaReiniciar   = 05h
-.falhaAtividade   = 07h
-.falhaDMA         = 08h
-.limiteDMA        = 09h
-.setorDanificado  = 0Ah
-.erroCilindro     = 0Bh
-.numSetInvalido   = 0x0D
-.falhaControlador = 20h
-.semMidia         = 31h
-.timeOut          = 80h
-.driveNaoPronto   = 0xAA
-.volumeEmUso      = 0xB3
-.erroDesconhecido = 0xBB
-.falhaEscrita     = 0xCC
-.estadoErro       = 0xE0
-.falhaOperacao    = 0xFF
+.withoutError      = 00h
+.invalidCommand    = 01h
+.invalidAddress    = 02h
+.writeProtected    = 03h
+.invalidSector     = 04h
+.resetFailure      = 05h
+.activityFailure   = 07h
+.DMAFailure        = 08h
+.DMALimit          = 09h
+.sectorDamaged     = 0Ah
+.cylinderError     = 0Bh
+.invalidNumSet     = 0x0D
+.controllerFailure = 20h
+.noMedia           = 31h
+.timeOut           = 80h
+.driveNotReady     = 0xAA
+.busyVolume        = 0xB3
+.unknownError      = 0xBB
+.writeFailure      = 0xCC
+.statusError       = 0xE0
+.operationFailure  = 0xFF
 
 }
 
-struc Hexagon.Dev.Gen.Disco.HD
+struc Hexagon.Dev.Gen.Disk.HardDisk
 {
 
-.semErro          = 00h
-.protegidoEscrita = 01h
-.erroLeitura      = 02h
-.discoEmUso       = 03h
-.semMidia         = 04h
-.erroDesconhecido = 05h
-.falhaOperacao    = 06h
-.erroAutenticacao = 07h
-.discoNaoPronto   = 08h
+.withoutError        = 00h
+.writeProtected      = 01h
+.writeError          = 02h
+.busyVolume          = 03h
+.noMedia             = 04h
+.unknownError        = 05h
+.operationFailure    = 06h
+.authenticationError = 07h
+.volumeNotReady      = 08h
 
 }
 
-struc Hexagon.Dev.Gen.Disco.Controle
+struc Hexagon.Dev.Gen.Disk.Control
 {
 
-.driveAtual: db 0
-.driveBoot:  db 0
+.currentDisk: db 0
+.bootDisk:    db 0
 
 }
 
-Hexagon.Dev.Gen.Disco.Codigos  Hexagon.Dev.Gen.Disco.Geral
-Hexagon.Dev.Gen.Disco.HD.IO    Hexagon.Dev.Gen.Disco.HD
-Hexagon.Dev.Gen.Disco.Controle Hexagon.Dev.Gen.Disco.Controle
+Hexagon.Dev.Gen.Disk.Codes  Hexagon.Dev.Gen.Disk.General
+Hexagon.Dev.Gen.Disk.HardDisk.IO Hexagon.Dev.Gen.Disk.HardDisk
+Hexagon.Dev.Gen.Disk.Control Hexagon.Dev.Gen.Disk.Control
 
-Hexagon.Dev.Gen.Disco:
+Hexagon.Dev.Gen.Disk:
 
-.codigoOperacao: db 0
+.operationCode: db 0
 
 ;;************************************************************************************
 
 align 4
 
-;; Para os discos em uso no sistema
+;; Stop disks in use on the system
 ;;
-;; Entrada e saída: vazio
+;; Input and output: empty
 
-Hexagon.Kernel.Dev.i386.Disco.Disco.pararDisco:
+Hexagon.Kernel.Dev.i386.Disk.Disk.stopDisk:
 
-    call Hexagon.Kernel.Dev.i386.Disco.Disco.reiniciarDisco
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.resetDisk
 
     ret
 
 ;;************************************************************************************
 
-;; Criar instâncias das estruturas, com os nomes adequados que indiquem sua localização
-
-;; Obtêm da MBR (Master Boot Record) informações úteis a respeito do disco
+;; Obtain useful information about the disk from the MBR (Master Boot Record)
 ;;
-;; Saída:
+;; Output:
 ;;
-;; AH - Código da partição
-;; Outros dados podem ser armazenados em variáveis apropriadas, futuramente
+;; AH - Partition code
+;; Other data can be stored in appropriate variables in the future
 
-Hexagon.Kernel.Dev.i386.Disco.Disco.lerMBR:
+Hexagon.Kernel.Dev.i386.Disk.Disk.readMBR:
 
     push ds ;; Kernel data segment
     pop es
 
-;; Primeiro devemos carregar a MBR na memória
+;; First we must load the MBR into memory
 
-    mov eax, 01h ;; Número de setores para ler
-    mov esi, 00h ;; LBA do setor inicial
-    mov cx, 50h  ;; Segmento
-    mov edi, Hexagon.Heap.CacheDisco + 20000 ;; Deslocamento
-    mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
+    mov eax, 01h ;; Number of sectors to read
+    mov esi, 00h ;; Start LBA sector
+    mov cx, 50h  ;; Segment
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
+    mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
 
-    call Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors
 
-    jc .erro
+    jc .error
 
-    mov ebx, Hexagon.Heap.CacheDisco + 500h + 20000
+    mov ebx, Hexagon.Heap.DiskCache + 500h + 20000
 
     add ebx, 0x1BE ;; Deslocamento da primeira partição
 
-    mov ah, byte[es:ebx+04h] ;; Contém o sistema de arquivos
+    mov ah, byte[es:ebx+04h] ;; Contains the file system
 
-    jmp .fim
+    jmp .end
 
-.erro:
+.error:
 
     stc
 
-.fim:
+.end:
 
     ret
 
 ;;************************************************************************************
 
-;; Obter o BPB (BIOS Parameter Block) do disco para a memória
+;; Get BPB (BIOS Parameter Block) from disk to memory
 ;;
-;; Saída:
+;; Output:
 ;;
-;; Nada, carrega diretamente em 0000:7C00h
+;; Nothing, load directly at 0000:7C00h
 
-Hexagon.Kernel.Dev.i386.Disco.Disco.lerBPB:
+Hexagon.Kernel.Dev.i386.Disk.Disk.readBPB:
 
     push ds ;; Kernel data segment
     pop es
 
-;; Primeiro devemos carregar a MBR na memória
+;; First we must load the MBR into memory
 
     mov eax, 01h
     mov esi, 00h
-    mov cx, 2000h ;; Segmento
-    mov edi, 0x7C00 ;; Deslocamento
-    mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
+    mov cx, 2000h ;; Segment
+    mov edi, 0x7C00 ;; Offset
+    mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
 
-    call Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors
 
-    jc .erro
+    jc .error
 
-    jmp .fim
+    jmp .end
 
-.erro:
+.error:
 
     stc
 
-.fim:
+.end:
 
     ret
 
 ;;************************************************************************************
 
-;; Reinicia determinado disco fornecido como parâmetro
+;; Restarts a given disk provided as a parameter
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; DL - Código do disco
+;; DL - Disk code
 ;;
-;; Saída:
+;; Output:
 ;;
-;; EAX - 01h caso algum erro tenha ocorrido no processo
+;; EAX - 01h if an error occurred in the process
 
-Hexagon.Kernel.Dev.i386.Disco.Disco.reiniciarDisco:
+Hexagon.Kernel.Dev.i386.Disk.Disk.resetDisk:
 
     mov ah, 00h
 
     call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int13h
 
-    jc .erro
+    jc .error
 
-    jmp .fim
+    jmp .end
 
-.erro:
+.error:
 
     stc
 
     mov eax, 01h
 
-.fim:
+.end:
 
     ret
 
 ;;************************************************************************************
 
-;; Detecta se existe um disco rígido ou removível conectado ao computador. Pode ser
-;; utilizada para verificar se o disco solicitado está disponível para montagem
+;; Detects whether there is a hard or removable drive connected to the computer.
+;; Can be used to check whether the requested disk is available for mounting
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; EAX - 00h se para utilizar o disco padrão
-;; DL  - Código do disco, para verificar outro volume
+;; EAX - 00h if to use the default disk
+;; DL  - Disk code, to check another volume
 ;;
-;; Saída:
+;; Output:
 ;;
-;; AH - 00h para não instalado, 01h para falha ao detectar alteração de disco, 02h para falha
-;;      em detectar alteração de disquete e 03h para disco rígido
-;; CF defindo em caso de erro, com AH com o código de erro BIOS
+;; AH - 00h for not installed, 01h for failure to detect disk change
+;;      02h for failure to detect floppy change and 03h for hard disk
+;; CF setting on error, with AH with BIOS error code
 
-Hexagon.Kernel.Dev.i386.Disco.Disco.detectarDisco:
+Hexagon.Kernel.Dev.i386.Disk.Disk.detectDisk:
 
     clc
 
-;; Vamos chamar o BIOS para solicitar esta informação
+;; Let's call the BIOS to request this information
 
     mov ah, 15h
 
     cmp eax, 00h
-    je .discoPadrao
+    je .defaultDisk
 
-    jmp .continuar
+    jmp .continue
 
-.discoPadrao:
+.defaultDisk:
 
-    mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
+    mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
 
-.continuar:
+.continue:
 
     mov al, 0xFF
     mov cx, 0xFFFF
 
     call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int13h
 
-    jc .erro
+    jc .error
 
-    jmp .fim
+    jmp .end
 
-.erro:
+.error:
 
-;; A tabela de erros BIOS deve ser observada
+;; The BIOS error table must be observed
 
     stc
 
-.fim:
+.end:
 
     ret
 
 ;;************************************************************************************
 
-;; Carregar setor do disco usando funções extendidas BIOS
+;; Load disk sector using BIOS extended functions
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; EAX - Número de setores
+;; EAX - Number of sectors
 ;; ESI - LBA
-;; EDI - Buffer de destino
-;; CX  - Segmento de modo real
+;; EDI - Destination buffer
+;; CX  - Real mode segment
 ;; DL  - Drive
 ;;
-;; Saída:
+;; Output:
 ;;
-;; EBX - Código de retorno da operação de disco executada, como em Hexagon.HD.IO, acima
+;; EBX - Return code from executed disk operation (Hexagon.Dev.Gen.Disk.HardDisk)
 
-Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores:
+Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors:
 
     push eax
     push esi
 
-    mov dword[.PED.totalSetores], eax ;; Total de setores para carregar
-    mov dword[.PED.LBA], esi ;; Endereço de Bloco Linear (Linear Block Addres - LBA)
+    mov dword[.DAP.totalSectors], eax ;; Total sectors to load
+    mov dword[.DAP.LBA], esi ;; Linear Block Addres - LBA
 
     mov eax, edi
     shr eax, 4
@@ -408,39 +406,39 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores:
 
     and edi, 0xF
 
-    mov word[.PED.segmento], cx ;; Segmento de modo real
-    mov word[.PED.deslocamento], di
+    mov word[.DAP.segment], cx ;; Real mode segment
+    mov word[.DAP.offset], di
 
-    mov esi, .PED
-    mov ah, 42h ;; Leitura extendida BIOS
+    mov esi, .DAP
+    mov ah, 42h ;; BIOS extended reading
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int13h ;; Serviços de disco do BIOS BIOS
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int13h ;; BIOS disk services
 
-    jnc .semErro
+    jnc .withoutError
 
-.verificarErro:
+.checkError:
 
-    cmp ah, Hexagon.Dev.Gen.Disco.Codigos.enderecoInvalido
-    je .semMidia
+    cmp ah, Hexagon.Dev.Gen.Disk.Codes.invalidAddress
+    je .noMedia
 
-    cmp ah, Hexagon.Dev.Gen.Disco.Codigos.setorInvalido
-    je .semMidia
+    cmp ah, Hexagon.Dev.Gen.Disk.Codes.invalidSector
+    je .noMedia
 
-    cmp ah, Hexagon.Dev.Gen.Disco.Codigos.falhaAtividade
-    je .semMidia
+    cmp ah, Hexagon.Dev.Gen.Disk.Codes.activityFailure
+    je .noMedia
 
-    cmp ah, Hexagon.Dev.Gen.Disco.Codigos.falhaControlador
-    je .semMidia
+    cmp ah, Hexagon.Dev.Gen.Disk.Codes.controllerFailure
+    je .noMedia
 
-    cmp al, Hexagon.Dev.Gen.Disco.Codigos.semMidia
-    je .semMidia
+    cmp al, Hexagon.Dev.Gen.Disk.Codes.noMedia
+    je .noMedia
 
-    cmp al, Hexagon.Dev.Gen.Disco.Codigos.timeOut
-    je .errosGerais
+    cmp al, Hexagon.Dev.Gen.Disk.Codes.timeOut
+    je .generalError
 
-    jmp .errosGerais ;; Imprimir erro e aguardar reinício
+    jmp .generalError ;; Print error and wait for restart
 
-.errosGerais:
+.generalError:
 
     mov esi, Hexagon.Verbose.Disco.erroDisco
 
@@ -448,66 +446,66 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores:
 
     call Hexagon.Kernel.Kernel.Panico.panico
 
-.semMidia:
+.noMedia:
 
-    mov dl, byte [Hexagon.Dev.Gen.Disco.Controle.driveBoot]
-    mov byte [Hexagon.Dev.Gen.Disco.Controle.driveAtual], dl
+    mov dl, byte [Hexagon.Dev.Gen.Disk.Control.bootDisk]
+    mov byte [Hexagon.Dev.Gen.Disk.Control.currentDisk], dl
 
     call Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos
 
-    mov byte[Hexagon.Dev.Gen.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.semMidia
+    mov byte[Hexagon.Dev.Gen.Disk.operationCode], Hexagon.Dev.Gen.Disk.HardDisk.IO.noMedia
 
     stc
 
-    jmp .finalizar
+    jmp .finish
 
-.semErro:
+.withoutError:
 
-    mov byte[Hexagon.Dev.Gen.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.semErro
+    mov byte[Hexagon.Dev.Gen.Disk.operationCode], Hexagon.Dev.Gen.Disk.HardDisk.IO.withoutError
 
-.finalizar:
+.finish:
 
     pop esi
     pop eax
 
-    movzx ebx, byte[Hexagon.Dev.Gen.Disco.codigoOperacao] ;; Fornecer em EBX o código de retorno da operação
+    movzx ebx, byte[Hexagon.Dev.Gen.Disk.operationCode] ;; Provide the operation return code in EBX
 
     ret
 
-;; PED = Pacote de Endereço de Disco. Do termo em inglês DAP (Disk Address Packet)
+;; DAP (Disk Address Packet)
 
-.PED:
-.PED.tamanho:      db 16
-.PED.reservado:    db 0
-.PED.totalSetores: dw 0
-.PED.deslocamento: dw 0000h
-.PED.segmento:     dw 0
-.PED.LBA:          dd 0
+.DAP:
+.DAP.size:         db 16
+.DAP.reserved:     db 0
+.DAP.totalSectors: dw 0
+.DAP.offset:       dw 0000h
+.DAP.segment:      dw 0
+.DAP.LBA:          dd 0
                    dd 0
 
 ;;************************************************************************************
 
-;; Escrever setores no disco utilizando funções extendidas BIOS
+;; Write sectors to disk using extended BIOS functions
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; EAX - Número de setores
+;; EAX - Number of sectors
 ;; ESI - LBS
-;; EDI - Buffer para escrever
-;; CX  - Segmento de modo real
+;; EDI - Write buffer
+;; CX  - Real mode segment
 ;; DL  - Drive
 ;;
-;; Saída:
+;; Output:
 ;;
-;; EBX - Código de retorno da operação de disco executada, como em Hexagon.HD.IO, acima
+;; EBX - Return code from performed disk operation (Hexagon.Dev.Gen.Disk.HardDisk)
 
-Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores:
+Hexagon.Kernel.Dev.i386.Disk.Disk.writeSectors:
 
     push eax
     push esi
 
-    mov dword[.PED.totalSetores], eax ;; Total de setores para escrever
-    mov dword[.PED.LBA], esi ;; LBA
+    mov dword[.DAP.totalSectors], eax ;; Total sectors to write
+    mov dword[.DAP.LBA], esi ;; LBA
 
     mov eax, edi
     shr eax, 4
@@ -516,84 +514,84 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores:
 
     and edi, 0xF
 
-    mov word[.PED.deslocamento], di
-    mov word[.PED.segmento], cx ;; Segmento de modo real
+    mov word[.DAP.offset], di
+    mov word[.DAP.segment], cx ;; Real mode segment
 
-    mov esi, .PED
-    mov ah, 43h ;; Escrita extendida BIOS
+    mov esi, .DAP
+    mov ah, 43h ;; BIOS extended writing
     mov al, 0
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int13h ;; Serviços de disco BIOS
+    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int13h ;; BIOS disk services
 
-    jnc .semErro
+    jnc .withoutError
 
-.verificarErro:
+.checkError:
 
-    cmp ah, Hexagon.Dev.Gen.Disco.Codigos.enderecoInvalido
-    je .semMidia
+    cmp ah, Hexagon.Dev.Gen.Disk.Codes.invalidAddress
+    je .noMedia
 
-    cmp ah, Hexagon.Dev.Gen.Disco.Codigos.protegidoEscrita
-    je .protegidoEscrita
+    cmp ah, Hexagon.Dev.Gen.Disk.Codes.writeProtected
+    je .writeProtected
 
-    cmp ah, Hexagon.Dev.Gen.Disco.Codigos.driveNaoPronto
-    je .discoNaoPronto
+    cmp ah, Hexagon.Dev.Gen.Disk.Codes.driveNotReady
+    je .volumeNotReady
 
-    cmp ah, Hexagon.Dev.Gen.Disco.Codigos.volumeEmUso
-    je .discoEmUso
+    cmp ah, Hexagon.Dev.Gen.Disk.Codes.busyVolume
+    je .busyVolume
 
-    cmp ah, Hexagon.Dev.Gen.Disco.Codigos.falhaEscrita
-    je .falhaEscrita
+    cmp ah, Hexagon.Dev.Gen.Disk.Codes.writeFailure
+    je .writeFailure
 
-    cmp ah, Hexagon.Dev.Gen.Disco.Codigos.setorInvalido
-    je .semMidia
+    cmp ah, Hexagon.Dev.Gen.Disk.Codes.invalidSector
+    je .noMedia
 
-    cmp al, Hexagon.Dev.Gen.Disco.Codigos.falhaAtividade
-    je .semMidia
+    cmp al, Hexagon.Dev.Gen.Disk.Codes.activityFailure
+    je .noMedia
 
-    cmp al, Hexagon.Dev.Gen.Disco.Codigos.falhaControlador
-    je .semMidia
+    cmp al, Hexagon.Dev.Gen.Disk.Codes.controllerFailure
+    je .noMedia
 
-    cmp al, Hexagon.Dev.Gen.Disco.Codigos.semMidia
-    je .semMidia
+    cmp al, Hexagon.Dev.Gen.Disk.Codes.noMedia
+    je .noMedia
 
-    cmp al, Hexagon.Dev.Gen.Disco.Codigos.timeOut
-    je .errosGerais
+    cmp al, Hexagon.Dev.Gen.Disk.Codes.timeOut
+    je .generalError
 
-    jmp .errosGerais ;; Imprimir erro e aguardar reinício
+    jmp .generalError ;; Print error and wait for restart
 
-.protegidoEscrita:
-
-    stc
-
-    mov byte[Hexagon.Dev.Gen.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.protegidoEscrita
-
-    ret
-
-.discoNaoPronto:
+.writeProtected:
 
     stc
 
-    mov byte[Hexagon.Dev.Gen.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.discoNaoPronto
+    mov byte[Hexagon.Dev.Gen.Disk.operationCode], Hexagon.Dev.Gen.Disk.HardDisk.IO.writeProtected
 
     ret
 
-.discoEmUso:
+.volumeNotReady:
 
     stc
 
-    mov byte[Hexagon.Dev.Gen.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.discoEmUso
+    mov byte[Hexagon.Dev.Gen.Disk.operationCode], Hexagon.Dev.Gen.Disk.HardDisk.IO.volumeNotReady
 
     ret
 
-.falhaEscrita:
+.busyVolume:
 
     stc
 
-    mov byte[Hexagon.Dev.Gen.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.falhaOperacao
+    mov byte[Hexagon.Dev.Gen.Disk.operationCode], Hexagon.Dev.Gen.Disk.HardDisk.IO.busyVolume
 
     ret
 
-.errosGerais:
+.writeFailure:
+
+    stc
+
+    mov byte[Hexagon.Dev.Gen.Disk.operationCode], Hexagon.Dev.Gen.Disk.HardDisk.IO.operationFailure
+
+    ret
+
+.generalError:
 
     mov esi, Hexagon.Verbose.Disco.erroDisco
 
@@ -601,56 +599,56 @@ Hexagon.Kernel.Dev.i386.Disco.Disco.escreverSetores:
 
     call Hexagon.Kernel.Kernel.Panico.panico
 
-.semMidia:
+.noMedia:
 
-    mov dl, byte [Hexagon.Dev.Gen.Disco.Controle.driveBoot]
-    mov byte [Hexagon.Dev.Gen.Disco.Controle.driveAtual], dl
+    mov dl, byte [Hexagon.Dev.Gen.Disk.Control.bootDisk]
+    mov byte [Hexagon.Dev.Gen.Disk.Control.currentDisk], dl
 
     call Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos
 
-    mov byte[Hexagon.Dev.Gen.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.semMidia
+    mov byte[Hexagon.Dev.Gen.Disk.operationCode], Hexagon.Dev.Gen.Disk.HardDisk.IO.noMedia
 
     stc
 
-    jmp .finalizar
+    jmp .finish
 
-.semErro:
+.withoutError:
 
-    mov byte[Hexagon.Dev.Gen.Disco.codigoOperacao], Hexagon.Dev.Gen.Disco.HD.IO.semErro
+    mov byte[Hexagon.Dev.Gen.Disk.operationCode], Hexagon.Dev.Gen.Disk.HardDisk.IO.withoutError
 
-.finalizar:
+.finish:
 
     pop esi
     pop eax
 
-    movzx ebx, byte[Hexagon.Dev.Gen.Disco.codigoOperacao] ;; Fornecer em EBX o código de retorno da operação
+    movzx ebx, byte[Hexagon.Dev.Gen.Disk.operationCode];; Provide the operation return code in EBX
 
     ret
 
-;; PED = Pacote de Endereço de Disco. Do termo em inglês DAP (Disk Address Packet)
+;; DAP (Disk Address Packet)
 
-.PED:
-.PED.tamanho:      db 16
-.PED.reservado:    db 0
-.PED.totalSetores: dw 0
-.PED.deslocamento: dw 0000h
-.PED.segmento:     dw 0
-.PED.LBA:          dd 0
+.DAP:
+.DAP.size:         db 16
+.DAP.reserved:     db 0
+.DAP.totalSectors: dw 0
+.DAP.offset:       dw 0000h
+.DAP.segment:      dw 0
+.DAP.LBA:          dd 0
                    dd 0
 
 ;;************************************************************************************
 
-;; Testa um determinado volume para verificar sua presença. Caso não esteja presente,
-;; um erro será definido, conforme Hexagon.HD.IO
+;; Tests a certain volume to verify its presence.
+;; If it is not present, an error will be set, as per (Hexagon.Dev.Gen.Disk.HardDisk)
 
-Hexagon.Kernel.Dev.i386.Disco.Disco.testarVolume:
+Hexagon.Kernel.Dev.i386.Disk.Disk.testVolume:
 
     mov eax, 1
     mov esi, 01
-    mov cx, 50h ;; Segmento
-    mov edi, Hexagon.Heap.CacheDisco + 20000 ;; Deslocamento
-    mov dl, byte[Hexagon.Dev.Gen.Disco.Controle.driveAtual]
+    mov cx, 50h ;; Segment
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
+    mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
 
-    call Hexagon.Kernel.Dev.i386.Disco.Disco.lerSetores
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors
 
     ret
