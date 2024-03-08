@@ -147,7 +147,7 @@ hexagonHeader:
 
 ;; Now let's save the location of the parameter structure provided by HBoot
 
-    mov dword[Hexagon.Boot.Parametros.linhaComando], esi
+    mov dword[Hexagon.Boot.Parameters.commandLine], esi
 
 ;; Now let's tidy up the house to enter protected mode and go to the actual Hexagon
 ;; entry point, actually starting the kernel

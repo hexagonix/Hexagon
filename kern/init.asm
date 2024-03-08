@@ -90,7 +90,7 @@ Hexagon.Init.startUserMode:
 
     jc .initNotFound
 
-    logHexagon Hexagon.Verbose.initEncontrado, Hexagon.Dmesg.Priorities.p5
+    logHexagon Hexagon.Verbose.initFound, Hexagon.Dmesg.Priorities.p5
 
     mov eax, 0 ;; Do not provide arguments
     mov esi, Hexagon.Init.Const.initHexagon ;; Filename
@@ -99,7 +99,7 @@ Hexagon.Init.startUserMode:
 
     call Hexagon.Kernel.Kernel.Proc.criarProcesso ;; Request init loading
 
-    logHexagon Hexagon.Verbose.semInit, Hexagon.Dmesg.Priorities.p5
+    logHexagon Hexagon.Verbose.withoutInit, Hexagon.Dmesg.Priorities.p5
 
     jnc .endInit
 
@@ -107,7 +107,7 @@ Hexagon.Init.startUserMode:
 
 ;; For now, Hexagon will attempt to load the system's default shell
 
-    logHexagon Hexagon.Verbose.initNaoEncontrado, Hexagon.Dmesg.Priorities.p5
+    logHexagon Hexagon.Verbose.initNotFound, Hexagon.Dmesg.Priorities.p5
 
     mov eax, 0 ;; Do not provide arguments
     mov esi, Hexagon.Init.Const.shellHexagon ;; Filename
@@ -120,21 +120,21 @@ Hexagon.Init.startUserMode:
 
 .endInit: ;; Print message and close the system
 
-    mov esi, Hexagon.Verbose.Init.semInit
+    mov esi, Hexagon.Verbose.Init.withoutInit
 
     mov eax, 1
 
-    call Hexagon.Kernel.Kernel.Panico.panico
+    call Hexagon.Kernel.Kernel.Panic.panic
 
     jmp .fim
 
 .endShell:
 
-    mov esi, Hexagon.Verbose.Init.shellFinalizado
+    mov esi, Hexagon.Verbose.Init.shellExited
 
     mov eax, 1
 
-    call Hexagon.Kernel.Kernel.Panico.panico ;; Request error screen
+    call Hexagon.Kernel.Kernel.Panic.panic ;; Request error screen
 
 .fim:
 

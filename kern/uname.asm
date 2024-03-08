@@ -73,18 +73,18 @@
 
 use32
 
-;; Retorna para os aplicativos solicitantes os número de versão e subversão do Hexagon
+;; Returns Hexagon version and subversion numbers to requesting applications
 ;;
-;; Saída:
+;; Output:
 ;;
-;; EAX - Número da versão do Hexagon
-;; EBX - Número da subversão do Hexagon
-;; ECX - Revisão do kernel
-;; EDX - Arquitetura
-;; ESI - String de nome do kernel
-;; EDI - Build do kernel
+;; EAX - Hexagon version number
+;; EBX - Hexagon subversion number
+;; ECX - Kernel revision
+;; EDX - Architecture
+;; ESI - Kernel name string
+;; EDI - Kernel build
 
-Hexagon.Kernel.Kernel.Uname.retornarVersao:
+Hexagon.Kernel.Kernel.Uname.uname:
 
     mov eax, Hexagon.Version.versionNumber
     mov ebx, Hexagon.Version.subversionNumber

@@ -89,37 +89,37 @@ Hexagon.Verbose:
 db "Welcome to Hexagon", 10
 db "Copyright (C) 2015-", __stringano, " Felipe Miguel Nery Lunkes", 10
 db "All rights reserved.", 10, 10, 0
-.versao:
+.version:
 db "Hexagon kernel version: ", Hexagon.Version.definition, 0
-.travando:
+.locking:
 db "Enabling user and security guidelines...", 0
 .timer:
 db "Starting and setting up the timer (119 Hz)...", 0
-.escalonador:
+.scheduler:
 db "Starting and setting up the scheduler...", 0
 .heapKernel:
 db "Setting up the kernel heap...", 0
-.teclado:
+.keyboard:
 db "The keyboard management service has started.", 0
 .mouse:
 db "The mouse management service has started.", 0
 .serial:
 db "The serial port management service is starting...", 0
-.definirVolume:
+.setVolume:
 db "Hexagon is looking for a volume to mount...", 0
-.inicioMontagem:
+.startMounting:
 db "The volume ", 0
-.montagemRealizada:
+.mountPointDefined:
 db " has been marked for mounting on /.", 0
-.sistemaArquivos:
+.filesystem:
 db "The mounted volume is formatted as (FSID): ", 0
 .volumeLabel:
 db "The volume label is: ", 0
-.sucessoMontagem:
+.mountSuccess:
 db "Volume successfully mounted on /.", 0
 .init:
 db "Looking for /init...", 0
-.semInit:
+.withoutInit:
 db "/init not found at the root of the volume. Trying /sh...", 0
 .userMode:
 db "Going to user mode...", 0
@@ -129,97 +129,97 @@ db "Total memory installed and available: ", 0
 db " Mb (", 0
 .bytes:
 db " bytes).", 0
-.initEncontrado:
+.initFound:
 db "PID 1: starting /init.", 0
-.initNaoEncontrado:
+.initNotFound:
 db "PID 1: looking for /sh...", 0
-.desligando:
+.shuttingDow:
 db "Shuting down and halting the CPU...", 0
 .newLine:
 db 10, 0
-.opcodeInvalido:
+.invalidOpcode:
 db "Invalid opcode found at runtime. Failure.", 0
 
 ;;************************************************************************************
 
 Hexagon.Verbose.APM:
 
-.reinicioAPM:
+.rebootAPM:
 db "Requesting restart...", 0
-.servicoAPM:
+.serviceAPM:
 db "Requesting power management service...", 0
-.desligamentoAPM:
+.shutdownAPM:
 db "Requesting shutdown...", 0
-.erroAPM:
+.errorAPM:
 db "An error occurred in the power management service request.", 0
-.erroComandoAPM:
+.commandErrorAPM:
 db "An error occurred in the command given to power management service.", 0
-.erroConexaoAPM:
+.connectionErrorAPM:
 db "There was an error connecting to the power management service.", 0
-.sucessoDesligamentoAPM:
+.shutdownSuccessAPM:
 db "Success in requesting the power management system.", 0
-.erroInstalacaoAPM:
+.instalationErrorAPM:
 db "Error installing Hexagon power management service.", 0
 
 ;;************************************************************************************
 
-Hexagon.Verbose.Servicos:
+Hexagon.Verbose.Services:
 
-.matarProcesso:
+.killProcess:
 db "The process running with this PID was terminated by Hexagon.", 0
 
 ;;************************************************************************************
 
-Hexagon.Verbose.Disco:
+Hexagon.Verbose.Disk:
 
-.erroDisco:
+.diskError:
 db "Hexagon was unable to access the requested disk.", 10, 10
 db 10, 10, "An unknown error prevented Hexagon from accessing the disk properly.", 10
 db "To prevent data loss, system has been terminated.", 10
 db "This problem could be one-off. And don't worry, your data is intact.", 10
 db "If something went wrong, please use the system installation disk for correct possible", 10
 db "disk errors.", 10, 10, 0
-.erroLerMBR:
+.readErrorMBR:
 db "Error reading volume MBR.", 0
-.erroLerBPB:
+.writeErrorMBR:
 db "Error trying to read volume BPB.", 0
-.erroReiniciarDisco:
+.resetDiskError:
 db "Error requesting disk restart.", 0
-.erroDiscoNaoDetectado:
+.diskNotDetectedError:
 db "The requested disk/volume is not detected or is offline.", 0
-.erroGeralLeitura:
+.generalReadError:
 db "General error when trying to read sectors on the volume.", 0
-.erroSemMidia:
+.noMediaError:
 db "The requested disk/volume is not online.", 0
-.erroProtegidoEscrita:
+.writeProtectedError:
 db "The volume is write protected. Failed to write sectors.", 0
-.erroDiscoNaoPronto:
+.diskNotReadyError:
 db "The disk/volume is not ready.", 0
-.erroEmUso:
+.diskBusyError:
 db "The volume is already in use by Hexagon or another process.", 0
-.erroEscrita:
+.writeError:
 db "Error writing to volume.", 0
-.erroGeralEscrita:
+.generalWriteError:
 db "General error when trying to write sectors to the volume.", 0
 
 ;;************************************************************************************
 
 Hexagon.Verbose.Init:
 
-.semInit:
+.withoutInit:
 db "A critical component (init) was not found on the boot volume.", 10, 10
 db "Make sure the 'init' file or equivalent is present on the system volume.", 10
 db "If not present, use the original installation media to correct this problem.", 10, 10, 0
-.componenteFinalizado:
+.componentExited:
 db "A critical component (init) terminated unexpectedly.", 10, 10
 db "Some unexpected error caused a system component to terminate.", 10
 db "This problem prevents the system from running properly and to avoid any more serious problem or the", 10
 db "loss of your data, the system has halted.", 10, 0
-.semShell:
+.withoutShell:
 db "The default shell (/sh) was not found on this volume.", 10, 10
 db "Make sure the default shell is present on the system volume and try again.", 10
 db "If not present, use the installation disc to correct this problem.", 10, 10, 0
-.shellFinalizado:
+.shellExited:
 db "The shell terminated unexpectedly.", 10, 10
 db "Some unexpected error caused the shell to terminate.", 10
 db "This problem prevents the system from running properly and to avoid any more serious problem or the", 10

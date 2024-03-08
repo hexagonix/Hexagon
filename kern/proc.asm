@@ -236,7 +236,7 @@ Hexagon.Kernel.Kernel.Proc.iniciarEscalonador:
 
     mov dword[Hexagon.Processos.BCP.contagemProcessos], 0
 
-    logHexagon Hexagon.Verbose.escalonador, Hexagon.Dmesg.Priorities.p5
+    logHexagon Hexagon.Verbose.scheduler, Hexagon.Dmesg.Priorities.p5
 
 ;; Agora, uma função para iniciar os BCPs
 ;; Essa função pode ser executada, mas o uso dos novos BCPs ainda está em desenvolvimento
@@ -283,7 +283,7 @@ Hexagon.Kernel.Kernel.Proc.matarProcesso:
 match =YES, VERBOSE
 {
 
-    mov esi, Hexagon.Verbose.Servicos.matarProcesso
+    mov esi, Hexagon.Verbose.Services.killProcess
     mov ebx, Hexagon.Dmesg.Priorities.p5
 
     call Hexagon.Kernel.Kernel.Dmesg.createMessage

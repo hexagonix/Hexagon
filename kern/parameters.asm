@@ -73,7 +73,7 @@
 
 use32
 
-Hexagon.Boot.Parametros:
+Hexagon.Boot.Parameters:
 
-.linhaComando: dd 0
-.modoVerbose:  db 0
+.commandLine: dd 0
+.verboseMode: db 0

@@ -440,11 +440,11 @@ Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors:
 
 .generalError:
 
-    mov esi, Hexagon.Verbose.Disco.erroDisco
+    mov esi, Hexagon.Verbose.Disk.diskError
 
     mov eax, 1
 
-    call Hexagon.Kernel.Kernel.Panico.panico
+    call Hexagon.Kernel.Kernel.Panic.panic
 
 .noMedia:
 
@@ -593,11 +593,11 @@ Hexagon.Kernel.Dev.i386.Disk.Disk.writeSectors:
 
 .generalError:
 
-    mov esi, Hexagon.Verbose.Disco.erroDisco
+    mov esi, Hexagon.Verbose.Disk.diskError
 
     mov eax, 1
 
-    call Hexagon.Kernel.Kernel.Panico.panico
+    call Hexagon.Kernel.Kernel.Panic.panic
 
 .noMedia:
 

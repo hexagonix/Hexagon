@@ -94,12 +94,12 @@ Hexagon.Kernel.Arch.i386.APM.reboot:
 match =YES, VERBOSE
 {
 
-    mov esi, Hexagon.Verbose.APM.servicoAPM
+    mov esi, Hexagon.Verbose.APM.serviceAPM
     mov ebx, Hexagon.Dmesg.Priorities.p5
 
     call Hexagon.Kernel.Kernel.Dmesg.createMessage
 
-    mov esi, Hexagon.Verbose.APM.reinicioAPM
+    mov esi, Hexagon.Verbose.APM.rebootAPM
     mov ebx, Hexagon.Dmesg.Priorities.p5
 
     call Hexagon.Kernel.Kernel.Dmesg.createMessage
@@ -134,12 +134,12 @@ Hexagon.Kernel.Arch.i386.APM.shutdown:
 match =YES, VERBOSE
 {
 
-    mov esi, Hexagon.Verbose.APM.servicoAPM
+    mov esi, Hexagon.Verbose.APM.serviceAPM
     mov ebx, Hexagon.Dmesg.Priorities.p5
 
     call Hexagon.Kernel.Kernel.Dmesg.createMessage
 
-    mov esi, Hexagon.Verbose.APM.desligamentoAPM
+    mov esi, Hexagon.Verbose.APM.shutdownAPM
     mov ebx, Hexagon.Dmesg.Priorities.p5
 
     call Hexagon.Kernel.Kernel.Dmesg.createMessage
@@ -201,7 +201,7 @@ match =YES, VERBOSE
 match =YES, VERBOSE
 {
 
-    mov esi, Hexagon.Verbose.APM.erroComandoAPM
+    mov esi, Hexagon.Verbose.APM.commandErrorAPM
     mov ebx, Hexagon.Dmesg.Priorities.p5
 
     call Hexagon.Kernel.Kernel.Dmesg.createMessage
@@ -217,7 +217,7 @@ match =YES, VERBOSE
 match =YES, VERBOSE
 {
 
-    mov esi, Hexagon.Verbose.APM.erroInstalacaoAPM
+    mov esi, Hexagon.Verbose.APM.instalationErrorAPM
     mov ebx, Hexagon.Dmesg.Priorities.p5
 
     call Hexagon.Kernel.Kernel.Dmesg.createMessage
@@ -233,7 +233,7 @@ match =YES, VERBOSE
 match =YES, VERBOSE
 {
 
-    mov esi, Hexagon.Verbose.APM.erroConexaoAPM
+    mov esi, Hexagon.Verbose.APM.connectionErrorAPM
     mov ebx, Hexagon.Dmesg.Priorities.p5
 
     call Hexagon.Kernel.Kernel.Dmesg.createMessage
@@ -253,7 +253,7 @@ match =YES, VERBOSE
 match =YES, VERBOSE
 {
 
-    mov esi, Hexagon.Verbose.APM.sucessoDesligamentoAPM
+    mov esi, Hexagon.Verbose.APM.shutdownSuccessAPM
     mov ebx, Hexagon.Dmesg.Priorities.p5
 
     call Hexagon.Kernel.Kernel.Dmesg.createMessage

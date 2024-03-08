@@ -214,7 +214,7 @@ Hexagon.Autoconfig:
 
     kprint Hexagon.Verbose.Hexagon
 
-    logHexagon Hexagon.Verbose.versao, Hexagon.Dmesg.Priorities.p5
+    logHexagon Hexagon.Verbose.version, Hexagon.Dmesg.Priorities.p5
 
     kprint Hexagon.Dmesg.hexagonIdentifier
 
@@ -248,7 +248,7 @@ Hexagon.Autoconfig:
 
 ;;************************************************************************************
 
-    logHexagon Hexagon.Verbose.teclado, Hexagon.Dmesg.Priorities.p5
+    logHexagon Hexagon.Verbose.keyboard, Hexagon.Dmesg.Priorities.p5
 
     logHexagon Hexagon.Verbose.mouse, Hexagon.Dmesg.Priorities.p5
 
@@ -266,13 +266,13 @@ Hexagon.Autoconfig:
 
     kprint Hexagon.Dmesg.hexagonIdentifier
 
-    kprint Hexagon.Verbose.inicioMontagem
+    kprint Hexagon.Verbose.startMounting
 
     call Hexagon.Kernel.FS.VFS.getVolume ;; Obter o identificador do volume
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printString ;; Exibir
 
-    kprint Hexagon.Verbose.montagemRealizada
+    kprint Hexagon.Verbose.mountPointDefined
 
     kprint Hexagon.Verbose.newLine
 
@@ -282,7 +282,7 @@ Hexagon.Autoconfig:
 
     kprint Hexagon.Dmesg.hexagonIdentifier
 
-    kprint Hexagon.Verbose.sistemaArquivos
+    kprint Hexagon.Verbose.filesystem
 
     call Hexagon.Kernel.FS.VFS.getVolume
 
@@ -321,7 +321,7 @@ Hexagon.Autoconfig:
 
     call Hexagon.Kernel.FS.VFS.mountVolume ;; Monta o volume padrão utilizado para a inicialização
 
-    logHexagon Hexagon.Verbose.sucessoMontagem, Hexagon.Dmesg.Priorities.p5
+    logHexagon Hexagon.Verbose.mountSuccess, Hexagon.Dmesg.Priorities.p5
 
 ;;************************************************************************************
 
@@ -334,7 +334,7 @@ Hexagon.Autoconfig:
 
     call Hexagon.Kernel.Kernel.Proc.travar
 
-    logHexagon Hexagon.Verbose.travando, Hexagon.Dmesg.Priorities.p5
+    logHexagon Hexagon.Verbose.locking, Hexagon.Dmesg.Priorities.p5
 
 ;;************************************************************************************
 

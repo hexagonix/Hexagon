@@ -75,52 +75,52 @@ use32
 
 ;;************************************************************************************
 
-Hexagon.Panico:
+Hexagon.Panic:
 
-.cabecalhoPanico:
+.panicHeader:
 db 10, 10, "Kernel Panic: ", 0
-.cabecalhoOops:
+.oopsHeader:
 db 10, 10, "Kernel Oops: ", 0
-.erroReiniciar:
+.rebootError:
 db "Restart your computer to continue.", 0
-.erroNaoFatal:
+.oopsError:
 db "Press any key to continue...", 0
 .unknownError:
 db 10, 10, "The severity of the error was not provided or is unknown by the Hexagon.", 10, 10, 0
 
 ;;************************************************************************************
 
-;; Exibe mensagem de erro na tela e solicita o reinício do computador
+;; Displays an error message on the screen and requests to restart the computer
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; EAX - O erro é fatal? (0 para não e 1 para sim)
-;; ESI - Mensagem de erro complementar
+;; EAX - Is the error fatal? (0 for no and 1 for yes)
+;; ESI - Supplemental error message
 
-Hexagon.Kernel.Kernel.Panico.panico:
+Hexagon.Kernel.Kernel.Panic.panic:
 
     push esi
     push eax
 
-    call Hexagon.Kernel.Kernel.Panico.prepararPanico
+    call Hexagon.Kernel.Kernel.Panic.preparePanic
 
     kprint Hexagon.Info.aboutHexagon
 
     pop eax
 
-    cmp eax, 0 ;; Caso o erro não seja fatal, o controle pode ser devolvido à função que chamou
-    je .naoFatal
+    cmp eax, 0 ;; If the error is not fatal, control can be returned to the calling function
+    je .notFatal
 
     cmp eax, 1
     je .fatal
 
-    jmp .desconhecido
+    jmp .unknown
 
 .fatal:
 
-    kprint Hexagon.Panico.cabecalhoPanico
+    kprint Hexagon.Panic.panicHeader
 
-    logHexagon Hexagon.Panico.cabecalhoPanico, Hexagon.Dmesg.Priorities.p4
+    logHexagon Hexagon.Panic.panicHeader, Hexagon.Dmesg.Priorities.p4
 
     pop esi
 
@@ -130,17 +130,17 @@ Hexagon.Kernel.Kernel.Panico.panico:
 
     call Hexagon.Kernel.Kernel.Dmesg.createMessage
 
-    kprint Hexagon.Panico.erroReiniciar
+    kprint Hexagon.Panic.rebootError
 
     hlt
 
     jmp $
 
-.naoFatal:
+.notFatal:
 
-    kprint Hexagon.Panico.cabecalhoOops
+    kprint Hexagon.Panic.oopsHeader
 
-    logHexagon Hexagon.Panico.cabecalhoOops, Hexagon.Dmesg.Priorities.p4
+    logHexagon Hexagon.Panic.oopsHeader, Hexagon.Dmesg.Priorities.p4
 
     call Hexagon.Kernel.Kernel.Dmesg.createMessage
 
@@ -152,30 +152,30 @@ Hexagon.Kernel.Kernel.Panico.panico:
 
     call Hexagon.Kernel.Kernel.Dmesg.createMessage
 
-    kprint Hexagon.Panico.erroNaoFatal
+    kprint Hexagon.Panic.oopsError
 
     call Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.waitKeyboard
 
     ret
 
-.desconhecido:
+.unknown:
 
-    kprint Hexagon.Panico.unknownError
+    kprint Hexagon.Panic.unknownError
 
     ret
 
 ;;************************************************************************************
 
-;; Rotina que prepara a saída de vídeo padrão para a exibição de informações em caso de
-;; erro grave no sistema
+;; Routine that prepares the default video output to display information in
+;; case of a serious system error
 
-Hexagon.Kernel.Kernel.Panico.prepararPanico:
+Hexagon.Kernel.Kernel.Panic.preparePanic:
 
-    mov esi, Hexagon.Dev.Devices.tty1 ;; Primeiro, fechar tty1
+    mov esi, Hexagon.Dev.Devices.tty1 ;; First, close tty1
 
     call Hexagon.Kernel.Dev.Dev.close
 
-    mov esi, Hexagon.Dev.Devices.tty0 ;; Abrir a saída de vídeo padrão
+    mov esi, Hexagon.Dev.Devices.tty0 ;; Open default video output
 
     call Hexagon.Kernel.Dev.Dev.open
 
@@ -184,10 +184,10 @@ Hexagon.Kernel.Kernel.Panico.prepararPanico:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.setConsoleColor
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.clearConsole ;; Limpar saída de vídeo padrão
+    call Hexagon.Kernel.Dev.Gen.Console.Console.clearConsole ;; Clear default video output
 
     mov dx, 0
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.positionCursor
 
-    ret ;; Retornar à rotina principal
+    ret ;; Return to main routine
