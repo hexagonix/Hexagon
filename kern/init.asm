@@ -71,16 +71,16 @@
 ;;
 ;;************************************************************************************
 
-Hexagon.Init.iniciarModoUsuario:
+Hexagon.Init.startUserMode:
 
     logHexagon Hexagon.Verbose.userMode, Hexagon.Dmesg.Priorities.p5
 
-.iniciarInit:
+.startInit:
 
-;; Agora o Hexagon tentará carregar o init e, em caso de sucesso, transferir o controle para
-;; ele, que finalizará a inicialização do sistema em modo usuário
+;; Now Hexagon will try to load init and, if successful, transfer control to it,
+;; which will finish booting the system in user mode
 
-;; Primeiro, verificar se o arquivo existe no volume
+;; First, check if the file exists on the volume
 
     logHexagon Hexagon.Verbose.init, Hexagon.Dmesg.Priorities.p5
 
@@ -88,37 +88,37 @@ Hexagon.Init.iniciarModoUsuario:
 
     call Hexagon.Kernel.FS.VFS.fileExists
 
-    jc .initNaoEncontrado
+    jc .initNotFound
 
     logHexagon Hexagon.Verbose.initEncontrado, Hexagon.Dmesg.Priorities.p5
 
-    mov eax, 0 ;; Não fornecer argumentos
-    mov esi, Hexagon.Init.Const.initHexagon ;; Nome do arquivo
+    mov eax, 0 ;; Do not provide arguments
+    mov esi, Hexagon.Init.Const.initHexagon ;; Filename
 
     clc
 
-    call Hexagon.Kernel.Kernel.Proc.criarProcesso ;; Solicitar o carregamento do init
+    call Hexagon.Kernel.Kernel.Proc.criarProcesso ;; Request init loading
 
     logHexagon Hexagon.Verbose.semInit, Hexagon.Dmesg.Priorities.p5
 
-    jnc .fimInit
+    jnc .endInit
 
-.initNaoEncontrado: ;; O init não pôde ser localizado
+.initNotFound: ;; init could not be located
 
-;; Por enquanto, o Hexagon tentará carregar o shell padrão do sistema
+;; For now, Hexagon will attempt to load the system's default shell
 
     logHexagon Hexagon.Verbose.initNaoEncontrado, Hexagon.Dmesg.Priorities.p5
 
-    mov eax, 0 ;; Não fornecer argumentos
-    mov esi, Hexagon.Init.Const.shellHexagon ;; Nome do arquivo
+    mov eax, 0 ;; Do not provide arguments
+    mov esi, Hexagon.Init.Const.shellHexagon ;; Filename
 
     clc
 
-    call Hexagon.Kernel.Kernel.Proc.criarProcesso ;; Solicitar o carregamento do shell padrão
+    call Hexagon.Kernel.Kernel.Proc.criarProcesso ;; Request loading default shell
 
-    jnc .fimShell
+    jnc .endShell
 
-.fimInit: ;; Imprimir mensagem e finalizar o sistema
+.endInit: ;; Print message and close the system
 
     mov esi, Hexagon.Verbose.Init.semInit
 
@@ -128,21 +128,21 @@ Hexagon.Init.iniciarModoUsuario:
 
     jmp .fim
 
-.fimShell:
+.endShell:
 
     mov esi, Hexagon.Verbose.Init.shellFinalizado
 
     mov eax, 1
 
-    call Hexagon.Kernel.Kernel.Panico.panico ;; Solicitar montagem de tela de erro
+    call Hexagon.Kernel.Kernel.Panico.panico ;; Request error screen
 
 .fim:
 
-    ret ;; Nunca chegaremos até aqui
+    ret ;; We'll never get this far
 
 ;;************************************************************************************
 
 Hexagon.Init.Const:
 
-.initHexagon:  db "init", 0 ;; Nome da imagem do init no volume
-.shellHexagon: db "sh", 0   ;; Nome do shell padrão
+.initHexagon:  db "init", 0 ;; Name of the init image on the volume
+.shellHexagon: db "sh", 0   ;; Default shell name

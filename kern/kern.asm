@@ -343,7 +343,7 @@ Hexagon.userMode:
 ;; Agora, devemos ir para o modo usuário, executando o primeiro processo, init. Caso
 ;; init não esteja presente no volume, tentar executar o shell padrão
 
-    call Hexagon.Init.iniciarModoUsuario
+    call Hexagon.Init.startUserMode
 
 ;;************************************************************************************
 

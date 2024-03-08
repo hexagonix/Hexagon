@@ -71,47 +71,47 @@
 ;;
 ;;************************************************************************************
 
-;; Ponto de entrada do kernel Hexagon
+;; Hexagon kernel entry point
 
-;; Neste momento, o ambiente de operação é o modo real
+;; At this time, the operation environment is the real mode
 
-;; Especificações de inicialização do Hexagon
+;; Hexagon Boot Specifications
 ;;
-;; Parâmetros que devem ser fornecidos pelo HBoot (ou gerenciador compatível):
+;; Parameters that must be provided by HBoot (or compatible manager):
 ;;
-;; Os parâmetros devem ser fornecidos nos registradores, em valor absoluto ou endereço
-;; de memória para estrutura, como árvore de dispositivos, ou variáveis
+;; Parameters must be provided in registers, in absolute value or
+;; memory address for structure, such as device tree, or variables
 ;;
-;; BL  - Código da unidade de unicialização
-;; CX  - Memória total reconhecida pelo HBoot
-;; AX  - Endereço da árvore de dispositivos de 16 bits
-;; EBP - Ponteiro para o BPB (BIOS Parameter Block)
-;; ESI - Linha de comando para o Hexagon
-;; EDI - Endereço da árvore de dispositivos de 32 bits
+;; BL  - Boot drive code
+;; CX  - Total memory recognized by HBoot (available)
+;; AX  - 16-bit device tree address
+;; EBP - Pointer to BPB (BIOS Parameter Block)
+;; ESI - Command line for Hexagon
+;; EDI - 32-bit device tree address
 
 use16
 
-cabecalhoHexagon:
+hexagonHeader:
 
-.assinatura:      db "HAPP" ;; Assinatura
-.arquitetura:     db 01h    ;; Arquitetura (i386 = 01h)
-.versaoMinima:    db 00h    ;; Versão mínima do Hexagon (não nos interessa aqui)
-.subversaoMinima: db 00h    ;; Subversão mínima do Hexagon (não nos interessa aqui)
-.pontoEntrada:    dd Hexagon.Kernel.Lib.HAPP.execucaoIndevida ;; Offset do ponto de entrada
-.tipoExecutavel:  db 01h    ;; Esta é uma imagem executável
-.reservado0:      dd 0      ;; Reservado (Dword)
-.reservado1:      db 0      ;; Reservado (Byte)
-.reservado2:      db 0      ;; Reservado (Byte)
-.reservado3:      db 0      ;; Reservado (Byte)
-.reservado4:      dd 0      ;; Reservado (Dword)
-.reservado5:      dd 0      ;; Reservado (Dword)
-.reservado6:      dd 0      ;; Reservado (Dword)
-.reservado7:      db 0      ;; Reservado (Byte)
-.reservado8:      dw 0      ;; Reservado (Word)
-.reservado9:      dw 0      ;; Reservado (Word)
-.reservado10:     dw 0      ;; Reservado (Word)
+.signature:     db "HAPP" ;; Image signature
+.architecture:  db 01h    ;; Architecture (i386 = 01h)
+.minVersion:    db 00h    ;; Minimum version of Hexagon (we don't care here)
+.minSubversion: db 00h    ;; Minimal subversion of Hexagon (we don't care here)
+.entryPoint:    dd Hexagon.Kernel.Lib.HAPP.execucaoIndevida ;; Entry point offset
+.execType:      db 01h    ;; This is an executable image
+.reserved0:     dd 0      ;; Reserved (Dword)
+.reserved1:     db 0      ;; Reserved (Byte)
+.reserved2:     db 0      ;; Reserved (Byte)
+.reserved3:     db 0      ;; Reserved (Byte)
+.reserved4:     dd 0      ;; Reserved (Dword)
+.reserved5:     dd 0      ;; Reserved (Dword)
+.reserved6:     dd 0      ;; Reserved (Dword)
+.reserved7:     db 0      ;; Reserved (Byte)
+.reserved8:     dw 0      ;; Reserved (Word)
+.reserved9:     dw 0      ;; Reserved (Word)
+.reserved10:    dw 0      ;; Reserved (Word)
 
-;; Primeiramente, os segmentos do kernel em modo real serão definidos
+;; First, the real-mode kernel segments will be defined
 
     mov ax, 50h
     mov ds, ax
@@ -119,7 +119,7 @@ cabecalhoHexagon:
     mov fs, ax
     mov gs, ax
 
-;; Definir pilha para este modo de operação
+;; Set stack for this mode of operation
 
     cli
 
@@ -127,44 +127,43 @@ cabecalhoHexagon:
     mov ss, ax
     mov sp, 0
 
-;; Salvar informações importantes provenientes da inicialização. Estes dados dizem respeito
-;; ao disco utilizado na inicialização. Futuros dados poderão ser salvos do modo real para
-;; uso no ambiente protegido. Os dados de inicialização são disponibilizados pelo HBoot, como
-;; valores brutos ou como endereços para estruturas com parâmetros que devem ser processados
-;; no ambiente protegido do Hexagon
+;; Save important information from startup.
+;; This data concerns the boot disk.
+;; Future data can be saved in real mode for use in the protected mode environment.
+;; Boot data is made available by HBoot, either as raw values ​​or as addresses to structures
+;; with parameters that must be processed in the Hexagon protected mode environment
 
-;; Irá armazenar o volume onde o sistema foi iniciado (não pode ser alterado)
+;; Will store the volume where the system was booted (cannot be changed)
 
     mov byte[Hexagon.Dev.Gen.Disk.Control.bootDisk], bl
 
-;; Salvar o endereço do BPB (BIOS Parameter Block) do volume utilizado para a inicialização
+;; Save the BPB (BIOS Parameter Block) address of the volume used for boot
 
     mov dword[Hexagon.Memory.addressBPB], ebp
 
-;; Armazenar o tamanho da memória RAM disponível, fornecido pelo HBoot
+;; Store available RAM memory size provided by HBoot
 
     mov word[Hexagon.Memory.memoryCMOS], cx
 
-;; Agora vamos salvar a localização da estrutura de parâmetros fornecida pelo HBoot
+;; Now let's save the location of the parameter structure provided by HBoot
 
     mov dword[Hexagon.Boot.Parametros.linhaComando], esi
 
-;; Agora vamos arrumar a casa para entrar em modo protegido e ir para o ponto de entrada de fato do
-;; Hexagon, iniciando de fato o kernel
+;; Now let's tidy up the house to enter protected mode and go to the actual Hexagon
+;; entry point, actually starting the kernel
 
-;; Habilitar A20, necessário para endereçamento de 4 GB de memória RAM e para entrar em modo
-;; protegido
+;; Enable A20, necessary to address 4 GB of RAM and to enter protected mode
 
-    call Hexagon.Kernel.Arch.i386.CPU.CPU.enableA20Gate ;; Ativar A20, necessário para o modo protegido
+    call Hexagon.Kernel.Arch.i386.CPU.CPU.enableA20Gate ;; Enable A20, required for protected mode
 
-    call Hexagon.Kernel.Arch.i386.Mm.Mm.getInstalledMemory ;; Obtem o total de memória instalada
+    call Hexagon.Kernel.Arch.i386.Mm.Mm.getInstalledMemory ;; Gets the total installed memory
 
-    call Hexagon.Kernel.Arch.i386.CPU.CPU.goToProtectedMode32 ;; Configurar modo protegido 32 bits
+    call Hexagon.Kernel.Arch.i386.CPU.CPU.goToProtectedMode32 ;; Configure 32-bit protected mode
 
-;; Agora o código de modo protegido será executado (já estamos em 32 bits!)
+;; Now the protected mode code will run (we are already on 32-bit!)
 
 use32
 
-    jmp Hexagon.init ;; Vamos agora para o ponto de entrada do Hexagon em modo protegido
+    jmp Hexagon.init ;; Let's now go to the Hexagon entry point in protected mode
 
-include "kern.asm" ;; Incluir o restante do kernel, em ambiente de modo protegido
+include "kern.asm" ;; Include the rest of the kernel, in a protected mode environment
