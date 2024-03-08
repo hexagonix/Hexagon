@@ -297,7 +297,7 @@ Hexagon.Kernel.Dev.Gen.COM.Serial.setupCOM1:
     pop ebx
     pop eax
 
-    logHexagon Hexagon.Verbose.serial, Hexagon.Dmesg.Prioridades.p5
+    logHexagon Hexagon.Verbose.serial, Hexagon.Dmesg.Priorities.p5
 
     ret
 

@@ -472,7 +472,7 @@ Hexagon.Kernel.FS.VFS.setBootVolume:
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.bootDisk]
     mov byte[Hexagon.Dev.Gen.Disk.Control.currentDisk], dl
 
-    logHexagon Hexagon.Verbose.definirVolume, Hexagon.Dmesg.Prioridades.p5
+    logHexagon Hexagon.Verbose.definirVolume, Hexagon.Dmesg.Priorities.p5
 
     ret
 

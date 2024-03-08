@@ -73,7 +73,7 @@
 
 Hexagon.Init.iniciarModoUsuario:
 
-    logHexagon Hexagon.Verbose.userMode, Hexagon.Dmesg.Prioridades.p5
+    logHexagon Hexagon.Verbose.userMode, Hexagon.Dmesg.Priorities.p5
 
 .iniciarInit:
 
@@ -82,7 +82,7 @@ Hexagon.Init.iniciarModoUsuario:
 
 ;; Primeiro, verificar se o arquivo existe no volume
 
-    logHexagon Hexagon.Verbose.init, Hexagon.Dmesg.Prioridades.p5
+    logHexagon Hexagon.Verbose.init, Hexagon.Dmesg.Priorities.p5
 
     mov esi, Hexagon.Init.Const.initHexagon
 
@@ -90,7 +90,7 @@ Hexagon.Init.iniciarModoUsuario:
 
     jc .initNaoEncontrado
 
-    logHexagon Hexagon.Verbose.initEncontrado, Hexagon.Dmesg.Prioridades.p5
+    logHexagon Hexagon.Verbose.initEncontrado, Hexagon.Dmesg.Priorities.p5
 
     mov eax, 0 ;; Não fornecer argumentos
     mov esi, Hexagon.Init.Const.initHexagon ;; Nome do arquivo
@@ -99,7 +99,7 @@ Hexagon.Init.iniciarModoUsuario:
 
     call Hexagon.Kernel.Kernel.Proc.criarProcesso ;; Solicitar o carregamento do init
 
-    logHexagon Hexagon.Verbose.semInit, Hexagon.Dmesg.Prioridades.p5
+    logHexagon Hexagon.Verbose.semInit, Hexagon.Dmesg.Priorities.p5
 
     jnc .fimInit
 
@@ -107,7 +107,7 @@ Hexagon.Init.iniciarModoUsuario:
 
 ;; Por enquanto, o Hexagon tentará carregar o shell padrão do sistema
 
-    logHexagon Hexagon.Verbose.initNaoEncontrado, Hexagon.Dmesg.Prioridades.p5
+    logHexagon Hexagon.Verbose.initNaoEncontrado, Hexagon.Dmesg.Priorities.p5
 
     mov eax, 0 ;; Não fornecer argumentos
     mov esi, Hexagon.Init.Const.shellHexagon ;; Nome do arquivo

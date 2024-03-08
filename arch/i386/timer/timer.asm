@@ -87,7 +87,7 @@ Hexagon.Kernel.Arch.i386.Timer.Timer.setupTimer:
 
     out 40h, al
 
-    logHexagon Hexagon.Verbose.timer, Hexagon.Dmesg.Prioridades.p5
+    logHexagon Hexagon.Verbose.timer, Hexagon.Dmesg.Priorities.p5
 
     ret
 

@@ -101,7 +101,7 @@ macro logHexagon mensagem, prioridade
     mov esi, mensagem
     mov ebx, prioridade
 
-    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+    call Hexagon.Kernel.Kernel.Dmesg.createMessage
 
 }
 

@@ -202,7 +202,7 @@ Hexagon.Autoconfig:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.setupConsole ;; Configura a resolução e configurações padrão de vídeo
 
-    call Hexagon.Kernel.Kernel.Dmesg.iniciarRelatorio ;; Inicia o relatório de componentes do Hexagon
+    call Hexagon.Kernel.Kernel.Dmesg.startLog ;; Inicia o relatório de componentes do Hexagon
 
 ;;************************************************************************************
 
@@ -214,17 +214,17 @@ Hexagon.Autoconfig:
 
     kprint Hexagon.Verbose.Hexagon
 
-    logHexagon Hexagon.Verbose.versao, Hexagon.Dmesg.Prioridades.p5
+    logHexagon Hexagon.Verbose.versao, Hexagon.Dmesg.Priorities.p5
 
-    kprint Hexagon.Dmesg.identificadorHexagon
+    kprint Hexagon.Dmesg.hexagonIdentifier
 
-    call Hexagon.Kernel.Kernel.Dmesg.dataParaRelatorio
+    call Hexagon.Kernel.Kernel.Dmesg.dateToLog
 
-    call Hexagon.Kernel.Kernel.Dmesg.horaParaRelatorio
+    call Hexagon.Kernel.Kernel.Dmesg.hourToLog
 
-    kprint Hexagon.Verbose.novaLinha
+    kprint Hexagon.Verbose.newLine
 
-    kprint Hexagon.Dmesg.identificadorHexagon
+    kprint Hexagon.Dmesg.hexagonIdentifier
 
     kprint Hexagon.Verbose.totalMemory
 
@@ -244,13 +244,13 @@ Hexagon.Autoconfig:
 
     kprint Hexagon.Verbose.bytes
 
-    kprint Hexagon.Verbose.novaLinha
+    kprint Hexagon.Verbose.newLine
 
 ;;************************************************************************************
 
-    logHexagon Hexagon.Verbose.teclado, Hexagon.Dmesg.Prioridades.p5
+    logHexagon Hexagon.Verbose.teclado, Hexagon.Dmesg.Priorities.p5
 
-    logHexagon Hexagon.Verbose.mouse, Hexagon.Dmesg.Prioridades.p5
+    logHexagon Hexagon.Verbose.mouse, Hexagon.Dmesg.Priorities.p5
 
     call Hexagon.Kernel.Arch.i386.Timer.Timer.setupTimer ;; Inicializa o serviço de timer do sistema
 
@@ -264,7 +264,7 @@ Hexagon.Autoconfig:
 
     call Hexagon.Kernel.FS.VFS.setFilesystem ;; Define o sistema de arquivos à ser utilizado para o volume
 
-    kprint Hexagon.Dmesg.identificadorHexagon
+    kprint Hexagon.Dmesg.hexagonIdentifier
 
     kprint Hexagon.Verbose.inicioMontagem
 
@@ -274,13 +274,13 @@ Hexagon.Autoconfig:
 
     kprint Hexagon.Verbose.montagemRealizada
 
-    kprint Hexagon.Verbose.novaLinha
+    kprint Hexagon.Verbose.newLine
 
 ;;************************************************************************************
 
     call Hexagon.Kernel.FS.VFS.initFilesystem ;; Inicializa as estruturas do sistema de arquivos do volume
 
-    kprint Hexagon.Dmesg.identificadorHexagon
+    kprint Hexagon.Dmesg.hexagonIdentifier
 
     kprint Hexagon.Verbose.sistemaArquivos
 
@@ -298,7 +298,7 @@ Hexagon.Autoconfig:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
-    kprint Hexagon.Dmesg.identificadorHexagon
+    kprint Hexagon.Dmesg.hexagonIdentifier
 
     kprint Hexagon.Verbose.volumeLabel
 
@@ -321,7 +321,7 @@ Hexagon.Autoconfig:
 
     call Hexagon.Kernel.FS.VFS.mountVolume ;; Monta o volume padrão utilizado para a inicialização
 
-    logHexagon Hexagon.Verbose.sucessoMontagem, Hexagon.Dmesg.Prioridades.p5
+    logHexagon Hexagon.Verbose.sucessoMontagem, Hexagon.Dmesg.Priorities.p5
 
 ;;************************************************************************************
 
@@ -334,7 +334,7 @@ Hexagon.Autoconfig:
 
     call Hexagon.Kernel.Kernel.Proc.travar
 
-    logHexagon Hexagon.Verbose.travando, Hexagon.Dmesg.Prioridades.p5
+    logHexagon Hexagon.Verbose.travando, Hexagon.Dmesg.Priorities.p5
 
 ;;************************************************************************************
 

@@ -178,7 +178,7 @@ Hexagon.Syscall.Syscall.servicosHexagon:
 
 ;; Serviço de mensagens do Hexagon
 
-    dd Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon                ;; 66
+    dd Hexagon.Kernel.Kernel.Dmesg.createMessage                ;; 66
 
 ;; Serviço de relógio em tempo real do Hexagon
 

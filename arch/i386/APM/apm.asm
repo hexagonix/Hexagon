@@ -95,14 +95,14 @@ match =YES, VERBOSE
 {
 
     mov esi, Hexagon.Verbose.APM.servicoAPM
-    mov ebx, Hexagon.Dmesg.Prioridades.p5
+    mov ebx, Hexagon.Dmesg.Priorities.p5
 
-    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+    call Hexagon.Kernel.Kernel.Dmesg.createMessage
 
     mov esi, Hexagon.Verbose.APM.reinicioAPM
-    mov ebx, Hexagon.Dmesg.Prioridades.p5
+    mov ebx, Hexagon.Dmesg.Priorities.p5
 
-    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+    call Hexagon.Kernel.Kernel.Dmesg.createMessage
 
 }
 
@@ -135,14 +135,14 @@ match =YES, VERBOSE
 {
 
     mov esi, Hexagon.Verbose.APM.servicoAPM
-    mov ebx, Hexagon.Dmesg.Prioridades.p5
+    mov ebx, Hexagon.Dmesg.Priorities.p5
 
-    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+    call Hexagon.Kernel.Kernel.Dmesg.createMessage
 
     mov esi, Hexagon.Verbose.APM.desligamentoAPM
-    mov ebx, Hexagon.Dmesg.Prioridades.p5
+    mov ebx, Hexagon.Dmesg.Priorities.p5
 
-    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+    call Hexagon.Kernel.Kernel.Dmesg.createMessage
 
 }
 
@@ -202,9 +202,9 @@ match =YES, VERBOSE
 {
 
     mov esi, Hexagon.Verbose.APM.erroComandoAPM
-    mov ebx, Hexagon.Dmesg.Prioridades.p5
+    mov ebx, Hexagon.Dmesg.Priorities.p5
 
-    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+    call Hexagon.Kernel.Kernel.Dmesg.createMessage
 
 }
 
@@ -218,9 +218,9 @@ match =YES, VERBOSE
 {
 
     mov esi, Hexagon.Verbose.APM.erroInstalacaoAPM
-    mov ebx, Hexagon.Dmesg.Prioridades.p5
+    mov ebx, Hexagon.Dmesg.Priorities.p5
 
-    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+    call Hexagon.Kernel.Kernel.Dmesg.createMessage
 
 }
 
@@ -234,9 +234,9 @@ match =YES, VERBOSE
 {
 
     mov esi, Hexagon.Verbose.APM.erroConexaoAPM
-    mov ebx, Hexagon.Dmesg.Prioridades.p5
+    mov ebx, Hexagon.Dmesg.Priorities.p5
 
-    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+    call Hexagon.Kernel.Kernel.Dmesg.createMessage
 
 }
 
@@ -254,9 +254,9 @@ match =YES, VERBOSE
 {
 
     mov esi, Hexagon.Verbose.APM.sucessoDesligamentoAPM
-    mov ebx, Hexagon.Dmesg.Prioridades.p5
+    mov ebx, Hexagon.Dmesg.Priorities.p5
 
-    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+    call Hexagon.Kernel.Kernel.Dmesg.createMessage
 
 }
 

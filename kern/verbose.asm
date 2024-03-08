@@ -135,7 +135,7 @@ db "PID 1: starting /init.", 0
 db "PID 1: looking for /sh...", 0
 .desligando:
 db "Shuting down and halting the CPU...", 0
-.novaLinha:
+.newLine:
 db 10, 0
 .opcodeInvalido:
 db "Invalid opcode found at runtime. Failure.", 0

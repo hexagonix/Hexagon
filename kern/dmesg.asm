@@ -77,30 +77,29 @@ use32
 
 Hexagon.Dmesg:
 
-.dataInicio:
+.bootDate:
 db "System initialization: ", 0
-.infoData:
+.dateSource:
 db " [CMOS]", 0
-.identificadorHexagon:
+.hexagonIdentifier:
 db "[Hexagon] ", 0
-.identificadorUsuarioInicial:
+.userIdentifierOpen:
 db "[PID: ", 0
-.identificadorUsuarioFinal:
+.userIdentifierClose:
 db "] ", 0
-.novaLinha: db 10, 0
+.newLine: db 10, 0
 
-Hexagon.Dmesg.Prioridades:
+Hexagon.Dmesg.Priorities:
 
-;; Lista de prioridades do kernel:
+;; Kernel priority list:
 ;;
-;; 0 - Interromper a execução do processo atual e exibir uma mensagem (a ser implementado).
-;; 1 - Não interromper o processamento e exibir a mensagem apenas, interrompendo a execução de
-;;     qualquer processo (a ser implementado).
-;; 2 - Exibir a mensagem apenas de algum utilitário realizar uma chamada de solicitação
-;;     (a ser implementado).
-;; 3 - Mensagem relevante apenas ao kernel (a ser implementado).
-;; 4 - Enviar a mensagem apenas via serial, para fins de debug (verbose).
-;; 5 - Enviar a mensagem na saída padrão e por via serial.
+;; 0 - Stop the execution of the current process and display a message (to be implemented).
+;; 1 - Do not interrupt processing and only display the message, interrupting the execution
+;;     of any process (to be implemented).
+;; 2 - Display the message only if a utility makes a request call (to be implemented).
+;; 3 - Message relevant only to the kernel (to be implemented).
+;; 4 - Send the message only via serial, for debugging purposes (verbose).
+;; 5 - Send the message via default output and serially.
 
 .p0 = 0
 .p1 = 1
@@ -111,7 +110,7 @@ Hexagon.Dmesg.Prioridades:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Dmesg.iniciarRelatorio:
+Hexagon.Kernel.Kernel.Dmesg.startLog:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.useKernelConsole
 
@@ -119,9 +118,9 @@ Hexagon.Kernel.Kernel.Dmesg.iniciarRelatorio:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
-    call Hexagon.Kernel.Kernel.Dmesg.dataParaRelatorio
+    call Hexagon.Kernel.Kernel.Dmesg.dateToLog
 
-    call Hexagon.Kernel.Kernel.Dmesg.horaParaRelatorio
+    call Hexagon.Kernel.Kernel.Dmesg.hourToLog
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.useMainConsole
 
@@ -129,9 +128,9 @@ Hexagon.Kernel.Kernel.Dmesg.iniciarRelatorio:
 
 ;;************************************************************************************
 
-;; Esta função permite adicionar uma mensagem no relatório do kernel
+;; This function allows you to add a message to the kernel log
 
-Hexagon.Kernel.Kernel.Dmesg.adicionarMensagem:
+Hexagon.Kernel.Kernel.Dmesg.addMessage:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.useKernelConsole
 
@@ -143,13 +142,13 @@ Hexagon.Kernel.Kernel.Dmesg.adicionarMensagem:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Dmesg.dataParaRelatorio:
+Hexagon.Kernel.Kernel.Dmesg.dateToLog:
 
     push eax
     push ebx
     push esi
 
-    mov esi, Hexagon.Dmesg.dataInicio
+    mov esi, Hexagon.Dmesg.bootDate
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
@@ -227,7 +226,7 @@ Hexagon.Kernel.Kernel.Dmesg.dataParaRelatorio:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Dmesg.horaParaRelatorio:
+Hexagon.Kernel.Kernel.Dmesg.hourToLog:
 
     push eax
     push ebx
@@ -289,7 +288,7 @@ Hexagon.Kernel.Kernel.Dmesg.horaParaRelatorio:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
-    mov esi, Hexagon.Dmesg.infoData
+    mov esi, Hexagon.Dmesg.dateSource
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
@@ -301,145 +300,145 @@ Hexagon.Kernel.Kernel.Dmesg.horaParaRelatorio:
 
 ;;************************************************************************************
 
-;; Essa função é responsável por receber e exibir uma mensagem originada no próprio
-;; Hexagon ou como um alerta relevante de daemons ou aplicativos
-
-;; Entrada:
+;; This function is responsible for receiving and displaying a message originating
+;; from Hexagon itself or as a relevant alert from daemons or applications
 ;;
-;; ESI - Mensagem completa a ser exibida
-;; EAX - Código, se houver
-;; EBX - Prioridade
+;; Input:
+;;
+;; ESI - Complete message to be displayed
+;; EAX - Code, if any
+;; EBX - Priority
 
-;; Se a prioridade for superior ou igual a 4, as mensagens serão enviadas apenas via porta serial.
+;; If the priority is greater than or equal to 4, messages will only be sent via
+;; the serial port.
 
-Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon:
+Hexagon.Kernel.Kernel.Dmesg.createMessage:
 
-    cmp ebx, Hexagon.Dmesg.Prioridades.p4
-    je .apenasSaidaSerial
+    cmp ebx, Hexagon.Dmesg.Priorities.p4
+    je .justSerialOutput
 
     cmp ebx, 05h
-    je .envioPadrao
+    je .defaultSent
 
     ret ;; Por enquanto, só essas opções são válidas
 
-.envioPadrao:
+.defaultSent:
 
     push esi
 
     cmp byte[Hexagon.Syscall.Controle.chamadaSistema], 01h
-    je .processoUsuario
+    je .userProcess
 
-.mensagemHexagon:
+.hexagonMessage:
 
-    mov esi, Hexagon.Dmesg.identificadorHexagon
+    mov esi, Hexagon.Dmesg.hexagonIdentifier
 
-    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
-
-    call Hexagon.Kernel.Dev.Gen.Console.Console.printString
-
-    jmp .mensagemRecebida
-
-.processoUsuario:
-
-    mov esi, Hexagon.Dmesg.identificadorUsuarioInicial
-
-    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
+    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
-;; O PID do processo será exibido na tela
+    jmp .messageReceived
 
-    movzx eax, word[Hexagon.Processos.BCP.PID] ;; Obter o PID
+.userProcess:
 
-    call Hexagon.Kernel.Lib.String.paraString ;; Transformar em uma string
+    mov esi, Hexagon.Dmesg.userIdentifierOpen
 
-    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
-
-    call Hexagon.Kernel.Dev.Gen.Console.Console.printString
-
-    mov esi, Hexagon.Dmesg.identificadorUsuarioFinal
-
-    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
+    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
-    jmp .mensagemRecebida
+;; The process PID will be displayed on the screen
 
-.mensagemRecebida:
+    movzx eax, word[Hexagon.Processos.BCP.PID] ;; Get PID
+
+    call Hexagon.Kernel.Lib.String.paraString ;; Transform into a string
+
+    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
+
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printString
+
+    mov esi, Hexagon.Dmesg.userIdentifierClose
+
+    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
+
+    call Hexagon.Kernel.Dev.Gen.Console.Console.printString
+
+    jmp .messageReceived
+
+.messageReceived:
 
     pop esi
 
-    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
+    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
-    mov esi, Hexagon.Dmesg.novaLinha
+    mov esi, Hexagon.Dmesg.newLine
 
-    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
+    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
     ret
 
-.apenasSaidaSerial:
+.justSerialOutput:
 
     push esi
 
     cmp byte[Hexagon.Syscall.Controle.chamadaSistema], 01h
-    je .serialProcessoUsuario
+    je .userProcessSerialMessage
 
-.serialMensagemHexagon:
+.hexagonSerialMessage:
 
-    mov esi, Hexagon.Dmesg.identificadorHexagon
+    mov esi, Hexagon.Dmesg.hexagonIdentifier
 
-    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
+    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
 
-    jmp .serialMensagemRecebida
+    jmp .serialMessageReceived
 
-.serialProcessoUsuario:
+.userProcessSerialMessage:
 
-    mov esi, Hexagon.Dmesg.identificadorUsuarioInicial
+    mov esi, Hexagon.Dmesg.userIdentifierOpen
 
-    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
+    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
 
-;; O PID do processo será exibido na tela
+;; The process PID will be displayed on the screen
 
-    movzx eax, word[Hexagon.Processos.BCP.PID] ;; Obter o PID
+    movzx eax, word[Hexagon.Processos.BCP.PID] ;; Get PID
 
-    call Hexagon.Kernel.Lib.String.paraString ;; Transformar em uma string
+    call Hexagon.Kernel.Lib.String.paraString ;; Transform into a string
 
-    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
+    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
 
-    mov esi, Hexagon.Dmesg.identificadorUsuarioFinal
+    mov esi, Hexagon.Dmesg.userIdentifierClose
 
-    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
+    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
 
-.serialMensagemRecebida:
+.serialMessageReceived:
 
     pop esi
 
-    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
+    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
 
-    mov esi, Hexagon.Dmesg.novaLinha
+    mov esi, Hexagon.Dmesg.newLine
 
-    call Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial
+    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
 
     ret
 
 ;;************************************************************************************
 
-;; Essa função é responsável por enviar as mensagens recebida pelo Hexagon para a porta
-;; serial padrão inicializada durante a inicialização (COM1). Útil para debug em tempo de
-;; execução
-
-;; Entrada:
+;; This function is responsible for sending the messages received by Hexagon to
+;; the default serial port initialized during startup (COM1). Useful for runtime debugging
 ;;
-;; ESI - Mensagem completa a ser exibida
+;; Input:
+;;
+;; ESI - Full message to be displayed
 
-Hexagon.Kernel.Kernel.Dmesg.mensagemHexagonParaSerial:
+Hexagon.Kernel.Kernel.Dmesg.messageToSerial:
 
-;; Primeiro, salvar a mensagem já presente em ESI para uso futuro em
-;; Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+;; First, save the message already present in ESI for future use
+;; in Hexagon.Kernel.Kernel.Dmesg.createMessage
 
     push esi
 

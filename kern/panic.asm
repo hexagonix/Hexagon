@@ -120,15 +120,15 @@ Hexagon.Kernel.Kernel.Panico.panico:
 
     kprint Hexagon.Panico.cabecalhoPanico
 
-    logHexagon Hexagon.Panico.cabecalhoPanico, Hexagon.Dmesg.Prioridades.p4
+    logHexagon Hexagon.Panico.cabecalhoPanico, Hexagon.Dmesg.Priorities.p4
 
     pop esi
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
-    mov ebx, Hexagon.Dmesg.Prioridades.p4
+    mov ebx, Hexagon.Dmesg.Priorities.p4
 
-    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+    call Hexagon.Kernel.Kernel.Dmesg.createMessage
 
     kprint Hexagon.Panico.erroReiniciar
 
@@ -140,17 +140,17 @@ Hexagon.Kernel.Kernel.Panico.panico:
 
     kprint Hexagon.Panico.cabecalhoOops
 
-    logHexagon Hexagon.Panico.cabecalhoOops, Hexagon.Dmesg.Prioridades.p4
+    logHexagon Hexagon.Panico.cabecalhoOops, Hexagon.Dmesg.Priorities.p4
 
-    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+    call Hexagon.Kernel.Kernel.Dmesg.createMessage
 
     pop esi
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
-    mov ebx, Hexagon.Dmesg.Prioridades.p4
+    mov ebx, Hexagon.Dmesg.Priorities.p4
 
-    call Hexagon.Kernel.Kernel.Dmesg.criarMensagemHexagon
+    call Hexagon.Kernel.Kernel.Dmesg.createMessage
 
     kprint Hexagon.Panico.erroNaoFatal
 
