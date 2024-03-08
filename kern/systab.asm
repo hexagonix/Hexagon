@@ -97,13 +97,13 @@ Hexagon.Syscall.Syscall.servicosHexagon:
 
 ;; Gerenciamento do Sistema de Arquivos e de volumes
 
-    dd Hexagon.Kernel.FS.VFS.novoArquivo                               ;; 12
-    dd Hexagon.Kernel.FS.VFS.salvarArquivo                             ;; 13
-    dd Hexagon.Kernel.FS.VFS.deletarArquivo                            ;; 14
-    dd Hexagon.Kernel.FS.VFS.renomearArquivo                           ;; 15
-    dd Hexagon.Kernel.FS.VFS.listarArquivos                            ;; 16
-    dd Hexagon.Kernel.FS.VFS.arquivoExiste                             ;; 17
-    dd Hexagon.Kernel.FS.VFS.obterVolume                               ;; 18
+    dd Hexagon.Kernel.FS.VFS.createFile                               ;; 12
+    dd Hexagon.Kernel.FS.VFS.saveFile                             ;; 13
+    dd Hexagon.Kernel.FS.VFS.unlinkFile                            ;; 14
+    dd Hexagon.Kernel.FS.VFS.renameFile                           ;; 15
+    dd Hexagon.Kernel.FS.VFS.listFiles                            ;; 16
+    dd Hexagon.Kernel.FS.VFS.fileExists                             ;; 17
+    dd Hexagon.Kernel.FS.VFS.getVolume                               ;; 18
 
 ;; Gerenciamento de usuários
 

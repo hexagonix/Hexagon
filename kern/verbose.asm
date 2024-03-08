@@ -113,7 +113,7 @@ db "The volume ", 0
 db " has been marked for mounting on /.", 0
 .sistemaArquivos:
 db "The mounted volume is formatted as (FSID): ", 0
-.rotuloVolume:
+.volumeLabel:
 db "The volume label is: ", 0
 .sucessoMontagem:
 db "Volume successfully mounted on /.", 0

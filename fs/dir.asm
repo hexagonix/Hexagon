@@ -291,6 +291,6 @@ Hexagon.Kernel.FS.Dir.getMountPoint:
 
 ;; Restore the filesystem code
 
-    mov eax, [Hexagon.VFS.Controle.tipoSistemaArquivos]
+    mov eax, [Hexagon.VFS.Control.filesystemType]
 
     ret

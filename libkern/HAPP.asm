@@ -228,7 +228,7 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
 
 ;; O arquivo existe em disco? Precisamos dos dados de tamanho
 
-    call Hexagon.Kernel.FS.VFS.arquivoExiste
+    call Hexagon.Kernel.FS.VFS.fileExists
 
     push eax
 
@@ -236,7 +236,7 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
 
 ;; Vamos carregar a imagem para começar as análises
 
-    call Hexagon.Kernel.FS.VFS.carregarArquivo
+    call Hexagon.Kernel.FS.VFS.openFile
 
     jc .imagemAusente
 

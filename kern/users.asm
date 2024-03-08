@@ -253,19 +253,19 @@ execucao: db 0
 ;;
 ;; Nome do objeto                       | Código |               Tipo de acesso               |
 ;;
-;; ordemKernelDesativada                    00h      O kernel não está solicitando operações
+;; kernelExecuteDisabled                    00h      O kernel não está solicitando operações
 ;;                                                   que demandem acesso restrito ou análise
-;; ordemKernelExecutar                      01h           Executar a função solicitada
+;; kernelExecutePermission                      01h           Executar a função solicitada
 ;; ordemKernelNegar                         02h       Impedir a execução de qualquer função
 ;;                                                             até mudança de estado
 ;; ordemKernelDebug                         04h           Usar futuramente para depuração
 ;;
-;; O sinalizador ordemKernelExecutar é análogo ao login realizado com a conta de usuário
+;; O sinalizador kernelExecutePermission é análogo ao login realizado com a conta de usuário
 ;; raiz (root), permitindo a realização de tarefas com prerrogativas. Entretanto, permite o
 ;; acesso a dados e funções não expostas ou permitidas ao usuário raiz.
 
-ordemKernelDesativada = 00h ;; Evidencia que a chamada não foi realizada pelo Hexagon
-ordemKernelExecutar   = 01h ;; Este sinalizador é compatível com o usuário raiz (root)
+kernelExecuteDisabled = 00h ;; Evidencia que a chamada não foi realizada pelo Hexagon
+kernelExecutePermission   = 01h ;; Este sinalizador é compatível com o usuário raiz (root)
 ordemKernelNegar      = 02h ;; Nega a execução de *QUALQUER* função compatível solicitada
 ordemKernelDebug      = 04h ;; Usada para depuração de funções compatíveis
 

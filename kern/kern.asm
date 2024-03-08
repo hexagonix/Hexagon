@@ -258,17 +258,17 @@ Hexagon.Autoconfig:
 
     call Hexagon.Kernel.Dev.Gen.COM.Serial.setupCOM1 ;; Iniciar primeira porta serial para debug
 
-    call Hexagon.Kernel.FS.VFS.definirVolumeBoot ;; Define o volume com base em informações da inicialização
+    call Hexagon.Kernel.FS.VFS.setBootVolume ;; Define o volume com base em informações da inicialização
 
 ;;************************************************************************************
 
-    call Hexagon.Kernel.FS.VFS.definirSistemaArquivos ;; Define o sistema de arquivos à ser utilizado para o volume
+    call Hexagon.Kernel.FS.VFS.setFilesystem ;; Define o sistema de arquivos à ser utilizado para o volume
 
     kprint Hexagon.Dmesg.identificadorHexagon
 
     kprint Hexagon.Verbose.inicioMontagem
 
-    call Hexagon.Kernel.FS.VFS.obterVolume ;; Obter o identificador do volume
+    call Hexagon.Kernel.FS.VFS.getVolume ;; Obter o identificador do volume
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printString ;; Exibir
 
@@ -278,13 +278,13 @@ Hexagon.Autoconfig:
 
 ;;************************************************************************************
 
-    call Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos ;; Inicializa as estruturas do sistema de arquivos do volume
+    call Hexagon.Kernel.FS.VFS.initFilesystem ;; Inicializa as estruturas do sistema de arquivos do volume
 
     kprint Hexagon.Dmesg.identificadorHexagon
 
     kprint Hexagon.Verbose.sistemaArquivos
 
-    call Hexagon.Kernel.FS.VFS.obterVolume
+    call Hexagon.Kernel.FS.VFS.getVolume
 
     push esi
     push edi
@@ -300,7 +300,7 @@ Hexagon.Autoconfig:
 
     kprint Hexagon.Dmesg.identificadorHexagon
 
-    kprint Hexagon.Verbose.rotuloVolume
+    kprint Hexagon.Verbose.volumeLabel
 
     pop edi
     pop esi
@@ -319,7 +319,7 @@ Hexagon.Autoconfig:
 
     call Hexagon.Kernel.FS.Dir.setMountPoint
 
-    call Hexagon.Kernel.FS.VFS.montarVolume ;; Monta o volume padrão utilizado para a inicialização
+    call Hexagon.Kernel.FS.VFS.mountVolume ;; Monta o volume padrão utilizado para a inicialização
 
     logHexagon Hexagon.Verbose.sucessoMontagem, Hexagon.Dmesg.Prioridades.p5
 

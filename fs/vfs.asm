@@ -73,92 +73,92 @@
 
 use32
 
-;; Códigos dos Sistemas de Arquivo suportados
+;; Supported filesystem codes
 
-;; Códigos para os principais Sistemas de Arquivos, suportados ou não
+;; Codes for the main filesystems, supported or not
 
 Hexagon.VFS.FS:
 
-.FAT12    = 01h ;; FAT12 (Futuro)
+.FAT12    = 01h ;; FAT12 (Future)
 .FAT16    = 04h ;; FAT16 (< 32 MB)
-.FAT16B   = 06h ;; FAT16B (FAT16B) - Suportado
+.FAT16B   = 06h ;; FAT16B (FAT16B) - Supported
 .FAT16LBA = 0Eh ;; FAT16 (LBA)
 
-Hexagon.VFS.Controle:
+Hexagon.VFS.Control:
 
-.tipoSistemaArquivos: db 0 ;; Armazena qual sistema de arquivos está presente no volume
-.rotuloVolume:        db 0
-.serialVolume:        db 0
+.filesystemType: db 0 ;; Stores which filesystem is present on the volume
+.volumeLabel:    db 0
+.volumeSerial:   db 0
 
-;; Estrutura com as variáveis e constantes comuns para sistemas do tipo FAT
-;; Compatível com FAT12, FAT16 e FAT32. Deve ser instanciada em cada aplicação
+;; Structure with common variables and constants for FAT-type systems
+;; Compatible with FAT12, FAT16 and FAT32. Must be instantiated in each application
 
 struc Hexagon.VFS.FAT
 {
 
-.bytesPorSetor:        dw 0       ;; Número de bytes por setor
-.setoresPorCluster:    db 0       ;; Setores em um cluster
-.setoresReservados:    dw 0       ;; Setores reservaos após o setor de inicialização
-.totalFATs:            db 0       ;; Número de tabelas FAT
-.entradasRaiz:         dw 0       ;; Total de arquivos e pastas no diretório raiz
-.setoresPorFAT:        dw 0       ;; Setores usados para armazenar a FAT
-.totalSetores:         dd 0       ;; Setores no disco
-.tamanhoDirRaiz:       dw 0       ;; Tamanho em setores do diretório raiz
-.dirRaiz:              dd 0       ;; Endereço LBA do diretório raiz
-.tamanhoFATs:          dw 0       ;; Tamanho em setores da(s) FAT(s)
-.FAT:                  dd 0       ;; Endereço LBA da FAT
-.areaDeDados:          dd 0       ;; Endereço LBA do início da área de dados
-.tamanhoCluster:       dd 0       ;; Tamanho do cluster, em bytes
-.atributoOculto        equ 00h    ;; Atributo de um arquivo oculto
-.atributoSistema       equ 04h    ;; Atributo de um arquivo marcado como de sistema
-.atributoDiretorio     equ 10h    ;; Atributo de um diretório
-.atributoLFN           equ 0x0F   ;; Atributo de um nome de arquivo longo (Long File Name)
-.atributoDeletado      equ 0xE5   ;; Atributo de arquivo deletado/entrada livre
-.atributoUltimoCluster equ 0xFFF8 ;; Atributo de último cluster na cadeia
-.bitDiretorio          equ 04h    ;; Bit de um diretório = .atributoDiretorio, mas para bit check
-.bitNomeVolume         equ 03h    ;; Bit de um nome (rótulo) de volume
+.bytesPerSector:       dw 0       ;; Number of bytes per sector
+.sectorsPerCluster:    db 0       ;; Sectors per cluster
+.reservedSectors:      dw 0       ;; Reserve sectors after the boot sector
+.totalFATs:            db 0       ;; Number of FAT tables
+.rootEntries:          dw 0       ;; Total files and folders in the root directory
+.sectorsPerFAT:        dw 0       ;; Sectors used to store FAT
+.totalSectors:         dd 0       ;; Sectors on the disk
+.rootDirSize:          dw 0       ;; Size in sectors of the root directory
+.rootDir:              dd 0       ;; LBA address of the root directory
+.sizeFATs:             dw 0       ;; Size in sectors of the FAT(s)
+.FAT:                  dd 0       ;; LBA address of FAT
+.dataArea:             dd 0       ;; LBA address of the start of the data area
+.clusterSize:          dd 0       ;; Cluster size, in bytes
+.hiddenAttribute       equ 00h    ;; Attribute of a hidden file
+.systemAttribute       equ 04h    ;; Attribute of a file marked as system file
+.directoryAttribute    equ 10h    ;; Attribute of a directory
+.longFilenameAttribute equ 0x0F   ;; Attribute of a long filename (Long File Name)
+.unlinkedAttribute     equ 0xE5   ;; Deleted file/free entry attribute
+.lastClusterAttribute  equ 0xFFF8 ;; Last cluster in chain attribute
+.directoryBit          equ 04h    ;; Bit of a directory = .directoryAttribute, but for bit check
+.volumeNameBit         equ 03h    ;; Bit of a volume name (label)
 
 }
 
-;; Estruturas de gerenciamento de arquivos e pontos de montagem do Hexagon
+;; Hexagon file management structures and mount points
 
 include "fs/dir.asm"
 
 ;;************************************************************************************
 
-;; Criar novo arquivo vazio
+;; Create new empty file
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; ESI - Ponteiro para o nome de arquivo
+;; ESI - Pointer to filename
 ;;
-;; Saída:
+;; Output:
 ;;
-;; EDI - Ponteiro para a entrada no diretório raiz
-;; EAX contendo o código de erro, se cabível
-;; CF definido caso o arquivo já exista no disco
+;; EDI - Pointer to entry in the root directory
+;; EAX containing the error code, if applicable
+;; CF defined if the file already exists on the disk
 
-Hexagon.Kernel.FS.VFS.novoArquivo:
+Hexagon.Kernel.FS.VFS.createFile:
 
     call Hexagon.Kernel.Kernel.Usuarios.verificarPermissoes
 
-    cmp eax, 03h ;; Código de grupo para usuário padrão
-    je .permissaoNegada
+    cmp eax, 03h ;; Group code for default user
+    je .permissionDenied
 
-    mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
+    mov ah, byte[Hexagon.VFS.Control.filesystemType]
 
     cmp ah, Hexagon.VFS.FS.FAT16B
-    je .novoArquivoFAT16B
+    je .newFileFAT16B
 
     ret
 
-.novoArquivoFAT16B:
+.newFileFAT16B:
 
     call Hexagon.Kernel.FS.FAT16.createEmptyFileFAT16B
 
     ret
 
-.permissaoNegada:
+.permissionDenied:
 
     stc
 
@@ -168,39 +168,39 @@ Hexagon.Kernel.FS.VFS.novoArquivo:
 
 ;;************************************************************************************
 
-;; Remover um arquivo do disco
+;; Unlink a file from volume
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; ESI - Ponteiro para o nome de arquivo
+;; ESI - Pointer to filename
 ;;
-;; Saída:
+;; Output:
 ;;
-;; EAX - Código de erro, se cabível
-;;     - 05h para permissão negada
-;; CF definido caso o arquivo não tenha sido encontrado ou tenha nome inválido
+;; EAX - Error code, if applicable
+;;     - 05h for permission denied
+;; CF defined if the file was not found or has an invalid name
 
-Hexagon.Kernel.FS.VFS.deletarArquivo:
+Hexagon.Kernel.FS.VFS.unlinkFile:
 
     call Hexagon.Kernel.Kernel.Usuarios.verificarPermissoes
 
-    cmp eax, 03h ;; Código de grupo para usuário padrão
-    je .permissaoNegada
+    cmp eax, 03h ;; Group code for default user
+    je .permissionDenied
 
-    mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
+    mov ah, byte[Hexagon.VFS.Control.filesystemType]
 
     cmp ah, Hexagon.VFS.FS.FAT16B
-    je .deletarArquivoFAT16B
+    je .unlinkFileFAT16B
 
     ret
 
-.deletarArquivoFAT16B:
+.unlinkFileFAT16B:
 
     call Hexagon.Kernel.FS.FAT16.unlinkFileFAT16B
 
     ret
 
-.permissaoNegada:
+.permissionDenied:
 
     stc
 
@@ -210,33 +210,33 @@ Hexagon.Kernel.FS.VFS.deletarArquivo:
 
 ;;************************************************************************************
 
-;; Salvar arquivo no disco
+;; Save file to volume
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; ESI - Ponteiro para o nome do arquivo
-;; EDI - Ponteiro para os dados
-;; EAX - Tamanho do arquivo (em bytes)
+;; ESI - Pointer to filename
+;; EDI - Pointer to data
+;; EAX - File size (in bytes)
 ;;
-;; Saída:
+;; Output:
 ;;
-;; EAX - Código de erro, se cabível
-;; CF definido caso o arquivo não tenha sido encontrado ou tenha nome inválido
+;; EAX - Error code, if applicable
+;; CF defined if the file was not found or has an invalid name
 
-Hexagon.Kernel.FS.VFS.salvarArquivo:
+Hexagon.Kernel.FS.VFS.saveFile:
 
     pushad
 
-    mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
+    mov ah, byte[Hexagon.VFS.Control.filesystemType]
 
     cmp ah, Hexagon.VFS.FS.FAT16B
-    je .salvarArquivoFAT16B
+    je .saveFileFAT16B
 
     popad
 
     ret
 
-.salvarArquivoFAT16B:
+.saveFileFAT16B:
 
     popad
 
@@ -253,16 +253,16 @@ Hexagon.Kernel.FS.VFS.salvarArquivo:
 ;; ESI - Ponteiro para a lista de arquivos
 ;; EAX - Número de arquivos total
 
-Hexagon.Kernel.FS.VFS.listarArquivos:
+Hexagon.Kernel.FS.VFS.listFiles:
 
-    mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
+    mov ah, byte[Hexagon.VFS.Control.filesystemType]
 
     cmp ah, Hexagon.VFS.FS.FAT16B
-    je .listarArquivosFAT16B
+    je .listFilesFAT16B
 
     ret
 
-.listarArquivosFAT16B:
+.listFilesFAT16B:
 
     call Hexagon.Kernel.FS.FAT16.listFilesFAT16B
 
@@ -270,27 +270,27 @@ Hexagon.Kernel.FS.VFS.listarArquivos:
 
 ;;************************************************************************************
 
-;; Renomear um arquivo existente no disco
+;; Rename an existing file on volume
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; ESI - Nome de arquivo da fonte
-;; EDI - Nome de arquivo do destino
+;; ESI - Source filename
+;; EDI - Destination filename
 ;;
-;; Saída:
+;; Output:
 ;;
-;; CF definido em caso de erro ou limpo em caso de sucesso
+;; CF set on error or cleared on success
 
-Hexagon.Kernel.FS.VFS.renomearArquivo:
+Hexagon.Kernel.FS.VFS.renameFile:
 
-    mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
+    mov ah, byte[Hexagon.VFS.Control.filesystemType]
 
     cmp ah, Hexagon.VFS.FS.FAT16B
-    je .renomearArquivoFAT16B
+    je .renameFileFAT16B
 
     ret
 
-.renomearArquivoFAT16B:
+.renameFileFAT16B:
 
     call Hexagon.Kernel.FS.FAT16.renameFileFAT16B
 
@@ -298,28 +298,28 @@ Hexagon.Kernel.FS.VFS.renomearArquivo:
 
 ;;************************************************************************************
 
-;; Carregar arquivo na memória
+;; Load file into memory (open file)
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; ESI - Nome do arquivo para carregar
-;; EDI - Endereço do arquivo a ser carregado
+;; ESI - Name of the file to load
+;; EDI - Address of the file to be loaded
 ;;
-;; Saída:
+;; Output:
 ;;
-;; EAX - Tamanho do arquivo em bytes
-;; CF definido caso o arquivo não tenha sido encontrado ou tenha nome inválido
+;; EAX - File size in bytes
+;; CF defined if the file was not found or has an invalid name
 
-Hexagon.Kernel.FS.VFS.carregarArquivo:
+Hexagon.Kernel.FS.VFS.openFile:
 
-    mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
+    mov ah, byte[Hexagon.VFS.Control.filesystemType]
 
     cmp ah, Hexagon.VFS.FS.FAT16B
-    je .carregarArquivoFAT16B
+    je .openFileFAT16B
 
     ret
 
-.carregarArquivoFAT16B:
+.openFileFAT16B:
 
     call Hexagon.Kernel.FS.FAT16.loadFileFAT16B
 
@@ -327,28 +327,28 @@ Hexagon.Kernel.FS.VFS.carregarArquivo:
 
 ;;************************************************************************************
 
-;; Checar se um arquivo existe no disco
+;; Check if a file exists on the volume
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; ESI - Nome do arquivo para checar
+;; ESI - Filename to check
 ;;
-;; Saída:
+;; Output:
 ;;
-;; EAX - Tamanho do arquivo em bytes
-;; EBX - Ponteiro para a entrada no diretório raiz
-;; CF definido caso o arquivo não tenha sido encontrado ou tenha nome inválido
+;; EAX - File size in bytes
+;; EBX - Pointer to entry in the root directory
+;; CF defined if the file was not found or has an invalid name
 
-Hexagon.Kernel.FS.VFS.arquivoExiste:
+Hexagon.Kernel.FS.VFS.fileExists:
 
-    mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
+    mov ah, byte[Hexagon.VFS.Control.filesystemType]
 
     cmp ah, Hexagon.VFS.FS.FAT16B
-    je .arquivoExisteFAT16B
+    je .fileExistsFAT16B
 
     ret
 
-.arquivoExisteFAT16B:
+.fileExistsFAT16B:
 
     call Hexagon.Kernel.FS.FAT16.fileExistsFAT16B
 
@@ -356,84 +356,84 @@ Hexagon.Kernel.FS.VFS.arquivoExiste:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.FS.VFS.montarVolume:
+Hexagon.Kernel.FS.VFS.mountVolume:
 
     mov ah, byte[Hexagon.Dev.Gen.Disk.Control.bootDisk]
 
-    mov dl, 01h ;; Classe de dispositivo de armazenamento
+    mov dl, 01h ;; Storage device class
 
-    call Hexagon.Kernel.Dev.Dev.convertDeviceToDeviceName ;; Converter para nome de dispositivo
+    call Hexagon.Kernel.Dev.Dev.convertDeviceToDeviceName ;; Convert to device name
 
-;; Habilitar os privilégios do kernel para solicitação privilegiada
+;; Enable kernel privileges for privileged request
 
-    mov dword[ordemKernel], ordemKernelExecutar
+    mov dword[ordemKernel], kernelExecutePermission
 
-    call Hexagon.Kernel.Dev.Dev.open ;; Abrir o dispositivo para leitura/escrita com privilégios
+    call Hexagon.Kernel.Dev.Dev.open ;; Open device for read/write with privileges
 
-;; Desabilitar os privilégios do kernel, uma vez que já não são necessários
+;; Disable kernel privileges as they are no longer needed
 
-    mov dword[ordemKernel], ordemKernelDesativada
+    mov dword[ordemKernel], kernelExecuteDisabled
 
     ret
 
 ;;************************************************************************************
 
-;; Define o sistema de arquivos presente no disco atual, obtendo a informação adequada
-;; no MBR (Master Boot Record)
+;; Defines the filesystem present on the current volume, obtaining the appropriate
+;; information in the MBR (Master Boot Record)
 
-Hexagon.Kernel.FS.VFS.definirSistemaArquivos:
+Hexagon.Kernel.FS.VFS.setFilesystem:
 
     call Hexagon.Kernel.Dev.i386.Disk.Disk.readMBR
 
-    jc .restaurarVolume
+    jc .restoreVolume
 
-    mov byte[Hexagon.VFS.Controle.tipoSistemaArquivos], ah
+    mov byte[Hexagon.VFS.Control.filesystemType], ah
 
-    jmp .finalizar
+    jmp .finish
 
-.restaurarVolume:
+.restoreVolume:
 
     mov dl, byte [Hexagon.Dev.Gen.Disk.Control.bootDisk]
     mov byte [Hexagon.Dev.Gen.Disk.Control.currentDisk], dl
 
-    call Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos
+    call Hexagon.Kernel.FS.VFS.initFilesystem
 
     stc
 
-.finalizar:
+.finish:
 
     ret
 
 ;;************************************************************************************
 
-;; Inicializa o sistema de arquivos do disco montado, para uso com o sistema
+;; Initializes the filesystem of the mounted volume, for use with the system
 
-Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos:
+Hexagon.Kernel.FS.VFS.initFilesystem:
 
     call Hexagon.Kernel.Dev.i386.Disk.Disk.testVolume
 
-    jc .volumeAusente
+    jc .volumeNotPresent
 
-.volumePresente:
+.volumePresent:
 
-    mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
+    mov ah, byte[Hexagon.VFS.Control.filesystemType]
 
     cmp ah, Hexagon.VFS.FS.FAT16B
-    je .iniciarFAT16B
+    je .initFAT16B
 
     clc
 
     ret
 
-.volumeAusente:
+.volumeNotPresent:
 
     mov ah, byte[Hexagon.Dev.Gen.Disk.Control.bootDisk]
     mov byte[Hexagon.Dev.Gen.Disk.Control.currentDisk], ah
 
-    mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
+    mov ah, byte[Hexagon.VFS.Control.filesystemType]
 
     cmp ah, Hexagon.VFS.FS.FAT16B
-    je .volumeDesconectadoFAT16B
+    je .volumeDisconnectedFAT16B
 
     stc
 
@@ -441,12 +441,11 @@ Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos:
 
 ;;************************************************************************************
 ;;
-;; Área para implementação de rotinas de implementação/recuperação dos Sistemas de
-;; Arquivo suportados
+;; Area for implementing implementation/recovery routines of supported filesystems
 ;;
 ;;************************************************************************************
 
-.iniciarFAT16B:
+.initFAT16B:
 
     push ebx
 
@@ -456,9 +455,9 @@ Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos:
 
     ret
 
-.volumeDesconectadoFAT16B:
+.volumeDisconnectedFAT16B:
 
-    call .iniciarFAT16B
+    call .initFAT16B
 
     stc
 
@@ -466,9 +465,9 @@ Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.FS.VFS.definirVolumeBoot:
+Hexagon.Kernel.FS.VFS.setBootVolume:
 
-;; Irá armazenar o volume a ser utilizado pelo sistema (pode ser alterado)
+;; Will store the volume to be used by the system (can be changed)
 
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.bootDisk]
     mov byte[Hexagon.Dev.Gen.Disk.Control.currentDisk], dl
@@ -479,23 +478,23 @@ Hexagon.Kernel.FS.VFS.definirVolumeBoot:
 
 ;;************************************************************************************
 
-;; Obtêm o disco utilizado pelo sistema
+;; Get the volume used by the system
 ;;
-;; Saída:
+;; Output:
 ;;
-;; DL - Número do drive (0x00, 0x01, 0x80, 0x81, 0x82, 0x83)
-;; AH - Tipo de Sistema de Arquivos
-;; ESI - Nome do dispositivo
-;; EDI - Rótulo do volume em utilização
+;; DL  - Drive number (0x00, 0x01, 0x80, 0x81, 0x82, 0x83)
+;; AH  - Filesystem type
+;; ESI - Device name
+;; EDI - Label of volume in use
 
-Hexagon.Kernel.FS.VFS.obterVolume:
+Hexagon.Kernel.FS.VFS.getVolume:
 
-    mov ah, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk] ;; Número do dispositivo de armazenamento
-    mov dl, [Hexagon.Dev.DeviceClasses.block] ;; Classe do dispositivo
+    mov ah, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk] ;; Storage device number
+    mov dl, [Hexagon.Dev.DeviceClasses.block] ;; Device class
 
     call Hexagon.Kernel.Dev.Dev.convertDeviceToDeviceName
 
-    mov edi, Hexagon.VFS.Controle.rotuloVolume
-    mov ah, byte[Hexagon.VFS.Controle.tipoSistemaArquivos]
+    mov edi, Hexagon.VFS.Control.volumeLabel
+    mov ah, byte[Hexagon.VFS.Control.filesystemType]
 
     ret

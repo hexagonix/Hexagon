@@ -1591,7 +1591,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.getConsoleColor:
 
 Hexagon.Kernel.Dev.Gen.Console.Console.changeFont:
 
-    call Hexagon.Kernel.FS.VFS.arquivoExiste
+    call Hexagon.Kernel.FS.VFS.fileExists
 
     jc .fileNotFound
 
@@ -1606,7 +1606,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.changeFont:
 
     mov edi, Hexagon.Heap.Temp + 500
 
-    call Hexagon.Kernel.FS.VFS.carregarArquivo
+    call Hexagon.Kernel.FS.VFS.openFile
 
     cmp byte[edi+0], "H"
     jne .incompatibleFont
@@ -1622,7 +1622,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.changeFont:
 
     mov edi, Hexagon.Fontes.espacoFonte
 
-    call Hexagon.Kernel.FS.VFS.carregarArquivo
+    call Hexagon.Kernel.FS.VFS.openFile
 
     ret
 

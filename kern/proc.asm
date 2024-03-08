@@ -416,7 +416,7 @@ Hexagon.Kernel.Kernel.Proc.criarProcesso:
 
     push esi
 
-    call Hexagon.Kernel.FS.VFS.arquivoExiste
+    call Hexagon.Kernel.FS.VFS.fileExists
 
     pop esi
 
@@ -514,7 +514,7 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcesso:
 
     push esi
 
-    call Hexagon.Kernel.FS.VFS.carregarArquivo
+    call Hexagon.Kernel.FS.VFS.openFile
 
     pop esi
 

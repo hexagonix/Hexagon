@@ -86,7 +86,7 @@ Hexagon.Init.iniciarModoUsuario:
 
     mov esi, Hexagon.Init.Const.initHexagon
 
-    call Hexagon.Kernel.FS.VFS.arquivoExiste
+    call Hexagon.Kernel.FS.VFS.fileExists
 
     jc .initNaoEncontrado
 

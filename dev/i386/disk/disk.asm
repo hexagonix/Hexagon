@@ -451,7 +451,7 @@ Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors:
     mov dl, byte [Hexagon.Dev.Gen.Disk.Control.bootDisk]
     mov byte [Hexagon.Dev.Gen.Disk.Control.currentDisk], dl
 
-    call Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos
+    call Hexagon.Kernel.FS.VFS.initFilesystem
 
     mov byte[Hexagon.Dev.Gen.Disk.operationCode], Hexagon.Dev.Gen.Disk.HardDisk.IO.noMedia
 
@@ -604,7 +604,7 @@ Hexagon.Kernel.Dev.i386.Disk.Disk.writeSectors:
     mov dl, byte [Hexagon.Dev.Gen.Disk.Control.bootDisk]
     mov byte [Hexagon.Dev.Gen.Disk.Control.currentDisk], dl
 
-    call Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos
+    call Hexagon.Kernel.FS.VFS.initFilesystem
 
     mov byte[Hexagon.Dev.Gen.Disk.operationCode], Hexagon.Dev.Gen.Disk.HardDisk.IO.noMedia
 

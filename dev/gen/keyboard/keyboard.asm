@@ -406,13 +406,13 @@ Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.getSpecialKeysStatus:
 
 Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.changeLayout:
 
-    call Hexagon.Kernel.FS.VFS.arquivoExiste
+    call Hexagon.Kernel.FS.VFS.fileExists
 
     jc .layoutError
 
     mov edi, Hexagon.Keyboard.keyboardDefaultLayout
 
-    call Hexagon.Kernel.FS.VFS.carregarArquivo
+    call Hexagon.Kernel.FS.VFS.openFile
 
     ret
 

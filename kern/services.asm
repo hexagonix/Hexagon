@@ -88,7 +88,7 @@ Hexagon.Int.instalarInterrupcoes:
 
 ;; Instalar os manipuladores de IRQs
 
-    mov dword[ordemKernel], ordemKernelExecutar
+    mov dword[ordemKernel], kernelExecutePermission
 
     mov esi, Hexagon.Int.manipuladorTimer ;; IRQ 0
     mov eax, Hexagon.Int.interrupcaoTimer ;; Número da interrupção
@@ -114,7 +114,7 @@ Hexagon.Int.instalarInterrupcoes:
 
     sti ;; Habilitar interrupções
 
-    mov dword[ordemKernel], ordemKernelDesativada
+    mov dword[ordemKernel], kernelExecuteDisabled
 
     ret ;; Tudo pronto
 
@@ -649,7 +649,7 @@ Hexagon.Int.instalarISR:
 ;; Primeiramente vamos verificar se o pedido de instalação de interrupção partiu
 ;; do Hexagon, observando a variável que registra essas solicitações previlegiadas
 
-    cmp dword[ordemKernel], ordemKernelExecutar ;; Caso sim, ignorar medidas de discriminação
+    cmp dword[ordemKernel], kernelExecutePermission ;; Caso sim, ignorar medidas de discriminação
     je .instalar
 
 ;; Caso a solicitação tenha partido do usuário ou aplicativo, verificar se os valores

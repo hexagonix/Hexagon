@@ -386,7 +386,7 @@ Hexagon.Kernel.Dev.Dev.open:
 
     push eax
 
-    cmp dword[ordemKernel], ordemKernelExecutar
+    cmp dword[ordemKernel], kernelExecutePermission
     je .storageAuthenticated
 
 .storageVerifyPermissions:
@@ -402,11 +402,11 @@ Hexagon.Kernel.Dev.Dev.open:
 
     mov byte[Hexagon.Dev.Gen.Disk.Control.currentDisk], ah
 
-    call Hexagon.Kernel.FS.VFS.definirSistemaArquivos
+    call Hexagon.Kernel.FS.VFS.setFilesystem
 
     jc .notFoundError
 
-    call Hexagon.Kernel.FS.VFS.iniciarSistemaArquivos
+    call Hexagon.Kernel.FS.VFS.initFilesystem
 
     jc .openingError
 
@@ -543,7 +543,7 @@ Hexagon.Kernel.Dev.Dev.open:
 
     mov byte[Hexagon.Dev.Control.file], 0
 
-    call Hexagon.Kernel.FS.VFS.carregarArquivo
+    call Hexagon.Kernel.FS.VFS.openFile
 
     jmp .return
 
