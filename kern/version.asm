@@ -83,7 +83,7 @@ use32
 
 Hexagon.Arch.support = 1 ;; Architecture of this image
 
-Hexagon.Version.definition equ "1.0.1-alpha7"
+Hexagon.Version.definition equ "1.0.1-alpha8"
 
 Hexagon.Version:
 
