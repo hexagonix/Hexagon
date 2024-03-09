@@ -73,30 +73,30 @@
 
 use32
 
-Hexagon.Syscall.Controle:
+Hexagon.Syscall.Control:
 
-.ultimaChamada:  dd 0
-.chamadaAtual:   dd 0
-.chamadaSistema: db 0 ;; Armazena se uma chamada foi ou não realizada
-.eflags:         dd 0
-.parametro:      dd 0
-.eax:            dd 0
-.cs:             dd 0
-.es:             dw 0
-.eip:            dd 0
-.ebp:            dd 0
-.totalChamadas:  dd 68
+.lastSystemCall:    dd 0
+.currentSystemCall: dd 0
+.systemCall:        db 0 ;; Stores whether or not a call was made
+.eflags:            dd 0
+.parameter:         dd 0
+.eax:               dd 0
+.cs:                dd 0
+.es:                dw 0
+.eip:               dd 0
+.ebp:               dd 0
+.totalCalls:        dd 68
 
 ;;************************************************************************************
 
-;; Manipulador de interrupção do Sistema Operacional Hexagonix
+;; Hexagonix Interrupt Handler
 ;;
-;; Saída:
+;; Output:
 ;;
-;;  EBP = 0xABC12345 em caso de função não disponível
-;;  CF definido em caso de função não disponível
+;; EBP = 0xABC12345 in case of function not available
+;; CF defined in case of function not available
 
-Hexagon.Syscall.Syscall.manipuladorHexagon:
+Hexagon.Syscall.Syscall.hexagonHandler:
 
     push ebp
 
@@ -105,110 +105,110 @@ Hexagon.Syscall.Syscall.manipuladorHexagon:
     push 10h ;; Kernel data segment
     pop ds
 
-    mov [Hexagon.Syscall.Controle.es], es
+    mov [Hexagon.Syscall.Control.es], es
 
     push 18h ;; Kernel linear segment
     pop es
 
     cld
 
-    mov dword[Hexagon.Syscall.Controle.eax], eax
+    mov dword[Hexagon.Syscall.Control.eax], eax
 
     add esi, dword[Hexagon.Processos.BCP.baseProcessos]
 
-;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+;; Correct address with segment base (physical address = address + segment base)
 
     sub esi, 500h
 
     add edi, dword[Hexagon.Processos.BCP.baseProcessos]
 
-;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+;; Correct address with segment base (physical address = address + segment base)
 
     sub edi, 500h
 
-    pop eax ;; Limpar pilha
+    pop eax ;; Clear stack
 
-    mov dword[Hexagon.Syscall.Controle.ebp], eax
-
-    pop eax
-
-    mov dword[Hexagon.Syscall.Controle.eip], eax
+    mov dword[Hexagon.Syscall.Control.ebp], eax
 
     pop eax
 
-    mov dword[Hexagon.Syscall.Controle.cs], eax
+    mov dword[Hexagon.Syscall.Control.eip], eax
 
-    pop eax ;; Bandeira
+    pop eax
 
-    pop eax ;; Chamada solicitada, armazenada na pilha
+    mov dword[Hexagon.Syscall.Control.cs], eax
 
-    mov dword[Hexagon.Syscall.Controle.parametro], eax ;; Chamada do sistema
+    pop eax ;; Flags
 
-    mov dword[Hexagon.Syscall.Controle.chamadaAtual], eax
+    pop eax ;; Requested call, stored on stack
 
-    mov eax, dword[Hexagon.Syscall.Controle.eax]
+    mov dword[Hexagon.Syscall.Control.parameter], eax ;; System call
 
-    mov ebp, dword[ds:Hexagon.Syscall.Controle.parametro]
+    mov dword[Hexagon.Syscall.Control.currentSystemCall], eax
 
-    cmp ebp, dword[Hexagon.Syscall.Controle.totalChamadas]
-    ja .chamadaIndisponivel
+    mov eax, dword[Hexagon.Syscall.Control.eax]
 
-    mov byte[Hexagon.Syscall.Controle.chamadaSistema], 01h ;; Uma chamada foi sim solicitada
+    mov ebp, dword[ds:Hexagon.Syscall.Control.parameter]
+
+    cmp ebp, dword[Hexagon.Syscall.Control.totalCalls]
+    ja .unavailableCall
+
+    mov byte[Hexagon.Syscall.Control.systemCall], 01h ;; A call was requested
 
     sti
 
     call dword[Hexagon.Syscall.Syscall.servicosHexagon.tabela+ebp*4]
 
-.fim:
+.end:
 
     sti
 
-;; Desmarcar a solicitação de chamada de sistema
+;; Clear system call request
 
-    mov byte[Hexagon.Syscall.Controle.chamadaSistema], 00h
+    mov byte[Hexagon.Syscall.Control.systemCall], 00h
 
     push eax
 
-    mov eax, dword[Hexagon.Syscall.Controle.chamadaAtual]
-    mov dword[Hexagon.Syscall.Controle.ultimaChamada], eax
+    mov eax, dword[Hexagon.Syscall.Control.currentSystemCall]
+    mov dword[Hexagon.Syscall.Control.lastSystemCall], eax
 
     pop eax
 
     pushfd
 
-    push dword[Hexagon.Syscall.Controle.cs]
-    push dword[Hexagon.Syscall.Controle.eip]
+    push dword[Hexagon.Syscall.Control.cs]
+    push dword[Hexagon.Syscall.Control.eip]
 
     sub esi, dword[Hexagon.Processos.BCP.baseProcessos]
 
-;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+;; Correct address with segment base (physical address = address + segment base)
 
     add esi, 500h
 
     sub edi, dword[Hexagon.Processos.BCP.baseProcessos]
 
-;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+;; Correct address with segment base (physical address = address + segment base)
 
     add edi, 500h
 
-    mov es, [Hexagon.Syscall.Controle.es]
+    mov es, [Hexagon.Syscall.Control.es]
 
-    push 38h ;; Segmento de dados do ambiente de usuário (processos)
+    push 38h ;; User environment data segment (processes)
     pop ds
 
     iret
 
-.chamadaIndisponivel:
+.unavailableCall:
 
     mov ebp, 0xABC12345
 
     stc
 
-    jmp .fim
+    jmp .end
 
 ;;************************************************************************************
 
-Hexagon.Syscall.Syscall.Nulo:
+Hexagon.Syscall.Syscall.nullSystemCall:
 
     mov ebp, 0xABC12345
 
@@ -218,28 +218,28 @@ Hexagon.Syscall.Syscall.Nulo:
 
 ;;************************************************************************************
 
-Hexagon.Syscall.Syscall.intalarInterrupcao:
+Hexagon.Syscall.Syscall.installInterruption:
 
     cli
 
-    call Hexagon.Int.instalarISR
+    call Hexagon.Int.installISR
 
     ret
 
 ;;************************************************************************************
 
-Hexagon.Syscall.Syscall.criarNovoProcesso:
+Hexagon.Syscall.Syscall.createProcess:
 
-;; Salvar ponteiro de instrução e segmento de código
+;; Save instruction pointer and code segment
 
-    push dword[Hexagon.Syscall.Controle.eip]
-    push dword[Hexagon.Syscall.Controle.cs]
+    push dword[Hexagon.Syscall.Control.eip]
+    push dword[Hexagon.Syscall.Control.cs]
 
     call Hexagon.Kernel.Kernel.Proc.criarProcesso
 
-;; Restaurar ponteiro de instrução e segmento de código
+;; Restore instruction pointer and code segment
 
-    pop dword[Hexagon.Syscall.Controle.cs]
-    pop dword[Hexagon.Syscall.Controle.eip]
+    pop dword[Hexagon.Syscall.Control.cs]
+    pop dword[Hexagon.Syscall.Control.eip]
 
     ret

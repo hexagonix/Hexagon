@@ -269,4 +269,4 @@ kernelExecutePermission   = 01h ;; Este sinalizador é compatível com o usuári
 ordemKernelNegar      = 02h ;; Nega a execução de *QUALQUER* função compatível solicitada
 ordemKernelDebug      = 04h ;; Usada para depuração de funções compatíveis
 
-ordemKernel: dd 0 ;; Usado como chave de acesso para executar qualquer função privilegiada
+kernelExecute: dd 0 ;; Usado como chave de acesso para executar qualquer função privilegiada

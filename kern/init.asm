@@ -126,7 +126,7 @@ Hexagon.Init.startUserMode:
 
     call Hexagon.Kernel.Kernel.Panic.panic
 
-    jmp .fim
+    jmp .end
 
 .endShell:
 
@@ -136,7 +136,7 @@ Hexagon.Init.startUserMode:
 
     call Hexagon.Kernel.Kernel.Panic.panic ;; Request error screen
 
-.fim:
+.end:
 
     ret ;; We'll never get this far
 

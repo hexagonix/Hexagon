@@ -366,13 +366,13 @@ Hexagon.Kernel.FS.VFS.mountVolume:
 
 ;; Enable kernel privileges for privileged request
 
-    mov dword[ordemKernel], kernelExecutePermission
+    mov dword[kernelExecute], kernelExecutePermission
 
     call Hexagon.Kernel.Dev.Dev.open ;; Open device for read/write with privileges
 
 ;; Disable kernel privileges as they are no longer needed
 
-    mov dword[ordemKernel], kernelExecuteDisabled
+    mov dword[kernelExecute], kernelExecuteDisabled
 
     ret
 

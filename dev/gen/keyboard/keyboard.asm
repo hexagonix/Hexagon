@@ -80,8 +80,8 @@ Hexagon.Keyboard.keyCodes: ;; Keycodes
 .tab       = 15h
 .enter     = 0x1C
 .ctrl      = 0x1D
-.shiftE    = 0x2A
-.shiftD    = 0x36
+.shiftL    = 0x2A
+.shiftR    = 0x36
 .space     = 0x39
 .capsLock  = 0x3A
 .F1        = 0x3B
@@ -441,10 +441,10 @@ Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.waitKeyboard:
 
     mov al, byte[.currentCodesIndex]
 
-    cmp byte[Hexagon.Int.manipuladorTeclado.codigosEscaneamento.indice], al
+    cmp byte[Hexagon.Int.keyboardHandler.scanCodes.index], al
     je .keyLoop
 
-    mov ebx, Hexagon.Int.manipuladorTeclado.codigosEscaneamento
+    mov ebx, Hexagon.Int.keyboardHandler.scanCodes
 
     add bl, byte[.currentCodesIndex]
 
@@ -465,7 +465,7 @@ Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.waitKeyboard:
 
 ;; Check Shift
 
-    cmp byte[Hexagon.Int.manipuladorTeclado.sinalShift], 1
+    cmp byte[Hexagon.Int.keyboardHandler.sinalShift], 1
     je .useShiftCharacters
 
     mov ebx, Hexagon.Keyboard.keyboardDefaultLayout.keys ;; Scan code vector

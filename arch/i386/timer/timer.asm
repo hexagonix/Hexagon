@@ -105,21 +105,21 @@ Hexagon.Kernel.Arch.i386.Timer.Timer.sleep:
 
     sti ;; Enable interrupts so that the counter can be updated
 
-    mov ebx, dword[Hexagon.Int.manipuladorTimer.contagemTimer]
+    mov ebx, dword[Hexagon.Int.timerHandler.timerCounter]
 
 .waitOne: ;; Let's wait until the counter changes
 
-    cmp ebx, dword[Hexagon.Int.manipuladorTimer.contagemTimer]
+    cmp ebx, dword[Hexagon.Int.timerHandler.timerCounter]
     je .waitOne
 
 .waitChange:
 
-    cmp ebx, dword[Hexagon.Int.manipuladorTimer.contagemTimer]
+    cmp ebx, dword[Hexagon.Int.timerHandler.timerCounter]
     je .waitChange ;; As long as the counter has not changed its value, continue here
 
     dec ecx
 
-    mov ebx, dword[Hexagon.Int.manipuladorTimer.contagemTimer]
+    mov ebx, dword[Hexagon.Int.timerHandler.timerCounter]
 
     cmp ecx, 0
     ja .waitOne ;; If it's not over, keep counting...

@@ -79,10 +79,10 @@ Hexagon.Syscall.Syscall.servicosHexagon:
 
 ;; Gerenciamento de memória e processos
 
-    dd Hexagon.Syscall.Syscall.Nulo                                    ;; 0 - função nula, apenas retorna
+    dd Hexagon.Syscall.Syscall.nullSystemCall                                    ;; 0 - função nula, apenas retorna
     dd Hexagon.Kernel.Arch.Gen.Mm.malloc                        ;; 1
     dd Hexagon.Kernel.Arch.Gen.Mm.free                       ;; 2
-    dd Hexagon.Syscall.Syscall.criarNovoProcesso                       ;; 3
+    dd Hexagon.Syscall.Syscall.createProcess                       ;; 3
     dd Hexagon.Kernel.Kernel.Proc.encerrarProcesso                     ;; 4
     dd Hexagon.Kernel.Kernel.Proc.obterPID                             ;; 5
     dd Hexagon.Kernel.Arch.Gen.Mm.memoryUse                           ;; 6
@@ -118,7 +118,7 @@ Hexagon.Syscall.Syscall.servicosHexagon:
     dd Hexagon.Kernel.Lib.Num.obterAleatorio                           ;; 24
     dd Hexagon.Kernel.Lib.Num.alimentarAleatorios                      ;; 25
     dd Hexagon.Kernel.Arch.i386.Timer.Timer.sleep               ;; 26
-    dd Hexagon.Syscall.Syscall.intalarInterrupcao                      ;; 27
+    dd Hexagon.Syscall.Syscall.installInterruption                      ;; 27
 
 ;; Gerenciamento de energia do Hexagon
 

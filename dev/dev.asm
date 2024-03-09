@@ -386,7 +386,7 @@ Hexagon.Kernel.Dev.Dev.open:
 
     push eax
 
-    cmp dword[ordemKernel], kernelExecutePermission
+    cmp dword[kernelExecute], kernelExecutePermission
     je .storageAuthenticated
 
 .storageVerifyPermissions:

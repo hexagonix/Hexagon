@@ -75,58 +75,58 @@ use32
 
 Hexagon.Int:
 
-.interrupcaoHexagon  = 80h ;; Interrupção do Hexagon
-.interrupcaoTimer    = 08h ;; Interrupção reservada ao timer
-.interrupcaoTeclado  = 09h ;; Interrupção reservada ao teclado
-.interrupcaoMouse    = 74h ;; Interrupção reservada ao dispositivo apontador
+.interruptionHexagon  = 80h ;; Hexagon services
+.interruptionTimer    = 08h ;; Interruption reserved for timer
+.interruptionKeyboard = 09h ;; Interruption reserved for keyboard
+.interruptionMouse    = 74h ;; Interrupt reserved for pointing device
 
 ;;************************************************************************************
 
 ;; Instala as rotinas de interrupção do Hexagon (ISR - Interrupt Service Routine)
 
-Hexagon.Int.instalarInterrupcoes:
+Hexagon.Int.installInterruptions:
 
-;; Instalar os manipuladores de IRQs
+;; Install IRQ handlers
 
-    mov dword[ordemKernel], kernelExecutePermission
+    mov dword[kernelExecute], kernelExecutePermission
 
-    mov esi, Hexagon.Int.manipuladorTimer ;; IRQ 0
-    mov eax, Hexagon.Int.interrupcaoTimer ;; Número da interrupção
+    mov esi, Hexagon.Int.timerHandler ;; IRQ 0
+    mov eax, Hexagon.Int.interruptionTimer    ;; Interruption number
 
-    call Hexagon.Int.instalarISR
+    call Hexagon.Int.installISR
 
-    mov esi, Hexagon.Int.manipuladorTeclado ;; IRQ 1
-    mov eax, Hexagon.Int.interrupcaoTeclado ;; Número da interrupção
+    mov esi, Hexagon.Int.keyboardHandler ;; IRQ 1
+    mov eax, Hexagon.Int.interruptionKeyboard ;; Interruption number
 
-    call Hexagon.Int.instalarISR
+    call Hexagon.Int.installISR
 
-    mov esi, Hexagon.Int.manipuladorMousePS2 ;; IRQ 12
-    mov eax, Hexagon.Int.interrupcaoMouse    ;; Número da interrupção
+    mov esi, Hexagon.Int.PS2MouseHandler ;; IRQ 12
+    mov eax, Hexagon.Int.interruptionMouse    ;; Interruption number
 
-    call Hexagon.Int.instalarISR
+    call Hexagon.Int.installISR
 
-;; Instalar o manipulador de chamadas do Hexagon
+;; Install the Hexagon services handler
 
-    mov esi, Hexagon.Syscall.Syscall.manipuladorHexagon ;; Serviços do Hexagon
-    mov eax, Hexagon.Int.interrupcaoHexagon ;; Número da interrupção
+    mov esi, Hexagon.Syscall.Syscall.hexagonHandler ;; Hexagon services
+    mov eax, Hexagon.Int.interruptionHexagon ;; Interruption number
 
-    call Hexagon.Int.instalarISR
+    call Hexagon.Int.installISR
 
-    sti ;; Habilitar interrupções
+    sti ;; Enable interrupts
 
-    mov dword[ordemKernel], kernelExecuteDisabled
+    mov dword[kernelExecute], kernelExecuteDisabled
 
-    ret ;; Tudo pronto
+    ret ;; All done
 
 ;;************************************************************************************
 
-;; IRQ 0 - Manipulador do Timer
+;; IRQ 0 - Timer Handler
 
-;; A cada interrupção do timer, será incromentado o contador. Este contador pode
-;; ser utilizado para temporizar operações de entrada e saída, assim como causar
-;; atraso em diversas aplicações do Sistema e de aplicativos.
+;; With each interruption of the timer, the counter will be increased.
+;; This counter can be used to time input and output operations, as well as
+;; cause delays in various system and user processes
 
-Hexagon.Int.manipuladorTimer:
+Hexagon.Int.timerHandler:
 
     push eax
 
@@ -135,12 +135,12 @@ Hexagon.Int.manipuladorTimer:
     mov ax, 10h ;; Kernel data segment
     mov ds, ax
 
-;; Atualizar o relógio em tempo real a cada intervalo
+;; Update real-time clock every interval
 
     call Hexagon.Kernel.Arch.i386.CMOS.CMOS.updateCMOSData
 
-    inc dword[.contagemTimer] ;; Incrementa o contador
-    inc dword[.contadorRelativo]
+    inc dword[.timerCounter] ;; Increment the counter
+    inc dword[.relativeCounter]
 
     mov al, 20h
 
@@ -151,16 +151,16 @@ Hexagon.Int.manipuladorTimer:
 
     iret
 
-.contagemTimer:    dd 0 ;; Este conteúdo é utilizado
-.contadorRelativo: dd 0
+.timerCounter:    dd 0 ;; This content is used
+.relativeCounter: dd 0
 
 ;;************************************************************************************
 
-;; Manipuladores de interrupção
+;; Interrupt handlers
 
-;; IRQ 1 - Interrupção de teclado
+;; IRQ 1 - Keyboard interrupt
 
-Hexagon.Int.manipuladorTeclado:
+Hexagon.Int.keyboardHandler:
 
     push eax
     push ebx
@@ -174,90 +174,90 @@ Hexagon.Int.manipuladorTeclado:
 
     in al, 60h
 
-    cmp al, Hexagon.Keyboard.keyCodes.F1 ;; Tecla F1
-    je .terminarTarefa
+    cmp al, Hexagon.Keyboard.keyCodes.F1 ;; F1 key
+    je .killCurrentProcess
 
-;; Checar se a tecla Control foi pressionada
+;; Check if the Control key was pressed
 
     cmp al, Hexagon.Keyboard.keyCodes.ctrl
-    je .controlPressionada
+    je .controlKeyPressed
 
     cmp al, 29+128
-    je .controlLiberada
+    je .controlKeyReleased
 
-;; Checar pressionamento da tecla Shift
+;; Check if the Shift key was pressed
 
-    cmp al, Hexagon.Keyboard.keyCodes.shiftD ;; Tecla shift da direita
-    je .shiftPressionado
+    cmp al, Hexagon.Keyboard.keyCodes.shiftR ;; Right shift key
+    je .shiftKeyPressed
 
-    cmp al, Hexagon.Keyboard.keyCodes.shiftE ;; Tecla shift da esquerda
-    je .shiftPressionado
+    cmp al, Hexagon.Keyboard.keyCodes.shiftL ;; Left shift key
+    je .shiftKeyPressed
 
-    cmp al, 54+128 ;; Tecla shift direita liberada
-    je .shiftLiberado
+    cmp al, 54+128 ;; Right shift key released
+    je .shiftKeyReleased
 
-    cmp al, 42+128 ;; Tecla shift esquerda liberada
-    je .shiftLiberado
+    cmp al, 42+128 ;; Left shift key released
+    je .shiftKeyReleased
 
-    jmp .outraTecla
+    jmp .anotherKey
 
-.controlPressionada:
+.controlKeyPressed:
 
     or dword[keyStatus], 0x00000001
 
-    jmp .naoArmazenar
+    jmp .doNotStore
 
-.controlLiberada:
+.controlKeyReleased:
 
     and dword[keyStatus], 0xFFFFFFFE
 
-    jmp .naoArmazenar
+    jmp .doNotStore
 
-.shiftPressionado:
+.shiftKeyPressed:
 
     or dword[keyStatus], 0x00000002
 
     mov byte[.sinalShift], 1 ;; Shift pressionada
 
-    jmp .naoArmazenar
+    jmp .doNotStore
 
-.shiftLiberado:
+.shiftKeyReleased:
 
     and dword[keyStatus], 0xFFFFFFFD
 
     mov byte[.sinalShift], 0
 
-    jmp .naoArmazenar
+    jmp .doNotStore
 
-.outraTecla:
+.anotherKey:
 
-    jmp .fim
+    jmp .end
 
 ;;************************************************************************************
 
-.terminarTarefa:
+.killCurrentProcess:
 
     call Hexagon.Kernel.Kernel.Proc.matarProcesso
 
 ;;************************************************************************************
 
-.fim:
+.end:
 
-    mov ebx, .codigosEscaneamento
-    add bl, byte[.codigosEscaneamento.indice]
+    mov ebx, .scanCodes
+    add bl, byte[.scanCodes.index]
 
     mov byte[ebx], al
 
-    cmp byte[.codigosEscaneamento.indice], 31
-    jl .incrementarIndice
+    cmp byte[.scanCodes.index], 31
+    jl .incrementIndex
 
-    mov byte[.codigosEscaneamento.indice], -1
+    mov byte[.scanCodes.index], -1
 
-.incrementarIndice:
+.incrementIndex:
 
-    inc byte[.codigosEscaneamento.indice]
+    inc byte[.scanCodes.index]
 
-.naoArmazenar:
+.doNotStore:
 
     mov al, 20h
 
@@ -270,45 +270,45 @@ Hexagon.Int.manipuladorTeclado:
 
     iret
 
-.codigosEscaneamento:
+.scanCodes:
 times 32 db 0
-.codigosEscaneamento.indice: db 0
+.scanCodes.index: db 0
 .sinalShift: db 0
 
-;; Bit 0: Tecla Control
-;; Bit 1: Tecla Shift
-;; Bit 2-31: Reservado
+;; Bit 0: Control key
+;; Bit 1: Shift key
+;; Bit 2-31: Reserved
 
 keyStatus: dd 0
 
 ;;************************************************************************************
 
-;; IRQ 12 - Manipulador de Mouse PS/2
+;; IRQ 12 - PS/2 Mouse Handler
 
-Hexagon.Int.manipuladorMousePS2:
+Hexagon.Int.PS2MouseHandler:
 
     pusha
 
     cmp byte[.status], 0
-    je .pacoteDeDados
+    je .dataPackage
 
     cmp byte[.status], 1
-    je .pacoteX
+    je .packageX
 
     cmp byte[.status], 2
-    je .pacoteY
+    je .packageY
 
-.pacoteDeDados:
+.dataPackage:
 
     in al, 60h
 
-    mov byte[.dados], al
+    mov byte[.data], al
 
     mov byte[.status], 1
 
-    jmp .finalizar
+    jmp .finish
 
-.pacoteX:
+.packageX:
 
     in al, 60h
 
@@ -316,9 +316,9 @@ Hexagon.Int.manipuladorMousePS2:
 
     mov byte[.status], 2
 
-    jmp .finalizar
+    jmp .finish
 
-.pacoteY:
+.packageY:
 
     in al, 60h
 
@@ -326,43 +326,43 @@ Hexagon.Int.manipuladorMousePS2:
 
     mov byte[.status], 0
 
-    mov byte[.alterado], 1
+    mov byte[.changed], 1
 
-.fim:
+.end:
 
-    movzx eax, byte[Hexagon.Int.manipuladorMousePS2.deltaX] ;; DeltaX alterado em X
-    movzx ebx, byte[Hexagon.Int.manipuladorMousePS2.deltaY] ;; DeltaY alterado em Y
-    mov dl, byte[Hexagon.Int.manipuladorMousePS2.dados]
+    movzx eax, byte[Hexagon.Int.PS2MouseHandler.deltaX] ;; DeltaX changed to X
+    movzx ebx, byte[Hexagon.Int.PS2MouseHandler.deltaY] ;; DeltaY changed to Y
+    mov dl, byte[Hexagon.Int.PS2MouseHandler.data]
 
-    bt dx, 4 ;; Checar se o mouse se moveu para a esquerda
-    jnc .movimentoADireita
+    bt dx, 4 ;; Check if the mouse has moved to the left
+    jnc .movementToTheRight
 
     xor eax, 0xFF ;; 255 - deltaX
     sub word[.mouseX], ax ;; MouseX - DeltaX
 
-    jnc .xOK ;; Checar se MouseX é menor que 0
-    mov word[.mouseX], 0 ;; Corrigir MouseX
+    jnc .xOK ;; Check if MouseX is less than 0
+    mov word[.mouseX], 0 ;; Fix MouseX
 
     jmp .xOK
 
-.movimentoADireita:
+.movementToTheRight:
 
     add word[.mouseX], ax ;; MouseX + DeltaX
 
 .xOK:
 
-    bt dx, 5 ;; Checar se o mouse se moveu para baixo
-    jnc .movimentoParaCima
+    bt dx, 5 ;; Check if the mouse has moved down
+    jnc .upMovement
 
     xor ebx, 0xFF ;; 255 - DeltaY
     sub word[.mouseY], bx ;; MouseY - DeltaY
 
-    jnc .yOK ;; Checar se MouseY é menor que 0
-    mov word[.mouseY], 0 ;; Corrigir MouseY
+    jnc .yOK ;; Check if MouseY is less than 0
+    mov word[.mouseY], 0 ;; Fix MouseY
 
     jmp .yOK
 
-.movimentoParaCima:
+.upMovement:
 
     add word[.mouseY], bx ;; MouseY + DeltaY
 
@@ -371,23 +371,23 @@ Hexagon.Int.manipuladorMousePS2:
     movzx eax, word[.mouseX]
     movzx ebx, word[.mouseY]
 
-;; Ter certeza que X e Y não são maiores que a resolução do vídeo
+;; Make sure that X and Y are not greater than the video resolution
 
     cmp ax, word[Hexagon.Console.Resolution.x]
-    jng .xNaoMaior
+    jng .xNotGreater
 
     mov ax, word[Hexagon.Console.Resolution.x]
     mov word[.mouseX], ax
 
-.xNaoMaior:
+.xNotGreater:
 
     cmp bx, word[Hexagon.Console.Resolution.y]
-    jng .yNaoMaior
+    jng .yNotGreater
 
     mov bx, word[Hexagon.Console.Resolution.y]
     mov word[.mouseY], bx
 
-.yNaoMaior:
+.yNotGreater:
 
     push edx
     movzx edx, word[Hexagon.Console.Resolution.y]
@@ -398,9 +398,9 @@ Hexagon.Int.manipuladorMousePS2:
     mov dword[Hexagon.Kernel.Dev.Gen.Mouse.mouseX], eax
     mov dword[Hexagon.Kernel.Dev.Gen.Mouse.mouseY], ebx
 
-.finalizar:
+.finish:
 
-    mov al, 20h ;; Fim da interrupção
+    mov al, 20h ;; End of interruption handling
 
     out 20h, al
     out 0xA0, al
@@ -412,43 +412,43 @@ Hexagon.Int.manipuladorMousePS2:
 .status:   db 0
 .deltaX:   db 0
 .deltaY:   db 0
-.dados:    db 0
-.alterado: db 0
+.data:     db 0
+.changed:  db 0
 
 align 32
 
-.estadoMouse: dd 0
+.mouseStatus: dd 0
 .mouseX:      dd 0
 .mouseY:      dd 0
 
 ;;************************************************************************************
 
-;; Manipulador especializado para touchpads - IRQ 12
+;; Specialized handler for touchpads - IRQ 12
 
-Hexagon.Int.manipuladorTouchpad:
+Hexagon.Int.touchpadHandler:
 
     push eax
     push edx
 
     cmp byte[.status], 0
-    je .pacote0
+    je .package0
 
     cmp byte[.status], 1
-    je .pacote1
+    je .package1
 
     cmp byte[.status], 2
-    je .pacote2
+    je .package2
 
     cmp byte[.status], 3
-    je .pacote3
+    je .package3
 
     cmp byte[.status], 4
-    je .pacote4
+    je .package4
 
     cmp byte[.status], 5
-    je .pacote5
+    je .package5
 
-.pacote0:
+.package0:
 
     mov al, 0
 
@@ -464,9 +464,9 @@ Hexagon.Int.manipuladorTouchpad:
 
     mov byte[.status], 1
 
-    jmp .fim
+    jmp .end
 
-.pacote1:
+.package1:
 
     mov al, 1
 
@@ -496,9 +496,9 @@ Hexagon.Int.manipuladorTouchpad:
 
     mov byte[.status], 2
 
-    jmp .fim
+    jmp .end
 
-.pacote2:
+.package2:
 
     mov al, 2
 
@@ -514,9 +514,9 @@ Hexagon.Int.manipuladorTouchpad:
 
     mov byte[.status], 3
 
-    jmp .fim
+    jmp .end
 
-.pacote3:
+.package3:
 
     mov al, 3
 
@@ -548,9 +548,9 @@ Hexagon.Int.manipuladorTouchpad:
 
     mov byte[.status], 4
 
-    jmp .fim
+    jmp .end
 
-.pacote4:
+.package4:
 
     mov al, 4
 
@@ -572,9 +572,9 @@ Hexagon.Int.manipuladorTouchpad:
 
     mov byte[.status], 5
 
-    jmp .fim
+    jmp .end
 
-.pacote5:
+.package5:
 
     mov al, 5
 
@@ -596,11 +596,11 @@ Hexagon.Int.manipuladorTouchpad:
 
     mov byte[.status], 0
 
-    jmp .fim
+    jmp .end
 
-.fim:
+.end:
 
-    mov al, 20h ;; Fim da interrupção
+    mov al, 20h ;; End of interruption handling
 
     out 20h, al
 
@@ -618,7 +618,7 @@ Hexagon.Int.manipuladorTouchpad:
 
 ;;************************************************************************************
 
-;; Manipulador para outras interrupções, quando as mesmas não estiverem disponíveis
+;; Handler for other interrupts, when they are not available
 
 Hexagon.Int.nullHandler:
 
@@ -634,40 +634,40 @@ Hexagon.Int.nullHandler:
 
 ;;************************************************************************************
 
-;; Instala um manipulador de interrupção ou manipulador IRQ
+;; Installs an interrupt handler or IRQ handler
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; EAX - Número da interrupção
-;; ESI - Rotina de interrupção
+;; EAX - Interrupt number
+;; ESI - Interrupt routine
 
-Hexagon.Int.instalarISR:
+Hexagon.Int.installISR:
 
     push eax
     push ebp
 
-;; Primeiramente vamos verificar se o pedido de instalação de interrupção partiu
-;; do Hexagon, observando a variável que registra essas solicitações previlegiadas
+;; First, let's check if the interrupt installation request came from Hexagon,
+;; observing the variable that records these privileged requests
 
-    cmp dword[ordemKernel], kernelExecutePermission ;; Caso sim, ignorar medidas de discriminação
-    je .instalar
+    cmp dword[kernelExecute], kernelExecutePermission ;; If yes, skip check and install
+    je .install
 
-;; Caso a solicitação tenha partido do usuário ou aplicativo, verificar se os valores
-;; passados poderiam sobrescrever as interrupções instaladas previamente pelo Hexagon
+;; If the request came from the user or application, check whether the values ​​passed could
+;; overwrite the interrupts previously installed by Hexagon
 
-    cmp eax, Hexagon.Int.interrupcaoHexagon ;; Tentativa de substituir a chamada do Hexagon
-    je .negar ;; Negar instalação
+    cmp eax, Hexagon.Int.interruptionHexagon ;; Attempt to replace Hexagon call
+    je .deny ;; Deny installation
 
-    cmp eax, Hexagon.Int.interrupcaoTimer ;; Tentativa de alterar a interrupção de timer
-    je .negar ;; Negar instalação
+    cmp eax, Hexagon.Int.interruptionTimer ;; Attempt to change timer interrupt
+    je .deny ;; Deny installation
 
-    cmp eax, Hexagon.Int.interrupcaoTeclado ;; Tentativa de alterar a interrupção de teclado
-    je .negar ;; Negar instalação
+    cmp eax, Hexagon.Int.interruptionKeyboard ;; Attempting to change the keyboard interrupt
+    je .deny ;; Deny installation
 
-    cmp eax, Hexagon.Int.interrupcaoMouse ;; Tentativa de alterar a interrupção de mouse
-    je .negar ;; Negar instalação
+    cmp eax, Hexagon.Int.interruptionMouse ;; Attempt to change mouse interrupt
+    je .deny ;; Deny installation
 
-.instalar:
+.install:
 
     mov ebp, eax
     mov eax, esi
@@ -677,15 +677,15 @@ Hexagon.Int.instalarISR:
 
     mov word[IDT+ebp*8+6], ax
 
-    jmp .fim
+    jmp .end
 
-.negar:
+.deny:
 
     stc
 
     mov eax, 01h
 
-.fim:
+.end:
 
     pop ebp
     pop eax

@@ -324,7 +324,7 @@ Hexagon.Autoconfig:
 
 ;;************************************************************************************
 
-    call Hexagon.Int.instalarInterrupcoes ;; Installs Hexagon interrupt handlers
+    call Hexagon.Int.installInterruptions ;; Installs Hexagon interrupt handlers
 
 ;; Firstly, the user must be prevented from killing processes with a special key,
 ;; preventing any relevant process, such as login, from being terminated prematurely

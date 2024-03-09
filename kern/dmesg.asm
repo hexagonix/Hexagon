@@ -326,7 +326,7 @@ Hexagon.Kernel.Kernel.Dmesg.createMessage:
 
     push esi
 
-    cmp byte[Hexagon.Syscall.Controle.chamadaSistema], 01h
+    cmp byte[Hexagon.Syscall.Control.systemCall], 01h
     je .userProcess
 
 .hexagonMessage:
@@ -385,7 +385,7 @@ Hexagon.Kernel.Kernel.Dmesg.createMessage:
 
     push esi
 
-    cmp byte[Hexagon.Syscall.Controle.chamadaSistema], 01h
+    cmp byte[Hexagon.Syscall.Control.systemCall], 01h
     je .userProcessSerialMessage
 
 .hexagonSerialMessage:
