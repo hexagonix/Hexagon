@@ -261,13 +261,13 @@ Hexagon.Kernel.Lib.Graficos.colocarPixel:
 
 Hexagon.Kernel.Lib.Graficos.desenharBlocoSyscall:
 
-    sub esi, dword[Hexagon.Processos.BCP.baseProcessos]
+    sub esi, dword[Hexagon.Processes.PCB.processBaseMemory]
 
 ;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
 
     add esi, 500h
 
-    sub edi, dword[Hexagon.Processos.BCP.baseProcessos]
+    sub edi, dword[Hexagon.Processes.PCB.processBaseMemory]
 
 ;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
 
@@ -275,13 +275,13 @@ Hexagon.Kernel.Lib.Graficos.desenharBlocoSyscall:
 
     call Hexagon.Kernel.Lib.Graficos.desenharBloco
 
-    add esi, dword[Hexagon.Processos.BCP.baseProcessos]
+    add esi, dword[Hexagon.Processes.PCB.processBaseMemory]
 
 ;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
 
     sub esi, 500h
 
-    add edi, dword[Hexagon.Processos.BCP.baseProcessos]
+    add edi, dword[Hexagon.Processes.PCB.processBaseMemory]
 
 ;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
 

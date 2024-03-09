@@ -237,7 +237,7 @@ Hexagon.Int.keyboardHandler:
 
 .killCurrentProcess:
 
-    call Hexagon.Kernel.Kernel.Proc.matarProcesso
+    call Hexagon.Kernel.Kernel.Proc.kill
 
 ;;************************************************************************************
 

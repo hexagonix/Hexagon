@@ -253,7 +253,7 @@ Hexagon.Autoconfig:
 
     call Hexagon.Kernel.Arch.i386.Timer.Timer.setupTimer ;; Initializes the Hexagon timer service
 
-    call Hexagon.Kernel.Kernel.Proc.iniciarEscalonador ;; Starts the Hexagon process scheduler
+    call Hexagon.Kernel.Kernel.Proc.setupScheduler ;; Starts the Hexagon process scheduler
 
     call Hexagon.Kernel.Dev.Gen.COM.Serial.setupCOM1 ;; Start first serial port for debugging
 
@@ -331,7 +331,7 @@ Hexagon.Autoconfig:
 
 ;; Prevents the user from killing processes with a special key
 
-    call Hexagon.Kernel.Kernel.Proc.travar
+    call Hexagon.Kernel.Kernel.Proc.lock
 
     logHexagon Hexagon.Verbose.locking, Hexagon.Dmesg.Priorities.p5
 
@@ -350,7 +350,7 @@ Hexagon.Heap: ;; Kernel heap
 
 Hexagon.Heap.VBE        = Hexagon.Heap            + 0           ;; Video control block
 Hexagon.Heap.DiskCache  = Hexagon.Heap.VBE        + 1200        ;; Disk cache
-Hexagon.Heap.BCPs       = Hexagon.Heap.DiskCache  + 200000      ;; Process control block
-Hexagon.Heap.ProcTab    = Hexagon.Heap.BCPs       + 5000        ;; Process table
+Hexagon.Heap.PCBs       = Hexagon.Heap.DiskCache  + 200000      ;; Process control block
+Hexagon.Heap.ProcTab    = Hexagon.Heap.PCBs       + 5000        ;; Process table
 Hexagon.Heap.ArgProc    = Hexagon.Heap.ProcTab    + 5000 + 500h ;; Arguments of a process
 Hexagon.Heap.Temp       = Hexagon.Heap.ArgProc    + 2000        ;; Temporary kernel data

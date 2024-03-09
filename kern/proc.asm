@@ -83,31 +83,31 @@
 
 ;;************************************************************************************
 ;;
-;;          Códigos de retorno (erro) do gerenciador de processos do Hexagon
+;;               Hexagon process manager return (error) codes
 ;;
-;;                           Interface padronizada de retorno
-;;
-;;************************************************************************************
-
-;;|==================================================================================|
-;;| Código |             Nome do erro             |          Motivo do erro          |
-;;|==================================================================================|
-;;|  00h   |        Nenhum erro no processo       |    Nenhum parâmetro inválido     |
-;;|  01h   |    Imagem não encontrada no disco    |                -                 |
-;;|  02h   |        Erro ao carregar imagem       |                -                 |
-;;|  03h   |     Limite de processos atingido     |                -                 |
-;;|  04h   |  Imagem inválida - imagem não HAPP   |                -                 |
-;;|==================================================================================|
-
-;;************************************************************************************
-;;
-;;    Este módulo faz chamadas a funções de gerenciamento de memória do Hexagon
+;;                      Standardized return interface
 ;;
 ;;************************************************************************************
 
+;;|=================================================================================|
+;;| Code | Error name                     | Error reason                            |
+;;|=================================================================================|
+;;| 00h  | No errors in the process       | No invalid parameters                   |
+;;| 01h  | Image not found on disk        |                    -                    |
+;;| 02h  | Error loading image            |                    -                    |
+;;| 03h  | Process limit reached          |                    -                    |
+;;| 04h  | Invalid image - non-HAPP image |                    -                    |
+;;|=================================================================================|
+
 ;;************************************************************************************
 ;;
-;;                         Controle de Processos do Hexagon
+;; Attention! This module makes calls to Hexagon memory management functions
+;;
+;;************************************************************************************
+
+;;************************************************************************************
+;;
+;; Hexagon process management
 ;;
 ;;************************************************************************************
 
@@ -115,99 +115,98 @@ use32
 
 ;;************************************************************************************
 
-struc Hexagon.Gerenciamento.Tarefas
+struc Hexagon.Gerenciamento.Tasks
 {
 
-.processoVazio: ;; Conteúdo de um processo vazio
+.emptyProcess: ;; Contents of an empty process
 times 13 db ' '
 
 }
 
 ;;************************************************************************************
 
-Hexagon.Processos Hexagon.Gerenciamento.Tarefas
+Hexagon.Processos Hexagon.Gerenciamento.Tasks
 
 ;;************************************************************************************
 ;;
-;;                      Bloco de Controle de Processo do Hexagon
+;;                    Hexagon Process Control Block (H-PCB)
 ;;
 ;;************************************************************************************
 
-virtual at Hexagon.Heap.BCPs ;; Este objeto está localizado na posição definida
+virtual at Hexagon.Heap.PCBs ;; This object is located at the defined position
 
-Hexagon.Processos.BCP.esp: ;; Bloco de Controle de Processo
-times Hexagon.Processos.BCP.limiteProcessos dd 0
-.ponteiro: dd 0 ;; Ponteiro para a pilha do processo
+Hexagon.Processes.PCB.esp: ;; Process Control Block
+times Hexagon.Processes.PCB.processLimit dd 0
+.pointer: dd 0 ;; Pointer to the process stack
 
 
-Hexagon.Processos.BCP.tamanho:  ;; Bloco de mapeamento de memória
-times Hexagon.Processos.BCP.limiteProcessos dd 0
-.ponteiro: dd 0 ;; Ponteiro para o endereço de memória do processo
+Hexagon.Processes.PCB.size:  ;; Memory mapping block
+times Hexagon.Processes.PCB.processLimit dd 0
+.pointer: dd 0 ;; Pointer to the process's memory address
 
-Hexagon.Processos.BCP:
-.codigoErro:            dd 0 ;; Código de erro emitido pelo último processo
-.baseProcessos:         dd 0 ;; Endereço base de carregamento de processos, fornececido pelo alocador
-.modoTerminar:          db 0 ;; Marca se o processo deve ficar residente ou não
-.processoBloqueado:     dd 0 ;; Marca se o processo pode ser finalizado por uma tecla ou combinação
-.limiteProcessos        = 31 ;; Número limite de processos carregados (n-1)
-.contagemProcessos:     dd 0 ;; Número de processos atualmente na pilha de execução
-.PID:                   dd 0 ;; PID
-.tamanhoUltimoProcesso: dd 0 ;; Tamanho do último processo
-.codigoRetorno:         db 0 ;; Registra os códigos de erro em operações de processos
-.PIDAtual:              dd 0 ;; PID atual
-.contador:              db 0 ;; Contador de processos
-.residente:             db 0 ;; Se o processo será residente (futuro)
-.imagemIncompativel:    db 0 ;; Marca se uma imagem é incompatível
-.entradaHAPP:           dd 0 ;; Entrada da imagem HAPP
-.tipoImagem:            db 0 ;; Tipo executável da imagem
-.tamanhoImagem: ;; Tamanho do programa atual na pilha de execução
-times Hexagon.Processos.BCP.limiteProcessos -1  dd 0
-.nomeProcesso: ;; Armazena o nome do processo
+Hexagon.Processes.PCB:
+.errorCode:         dd 0 ;; Error code issued by the last process
+.processBaseMemory: dd 0 ;; Process loading base address, provided by the allocator
+.endMode:           db 0 ;; Mark whether the process should remain resident or not
+.processLocked:     dd 0 ;; Marks whether the process can be terminated by a key or combination
+.processLimit        = 31 ;; Limit number of loaded processes (n-1)
+.processCount:      dd 0 ;; Number of processes currently on the execution stack
+.PID:               dd 0 ;; PID
+.lastProcessSize:   dd 0 ;; Size of last process
+.returnCode:        db 0 ;; Records error codes in process operations
+.currentPID:        dd 0 ;; Current PID
+.counter:           db 0 ;; Process counter
+.resident:          db 0 ;; Whether the process will be resident (future)
+.incompatibleImage: db 0 ;; Mark if an image is incompatible
+.entryHAPP:         dd 0 ;; HAPP image entry point
+.imageType:         db 0 ;; Image executable type
+.imageSize: ;; Size of the current program on the execution stack
+times Hexagon.Processes.PCB.processLimit -1  dd 0
+.processName: ;; Stores the process name
 times 11 db 0
 
 end virtual
 
 ;;************************************************************************************
 
-;; Destravar a pilha de processos, permitindo o encerramento do processo pelo usuário
+;; Unlock the process stack, allowing the user to terminate the process
 
-Hexagon.Kernel.Kernel.Proc.destravar:
+Hexagon.Kernel.Kernel.Proc.unlock:
 
-    mov word[Hexagon.Processos.BCP.processoBloqueado], 0h
-
-    ret
-
-;;************************************************************************************
-
-;; Travar o processo em primeiro plano, impedindo sua saída da pilha de execução
-
-Hexagon.Kernel.Kernel.Proc.travar:
-
-    mov word[Hexagon.Processos.BCP.processoBloqueado], 01h
+    mov word[Hexagon.Processes.PCB.processLocked], 0h
 
     ret
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Proc.iniciarEscalonador:
+;; Lock the foreground process, preventing it from exiting the execution stack
+
+Hexagon.Kernel.Kernel.Proc.lock:
+
+    mov word[Hexagon.Processes.PCB.processLocked], 01h
+
+    ret
+
+;;************************************************************************************
+
+Hexagon.Kernel.Kernel.Proc.setupScheduler:
 
     logHexagon Hexagon.Verbose.heapKernel, Hexagon.Dmesg.Priorities.p5
 
     push es
 
-;; Vamos iniciar a área de memória do heap do kernel que vai armazenar o nome dos
-;; processos em execução, aplicando a formatação esperada pelas funções que gerenciam
-;; esses campos
+;; Let's start the kernel heap memory area that will store the name of running processes,
+;; applying the formatting expected by the functions that manage these fields
 
     push ds
     pop es
 
-    mov edx, 13*Hexagon.Processos.BCP.limiteProcessos
+    mov edx, 13*Hexagon.Processes.PCB.processLimit
     mov ebx, 0
 
 .loop:
 
-    mov esi, .espaco
+    mov esi, .space
     mov edi, Hexagon.Heap.ProcTab
     add edi, ebx
     mov ecx, 1
@@ -224,61 +223,61 @@ Hexagon.Kernel.Kernel.Proc.iniciarEscalonador:
 
     mov esi, Hexagon.Heap.ProcTab
 
-    mov ebx, 13*Hexagon.Processos.BCP.limiteProcessos
+    mov ebx, 13*Hexagon.Processes.PCB.processLimit
 
     mov byte[esi+ebx], 0
 
-;; Pronto, tudo feito para a área de armazenamento do nome dos processos, vamos continuar
+;; Okay, everything done for the process name storage area, let's continue
 
-    mov dword[Hexagon.Processos.BCP.PIDAtual], 0
+    mov dword[Hexagon.Processes.PCB.currentPID], 0
 
-    mov dword[Hexagon.Processos.BCP.PID], 0
+    mov dword[Hexagon.Processes.PCB.PID], 0
 
-    mov dword[Hexagon.Processos.BCP.contagemProcessos], 0
+    mov dword[Hexagon.Processes.PCB.processCount], 0
 
     logHexagon Hexagon.Verbose.scheduler, Hexagon.Dmesg.Priorities.p5
 
-;; Agora, uma função para iniciar os BCPs
-;; Essa função pode ser executada, mas o uso dos novos BCPs ainda está em desenvolvimento
+;; Now a function to start PCBs
+;; This function can be performed, but the use of the new PCBs is still under development
 
-    ;; call Hexagon.Kernel.Kernel.Proc.iniciarBCP
+    ;; call Hexagon.Kernel.Kernel.Proc.setupPCB
 
     ret
 
-.espaco: db ' '
+.space: db ' '
 
 ;;************************************************************************************
 
-;; Agora o espaço de memória alocado para os processos será salvo na estrutura de controle
-;; do escalonador de processos do Hexagon
+;; Now the memory space allocated to the processes will be saved in
+;; the Hexagon process scheduler control structure
 
 Hexagon.Kernel.Kernel.Proc.configureProcessAllocation:
 
-    mov dword[Hexagon.Processos.BCP.baseProcessos], ebx
+    mov dword[Hexagon.Processes.PCB.processBaseMemory], ebx
 
     ret
 
 ;;************************************************************************************
 
-;; Permite encerrar um processo atualmente em execução pelo sistema, caso esse encerramento
-;; seja possível
+;; Allows you to terminate a process currently running by the system, if such
+;; termination is possible
 
-Hexagon.Kernel.Kernel.Proc.matarProcesso:
+Hexagon.Kernel.Kernel.Proc.kill:
 
-;; Terminar processo atual em execução
+;; End current running process
 
-;; Primeiro deve-se checar se a função de terminar um processo em primeiro plano com o uso
-;; de combinação de teclas ou a tecla especial "Matar processo" está habilitada por parte do
-;; sistema. Isso é uma medida de segurança que visa prevenir o fechamento de processos vitais
-;; como o gerenciador de login, por exemplo.
+;; First, you must check whether the function of ending a process in the foreground using
+;; a key combination or the special "Kill process" key is enabled by the system.
+;; This is a security measure that aims to prevent the closure of vital processes, such as the
+;; login manager, for example.
 
-;; Caso a função esteja desabilitada, a ocorrência será ignorada
+;; If the function is disabled, the occurrence will be ignored
 
-    cmp dword[Hexagon.Processos.BCP.processoBloqueado], 1
-    je .fim
+    cmp dword[Hexagon.Processes.PCB.processLocked], 1
+    je .end
 
-    cmp byte[Hexagon.Processos.BCP.contagemProcessos], 0 ;; Não exite processo para ser fechado
-    je .fim
+    cmp byte[Hexagon.Processes.PCB.processCount], 0 ;; There is no process to be closed
+    je .end
 
 match =YES, VERBOSE
 {
@@ -301,21 +300,20 @@ match =YES, VERBOSE
     mov eax, dword[Hexagon.Console.fontColor]
     mov ebx, dword[Hexagon.Console.backgroundColor]
 
-;; Definir cor padrão do console
+;; Set default console color
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.setConsoleColor
 
-;; Atualizar buffer de vídeo (console seundário -> console principal)
-;; Essa atualização não é obrigatória, só é útil para utilitários que
-;; utilizam double buffering
+;; Update video buffer (secondary console -> main console)
+;; This update is not mandatory, it is only useful for utilities that use double buffering
 
     ;; call Hexagon.Kernel.Dev.Gen.Console.Console.updateConsole
 
-;; Usar console principal
+;; Use main console
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.useMainConsole
 
-;; Rolar console
+;; Scroll console
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.scrollConsole
 
@@ -323,79 +321,60 @@ match =YES, VERBOSE
 
     out 20h, al
 
-    call Hexagon.Kernel.Kernel.Proc.encerrarProcesso
+    call Hexagon.Kernel.Kernel.Proc.exit
 
     ret
 
-.fim:
+.end:
 
     ret
 
 ;;************************************************************************************
+
+;; Configures a new Hexagon process to run immediately
+;;
+;; Input:
+;;
+;; ESI - Buffer containing the name of the file to be executed
+;; EDI - Program arguments (if they exist)
+;; EAX - 0 if no argument exists
+;;
+;; Output:
+;;
+;; CF - Set in case of error or file not found
+;;      Cleared on success
 
 Hexagon.Kernel.Kernel.Proc.exec:
 
-;; Save instruction pointer and code segment
-
-    push dword[Hexagon.Syscall.Control.eip]
-    push dword[Hexagon.Syscall.Control.cs]
-
-    call Hexagon.Kernel.Kernel.Proc.criarProcesso
-
-;; Restore instruction pointer and code segment
-
-    pop dword[Hexagon.Syscall.Control.cs]
-    pop dword[Hexagon.Syscall.Control.eip]
-
-    ret
-
-;;************************************************************************************
-
-;; Configura um novo processo Hexagon para execução imediata
-;;
-;; Entrada:
-;;
-;; ESI - Buffer contendo o nome do arquivo à ser executado
-;; EDI - Argumentos do programa (caso eles existam)
-;; EAX - 0 caso nenhum argumento exista
-;;
-;; Saída:
-;;
-;; CF - Definido em caso de erro ou arquivo não encontrado
-;;      Limpo em caso de sucesso
-
-Hexagon.Kernel.Kernel.Proc.criarProcesso:
-
     pusha
 
-;; Agora o limite de processos carregados será verificado. Caso já existam
-;; muitos processos em memória, o carregamento de um outro será impedido
+;; Now the limit of loaded processes will be checked.
+;; If there are already many processes in memory, another one will be prevented from loading
 
-.verificarLimite:
+.checkLimit:
 
     push eax
 
-    mov eax, [Hexagon.Processos.BCP.contagemProcessos]
+    mov eax, [Hexagon.Processes.PCB.processCount]
 
-;; Caso o número de processos carregados seja menos que o limite, proceder
-;; com o carregamento. Caso contrário, impedir o carregamento retornando
-;; um erro
+;; If the number of loaded processes is less than the limit, proceed with the loading.
+;; Otherwise, prevent loading by returning an error
 
-    cmp eax, Hexagon.Processos.BCP.limiteProcessos - 1 ;; Número limite de processos carregados
-    jl .limiteDisponivel
+    cmp eax, Hexagon.Processes.PCB.processLimit - 1 ;; Limit number of loaded processes
+    jl .limitAvailable
 
     pop eax
 
-    jmp Hexagon.Kernel.Kernel.Proc.numeroMaximoProcessosAtingido
+    jmp Hexagon.Kernel.Kernel.Proc.maxNumberProcessesReached
 
-.limiteDisponivel:
+.limitAvailable:
 
-;; Verificar se existem argumentos para o processo à ser carregado
+;; Check if there are arguments for the process to be loaded
 
     pop eax
 
     cmp eax, 0
-    je .semArgumentos
+    je .noArguments
 
     push esi
 
@@ -412,25 +391,25 @@ Hexagon.Kernel.Kernel.Proc.criarProcesso:
     push 18h ;; Kernel linear segment
     pop es
 
-;; Copiar argumentos para um endereço conhecido
+;; Copy arguments to a known address
 
     mov esi, edi
 
     mov edi, Hexagon.Heap.ArgProc
 
-    rep movsb ;; Copiar (ECX) caracteres de ESI para EDI
+    rep movsb ;; Copy (ECX) characters from ESI to EDI
 
     pop es
 
     pop esi
 
-    jmp .verificarImagem
+    jmp .checkImage
 
-.semArgumentos:
+.noArguments:
 
     mov byte[gs:Hexagon.Heap.ArgProc], 0
 
-.verificarImagem:
+.checkImage:
 
     push esi
 
@@ -440,93 +419,93 @@ Hexagon.Kernel.Kernel.Proc.criarProcesso:
 
     push eax
 
-    jc .imagemAusente
+    jc .missingImage
 
     call Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP
 
-    cmp byte[Hexagon.Imagem.Executavel.HAPP.imagemIncompativel], 01h
-    je .imagemIncompativel
+    cmp byte[Hexagon.Imagem.Executavel.HAPP.incompatibleImage], 01h
+    je .incompatibleImage
 
-    cmp byte[Hexagon.Imagem.Executavel.HAPP.imagemIncompativel], 02h
-    je .imagemAusente
+    cmp byte[Hexagon.Imagem.Executavel.HAPP.incompatibleImage], 02h
+    je .missingImage
 
-    jmp Hexagon.Kernel.Kernel.Proc.adicionarProcesso
+    jmp Hexagon.Kernel.Kernel.Proc.addProcess
 
-.imagemAusente:
+.missingImage:
 
     pop eax
 
-;; A imagem que contêm o código executável não foi localizada no disco
+;; The image containing the executable code was not found on disk
 
-    stc ;; Informar, ao processo que chamou a função, da ausência da imagem
+    stc ;; Inform the process that called the function of the absence of the image
 
-    popa ;; Restaurar a pilha
+    popa ;; Restore the stack
 
-    mov byte[Hexagon.Processos.BCP.codigoRetorno], 01h
+    mov byte[Hexagon.Processes.PCB.returnCode], 01h
 
-    mov eax, 01h ;; Enviar código de erro
+    mov eax, 01h ;; Send error code
 
     ret
 
-.imagemIncompativel:
+.incompatibleImage:
 
     pop eax
 
 ;; A imagem que contêm o código executável não apresenta um formato compatível
 
-    stc ;; Informar, ao processo que chamou a função, da ausência da imagem
+    stc ;; Inform the process that called the function of the absence of the image
 
-    popa ;; Restaurar a pilha
+    popa ;; Restore the stack
 
-    mov byte[Hexagon.Processos.BCP.codigoRetorno], 04h
+    mov byte[Hexagon.Processes.PCB.returnCode], 04h
 
-    mov eax, 04h ;; Enviar código de erro
+    mov eax, 04h ;; Send error code
 
     ret
 
 ;;************************************************************************************
 
-;; Carrega um executável presente no disco e o executa imediatamente
+;; Loads an executable from disk and runs it immediately
 ;;
-;; Os argumentos devem ser passados pela pilha
+;; Arguments must be passed through the stack
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; EAX - Tamanho da imagem que contêm o código executável
+;; EAX - Size of the image containing the executable code
 
-Hexagon.Kernel.Kernel.Proc.adicionarProcesso:
+Hexagon.Kernel.Kernel.Proc.addProcess:
 
-;; Serão restaurados dados passados pela pilha
+;; Data passed through the stack will be restored
 
     pop eax
 
     push eax
 
-    mov ebx, dword[Hexagon.Processos.BCP.PID]
+    mov ebx, dword[Hexagon.Processes.PCB.PID]
     inc ebx
-    mov dword[Hexagon.Processos.BCP.tamanhoImagem+ebx*4], eax
+    mov dword[Hexagon.Processes.PCB.imageSize+ebx*4], eax
 
     call Hexagon.Kernel.Arch.Gen.Mm.confirmMemoryUsage
 
     pop ebx
 
-    add ebx, [Hexagon.Processos.BCP.tamanhoUltimoProcesso]
+    add ebx, [Hexagon.Processes.PCB.lastProcessSize]
 
-    mov eax, [Hexagon.Processos.BCP.tamanho.ponteiro]
+    mov eax, [Hexagon.Processes.PCB.size.pointer]
 
-    add eax, Hexagon.Processos.BCP.tamanho
+    add eax, Hexagon.Processes.PCB.size
 
     mov dword[eax], ebx
 
-    mov dword[Hexagon.Processos.BCP.tamanhoUltimoProcesso], ebx
+    mov dword[Hexagon.Processes.PCB.lastProcessSize], ebx
 
-    add dword[Hexagon.Processos.BCP.tamanho.ponteiro], 4
+    add dword[Hexagon.Processes.PCB.size.pointer], 4
 
-    add dword[Hexagon.Processos.BCP.baseProcessos], ebx
+    add dword[Hexagon.Processes.PCB.processBaseMemory], ebx
 
-    mov edi, dword[Hexagon.Processos.BCP.baseProcessos]
+    mov edi, dword[Hexagon.Processes.PCB.processBaseMemory]
 
-;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+;; Correct address with segment base (physical address = address + segment base)
 
     sub edi, 500h
 
@@ -536,40 +515,40 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcesso:
 
     pop esi
 
-    jc .erroCarregandoImagem
+    jc .loadImageError
 
-    mov byte[Hexagon.Processos.BCP.codigoRetorno], 00h ;; Remover o sinalizador de erro
+    mov byte[Hexagon.Processes.PCB.returnCode], 00h ;; Remove the error flag
 
-    call Hexagon.Kernel.Kernel.Proc.adicionarProcessoPilha
+    call Hexagon.Kernel.Kernel.Proc.linkProcessStack
 
-    jmp Hexagon.Kernel.Kernel.Proc.executarProcesso
+    jmp Hexagon.Kernel.Kernel.Proc.executeProcess
 
-.erroCarregandoImagem:
+.loadImageError:
 
-;; Um erro ocorreu durante o carregamento da imagem presente no disco
+;; An error occurred while loading the image present on volume
 
-    stc ;; Informar, ao processo que chamou a função, da ocorrência de erro
+    stc ;; Inform the process that called the function of the occurrence of an error
 
-    popa ;; Restaurar a pilha
+    popa ;; Restore the stack
 
-    mov byte[Hexagon.Processos.BCP.codigoRetorno], 02h
+    mov byte[Hexagon.Processes.PCB.returnCode], 02h
 
-    mov eax, 02h ;; Enviar código de erro
+    mov eax, 02h ;; Send error code
 
     ret
 
 ;;************************************************************************************
 
-;; Após a imagem ter sido carregada no endereço apropriado, e o processo ter sido
-;; configurado quanto à sua pilha e informações de execução, o processo será executado.
-;; Para tanto, deve ser registrado na GDT e ter sua execução configurada
+;; After the image has been loaded to the appropriate address, and the process has been
+;; configured for its stack and execution information, the process will run.
+;; To do so, it must be registered with the GDT and have its execution configured
 
-Hexagon.Kernel.Kernel.Proc.executarProcesso:
+Hexagon.Kernel.Kernel.Proc.executeProcess:
 
-;; Agora devemos calcular os endereços base de código e dados do programa, os colocando
-;; na entrada da GDT do programa
+;; Now we must calculate the program's code and data base addresses,
+;; placing them in the program's GDT entry
 
-    mov eax, dword[Hexagon.Processos.BCP.baseProcessos]
+    mov eax, dword[Hexagon.Processes.PCB.processBaseMemory]
     mov edx, eax
     and eax, 0xFFFF
 
@@ -590,113 +569,113 @@ Hexagon.Kernel.Kernel.Proc.executarProcesso:
     mov byte[GDT.userCode+7], al ;; Base
     mov byte[GDT.userData+7], al ;; Base
 
-    lgdt[GDTReg] ;; Carregar a GDT contendo a entrada do processo
+    lgdt[GDTReg] ;; Load the GDT containing the process entry
 
-    mov eax, [Hexagon.Processos.BCP.esp.ponteiro]
+    mov eax, [Hexagon.Processes.PCB.esp.pointer]
 
-    add eax, Hexagon.Processos.BCP.esp
+    add eax, Hexagon.Processes.PCB.esp
 
     mov dword[eax], esp
 
-    add dword[Hexagon.Processos.BCP.esp.ponteiro], 4
+    add dword[Hexagon.Processes.PCB.esp.pointer], 4
 
-    call Hexagon.Kernel.Kernel.Proc.calcularEnderecoArgumentos
+    call Hexagon.Kernel.Kernel.Proc.calculateArgumentsAddress
 
-    sti ;; Ter certeza que as interrupções estão disponíveis
+    sti ;; Make sure interrupts are available
 
     pushfd   ;; Flags
-    push 30h ;; Segmento de código do ambiente do usuário (processo)
-    push dword [Hexagon.Imagem.Executavel.HAPP.entradaHAPP] ;; Ponto de entrada da imagem
+    push 30h ;; User environment code segment (process)
+    push dword [Hexagon.Imagem.Executavel.HAPP.entryHAPP] ;; Image entry point
 
-    inc dword[Hexagon.Processos.BCP.contagemProcessos]
-    inc dword[Hexagon.Processos.BCP.PID]
+    inc dword[Hexagon.Processes.PCB.processCount]
+    inc dword[Hexagon.Processes.PCB.PID]
 
-    mov ax, 38h ;; Segmento de dados do ambiente de usuário (processo)
+    mov ax, 38h ;; User environment data segment (process)
     mov ds, ax
 
     iret
 
 ;;************************************************************************************
 
-;; Função que recebe o controle após o término do processo e realiza as operações necessárias
-;; para removê-lo da pilha de execução
+;; Function that receives control after the process ends and performs the necessary
+;; operations to remove it from the execution stack
 
-Hexagon.Kernel.Kernel.Proc.encerrarProcesso:
+Hexagon.Kernel.Kernel.Proc.exit:
 
-;; Primeiramente, armazenar o código de erro do processo à ser finalizado
+;; First, store the error code of the process to be terminated
 
-    mov [Hexagon.Processos.BCP.codigoErro], eax
+    mov [Hexagon.Processes.PCB.errorCode], eax
 
     mov ax, 10h
     mov ds, ax
 
     cmp byte[Hexagon.Console.graphicMode], 0
-    je naoModoGrafico
+    je .noGraphicMode
 
-naoModoGrafico:
+.noGraphicMode:
 
     cmp ebx, 00h
-    je .continuar
+    je .continue
 
     cmp ebx, 1234h
-    je .terminarFicarResidente
+    je .terminateAndStayResident
 
-.terminarFicarResidente:
+.terminateAndStayResident:
 
-    mov byte[Hexagon.Processos.BCP.modoTerminar], 01h
+    mov byte[Hexagon.Processes.PCB.endMode], 01h
 
-.continuar:
+.continue:
 
-    mov eax, [Hexagon.Processos.BCP.esp.ponteiro]
+    mov eax, [Hexagon.Processes.PCB.esp.pointer]
 
-    add eax, Hexagon.Processos.BCP.esp
+    add eax, Hexagon.Processes.PCB.esp
     sub eax, 4
 
     mov esp, dword[eax]
 
-;; Endereço da função que removerá as permissões do processo
+;; Address of the function that will remove permissions from the process
 
-    mov eax, Hexagon.Kernel.Kernel.Proc.removerProcesso
+    mov eax, Hexagon.Kernel.Kernel.Proc.removeProcess
 
-    push 08h ;; Segmento de código do kernel
-    push eax ;; Endereço de retorno de retf
+    push 08h ;; Kernel code segment
+    push eax ;; retf return address
 
-    retf ;; Ir à essa função agora, trocando o contexto
+    retf ;; Go to this function now, switching the context
 
 ;;************************************************************************************
 
-;; Remove as credenciais e permissões do processo da pilha de execução do sistema e da
-;; GDT, transferindo o controle novamente ao kernel
+;; Removes the process's credentials and permissions from the system execution
+;; stack and GDT, transferring control back to the kernel
 
-Hexagon.Kernel.Kernel.Proc.removerProcesso:
+Hexagon.Kernel.Kernel.Proc.removeProcess:
 
-    call Hexagon.Kernel.Kernel.Proc.removerProcessoPilha
+    call Hexagon.Kernel.Kernel.Proc.unlinkProcessStack
 
     mov ax, 10h ;; Kernel data segment
     mov ds, ax
 
-    mov eax, [Hexagon.Processos.BCP.tamanho.ponteiro]
+    mov eax, [Hexagon.Processes.PCB.size.pointer]
 
-    add eax, Hexagon.Processos.BCP.tamanho
+    add eax, Hexagon.Processes.PCB.size
 
     sub eax, 4
 
     mov ebx, dword[eax]
 
-    sub dword[Hexagon.Processos.BCP.baseProcessos], ebx
+    sub dword[Hexagon.Processes.PCB.processBaseMemory], ebx
 
-    sub dword[Hexagon.Processos.BCP.tamanho.ponteiro], 4
+    sub dword[Hexagon.Processes.PCB.size.pointer], 4
 
     mov eax, dword[Hexagon.Memory.bytesAllocated]
 
-    sub dword[Hexagon.Processos.BCP.baseProcessos], eax
+    sub dword[Hexagon.Processes.PCB.processBaseMemory], eax
 
     mov dword[Hexagon.Memory.bytesAllocated], 0
 
-;; Agora devemos calcular os endereços base de código e dados do programa, os colocando
-;; na entrada da GDT do programa
+;; Now we must calculate the program's code and data base addresses,
+;; placing them in the program's GDT entry
 
-    mov eax, dword[Hexagon.Processos.BCP.baseProcessos]
+    mov eax, dword[Hexagon.Processes.PCB.processBaseMemory]
     mov edx, eax
     and eax, 0xFFFF
 
@@ -719,112 +698,112 @@ Hexagon.Kernel.Kernel.Proc.removerProcesso:
 
     lgdt[GDTReg]
 
-    sub dword[Hexagon.Processos.BCP.esp.ponteiro], 4
+    sub dword[Hexagon.Processes.PCB.esp.pointer], 4
 
     push eax
     push ebx
 
-    mov ebx, dword[Hexagon.Processos.BCP.PID]
-    mov eax, dword[Hexagon.Processos.BCP.tamanhoImagem+ebx*4]
-    mov dword[Hexagon.Processos.BCP.tamanhoImagem+ebx*4], 00h
+    mov ebx, dword[Hexagon.Processes.PCB.PID]
+    mov eax, dword[Hexagon.Processes.PCB.imageSize+ebx*4]
+    mov dword[Hexagon.Processes.PCB.imageSize+ebx*4], 00h
 
     call Hexagon.Kernel.Arch.Gen.Mm.freeMemoryUsage
 
     pop ebx
     pop eax
 
-    dec dword[Hexagon.Processos.BCP.contagemProcessos]
-    dec dword[Hexagon.Processos.BCP.PID]
+    dec dword[Hexagon.Processes.PCB.processCount]
+    dec dword[Hexagon.Processes.PCB.PID]
 
-    cmp byte[Hexagon.Processos.BCP.modoTerminar], 01h
-    je .ficarResidente
-
-    clc
-
-    jmp short .fim
-
-.ficarResidente:
-
-    mov ebx, dword[Hexagon.Processos.BCP.PID]
-
-    mov eax, [Hexagon.Processos.BCP.baseProcessos]
-    add eax, [Hexagon.Processos.BCP.tamanhoImagem+ebx*4]
-
-    mov byte[Hexagon.Processos.BCP.modoTerminar], 00h
+    cmp byte[Hexagon.Processes.PCB.endMode], 01h
+    je .starResident
 
     clc
 
-    jmp short .fim
+    jmp short .end
 
-.fim:
+.starResident:
+
+    mov ebx, dword[Hexagon.Processes.PCB.PID]
+
+    mov eax, [Hexagon.Processes.PCB.processBaseMemory]
+    add eax, [Hexagon.Processes.PCB.imageSize+ebx*4]
+
+    mov byte[Hexagon.Processes.PCB.endMode], 00h
+
+    clc
+
+    jmp short .end
+
+.end:
 
     clc
 
     popa
 
-.verificarRetorno:
+.checkReturn:
 
     clc
 
-    mov ah, [Hexagon.Processos.BCP.codigoRetorno]
+    mov ah, [Hexagon.Processes.PCB.returnCode]
 
     cmp ah, 00h
-    je .finalizar
+    je .finish
 
     stc
 
-.finalizar:
+.finish:
 
-    mov eax, [Hexagon.Processos.BCP.codigoRetorno]
-
-    ret
-
-;;************************************************************************************
-
-;; Manipulador que retorna código de erro para quando o limite de processos for atingido
-
-Hexagon.Kernel.Kernel.Proc.numeroMaximoProcessosAtingido:
-
-;; Um erro ocorreu durante o carregamento da imagem presente no disco
-
-    stc ;; Informar, ao processo que chamou a função, da ocorrência de erro
-
-    popa ;; Restaurar a pilha
-
-    mov byte[Hexagon.Processos.BCP.codigoRetorno], 03h
-
-    mov eax, 03h ;; Enviar código de erro
+    mov eax, [Hexagon.Processes.PCB.returnCode]
 
     ret
 
 ;;************************************************************************************
 
-;; Retorna ao processo o seu PID
+;; Handler that returns error code for when the process limit is reached
+
+Hexagon.Kernel.Kernel.Proc.maxNumberProcessesReached:
+
+;; An error occurred while loading the image present on volume
+
+    stc ;; Inform the process that called the function of the occurrence of an error
+
+    popa ;; Restore the stack
+
+    mov byte[Hexagon.Processes.PCB.returnCode], 03h
+
+    mov eax, 03h ;; Send error code
+
+    ret
+
+;;************************************************************************************
+
+;; Returns its PID to the process
 ;;
-;; Saída:
+;; Output:
 ;;
-;; EAX - PID do processo
+;; EAX - Process PID
 
-Hexagon.Kernel.Kernel.Proc.obterPID:
+Hexagon.Kernel.Kernel.Proc.getPID:
 
-    mov eax, dword[Hexagon.Processos.BCP.PID]
+    mov eax, dword[Hexagon.Processes.PCB.PID]
 
     ret
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Proc.adicionarProcessoPilha:
+Hexagon.Kernel.Kernel.Proc.linkProcessStack:
 
-    mov dword[Hexagon.Processos.BCP.nomeProcesso], esi
+    mov dword[Hexagon.Processes.PCB.processName], esi
 
     push ds ;; Kernel data segment
     pop es
 
-    mov eax, dword[Hexagon.Processos.BCP.contagemProcessos]
+    mov eax, dword[Hexagon.Processes.PCB.processCount]
 
     mov ebx, 14
 
-    mul ebx ;; EAX contêm o deslocamento
+    mul ebx ;; EAX contain the offset
 
     inc ebx
 
@@ -834,19 +813,19 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcessoPilha:
 
     push edi
 
-    mov esi, [Hexagon.Processos.BCP.nomeProcesso]
+    mov esi, [Hexagon.Processes.PCB.processName]
 
     call Hexagon.Kernel.Lib.String.tamanhoString
 
     mov ecx, eax
 
-;; Copiar o nome do processo
+;; Copy process name
 
-    mov esi, dword[Hexagon.Processos.BCP.nomeProcesso]
+    mov esi, dword[Hexagon.Processes.PCB.processName]
 
     pop edi
 
-    rep movsb ;; Copiar (ECX) caracteres de ESI para EDI
+    rep movsb ;; Copy (ECX) characters from ESI to EDI
 
     mov byte[edi+1], ' '
 
@@ -854,67 +833,67 @@ Hexagon.Kernel.Kernel.Proc.adicionarProcessoPilha:
 
 ;;************************************************************************************
 
-;; Calcula o endereço efetivo do bloco de memória que contêm os argumentos do processo.
-;; Esse bloco está sempre mapeado em uma região de despejo temporário do kernel para os
-;; argumentos de processos
-;; Esse endereço é diretamente relativo à localização do processo atual na memória
+;; Calculates the effective address of the memory block containing the process arguments.
+;; This block is always mapped to a kernel temporary dump region for process arguments.
+;; This address is directly relative to the location of the current process in memory
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; Nada
+;; Anything
 ;;
-;; Saída:
+;; Output:
 ;;
-;; EDI - endereço relativo (offset) em memória do bloco de memória com os argumentos do
-;;       processo
+;; EDI - relative address (offset) in memory of the memory block with the process arguments
 
-Hexagon.Kernel.Kernel.Proc.calcularEnderecoArgumentos:
+Hexagon.Kernel.Kernel.Proc.calculateArgumentsAddress:
 
-;; Documentação da resolução de endereço para os parâmetros que serão passados ao novo processo:
+;; Address resolution documentation for the parameters that will be passed to the new process:
 ;;
-;; Primeiro, pegamos o offset da estrutura dentro do endereço do kernel. Esse valor deve estar
-;; próximo do tamanho em bytes do arquivo que contêm o kernel. Esse valor é relativo ao kernel,
-;; não ao segmento de memória. Para obtermos o endereço efetivo, pegamos o offset em relação
-;; ao kernel e subtraímos pelo endreço base do processo, gerando um offset em relação ao segmento
-;; de memória.
-;; Neste caso, temos um endereço negativo, pois o kernel se encontra em uma região de memória
-;; inferior à região do processo. Na resolução de endereços, é feito um complemento de dois com o
-;; valor negativo (um valor possível e provavel de −2C9C6E é representado como 6392h ou 25490),
-;; sendo utilizado como offset no segmento ES, formando o endereço lógico ES:25490, que apontaria
-;; corretamente para a estrutura no kernel que contêm os argumentos do processo. Desta forma, o
-;; processo com o offset em EDI = -2C9C6E consegue apontar corretamente para a área esperada
-;; no kernel.
+;; First, we get the structure offset within the kernel address.
+;; This value should be close to the size in bytes of the file containing the kernel.
+;; This value is relative to the kernel, not the memory segment.
+;; To obtain the effective address, we take the offset in relation to the kernel and subtract it
+;; from the base address of the process, generating an offset in relation to the memory segment.
+;; In this case, we have a negative address, as the kernel is in a lower memory region than the
+;; process region.
+;; When resolving addresses, a two's complement is made with the negative value (a possible and
+;; probable value of −2C9C6E is represented as 6392h or 25490), being used as an offset in the
+;; ES segment, forming the logical address ES:25490, which would point correctly to the structure
+;; in the kernel that contains the process arguments.
+;; This way, the process with the offset at EDI = -2C9C6E can correctly point to the expected
+;; area in the kernel.
 ;;
-;; Mais informações sobre o processo (cálculo de endereço efetivo - offset):
+;; More information about the process (effective address calculation - offset):
 ;;
-;; A arquitetura trata com simetria em 0 os endereços, e normalmente endereços
-;; do kernel (com offset menor em relação ao início da memória) aparecem como endereços negativos
-;; para o ambiente de usuário, como é observado neste caso. A arquitetura suporta offsets negativos
-;; relativos ao segmento (via complemento de dois), realizando a tradução transparente para um
-;; endereço físico. No caso abaixo, teremos um offset negativo apontando para uma região anterior
-;; da memória que será traduzido para um endereço lógico que será, por sua vez, traduzido em um
-;; endereço físico pelo processador utilizando a tabela presente na GDT
+;; The architecture treats addresses with symmetry at 0, and normally kernel addresses (with a
+;; smaller offset in relation to the beginning of memory) appear as negative addresses for the
+;; user environment, as observed in this case.
+;; The architecture supports negative offsets relative to the segment (via two's complement),
+;; performing transparent translation to a physical address.
+;; In the case below, we will have a negative offset pointing to a previous region of memory
+;; that will be translated into a logical address that will, in turn, be translated into a physical
+;; address by the processor using the table present in the GDT
 
-    mov edi, Hexagon.Heap.ArgProc ;; Offset, dentro do kernel
+    mov edi, Hexagon.Heap.ArgProc ;; Offset, inside the kernel
 
-    sub edi, dword[Hexagon.Processos.BCP.baseProcessos] ;; Obter endereço efetivo (offset)
+    sub edi, dword[Hexagon.Processes.PCB.processBaseMemory] ;; Get effective address (offset)
 
     ret
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Proc.removerProcessoPilha:
+Hexagon.Kernel.Kernel.Proc.unlinkProcessStack:
 
     push ds ;; Kernel data segment
     pop es
 
-    mov eax, dword[Hexagon.Processos.BCP.contagemProcessos]
+    mov eax, dword[Hexagon.Processes.PCB.processCount]
 
     dec eax
 
     mov ebx, 14
 
-    mul ebx ;; EAX contêm o deslocamento
+    mul ebx ;; EAX contain the offset
 
     inc ebx
 
@@ -924,19 +903,19 @@ Hexagon.Kernel.Kernel.Proc.removerProcessoPilha:
 
     push edi
 
-    mov esi, Hexagon.Processos.processoVazio
+    mov esi, Hexagon.Processos.emptyProcess
 
     mov eax, 13
 
     mov ecx, eax
 
-;; Copiar o nome do processo
+;; Copy process name
 
-    mov esi, Hexagon.Processos.processoVazio
+    mov esi, Hexagon.Processos.emptyProcess
 
     pop edi
 
-    rep movsb ;; Copiar (ECX) caracteres de ESI para EDI
+    rep movsb ;; Copy (ECX) characters from ESI to EDI
 
     mov byte[edi+1], ' '
 
@@ -944,10 +923,9 @@ Hexagon.Kernel.Kernel.Proc.removerProcessoPilha:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Proc.obterListaProcessos:
+Hexagon.Kernel.Kernel.Proc.getProcessTable:
 
-;; Vamos iniciar a área de memória do heap do kernel que vai armazenar o nome dos
-;; processos em execução
+;; Let's get the running processes
 
     push ds ;; Kernel data segment
     pop es
@@ -956,13 +934,13 @@ Hexagon.Kernel.Kernel.Proc.obterListaProcessos:
 
     mov esi, Hexagon.Heap.ProcTab
     mov edi, Hexagon.Heap.Temp
-    mov ecx, 13*Hexagon.Processos.BCP.limiteProcessos
+    mov ecx, 13*Hexagon.Processes.PCB.processLimit
 
     rep movsb
 
     mov esi, Hexagon.Heap.Temp
 
-    mov ebx, 13*Hexagon.Processos.BCP.limiteProcessos
+    mov ebx, 13*Hexagon.Processes.PCB.processLimit
 
     mov byte[esi+ebx], 0
 
@@ -970,16 +948,16 @@ Hexagon.Kernel.Kernel.Proc.obterListaProcessos:
 
     call Hexagon.Kernel.Lib.String.cortarString
 
-    mov eax, dword[Hexagon.Processos.BCP.contagemProcessos]
+    mov eax, dword[Hexagon.Processes.PCB.processCount]
 
-.fim:
+.end:
 
     ret
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Proc.obterCodigoErro:
+Hexagon.Kernel.Kernel.Proc.getErrorCode:
 
-    mov eax, [Hexagon.Processos.BCP.codigoErro]
+    mov eax, [Hexagon.Processes.PCB.errorCode]
 
     ret

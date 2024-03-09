@@ -97,7 +97,7 @@ Hexagon.Init.startUserMode:
 
     clc
 
-    call Hexagon.Kernel.Kernel.Proc.criarProcesso ;; Request init loading
+    call Hexagon.Kernel.Kernel.Proc.exec ;; Request init loading
 
     logHexagon Hexagon.Verbose.withoutInit, Hexagon.Dmesg.Priorities.p5
 
@@ -114,7 +114,7 @@ Hexagon.Init.startUserMode:
 
     clc
 
-    call Hexagon.Kernel.Kernel.Proc.criarProcesso ;; Request loading default shell
+    call Hexagon.Kernel.Kernel.Proc.exec ;; Request loading default shell
 
     jnc .endShell
 

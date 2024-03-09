@@ -73,91 +73,91 @@
 
 use32
 
-Hexagon.Syscall.Syscall.servicosHexagon:
+Hexagon.Syscall.Syscall.hexagonServices:
 
-.tabela:
+.table:
 
-;; Gerenciamento de memória e processos
+;; Memory and process management
 
-    dd Hexagon.Syscall.Syscall.nullSystemCall                                    ;; 0 - função nula, apenas retorna
-    dd Hexagon.Kernel.Arch.Gen.Mm.malloc                        ;; 1
-    dd Hexagon.Kernel.Arch.Gen.Mm.free                       ;; 2
-    dd Hexagon.Kernel.Kernel.Proc.exec                       ;; 3
-    dd Hexagon.Kernel.Kernel.Proc.encerrarProcesso                     ;; 4
-    dd Hexagon.Kernel.Kernel.Proc.obterPID                             ;; 5
-    dd Hexagon.Kernel.Arch.Gen.Mm.memoryUse                           ;; 6
-    dd Hexagon.Kernel.Kernel.Proc.obterListaProcessos                  ;; 7
-    dd Hexagon.Kernel.Kernel.Proc.obterCodigoErro                      ;; 8
+    dd Hexagon.Syscall.Syscall.nullSystemCall                          ;; 0 - null function
+    dd Hexagon.Kernel.Arch.Gen.Mm.malloc                               ;; 1
+    dd Hexagon.Kernel.Arch.Gen.Mm.free                                 ;; 2
+    dd Hexagon.Kernel.Kernel.Proc.exec                                 ;; 3
+    dd Hexagon.Kernel.Kernel.Proc.exit                                 ;; 4
+    dd Hexagon.Kernel.Kernel.Proc.getPID                               ;; 5
+    dd Hexagon.Kernel.Arch.Gen.Mm.memoryUse                            ;; 6
+    dd Hexagon.Kernel.Kernel.Proc.getProcessTable                      ;; 7
+    dd Hexagon.Kernel.Kernel.Proc.getErrorCode                         ;; 8
 
-;; Gerenciamento de arquivos e dispositivos
+;; File and device management
 
-    dd Hexagon.Kernel.Dev.Dev.open                                    ;; 9
-    dd Hexagon.Kernel.Dev.Dev.write                                 ;; 10
-    dd Hexagon.Kernel.Dev.Dev.close                                   ;; 11
+    dd Hexagon.Kernel.Dev.Dev.open                                     ;; 9
+    dd Hexagon.Kernel.Dev.Dev.write                                    ;; 10
+    dd Hexagon.Kernel.Dev.Dev.close                                    ;; 11
 
-;; Gerenciamento do Sistema de Arquivos e de volumes
+;; Filesystem and volume management
 
-    dd Hexagon.Kernel.FS.VFS.createFile                               ;; 12
-    dd Hexagon.Kernel.FS.VFS.saveFile                             ;; 13
-    dd Hexagon.Kernel.FS.VFS.unlinkFile                            ;; 14
-    dd Hexagon.Kernel.FS.VFS.renameFile                           ;; 15
-    dd Hexagon.Kernel.FS.VFS.listFiles                            ;; 16
-    dd Hexagon.Kernel.FS.VFS.fileExists                             ;; 17
-    dd Hexagon.Kernel.FS.VFS.getVolume                               ;; 18
+    dd Hexagon.Kernel.FS.VFS.createFile                                ;; 12
+    dd Hexagon.Kernel.FS.VFS.saveFile                                  ;; 13
+    dd Hexagon.Kernel.FS.VFS.unlinkFile                                ;; 14
+    dd Hexagon.Kernel.FS.VFS.renameFile                                ;; 15
+    dd Hexagon.Kernel.FS.VFS.listFiles                                 ;; 16
+    dd Hexagon.Kernel.FS.VFS.fileExists                                ;; 17
+    dd Hexagon.Kernel.FS.VFS.getVolume                                 ;; 18
 
-;; Gerenciamento de usuários
+;; User management
 
-    dd Hexagon.Kernel.Kernel.Proc.travar                               ;; 19
-    dd Hexagon.Kernel.Kernel.Proc.destravar                            ;; 20
+    dd Hexagon.Kernel.Kernel.Proc.lock                                 ;; 19
+    dd Hexagon.Kernel.Kernel.Proc.unlock                               ;; 20
     dd Hexagon.Kernel.Kernel.Usuarios.definirUsuario                   ;; 21
     dd Hexagon.Kernel.Kernel.Usuarios.obterUsuario                     ;; 22
 
-;; Serviços oferecidos pelo Hexagon
+;; Hexagon services
 
-    dd Hexagon.Kernel.Kernel.Uname.uname                      ;; 23
+    dd Hexagon.Kernel.Kernel.Uname.uname                               ;; 23
     dd Hexagon.Kernel.Lib.Num.obterAleatorio                           ;; 24
     dd Hexagon.Kernel.Lib.Num.alimentarAleatorios                      ;; 25
-    dd Hexagon.Kernel.Arch.i386.Timer.Timer.sleep               ;; 26
-    dd Hexagon.Syscall.Syscall.installInterruption                      ;; 27
+    dd Hexagon.Kernel.Arch.i386.Timer.Timer.sleep                      ;; 26
+    dd Hexagon.Syscall.Syscall.installInterruption                     ;; 27
 
-;; Gerenciamento de energia do Hexagon
+;; Hexagon power management
 
-    dd Hexagon.Kernel.Arch.i386.APM.reboot                ;; 28
-    dd Hexagon.Kernel.Arch.i386.APM.shutdown                 ;; 29
+    dd Hexagon.Kernel.Arch.i386.APM.reboot                             ;; 28
+    dd Hexagon.Kernel.Arch.i386.APM.shutdown                           ;; 29
 
-;; Funções de saída em console e gráficos do Hexagon
+;; Console output functions and Hexagon graphics
 
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.print                 ;; 30
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.clearConsole            ;; 31
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.clearRow              ;; 32
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.scrollConsole             ;; 33
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.positionCursor         ;; 34
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.print                    ;; 30
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.clearConsole             ;; 31
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.clearRow                 ;; 32
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.scrollConsole            ;; 33
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.positionCursor           ;; 34
     dd Hexagon.Kernel.Lib.Graficos.colocarPixel                        ;; 35
     dd Hexagon.Kernel.Lib.Graficos.desenharBlocoSyscall                ;; 36
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter        ;; 37
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.setConsoleColor        ;; 38
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter           ;; 37
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.setConsoleColor          ;; 38
     dd Hexagon.Kernel.Dev.Gen.Console.Console.getConsoleColor          ;; 39
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.getConsoleInfo         ;; 40
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.updateConsole         ;; 41
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.setResolution         ;; 42
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.getResolution           ;; 43
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.getCursor              ;; 44
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.getConsoleInfo           ;; 40
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.updateConsole            ;; 41
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.setResolution            ;; 42
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.getResolution            ;; 43
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.getCursor                ;; 44
 
-;; Serviços de entrada por teclado do Hexagon
+;; Hexagon keyboard input services
 
-    dd Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.waitKeyboard          ;; 45
+    dd Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.waitKeyboard           ;; 45
     dd Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.getString              ;; 46
-    dd Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.getSpecialKeysStatus        ;; 47
-    dd Hexagon.Kernel.Dev.Gen.Console.Console.changeFont             ;; 48
+    dd Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.getSpecialKeysStatus   ;; 47
+    dd Hexagon.Kernel.Dev.Gen.Console.Console.changeFont               ;; 48
     dd Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.changeLayout           ;; 49
 
-;; Serviços de entrada de mouse PS/2 do Hexagon
+;; Hexagon PS/2 mouse input services
 
-    dd Hexagon.Kernel.Dev.Gen.Mouse.Mouse.waitMouseEvent                ;; 50
+    dd Hexagon.Kernel.Dev.Gen.Mouse.Mouse.waitMouseEvent               ;; 50
     dd Hexagon.Kernel.Dev.Gen.Mouse.Mouse.getFromMouse                 ;; 51
-    dd Hexagon.Kernel.Dev.Gen.Mouse.Mouse.setMouse              ;; 52
+    dd Hexagon.Kernel.Dev.Gen.Mouse.Mouse.setMouse                     ;; 52
 
-;; Serviços de manipulação de dados do Hexagon
+;; Hexagon data handling services
 
     dd Hexagon.Kernel.Lib.String.compararPalavrasNaString              ;; 53
     dd Hexagon.Kernel.Lib.String.removerCaractereNaString              ;; 54
@@ -171,16 +171,16 @@ Hexagon.Syscall.Syscall.servicosHexagon:
     dd Hexagon.Kernel.Lib.String.stringParaInteiro                     ;; 62
     dd Hexagon.Kernel.Lib.String.paraString                            ;; 63
 
-;; Serviços de saída por som do Hexagon
+;; Hexagon sound output services
 
     dd Hexagon.Kernel.Dev.Gen.Snd.Snd.playSound                        ;; 64
-    dd Hexagon.Kernel.Dev.Gen.Snd.Snd.stopSound                      ;; 65
+    dd Hexagon.Kernel.Dev.Gen.Snd.Snd.stopSound                        ;; 65
 
-;; Serviço de mensagens do Hexagon
+;; Hexagon messaging service
 
-    dd Hexagon.Kernel.Kernel.Dmesg.createMessage                ;; 66
+    dd Hexagon.Kernel.Kernel.Dmesg.createMessage                       ;; 66
 
-;; Serviço de relógio em tempo real do Hexagon
+;; Hexagon real-time clock service
 
     dd Hexagon.Kernel.Lib.Relogio.retornarData                         ;; 67
     dd Hexagon.Kernel.Lib.Relogio.retornarHora                         ;; 68

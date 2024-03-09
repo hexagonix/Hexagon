@@ -176,13 +176,13 @@ struc Hexagon.Gerenciamento.Imagem.HAPP
 
 {
 
-.codigoErro:             dd 0 ;; Código de erro emitido pelo último processo
+.errorCode:             dd 0 ;; Código de erro emitido pelo último processo
 .arquiteturaImagem:      db 0 ;; Arquitetura da imagem
-.imagemIncompativel:     db 0 ;; Imagem incompatível?
+.incompatibleImage:     db 0 ;; Imagem incompatível?
 .versaoMinima:           db 0 ;; Versão mínima do Hexagon necessária a execução (dependência)
 .subVersaoMinima:        db 0 ;; Subversão (ou revisão) do Hexagon necessária a execução (dependência)
-.entradaHAPP:            dd 0 ;; Endereço de entrada do código da imagem
-.tipoImagem:             db 0 ;; Tipo executável da imagem
+.entryHAPP:            dd 0 ;; Endereço de entrada do código da imagem
+.imageType:             db 0 ;; Tipo executável da imagem
 .saidaHAPP:              dd 0 ;; Código de saída do código da imagem (futuro)
 .reservado1:             db 0 ;; Reservado (Byte)
 .reservado2:             db 0 ;; Reservado (Byte)
@@ -295,7 +295,7 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
 ;; cabeçalho.
 
     mov eax, dword[edi+7]
-    mov dword[Hexagon.Imagem.Executavel.HAPP.entradaHAPP], eax
+    mov dword[Hexagon.Imagem.Executavel.HAPP.entryHAPP], eax
 
 ;; Os tipos de imagem podem ser (01h) imagens executáveis e (02h e 03h) bibliotecas
 ;; estáticas ou dinâminas (implementações futuras)
@@ -309,29 +309,29 @@ Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
 ;; Se tudo estiver certo, vamos prosseguir com a verificação da imagem
 
     mov ah, byte[edi+11]
-    mov byte[Hexagon.Imagem.Executavel.HAPP.tipoImagem], ah
+    mov byte[Hexagon.Imagem.Executavel.HAPP.imageType], ah
 
 ;; Se tudo certo com o cabeçalho, marcar que a imagem pode ser executada
 
-    mov byte[Hexagon.Imagem.Executavel.HAPP.imagemIncompativel], 00h ;; Marcar imagem como compatível
+    mov byte[Hexagon.Imagem.Executavel.HAPP.incompatibleImage], 00h ;; Marcar imagem como compatível
 
     jmp .final ;; Vamos continuar sem marcar erro na imagem
 
 .cabecalhoInvalido: ;; Algo no cabeçalho está inválido, então a imagem não pode ser executada
 
-    mov byte[Hexagon.Imagem.Executavel.HAPP.imagemIncompativel], 01h ;; Marcar como inválida
+    mov byte[Hexagon.Imagem.Executavel.HAPP.incompatibleImage], 01h ;; Marcar como inválida
 
     jmp .final ;; Pular para o final da função
 
 .imagemAusente:
 
-    mov byte[Hexagon.Imagem.Executavel.HAPP.imagemIncompativel], 02h ;; Marcar erro durante o carregamento
+    mov byte[Hexagon.Imagem.Executavel.HAPP.incompatibleImage], 02h ;; Marcar erro durante o carregamento
 
     jmp .final
 
 .tipoExecutavelInvalido:
 
-    mov byte[Hexagon.Imagem.Executavel.HAPP.imagemIncompativel], 03h
+    mov byte[Hexagon.Imagem.Executavel.HAPP.incompatibleImage], 03h
 
     jmp .final
 

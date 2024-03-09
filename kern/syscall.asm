@@ -114,13 +114,13 @@ Hexagon.Syscall.Syscall.hexagonHandler:
 
     mov dword[Hexagon.Syscall.Control.eax], eax
 
-    add esi, dword[Hexagon.Processos.BCP.baseProcessos]
+    add esi, dword[Hexagon.Processes.PCB.processBaseMemory]
 
 ;; Correct address with segment base (physical address = address + segment base)
 
     sub esi, 500h
 
-    add edi, dword[Hexagon.Processos.BCP.baseProcessos]
+    add edi, dword[Hexagon.Processes.PCB.processBaseMemory]
 
 ;; Correct address with segment base (physical address = address + segment base)
 
@@ -157,7 +157,13 @@ Hexagon.Syscall.Syscall.hexagonHandler:
 
     sti
 
-    call dword[Hexagon.Syscall.Syscall.servicosHexagon.tabela+ebp*4]
+    push dword[Hexagon.Syscall.Control.eip]
+    push dword[Hexagon.Syscall.Control.cs]
+
+    call dword[Hexagon.Syscall.Syscall.hexagonServices.table+ebp*4]
+
+    pop dword[Hexagon.Syscall.Control.cs]
+    pop dword[Hexagon.Syscall.Control.eip]
 
 .end:
 
@@ -179,13 +185,13 @@ Hexagon.Syscall.Syscall.hexagonHandler:
     push dword[Hexagon.Syscall.Control.cs]
     push dword[Hexagon.Syscall.Control.eip]
 
-    sub esi, dword[Hexagon.Processos.BCP.baseProcessos]
+    sub esi, dword[Hexagon.Processes.PCB.processBaseMemory]
 
 ;; Correct address with segment base (physical address = address + segment base)
 
     add esi, 500h
 
-    sub edi, dword[Hexagon.Processos.BCP.baseProcessos]
+    sub edi, dword[Hexagon.Processes.PCB.processBaseMemory]
 
 ;; Correct address with segment base (physical address = address + segment base)
 
