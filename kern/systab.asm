@@ -82,7 +82,7 @@ Hexagon.Syscall.Syscall.servicosHexagon:
     dd Hexagon.Syscall.Syscall.nullSystemCall                                    ;; 0 - função nula, apenas retorna
     dd Hexagon.Kernel.Arch.Gen.Mm.malloc                        ;; 1
     dd Hexagon.Kernel.Arch.Gen.Mm.free                       ;; 2
-    dd Hexagon.Syscall.Syscall.createProcess                       ;; 3
+    dd Hexagon.Kernel.Kernel.Proc.exec                       ;; 3
     dd Hexagon.Kernel.Kernel.Proc.encerrarProcesso                     ;; 4
     dd Hexagon.Kernel.Kernel.Proc.obterPID                             ;; 5
     dd Hexagon.Kernel.Arch.Gen.Mm.memoryUse                           ;; 6

@@ -333,6 +333,24 @@ match =YES, VERBOSE
 
 ;;************************************************************************************
 
+Hexagon.Kernel.Kernel.Proc.exec:
+
+;; Save instruction pointer and code segment
+
+    push dword[Hexagon.Syscall.Control.eip]
+    push dword[Hexagon.Syscall.Control.cs]
+
+    call Hexagon.Kernel.Kernel.Proc.criarProcesso
+
+;; Restore instruction pointer and code segment
+
+    pop dword[Hexagon.Syscall.Control.cs]
+    pop dword[Hexagon.Syscall.Control.eip]
+
+    ret
+
+;;************************************************************************************
+
 ;; Configura um novo processo Hexagon para execução imediata
 ;;
 ;; Entrada:
