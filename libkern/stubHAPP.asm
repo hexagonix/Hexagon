@@ -78,7 +78,7 @@ use32
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Lib.HAPP.execucaoIndevida:
+Hexagon.Libkern.HAPP.execucaoIndevida:
 
     push 4 ;; Encerrar processo
 

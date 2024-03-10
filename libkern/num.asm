@@ -83,7 +83,7 @@ use32
 ;;
 ;; EAX - Número gerado
 
-Hexagon.Kernel.Lib.Num.obterAleatorio:
+Hexagon.Libkern.Num.obterAleatorio:
 
     mov ecx, eax
 
@@ -137,9 +137,9 @@ Hexagon.Kernel.Lib.Num.obterAleatorio:
 ;;
 ;; EAX - Número
 
-Hexagon.Kernel.Lib.Num.alimentarAleatorios:
+Hexagon.Libkern.Num.alimentarAleatorios:
 
-    mov [Hexagon.Kernel.Lib.Num.obterAleatorio.numeroAleatorio], eax
+    mov [Hexagon.Libkern.Num.obterAleatorio.numeroAleatorio], eax
 
     ret
 
@@ -155,7 +155,7 @@ Hexagon.Kernel.Lib.Num.alimentarAleatorios:
 ;;
 ;; AL - Valor em binário
 
-Hexagon.Kernel.Lib.Num.BCDParaBinario:
+Hexagon.Libkern.Num.BCDParaBinario:
 
     push ebx
 

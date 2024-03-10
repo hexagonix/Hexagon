@@ -149,7 +149,7 @@ Hexagon.Kernel.FS.FAT16.FATnameToFilename:
     cmp byte[esi+8], ' '
     jne .thisIsExtension
 
-    call Hexagon.Kernel.Lib.String.cortarString
+    call Hexagon.Libkern.String.cortarString
 
     jmp .success
 
@@ -181,11 +181,11 @@ Hexagon.Kernel.FS.FAT16.FATnameToFilename:
     mov esi, .filenameBuffer
     mov byte[esi+8], 0
 
-    call Hexagon.Kernel.Lib.String.cortarString
+    call Hexagon.Libkern.String.cortarString
 
 ;; Add dot
 
-    call Hexagon.Kernel.Lib.String.tamanhoString
+    call Hexagon.Libkern.String.tamanhoString
 
     mov byte[esi+eax], '.'
 
@@ -199,11 +199,11 @@ Hexagon.Kernel.FS.FAT16.FATnameToFilename:
 
     mov byte[esi+3], 0
 
-    call Hexagon.Kernel.Lib.String.cortarString
+    call Hexagon.Libkern.String.cortarString
 
     mov ebx, eax ;; Save filename size (without extension)
 
-    call Hexagon.Kernel.Lib.String.tamanhoString
+    call Hexagon.Libkern.String.tamanhoString
 
 ;; Put file name and extension together
 
@@ -297,16 +297,16 @@ Hexagon.Kernel.FS.FAT16.filenameToFATName:
 
     mov al, '.' ;; Character to find
 
-    call Hexagon.Kernel.Lib.String.encontrarCaractereNaString
+    call Hexagon.Libkern.String.encontrarCaractereNaString
 
     jnc .dot
 
-    call Hexagon.Kernel.Lib.String.tamanhoString
+    call Hexagon.Libkern.String.tamanhoString
 
     cmp eax, 8 ;; More than eight characters are not allowed in 8.3 format
     ja .invalidFilename
 
-    call Hexagon.Kernel.Lib.String.stringParaMaiusculo
+    call Hexagon.Libkern.String.stringParaMaiusculo
 
     mov ecx, 11
     sub ecx, eax
@@ -357,7 +357,7 @@ Hexagon.Kernel.FS.FAT16.filenameToFATName:
     cmp al, 1
     ja .invalidFilename ;; If the dot occurs more than once
 
-    call Hexagon.Kernel.Lib.String.stringParaMaiusculo ;; All FAT file names are capitalized
+    call Hexagon.Libkern.String.stringParaMaiusculo ;; All FAT file names are capitalized
 
 ;; Check position of '.'
 
@@ -407,7 +407,7 @@ Hexagon.Kernel.FS.FAT16.filenameToFATName:
     add esi, ebx ;; EBX for filename length
     add esi, 1   ;; 1 byte for the character '.'
 
-    call Hexagon.Kernel.Lib.String.tamanhoString ;; Check extension size
+    call Hexagon.Libkern.String.tamanhoString ;; Check extension size
 
     cmp eax, 1
     jb .invalidFilename ;; If the extension is less than 1 character in length
@@ -568,7 +568,7 @@ Hexagon.Kernel.FS.FAT16.fileExistsFAT16B:
     push edi
     push esi
 
-    call Hexagon.Kernel.Lib.String.tamanhoString
+    call Hexagon.Libkern.String.tamanhoString
 
     cmp eax, 12
     ja .failure ;; In case of invalid filename
@@ -888,7 +888,7 @@ Hexagon.Kernel.FS.FAT16.listFilesFAT16B:
 
 ;; Add filename entry to list
 
-    call Hexagon.Kernel.Lib.String.tamanhoString ;; Find entry size
+    call Hexagon.Libkern.String.tamanhoString ;; Find entry size
 
     push esi
 
@@ -1418,7 +1418,7 @@ Hexagon.Kernel.FS.FAT16.createEmptyFileFAT16B:
 
     jnc .failure
 
-    call Hexagon.Kernel.Lib.String.tamanhoString
+    call Hexagon.Libkern.String.tamanhoString
 
     cmp eax, 12
     ja .failure ;; In case of invalid filename

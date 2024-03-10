@@ -115,8 +115,8 @@ Hexagon.Kern.Syscall.hexagonServices:
 ;; Hexagon services
 
     dd Hexagon.Kern.Uname.uname                                        ;; 23
-    dd Hexagon.Kernel.Lib.Num.obterAleatorio                           ;; 24
-    dd Hexagon.Kernel.Lib.Num.alimentarAleatorios                      ;; 25
+    dd Hexagon.Libkern.Num.obterAleatorio                           ;; 24
+    dd Hexagon.Libkern.Num.alimentarAleatorios                      ;; 25
     dd Hexagon.Arch.i386.Timer.Timer.sleep                             ;; 26
     dd Hexagon.Kern.Syscall.installInterruption                        ;; 27
 
@@ -132,8 +132,8 @@ Hexagon.Kern.Syscall.hexagonServices:
     dd Hexagon.Kernel.Dev.Gen.Console.Console.clearRow                 ;; 32
     dd Hexagon.Kernel.Dev.Gen.Console.Console.scrollConsole            ;; 33
     dd Hexagon.Kernel.Dev.Gen.Console.Console.positionCursor           ;; 34
-    dd Hexagon.Kernel.Lib.Graficos.colocarPixel                        ;; 35
-    dd Hexagon.Kernel.Lib.Graficos.desenharBlocoSyscall                ;; 36
+    dd Hexagon.Libkern.Graficos.colocarPixel                        ;; 35
+    dd Hexagon.Libkern.Graficos.desenharBlocoSyscall                ;; 36
     dd Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter           ;; 37
     dd Hexagon.Kernel.Dev.Gen.Console.Console.setConsoleColor          ;; 38
     dd Hexagon.Kernel.Dev.Gen.Console.Console.getConsoleColor          ;; 39
@@ -159,17 +159,17 @@ Hexagon.Kern.Syscall.hexagonServices:
 
 ;; Hexagon data handling services
 
-    dd Hexagon.Kernel.Lib.String.compararPalavrasNaString              ;; 53
-    dd Hexagon.Kernel.Lib.String.removerCaractereNaString              ;; 54
-    dd Hexagon.Kernel.Lib.String.inserirCaractereNaString              ;; 55
-    dd Hexagon.Kernel.Lib.String.tamanhoString                         ;; 56
-    dd Hexagon.Kernel.Lib.String.compararString                        ;; 57
-    dd Hexagon.Kernel.Lib.String.stringParaMaiusculo                   ;; 58
-    dd Hexagon.Kernel.Lib.String.stringParaMinusculo                   ;; 59
-    dd Hexagon.Kernel.Lib.String.cortarString                          ;; 60
-    dd Hexagon.Kernel.Lib.String.encontrarCaractereNaString            ;; 61
-    dd Hexagon.Kernel.Lib.String.stringParaInteiro                     ;; 62
-    dd Hexagon.Kernel.Lib.String.paraString                            ;; 63
+    dd Hexagon.Libkern.String.compararPalavrasNaString              ;; 53
+    dd Hexagon.Libkern.String.removerCaractereNaString              ;; 54
+    dd Hexagon.Libkern.String.inserirCaractereNaString              ;; 55
+    dd Hexagon.Libkern.String.tamanhoString                         ;; 56
+    dd Hexagon.Libkern.String.compararString                        ;; 57
+    dd Hexagon.Libkern.String.stringParaMaiusculo                   ;; 58
+    dd Hexagon.Libkern.String.stringParaMinusculo                   ;; 59
+    dd Hexagon.Libkern.String.cortarString                          ;; 60
+    dd Hexagon.Libkern.String.encontrarCaractereNaString            ;; 61
+    dd Hexagon.Libkern.String.stringParaInteiro                     ;; 62
+    dd Hexagon.Libkern.String.paraString                            ;; 63
 
 ;; Hexagon sound output services
 
@@ -182,5 +182,5 @@ Hexagon.Kern.Syscall.hexagonServices:
 
 ;; Hexagon real-time clock service
 
-    dd Hexagon.Kernel.Lib.Relogio.retornarData                         ;; 67
-    dd Hexagon.Kernel.Lib.Relogio.retornarHora                         ;; 68
+    dd Hexagon.Libkern.Clock.getDate                         ;; 67
+    dd Hexagon.Libkern.Clock.getTime                         ;; 68

@@ -176,13 +176,13 @@ struc Hexagon.Gerenciamento.Imagem.HAPP
 
 {
 
-.errorCode:             dd 0 ;; Código de erro emitido pelo último processo
+.errorCode:              dd 0 ;; Código de erro emitido pelo último processo
 .arquiteturaImagem:      db 0 ;; Arquitetura da imagem
-.incompatibleImage:     db 0 ;; Imagem incompatível?
+.incompatibleImage:      db 0 ;; Imagem incompatível?
 .versaoMinima:           db 0 ;; Versão mínima do Hexagon necessária a execução (dependência)
 .subVersaoMinima:        db 0 ;; Subversão (ou revisão) do Hexagon necessária a execução (dependência)
-.entryHAPP:            dd 0 ;; Endereço de entrada do código da imagem
-.imageType:             db 0 ;; Tipo executável da imagem
+.entryHAPP:              dd 0 ;; Endereço de entrada do código da imagem
+.imageType:              db 0 ;; Tipo executável da imagem
 .saidaHAPP:              dd 0 ;; Código de saída do código da imagem (futuro)
 .reservado1:             db 0 ;; Reservado (Byte)
 .reservado2:             db 0 ;; Reservado (Byte)
@@ -220,7 +220,7 @@ end virtual
 ;; Em caso negativo, a imagem será marcada como inválida e não será executada, retornando
 ;; ao processo que solicitou o carregamento o código de erro 3.
 
-Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP:
+Hexagon.Libkern.HAPP.verificarImagemHAPP:
 
 ;; Vamos salvar o nome do arquivo para a função que chamou
 

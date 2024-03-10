@@ -73,7 +73,7 @@
 
 use32
 
-Hexagon.Kernel.Lib.Relogio.retornarData:
+Hexagon.Libkern.Clock.getDate:
 
     movzx eax, [Hexagon.Arch.i386.CMOS.day]
     movzx ebx, [Hexagon.Arch.i386.CMOS.month]
@@ -85,7 +85,7 @@ Hexagon.Kernel.Lib.Relogio.retornarData:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Lib.Relogio.retornarHora:
+Hexagon.Libkern.Clock.getTime:
 
     movzx eax, [Hexagon.Arch.i386.CMOS.hour]
     movzx ebx, [Hexagon.Arch.i386.CMOS.minute]

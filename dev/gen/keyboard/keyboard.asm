@@ -269,7 +269,7 @@ Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.getString:
 
     mov edx, 0
 
-    call Hexagon.Kernel.Lib.String.inserirCaractereNaString
+    call Hexagon.Libkern.String.inserirCaractereNaString
 
     pop edx
 
@@ -294,7 +294,7 @@ Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.getString:
 
     mov eax, 0
 
-    call Hexagon.Kernel.Lib.String.removerCaractereNaString
+    call Hexagon.Libkern.String.removerCaractereNaString
 
     pop ecx
 
@@ -315,7 +315,7 @@ Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.getString:
 
     mov eax, 0
 
-    call Hexagon.Kernel.Lib.String.removerCaractereNaString
+    call Hexagon.Libkern.String.removerCaractereNaString
 
     pop ecx
 

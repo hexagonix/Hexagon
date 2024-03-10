@@ -73,21 +73,21 @@
 
 use32
 
-Hexagon.Fontes:
+Hexagon.Libkern.Fonts:
 
-.largura = 8
-.altura  = 16
+.width = 8
+.height  = 16
 
-.espacoFonte: ;; Área protegida para o carregamento de novas fontes
+.fontBuffer: ;; Area reserved for loading a new font
 
 ;;************************************************************************************
 
-;; Agora vamos incluir aqui uma fonte padrão, em formato de fonte Hexagonix
+;; Now let's include a standard font here, in Hexagonix font format
 
 include "../../Fonts/aurora.asm"
 
 ;;************************************************************************************
 
-.reservado: ;; Espaço reservado para fontes com mais caracteres
+.reserved: ;; Space reserved for fonts with more characters
 
 times 512 db 0

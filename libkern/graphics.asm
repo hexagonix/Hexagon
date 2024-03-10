@@ -86,7 +86,7 @@ use32
 ;;
 ;; ESI - Endereço do pixel
 
-Hexagon.Kernel.Lib.Graficos.calcularDeslocamentoPixel:
+Hexagon.Libkern.Graficos.calcularDeslocamentoPixel:
 
     push eax ;; X
 
@@ -118,17 +118,17 @@ Hexagon.Kernel.Lib.Graficos.calcularDeslocamentoPixel:
 ;; DH - Linha
 ;; AL - Caractere
 
-Hexagon.Kernel.Lib.Graficos.colocarCaractereBitmap:
+Hexagon.Libkern.Graficos.colocarCaractereBitmap:
 
     push edx
 
     and eax, 0xFF
     sub eax, 32
-    mov ebx, Hexagon.Fontes.altura
+    mov ebx, Hexagon.Libkern.Fonts.height
 
     mul ebx
 
-    mov edi, Hexagon.Fontes
+    mov edi, Hexagon.Libkern.Fonts
     add edi, 04h
     add edi, eax
 
@@ -136,7 +136,7 @@ Hexagon.Kernel.Lib.Graficos.colocarCaractereBitmap:
 
     push edx
 
-    mov eax, Hexagon.Fontes.largura
+    mov eax, Hexagon.Libkern.Fonts.width
     movzx ebx, dl
 
     mul ebx
@@ -145,14 +145,14 @@ Hexagon.Kernel.Lib.Graficos.colocarCaractereBitmap:
 
     pop edx
 
-    mov eax, Hexagon.Fontes.altura
+    mov eax, Hexagon.Libkern.Fonts.height
     movzx ebx, dh
 
     mul ebx
 
     mov word[.y], ax
 
-    mov eax, Hexagon.Fontes.largura
+    mov eax, Hexagon.Libkern.Fonts.width
     mov ebx, dword[Hexagon.Console.bytesPerPixel]
 
     mul ebx
@@ -165,9 +165,9 @@ Hexagon.Kernel.Lib.Graficos.colocarCaractereBitmap:
 
     movzx ebx, word[.y]
 
-    call Hexagon.Kernel.Lib.Graficos.calcularDeslocamentoPixel
+    call Hexagon.Libkern.Graficos.calcularDeslocamentoPixel
 
-    mov ecx, Hexagon.Fontes.altura
+    mov ecx, Hexagon.Libkern.Fonts.height
 
 .colocarColuna:
 
@@ -177,7 +177,7 @@ Hexagon.Kernel.Lib.Graficos.colocarCaractereBitmap:
 
     push ecx
 
-    mov ecx, Hexagon.Fontes.largura
+    mov ecx, Hexagon.Libkern.Fonts.width
 
 .colocarLinha:
 
@@ -231,7 +231,7 @@ Hexagon.Kernel.Lib.Graficos.colocarCaractereBitmap:
 ;; EBX - Y
 ;; EDX - Cor em hexadecimal
 
-Hexagon.Kernel.Lib.Graficos.colocarPixel:
+Hexagon.Libkern.Graficos.colocarPixel:
 
     push eax
     push edx
@@ -240,7 +240,7 @@ Hexagon.Kernel.Lib.Graficos.colocarPixel:
 
     push edx
 
-    call Hexagon.Kernel.Lib.Graficos.calcularDeslocamentoPixel ;; Obter deslocamento do pixel
+    call Hexagon.Libkern.Graficos.calcularDeslocamentoPixel ;; Obter deslocamento do pixel
 
     pop edx
 
@@ -259,7 +259,7 @@ Hexagon.Kernel.Lib.Graficos.colocarPixel:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Lib.Graficos.desenharBlocoSyscall:
+Hexagon.Libkern.Graficos.desenharBlocoSyscall:
 
     sub esi, dword[Hexagon.Processes.PCB.processBaseMemory]
 
@@ -273,7 +273,7 @@ Hexagon.Kernel.Lib.Graficos.desenharBlocoSyscall:
 
     add edi, 500h
 
-    call Hexagon.Kernel.Lib.Graficos.desenharBloco
+    call Hexagon.Libkern.Graficos.desenharBloco
 
     add esi, dword[Hexagon.Processes.PCB.processBaseMemory]
 
@@ -301,7 +301,7 @@ Hexagon.Kernel.Lib.Graficos.desenharBlocoSyscall:
 ;; EDI - Largura
 ;; EDX - Cor em hexadecimal
 
-Hexagon.Kernel.Lib.Graficos.desenharBloco:
+Hexagon.Libkern.Graficos.desenharBloco:
 
     push eax
     push ebx
@@ -320,7 +320,7 @@ Hexagon.Kernel.Lib.Graficos.desenharBloco:
 
 .x:
 
-    call Hexagon.Kernel.Lib.Graficos.colocarPixel
+    call Hexagon.Libkern.Graficos.colocarPixel
 
     inc eax
 

@@ -89,7 +89,7 @@ Hexagon.Teclado.Unix.Codigo:
 ;;
 ;; EAX - Tamanho da String
 
-Hexagon.Kernel.Lib.String.tamanhoString:
+Hexagon.Libkern.String.tamanhoString:
 
     push ecx
     push esi
@@ -135,7 +135,7 @@ Hexagon.Kernel.Lib.String.tamanhoString:
 ;;
 ;; Carry definido se as strings são iguais
 
-Hexagon.Kernel.Lib.String.compararPalavrasNaString:
+Hexagon.Libkern.String.compararPalavrasNaString:
 
     push eax
     push esi
@@ -194,7 +194,7 @@ Hexagon.Kernel.Lib.String.compararPalavrasNaString:
 ;;
 ;; Carry definido se as strings forem iguais
 
-Hexagon.Kernel.Lib.String.compararString:
+Hexagon.Libkern.String.compararString:
 
     push eax
     push esi
@@ -242,7 +242,7 @@ Hexagon.Kernel.Lib.String.compararString:
 ;;
 ;; ESI - String
 
-Hexagon.Kernel.Lib.String.stringParaMaiusculo:
+Hexagon.Libkern.String.stringParaMaiusculo:
 
     push eax
     push ecx
@@ -253,7 +253,7 @@ Hexagon.Kernel.Lib.String.stringParaMaiusculo:
     cmp al, 0
     je .fim
 
-    call Hexagon.Kernel.Lib.String.tamanhoString
+    call Hexagon.Libkern.String.tamanhoString
 
     mov ecx, eax
 
@@ -308,7 +308,7 @@ Hexagon.Kernel.Lib.String.stringParaMaiusculo:
 ;;
 ;; ESI - String
 
-Hexagon.Kernel.Lib.String.stringParaMinusculo:
+Hexagon.Libkern.String.stringParaMinusculo:
 
     push eax
     push ecx
@@ -319,7 +319,7 @@ Hexagon.Kernel.Lib.String.stringParaMinusculo:
     cmp al, 0
     je .fim
 
-    call Hexagon.Kernel.Lib.String.tamanhoString
+    call Hexagon.Libkern.String.tamanhoString
 
     mov ecx, eax
 
@@ -374,7 +374,7 @@ Hexagon.Kernel.Lib.String.stringParaMinusculo:
 ;;
 ;; ESI - String
 
-Hexagon.Kernel.Lib.String.cortarString:
+Hexagon.Libkern.String.cortarString:
 
     push eax
     push ebx
@@ -392,7 +392,7 @@ Hexagon.Kernel.Lib.String.cortarString:
     cmp byte[esi], 0 ;; Se string vazia, sair
     je .fim
 
-    call Hexagon.Kernel.Lib.String.tamanhoString ;; Obter tamanho da string SI em EAX
+    call Hexagon.Libkern.String.tamanhoString ;; Obter tamanho da string SI em EAX
 
     mov ecx, eax ;; Colocar isso em ECX para usar em loop
 
@@ -490,7 +490,7 @@ Hexagon.Kernel.Lib.String.cortarString:
 ;; EAX - Inteiro
 ;; CF definido em caso de número incorreto
 
-Hexagon.Kernel.Lib.String.stringParaInteiro:
+Hexagon.Libkern.String.stringParaInteiro:
 
     push ebx
     push ecx
@@ -501,7 +501,7 @@ Hexagon.Kernel.Lib.String.stringParaInteiro:
 
     mov al, '-'
 
-    call Hexagon.Kernel.Lib.String.encontrarCaractereNaString
+    call Hexagon.Libkern.String.encontrarCaractereNaString
 
     cmp eax, 1
     ja .negativo
@@ -520,7 +520,7 @@ Hexagon.Kernel.Lib.String.stringParaInteiro:
 
 .proximo:
 
-    call Hexagon.Kernel.Lib.String.tamanhoString ;; Encontrar tamanho da string
+    call Hexagon.Libkern.String.tamanhoString ;; Encontrar tamanho da string
 
     mov ecx, eax ;; Usar a contagem no loop
     add esi, eax
@@ -608,7 +608,7 @@ Hexagon.Kernel.Lib.String.stringParaInteiro:
 ;; CF definido se caractere não encontrado
 ;; EAX - Número de ocorrências desse caractere
 
-Hexagon.Kernel.Lib.String.encontrarCaractereNaString:
+Hexagon.Libkern.String.encontrarCaractereNaString:
 
     push ebx
     push ecx
@@ -665,14 +665,14 @@ Hexagon.Kernel.Lib.String.encontrarCaractereNaString:
 ;; ESI - String
 ;; EAX - Posição do caractere
 
-Hexagon.Kernel.Lib.String.removerCaractereNaString:
+Hexagon.Libkern.String.removerCaractereNaString:
 
     push esi
     push edx
 
     mov edx, eax
 
-    call Hexagon.Kernel.Lib.String.tamanhoString
+    call Hexagon.Libkern.String.tamanhoString
 
     cmp edx, eax ;; EAX tem o tamanho da string
     ja .fim
@@ -716,7 +716,7 @@ Hexagon.Kernel.Lib.String.removerCaractereNaString:
 ;;
 ;; O buffer da string tem que ter taamnho suficiente!
 
-Hexagon.Kernel.Lib.String.inserirCaractereNaString:
+Hexagon.Libkern.String.inserirCaractereNaString:
 
     push eax
     push ebx
@@ -729,7 +729,7 @@ Hexagon.Kernel.Lib.String.inserirCaractereNaString:
 
 ;; Criar espaço para incluir o caractere
 
-    call Hexagon.Kernel.Lib.String.tamanhoString
+    call Hexagon.Libkern.String.tamanhoString
 
     push eax ;; EAX tem o tamanho da string
 
@@ -787,7 +787,7 @@ Hexagon.Kernel.Lib.String.inserirCaractereNaString:
 ;;
 ;; ESI - Ponteiro com o conteúdo
 
-Hexagon.Kernel.Lib.String.paraString:
+Hexagon.Libkern.String.paraString:
 
     push es
 
@@ -883,7 +883,7 @@ Hexagon.Kernel.Lib.String.paraString:
 ;;
 ;; AX - Valor em ASCII
 
-Hexagon.Kernel.Lib.String.BCDParaASCII:
+Hexagon.Libkern.String.BCDParaASCII:
 
     push ecx
 

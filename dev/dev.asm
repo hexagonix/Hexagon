@@ -573,75 +573,75 @@ Hexagon.Kernel.Dev.Dev.open:
 Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 
     mov edi, Hexagon.Dev.Devices.hd0
-    call Hexagon.Kernel.Lib.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compararPalavrasNaString
     jc .hd0
 
     mov edi, Hexagon.Dev.Devices.hd1
-    call Hexagon.Kernel.Lib.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compararPalavrasNaString
     jc .hd1
 
     mov edi, Hexagon.Dev.Devices.hd2
-    call Hexagon.Kernel.Lib.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compararPalavrasNaString
     jc .hd2
 
     mov edi, Hexagon.Dev.Devices.hd3
-    call Hexagon.Kernel.Lib.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compararPalavrasNaString
     jc .hd3
 
     mov edi, Hexagon.Dev.Devices.com1
-    call Hexagon.Kernel.Lib.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compararPalavrasNaString
     jc .com1
 
     mov edi, Hexagon.Dev.Devices.com2
-    call Hexagon.Kernel.Lib.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compararPalavrasNaString
     jc .com2
 
     mov edi, Hexagon.Dev.Devices.com3
-    call Hexagon.Kernel.Lib.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compararPalavrasNaString
     jc .com3
 
     mov edi, Hexagon.Dev.Devices.com4
-    call Hexagon.Kernel.Lib.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compararPalavrasNaString
     jc .com4
 
     mov edi, Hexagon.Dev.Devices.lpt0
-    call Hexagon.Kernel.Lib.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compararPalavrasNaString
     jc .lpt0
 
     mov edi, Hexagon.Dev.Devices.lpt1
-    call Hexagon.Kernel.Lib.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compararPalavrasNaString
     jc .lpt1
 
     mov edi, Hexagon.Dev.Devices.lpt2
-    call Hexagon.Kernel.Lib.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compararPalavrasNaString
     jc .lpt2
 
     mov edi, Hexagon.Dev.Devices.tty0
-    call Hexagon.Kernel.Lib.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compararPalavrasNaString
     jc .tty0
 
     mov edi, Hexagon.Dev.Devices.tty1
-    call Hexagon.Kernel.Lib.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compararPalavrasNaString
     jc .tty1
 
     mov edi, Hexagon.Dev.Devices.tty2
-    call Hexagon.Kernel.Lib.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compararPalavrasNaString
     jc .tty2
 
     mov edi,Hexagon.Dev.Devices.au0
-    call Hexagon.Kernel.Lib.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compararPalavrasNaString
     jc .au0
 
     mov edi, Hexagon.Dev.Devices.mouse0
-    call Hexagon.Kernel.Lib.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compararPalavrasNaString
     jc .mouse0
 
     mov edi, Hexagon.Dev.Devices.kbd0
-    call Hexagon.Kernel.Lib.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compararPalavrasNaString
     jc .kbd0
 
     mov edi, Hexagon.Dev.Devices.proc0
-    call Hexagon.Kernel.Lib.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compararPalavrasNaString
     jc .proc0
 
 ;; This name may refer to a common file!

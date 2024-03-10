@@ -120,7 +120,7 @@ Hexagon.Kern.Users.setUser:
     push ds
     pop es
 
-    call Hexagon.Kernel.Lib.String.tamanhoString
+    call Hexagon.Libkern.String.tamanhoString
 
     cmp eax, 32
     jl .validName

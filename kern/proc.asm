@@ -382,7 +382,7 @@ Hexagon.Kern.Proc.exec:
 
     mov esi, edi
 
-    call Hexagon.Kernel.Lib.String.tamanhoString
+    call Hexagon.Libkern.String.tamanhoString
 
     mov ecx, eax
 
@@ -421,7 +421,7 @@ Hexagon.Kern.Proc.exec:
 
     jc .missingImage
 
-    call Hexagon.Kernel.Lib.HAPP.verificarImagemHAPP
+    call Hexagon.Libkern.HAPP.verificarImagemHAPP
 
     cmp byte[Hexagon.Imagem.Executavel.HAPP.incompatibleImage], 01h
     je .incompatibleImage
@@ -815,7 +815,7 @@ Hexagon.Kern.Proc.linkProcessStack:
 
     mov esi, [Hexagon.Processes.PCB.processName]
 
-    call Hexagon.Kernel.Lib.String.tamanhoString
+    call Hexagon.Libkern.String.tamanhoString
 
     mov ecx, eax
 
@@ -946,7 +946,7 @@ Hexagon.Kern.Proc.getProcessTable:
 
     mov esi, Hexagon.Heap.Temp
 
-    call Hexagon.Kernel.Lib.String.cortarString
+    call Hexagon.Libkern.String.cortarString
 
     mov eax, dword[Hexagon.Processes.PCB.processCount]
 
