@@ -71,7 +71,7 @@
 ;;
 ;;************************************************************************************
 
-Hexagon.Init.startUserMode:
+Hexagon.Kern.Init.startUserMode:
 
     logHexagon Hexagon.Verbose.userMode, Hexagon.Dmesg.Priorities.p5
 
@@ -97,7 +97,7 @@ Hexagon.Init.startUserMode:
 
     clc
 
-    call Hexagon.Kernel.Kernel.Proc.exec ;; Request init loading
+    call Hexagon.Kern.Proc.exec ;; Request init loading
 
     logHexagon Hexagon.Verbose.withoutInit, Hexagon.Dmesg.Priorities.p5
 
@@ -114,7 +114,7 @@ Hexagon.Init.startUserMode:
 
     clc
 
-    call Hexagon.Kernel.Kernel.Proc.exec ;; Request loading default shell
+    call Hexagon.Kern.Proc.exec ;; Request loading default shell
 
     jnc .endShell
 
@@ -124,7 +124,7 @@ Hexagon.Init.startUserMode:
 
     mov eax, 1
 
-    call Hexagon.Kernel.Kernel.Panic.panic
+    call Hexagon.Kern.Panic.panic
 
     jmp .end
 
@@ -134,7 +134,7 @@ Hexagon.Init.startUserMode:
 
     mov eax, 1
 
-    call Hexagon.Kernel.Kernel.Panic.panic ;; Request error screen
+    call Hexagon.Kern.Panic.panic ;; Request error screen
 
 .end:
 

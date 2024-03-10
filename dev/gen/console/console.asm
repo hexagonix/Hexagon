@@ -225,12 +225,12 @@ Hexagon.Kernel.Dev.Gen.Console.Console.setTextMode:
     mov ah, 0 ;; Function to set video mode
     mov al, 3 ;; Video in text mode
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int10h ;; Call real mode BIOS interrupt
+    call Hexagon.Arch.i386.BIOS.BIOS.int10h ;; Call real mode BIOS interrupt
 
     mov ax, 1003h
     mov bx, 0
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int10h ;; Turn off blinking
+    call Hexagon.Arch.i386.BIOS.BIOS.int10h ;; Turn off blinking
 
     mov byte[Hexagon.Console.graphicMode], 0
 
@@ -261,7 +261,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.setGraphicMode:
     mov ax, 0x4F01 ;; Function to obtain video information
     mov di, Hexagon.Heap.VBE + 500h ;; Address where data is stored
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int10h ;; Call BIOS interrupt in real mode
+    call Hexagon.Arch.i386.BIOS.BIOS.int10h ;; Call BIOS interrupt in real mode
 
     mov esi, dword[Hexagon.Heap.VBE+40] ;; Pointer to the base of the video memory
     mov dword[Hexagon.Console.Memory.addressLFB], esi
@@ -271,7 +271,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.setGraphicMode:
     mov bx, cx
     mov ax, 0x4F02 ;; Function to set video mode
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int10h ;; Call BIOS interrupt in real mode
+    call Hexagon.Arch.i386.BIOS.BIOS.int10h ;; Call BIOS interrupt in real mode
 
     mov ax, word[Hexagon.Heap.VBE+16]
     mov word[Hexagon.Console.bytesPerRow], ax

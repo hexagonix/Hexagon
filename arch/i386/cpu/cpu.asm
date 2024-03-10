@@ -91,7 +91,7 @@ struc Hexagon.Arch.i386.Regs
 
 ;; Switches the processor to 32-bit protected mode
 
-Hexagon.Kernel.Arch.i386.CPU.CPU.goToProtectedMode32:
+Hexagon.Arch.i386.CPU.CPU.goToProtectedMode32:
 
 use16
 
@@ -124,19 +124,19 @@ use32
 
 ;; Switches the processor back to real mode
 
-Hexagon.Kernel.Arch.i386.CPU.CPU.goToRealMode:
+Hexagon.Arch.i386.CPU.CPU.goToRealMode:
 
     cli ;; Clear interrupts
 
     pop edx ;; Save return location in EDX
 
-    jmp 20h:Hexagon.Kernel.Arch.i386.CPU.CPU.protectedMode16 ;; Load CS with 20h selector
+    jmp 20h:Hexagon.Arch.i386.CPU.CPU.protectedMode16 ;; Load CS with 20h selector
 
 ;; To go to 16-bit real mode, we have to go through 16-bit protected mode
 
 use16
 
-Hexagon.Kernel.Arch.i386.CPU.CPU.protectedMode16:
+Hexagon.Arch.i386.CPU.CPU.protectedMode16:
 
     mov ax, 28h ;; 28h is the 16-bit protected mode data selector
     mov ss, ax
@@ -146,9 +146,9 @@ Hexagon.Kernel.Arch.i386.CPU.CPU.protectedMode16:
     and eax, 0xFFFFFFFE ;; Clear protected mode enable bit in cr0
     mov cr0, eax ;; Disable 32-bit mode
 
-    jmp 50h:Hexagon.Kernel.Arch.i386.CPU.CPU.realMode ;; Load CS and IP pair (segment:instruction)
+    jmp 50h:Hexagon.Arch.i386.CPU.CPU.realMode ;; Load CS and IP pair (segment:instruction)
 
-Hexagon.Kernel.Arch.i386.CPU.CPU.realMode:
+Hexagon.Arch.i386.CPU.CPU.realMode:
 
 ;; Load segment registers with 16-bit values
 
@@ -178,7 +178,7 @@ Hexagon.Kernel.Arch.i386.CPU.CPU.realMode:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Arch.i386.CPU.CPU.enableA20Gate:
+Hexagon.Arch.i386.CPU.CPU.enableA20Gate:
 
 match =A20_NOT_SAFE, A20
 {
@@ -216,7 +216,7 @@ match =A20_NOT_SAFE, A20
 
 use32
 
-Hexagon.Kernel.Arch.i386.CPU.CPU.setupProcessor:
+Hexagon.Arch.i386.CPU.CPU.setupProcessor:
 
 ;; Enable SSE
 
@@ -246,7 +246,7 @@ Hexagon.Kernel.Arch.i386.CPU.CPU.setupProcessor:
 ;; a buffer that will be used at various points by kernel functions or copied to the
 ;;  user environment, to be used by processes
 
-Hexagon.Kernel.Arch.i386.CPU.CPU.identifyProcessor:
+Hexagon.Arch.i386.CPU.CPU.identifyProcessor:
 
     mov esi, Hexagon.Dev.deviceCodes.proc0
 
@@ -409,7 +409,7 @@ dd GDT + 500h ;; GDT offset
 
 align 32
 
-IDT: times 256 dw Hexagon.Int.nullHandler, 0x0008, 0x8e00, 0
+IDT: times 256 dw Hexagon.Kern.Services.nullHandler, 0x0008, 0x8e00, 0
 
 ;; nullHandler: offset (0:15)
 ;; 0x0008:  0x08 is a selector

@@ -73,7 +73,7 @@
 
 use32
 
-Hexagon.Int:
+Hexagon.Kern.Services:
 
 .interruptionHexagon  = 80h ;; Hexagon services
 .interruptionTimer    = 08h ;; Interruption reserved for timer
@@ -84,33 +84,33 @@ Hexagon.Int:
 
 ;; Instala as rotinas de interrupção do Hexagon (ISR - Interrupt Service Routine)
 
-Hexagon.Int.installInterruptions:
+Hexagon.Kern.Services.installInterruptions:
 
 ;; Install IRQ handlers
 
     mov dword[kernelExecute], kernelExecutePermission
 
-    mov esi, Hexagon.Int.timerHandler ;; IRQ 0
-    mov eax, Hexagon.Int.interruptionTimer    ;; Interruption number
+    mov esi, Hexagon.Kern.Services.timerHandler ;; IRQ 0
+    mov eax, Hexagon.Kern.Services.interruptionTimer    ;; Interruption number
 
-    call Hexagon.Int.installISR
+    call Hexagon.Kern.Services.installISR
 
-    mov esi, Hexagon.Int.keyboardHandler ;; IRQ 1
-    mov eax, Hexagon.Int.interruptionKeyboard ;; Interruption number
+    mov esi, Hexagon.Kern.Services.keyboardHandler ;; IRQ 1
+    mov eax, Hexagon.Kern.Services.interruptionKeyboard ;; Interruption number
 
-    call Hexagon.Int.installISR
+    call Hexagon.Kern.Services.installISR
 
-    mov esi, Hexagon.Int.PS2MouseHandler ;; IRQ 12
-    mov eax, Hexagon.Int.interruptionMouse    ;; Interruption number
+    mov esi, Hexagon.Kern.Services.PS2MouseHandler ;; IRQ 12
+    mov eax, Hexagon.Kern.Services.interruptionMouse ;; Interruption number
 
-    call Hexagon.Int.installISR
+    call Hexagon.Kern.Services.installISR
 
 ;; Install the Hexagon services handler
 
-    mov esi, Hexagon.Syscall.Syscall.hexagonHandler ;; Hexagon services
-    mov eax, Hexagon.Int.interruptionHexagon ;; Interruption number
+    mov esi, Hexagon.Kern.Syscall.hexagonHandler ;; Hexagon services
+    mov eax, Hexagon.Kern.Services.interruptionHexagon ;; Interruption number
 
-    call Hexagon.Int.installISR
+    call Hexagon.Kern.Services.installISR
 
     sti ;; Enable interrupts
 
@@ -126,7 +126,7 @@ Hexagon.Int.installInterruptions:
 ;; This counter can be used to time input and output operations, as well as
 ;; cause delays in various system and user processes
 
-Hexagon.Int.timerHandler:
+Hexagon.Kern.Services.timerHandler:
 
     push eax
 
@@ -137,7 +137,7 @@ Hexagon.Int.timerHandler:
 
 ;; Update real-time clock every interval
 
-    call Hexagon.Kernel.Arch.i386.CMOS.CMOS.updateCMOSData
+    call Hexagon.Arch.i386.CMOS.CMOS.updateCMOSData
 
     inc dword[.timerCounter] ;; Increment the counter
     inc dword[.relativeCounter]
@@ -160,7 +160,7 @@ Hexagon.Int.timerHandler:
 
 ;; IRQ 1 - Keyboard interrupt
 
-Hexagon.Int.keyboardHandler:
+Hexagon.Kern.Services.keyboardHandler:
 
     push eax
     push ebx
@@ -237,7 +237,7 @@ Hexagon.Int.keyboardHandler:
 
 .killCurrentProcess:
 
-    call Hexagon.Kernel.Kernel.Proc.kill
+    call Hexagon.Kern.Proc.kill
 
 ;;************************************************************************************
 
@@ -285,7 +285,7 @@ keyStatus: dd 0
 
 ;; IRQ 12 - PS/2 Mouse Handler
 
-Hexagon.Int.PS2MouseHandler:
+Hexagon.Kern.Services.PS2MouseHandler:
 
     pusha
 
@@ -330,9 +330,9 @@ Hexagon.Int.PS2MouseHandler:
 
 .end:
 
-    movzx eax, byte[Hexagon.Int.PS2MouseHandler.deltaX] ;; DeltaX changed to X
-    movzx ebx, byte[Hexagon.Int.PS2MouseHandler.deltaY] ;; DeltaY changed to Y
-    mov dl, byte[Hexagon.Int.PS2MouseHandler.data]
+    movzx eax, byte[Hexagon.Kern.Services.PS2MouseHandler.deltaX] ;; DeltaX changed to X
+    movzx ebx, byte[Hexagon.Kern.Services.PS2MouseHandler.deltaY] ;; DeltaY changed to Y
+    mov dl, byte[Hexagon.Kern.Services.PS2MouseHandler.data]
 
     bt dx, 4 ;; Check if the mouse has moved to the left
     jnc .movementToTheRight
@@ -425,7 +425,7 @@ align 32
 
 ;; Specialized handler for touchpads - IRQ 12
 
-Hexagon.Int.touchpadHandler:
+Hexagon.Kern.Services.touchpadHandler:
 
     push eax
     push edx
@@ -620,7 +620,7 @@ Hexagon.Int.touchpadHandler:
 
 ;; Handler for other interrupts, when they are not available
 
-Hexagon.Int.nullHandler:
+Hexagon.Kern.Services.nullHandler:
 
     push eax
 
@@ -641,7 +641,7 @@ Hexagon.Int.nullHandler:
 ;; EAX - Interrupt number
 ;; ESI - Interrupt routine
 
-Hexagon.Int.installISR:
+Hexagon.Kern.Services.installISR:
 
     push eax
     push ebp
@@ -655,16 +655,16 @@ Hexagon.Int.installISR:
 ;; If the request came from the user or application, check whether the values ​​passed could
 ;; overwrite the interrupts previously installed by Hexagon
 
-    cmp eax, Hexagon.Int.interruptionHexagon ;; Attempt to replace Hexagon call
+    cmp eax, Hexagon.Kern.Services.interruptionHexagon ;; Attempt to replace Hexagon call
     je .deny ;; Deny installation
 
-    cmp eax, Hexagon.Int.interruptionTimer ;; Attempt to change timer interrupt
+    cmp eax, Hexagon.Kern.Services.interruptionTimer ;; Attempt to change timer interrupt
     je .deny ;; Deny installation
 
-    cmp eax, Hexagon.Int.interruptionKeyboard ;; Attempting to change the keyboard interrupt
+    cmp eax, Hexagon.Kern.Services.interruptionKeyboard ;; Attempting to change the keyboard interrupt
     je .deny ;; Deny installation
 
-    cmp eax, Hexagon.Int.interruptionMouse ;; Attempt to change mouse interrupt
+    cmp eax, Hexagon.Kern.Services.interruptionMouse ;; Attempt to change mouse interrupt
     je .deny ;; Deny installation
 
 .install:

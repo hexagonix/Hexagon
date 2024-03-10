@@ -77,7 +77,7 @@ Hexagon.Arch.i386.BIOS Hexagon.Arch.i386.Regs
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Arch.i386.BIOS.BIOS.int10h:
+Hexagon.Arch.i386.BIOS.BIOS.int10h:
 
 use32
 
@@ -95,7 +95,7 @@ use32
     push eax
     push edx
 
-    call Hexagon.Kernel.Arch.i386.CPU.CPU.goToRealMode ;; Go to real mode to request BIOS services
+    call Hexagon.Arch.i386.CPU.CPU.goToRealMode ;; Go to real mode to request BIOS services
 
 use16
 
@@ -108,7 +108,7 @@ use16
 
     int 10h
 
-    call Hexagon.Kernel.Arch.i386.CPU.CPU.goToProtectedMode32 ;; Return to protected mode, to safety!
+    call Hexagon.Arch.i386.CPU.CPU.goToProtectedMode32 ;; Return to protected mode, to safety!
 
 use32
 
@@ -133,7 +133,7 @@ use32
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Arch.i386.BIOS.BIOS.int13h:
+Hexagon.Arch.i386.BIOS.BIOS.int13h:
 
 use32
 
@@ -151,7 +151,7 @@ use32
     push eax
     push edx
 
-    call Hexagon.Kernel.Arch.i386.CPU.CPU.goToRealMode
+    call Hexagon.Arch.i386.CPU.CPU.goToRealMode
 
 use16
 
@@ -171,7 +171,7 @@ use16
     mov word[Hexagon.Arch.i386.BIOS.registerFlags], ax ;; Save flags (for error checking)
     mov word[Hexagon.Arch.i386.BIOS.registerAX], ax
 
-    call Hexagon.Kernel.Arch.i386.CPU.CPU.goToProtectedMode32
+    call Hexagon.Arch.i386.CPU.CPU.goToProtectedMode32
 
 use32
 
@@ -208,7 +208,7 @@ use32
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h:
+Hexagon.Arch.i386.BIOS.BIOS.int15h:
 
 use32
 
@@ -226,7 +226,7 @@ use32
     push eax
     push edx
 
-    call Hexagon.Kernel.Arch.i386.CPU.CPU.goToRealMode
+    call Hexagon.Arch.i386.CPU.CPU.goToRealMode
 
 use16
 
@@ -239,7 +239,7 @@ use16
 
     int 15h
 
-    call Hexagon.Kernel.Arch.i386.CPU.CPU.goToProtectedMode32
+    call Hexagon.Arch.i386.CPU.CPU.goToProtectedMode32
 
 use32
 

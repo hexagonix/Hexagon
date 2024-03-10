@@ -97,12 +97,12 @@ db 10, 10, "The severity of the error was not provided or is unknown by the Hexa
 ;; EAX - Is the error fatal? (0 for no and 1 for yes)
 ;; ESI - Supplemental error message
 
-Hexagon.Kernel.Kernel.Panic.panic:
+Hexagon.Kern.Panic.panic:
 
     push esi
     push eax
 
-    call Hexagon.Kernel.Kernel.Panic.preparePanic
+    call Hexagon.Kern.Panic.preparePanic
 
     kprint Hexagon.Info.aboutHexagon
 
@@ -128,7 +128,7 @@ Hexagon.Kernel.Kernel.Panic.panic:
 
     mov ebx, Hexagon.Dmesg.Priorities.p4
 
-    call Hexagon.Kernel.Kernel.Dmesg.createMessage
+    call Hexagon.Kern.Dmesg.createMessage
 
     kprint Hexagon.Panic.rebootError
 
@@ -142,7 +142,7 @@ Hexagon.Kernel.Kernel.Panic.panic:
 
     logHexagon Hexagon.Panic.oopsHeader, Hexagon.Dmesg.Priorities.p4
 
-    call Hexagon.Kernel.Kernel.Dmesg.createMessage
+    call Hexagon.Kern.Dmesg.createMessage
 
     pop esi
 
@@ -150,7 +150,7 @@ Hexagon.Kernel.Kernel.Panic.panic:
 
     mov ebx, Hexagon.Dmesg.Priorities.p4
 
-    call Hexagon.Kernel.Kernel.Dmesg.createMessage
+    call Hexagon.Kern.Dmesg.createMessage
 
     kprint Hexagon.Panic.oopsError
 
@@ -169,7 +169,7 @@ Hexagon.Kernel.Kernel.Panic.panic:
 ;; Routine that prepares the default video output to display information in
 ;; case of a serious system error
 
-Hexagon.Kernel.Kernel.Panic.preparePanic:
+Hexagon.Kern.Panic.preparePanic:
 
     mov esi, Hexagon.Dev.Devices.tty1 ;; First, close tty1
 

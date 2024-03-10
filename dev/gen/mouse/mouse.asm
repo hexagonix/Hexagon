@@ -160,7 +160,7 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.setupMouse:
     in al, 60h
 
     mov ax, word[Hexagon.Console.Resolution.y]
-    mov word[Hexagon.Int.PS2MouseHandler.mouseY], ax
+    mov word[Hexagon.Kern.Services.PS2MouseHandler.mouseY], ax
 
     pop eax
 
@@ -197,7 +197,7 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.setMouse:
 
     mov [Hexagon.Kernel.Dev.Gen.Mouse.mouseX], eax
     mov [Hexagon.Kernel.Dev.Gen.Mouse.mouseY], ebx
-    mov byte[Hexagon.Int.PS2MouseHandler.data], 0
+    mov byte[Hexagon.Kern.Services.PS2MouseHandler.data], 0
 
     ret
 
@@ -303,10 +303,10 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.setupTouchpad:
 
     in al, 60h
 
-    mov esi, Hexagon.Int.touchpadHandler ;; IRQ 12
+    mov esi, Hexagon.Kern.Services.touchpadHandler ;; IRQ 12
     mov eax, 74h ;; Interruption number
 
-    call Hexagon.Int.installISR
+    call Hexagon.Kern.Services.installISR
 
     pop eax
 
@@ -326,13 +326,13 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.waitMouseEvent:
 
     sti
 
-    mov byte[Hexagon.Int.PS2MouseHandler.changed], 0
+    mov byte[Hexagon.Kern.Services.PS2MouseHandler.changed], 0
 
 .Wait:
 
 ;; Check if the mouse state has changed
 
-    cmp byte[Hexagon.Int.PS2MouseHandler.changed], 1
+    cmp byte[Hexagon.Kern.Services.PS2MouseHandler.changed], 1
 
     hlt
 
@@ -340,6 +340,6 @@ Hexagon.Kernel.Dev.Gen.Mouse.Mouse.waitMouseEvent:
 
     mov eax, [Hexagon.Kernel.Dev.Gen.Mouse.mouseX]
     mov ebx, [Hexagon.Kernel.Dev.Gen.Mouse.mouseY]
-    movzx edx, byte[Hexagon.Int.PS2MouseHandler.data]
+    movzx edx, byte[Hexagon.Kern.Services.PS2MouseHandler.data]
 
     ret

@@ -189,11 +189,11 @@ Hexagon.init:
 
 Hexagon.Autoconfig:
 
-    call Hexagon.Kernel.Arch.i386.CPU.CPU.identifyProcessor ;; Identifies the installed processor
+    call Hexagon.Arch.i386.CPU.CPU.identifyProcessor ;; Identifies the installed processor
 
-    call Hexagon.Kernel.Arch.i386.CPU.CPU.setupProcessor ;; Configures processor operation
+    call Hexagon.Arch.i386.CPU.CPU.setupProcessor ;; Configures processor operation
 
-    call Hexagon.Kernel.Arch.Gen.Mm.initMemory ;; Starts the Hexagon memory allocator
+    call Hexagon.Arch.Gen.Mm.initMemory ;; Starts the Hexagon memory allocator
 
     call Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.setupKeyboard ;; Start the Hexagon keyboard service
 
@@ -201,7 +201,7 @@ Hexagon.Autoconfig:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.setupConsole ;; Configures default video resolution and settings
 
-    call Hexagon.Kernel.Kernel.Dmesg.startLog ;; Start Hexagon component report
+    call Hexagon.Kern.Dmesg.startLog ;; Start Hexagon component report
 
 ;;************************************************************************************
 
@@ -217,9 +217,9 @@ Hexagon.Autoconfig:
 
     kprint Hexagon.Dmesg.hexagonIdentifier
 
-    call Hexagon.Kernel.Kernel.Dmesg.dateToLog
+    call Hexagon.Kern.Dmesg.dateToLog
 
-    call Hexagon.Kernel.Kernel.Dmesg.hourToLog
+    call Hexagon.Kern.Dmesg.hourToLog
 
     kprint Hexagon.Verbose.newLine
 
@@ -227,7 +227,7 @@ Hexagon.Autoconfig:
 
     kprint Hexagon.Verbose.totalMemory
 
-    call Hexagon.Kernel.Arch.Gen.Mm.memoryUse
+    call Hexagon.Arch.Gen.Mm.memoryUse
 
     mov eax, ecx
 
@@ -235,7 +235,7 @@ Hexagon.Autoconfig:
 
     kprint Hexagon.Verbose.megabytes
 
-    call Hexagon.Kernel.Arch.Gen.Mm.memoryUse
+    call Hexagon.Arch.Gen.Mm.memoryUse
 
     mov eax, ebx
 
@@ -251,9 +251,9 @@ Hexagon.Autoconfig:
 
     logHexagon Hexagon.Verbose.mouse, Hexagon.Dmesg.Priorities.p5
 
-    call Hexagon.Kernel.Arch.i386.Timer.Timer.setupTimer ;; Initializes the Hexagon timer service
+    call Hexagon.Arch.i386.Timer.Timer.setupTimer ;; Initializes the Hexagon timer service
 
-    call Hexagon.Kernel.Kernel.Proc.setupScheduler ;; Starts the Hexagon process scheduler
+    call Hexagon.Kern.Proc.setupScheduler ;; Starts the Hexagon process scheduler
 
     call Hexagon.Kernel.Dev.Gen.COM.Serial.setupCOM1 ;; Start first serial port for debugging
 
@@ -324,14 +324,14 @@ Hexagon.Autoconfig:
 
 ;;************************************************************************************
 
-    call Hexagon.Int.installInterruptions ;; Installs Hexagon interrupt handlers
+    call Hexagon.Kern.Services.installInterruptions ;; Installs Hexagon interrupt handlers
 
 ;; Firstly, the user must be prevented from killing processes with a special key,
 ;; preventing any relevant process, such as login, from being terminated prematurely
 
 ;; Prevents the user from killing processes with a special key
 
-    call Hexagon.Kernel.Kernel.Proc.lock
+    call Hexagon.Kern.Proc.lock
 
     logHexagon Hexagon.Verbose.locking, Hexagon.Dmesg.Priorities.p5
 
@@ -342,7 +342,7 @@ Hexagon.userMode:
 ;; Now, we must go to user mode, running the first process, init.
 ;; If init is not present on the volume, try running the default shell
 
-    call Hexagon.Init.startUserMode
+    call Hexagon.Kern.Init.startUserMode
 
 ;;************************************************************************************
 

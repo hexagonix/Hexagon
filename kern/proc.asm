@@ -171,7 +171,7 @@ end virtual
 
 ;; Unlock the process stack, allowing the user to terminate the process
 
-Hexagon.Kernel.Kernel.Proc.unlock:
+Hexagon.Kern.Proc.unlock:
 
     mov word[Hexagon.Processes.PCB.processLocked], 0h
 
@@ -181,7 +181,7 @@ Hexagon.Kernel.Kernel.Proc.unlock:
 
 ;; Lock the foreground process, preventing it from exiting the execution stack
 
-Hexagon.Kernel.Kernel.Proc.lock:
+Hexagon.Kern.Proc.lock:
 
     mov word[Hexagon.Processes.PCB.processLocked], 01h
 
@@ -189,7 +189,7 @@ Hexagon.Kernel.Kernel.Proc.lock:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Proc.setupScheduler:
+Hexagon.Kern.Proc.setupScheduler:
 
     logHexagon Hexagon.Verbose.heapKernel, Hexagon.Dmesg.Priorities.p5
 
@@ -240,7 +240,7 @@ Hexagon.Kernel.Kernel.Proc.setupScheduler:
 ;; Now a function to start PCBs
 ;; This function can be performed, but the use of the new PCBs is still under development
 
-    ;; call Hexagon.Kernel.Kernel.Proc.setupPCB
+    ;; call Hexagon.Kern.Proc.setupPCB
 
     ret
 
@@ -251,7 +251,7 @@ Hexagon.Kernel.Kernel.Proc.setupScheduler:
 ;; Now the memory space allocated to the processes will be saved in
 ;; the Hexagon process scheduler control structure
 
-Hexagon.Kernel.Kernel.Proc.configureProcessAllocation:
+Hexagon.Kern.Proc.configureProcessAllocation:
 
     mov dword[Hexagon.Processes.PCB.processBaseMemory], ebx
 
@@ -262,7 +262,7 @@ Hexagon.Kernel.Kernel.Proc.configureProcessAllocation:
 ;; Allows you to terminate a process currently running by the system, if such
 ;; termination is possible
 
-Hexagon.Kernel.Kernel.Proc.kill:
+Hexagon.Kern.Proc.kill:
 
 ;; End current running process
 
@@ -285,7 +285,7 @@ match =YES, VERBOSE
     mov esi, Hexagon.Verbose.Services.killProcess
     mov ebx, Hexagon.Dmesg.Priorities.p5
 
-    call Hexagon.Kernel.Kernel.Dmesg.createMessage
+    call Hexagon.Kern.Dmesg.createMessage
 
 }
 
@@ -321,7 +321,7 @@ match =YES, VERBOSE
 
     out 20h, al
 
-    call Hexagon.Kernel.Kernel.Proc.exit
+    call Hexagon.Kern.Proc.exit
 
     ret
 
@@ -344,7 +344,7 @@ match =YES, VERBOSE
 ;; CF - Set in case of error or file not found
 ;;      Cleared on success
 
-Hexagon.Kernel.Kernel.Proc.exec:
+Hexagon.Kern.Proc.exec:
 
     pusha
 
@@ -365,7 +365,7 @@ Hexagon.Kernel.Kernel.Proc.exec:
 
     pop eax
 
-    jmp Hexagon.Kernel.Kernel.Proc.maxNumberProcessesReached
+    jmp Hexagon.Kern.Proc.maxNumberProcessesReached
 
 .limitAvailable:
 
@@ -429,7 +429,7 @@ Hexagon.Kernel.Kernel.Proc.exec:
     cmp byte[Hexagon.Imagem.Executavel.HAPP.incompatibleImage], 02h
     je .missingImage
 
-    jmp Hexagon.Kernel.Kernel.Proc.addProcess
+    jmp Hexagon.Kern.Proc.addProcess
 
 .missingImage:
 
@@ -473,7 +473,7 @@ Hexagon.Kernel.Kernel.Proc.exec:
 ;;
 ;; EAX - Size of the image containing the executable code
 
-Hexagon.Kernel.Kernel.Proc.addProcess:
+Hexagon.Kern.Proc.addProcess:
 
 ;; Data passed through the stack will be restored
 
@@ -485,7 +485,7 @@ Hexagon.Kernel.Kernel.Proc.addProcess:
     inc ebx
     mov dword[Hexagon.Processes.PCB.imageSize+ebx*4], eax
 
-    call Hexagon.Kernel.Arch.Gen.Mm.confirmMemoryUsage
+    call Hexagon.Arch.Gen.Mm.confirmMemoryUsage
 
     pop ebx
 
@@ -519,9 +519,9 @@ Hexagon.Kernel.Kernel.Proc.addProcess:
 
     mov byte[Hexagon.Processes.PCB.returnCode], 00h ;; Remove the error flag
 
-    call Hexagon.Kernel.Kernel.Proc.linkProcessStack
+    call Hexagon.Kern.Proc.linkProcessStack
 
-    jmp Hexagon.Kernel.Kernel.Proc.executeProcess
+    jmp Hexagon.Kern.Proc.executeProcess
 
 .loadImageError:
 
@@ -543,7 +543,7 @@ Hexagon.Kernel.Kernel.Proc.addProcess:
 ;; configured for its stack and execution information, the process will run.
 ;; To do so, it must be registered with the GDT and have its execution configured
 
-Hexagon.Kernel.Kernel.Proc.executeProcess:
+Hexagon.Kern.Proc.executeProcess:
 
 ;; Now we must calculate the program's code and data base addresses,
 ;; placing them in the program's GDT entry
@@ -579,7 +579,7 @@ Hexagon.Kernel.Kernel.Proc.executeProcess:
 
     add dword[Hexagon.Processes.PCB.esp.pointer], 4
 
-    call Hexagon.Kernel.Kernel.Proc.calculateArgumentsAddress
+    call Hexagon.Kern.Proc.calculateArgumentsAddress
 
     sti ;; Make sure interrupts are available
 
@@ -600,7 +600,7 @@ Hexagon.Kernel.Kernel.Proc.executeProcess:
 ;; Function that receives control after the process ends and performs the necessary
 ;; operations to remove it from the execution stack
 
-Hexagon.Kernel.Kernel.Proc.exit:
+Hexagon.Kern.Proc.exit:
 
 ;; First, store the error code of the process to be terminated
 
@@ -635,7 +635,7 @@ Hexagon.Kernel.Kernel.Proc.exit:
 
 ;; Address of the function that will remove permissions from the process
 
-    mov eax, Hexagon.Kernel.Kernel.Proc.removeProcess
+    mov eax, Hexagon.Kern.Proc.removeProcess
 
     push 08h ;; Kernel code segment
     push eax ;; retf return address
@@ -647,9 +647,9 @@ Hexagon.Kernel.Kernel.Proc.exit:
 ;; Removes the process's credentials and permissions from the system execution
 ;; stack and GDT, transferring control back to the kernel
 
-Hexagon.Kernel.Kernel.Proc.removeProcess:
+Hexagon.Kern.Proc.removeProcess:
 
-    call Hexagon.Kernel.Kernel.Proc.unlinkProcessStack
+    call Hexagon.Kern.Proc.unlinkProcessStack
 
     mov ax, 10h ;; Kernel data segment
     mov ds, ax
@@ -707,7 +707,7 @@ Hexagon.Kernel.Kernel.Proc.removeProcess:
     mov eax, dword[Hexagon.Processes.PCB.imageSize+ebx*4]
     mov dword[Hexagon.Processes.PCB.imageSize+ebx*4], 00h
 
-    call Hexagon.Kernel.Arch.Gen.Mm.freeMemoryUsage
+    call Hexagon.Arch.Gen.Mm.freeMemoryUsage
 
     pop ebx
     pop eax
@@ -762,7 +762,7 @@ Hexagon.Kernel.Kernel.Proc.removeProcess:
 
 ;; Handler that returns error code for when the process limit is reached
 
-Hexagon.Kernel.Kernel.Proc.maxNumberProcessesReached:
+Hexagon.Kern.Proc.maxNumberProcessesReached:
 
 ;; An error occurred while loading the image present on volume
 
@@ -784,7 +784,7 @@ Hexagon.Kernel.Kernel.Proc.maxNumberProcessesReached:
 ;;
 ;; EAX - Process PID
 
-Hexagon.Kernel.Kernel.Proc.getPID:
+Hexagon.Kern.Proc.getPID:
 
     mov eax, dword[Hexagon.Processes.PCB.PID]
 
@@ -792,7 +792,7 @@ Hexagon.Kernel.Kernel.Proc.getPID:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Proc.linkProcessStack:
+Hexagon.Kern.Proc.linkProcessStack:
 
     mov dword[Hexagon.Processes.PCB.processName], esi
 
@@ -845,7 +845,7 @@ Hexagon.Kernel.Kernel.Proc.linkProcessStack:
 ;;
 ;; EDI - relative address (offset) in memory of the memory block with the process arguments
 
-Hexagon.Kernel.Kernel.Proc.calculateArgumentsAddress:
+Hexagon.Kern.Proc.calculateArgumentsAddress:
 
 ;; Address resolution documentation for the parameters that will be passed to the new process:
 ;;
@@ -882,7 +882,7 @@ Hexagon.Kernel.Kernel.Proc.calculateArgumentsAddress:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Proc.unlinkProcessStack:
+Hexagon.Kern.Proc.unlinkProcessStack:
 
     push ds ;; Kernel data segment
     pop es
@@ -923,7 +923,7 @@ Hexagon.Kernel.Kernel.Proc.unlinkProcessStack:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Proc.getProcessTable:
+Hexagon.Kern.Proc.getProcessTable:
 
 ;; Let's get the running processes
 
@@ -956,7 +956,7 @@ Hexagon.Kernel.Kernel.Proc.getProcessTable:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Proc.getErrorCode:
+Hexagon.Kern.Proc.getErrorCode:
 
     mov eax, [Hexagon.Processes.PCB.errorCode]
 

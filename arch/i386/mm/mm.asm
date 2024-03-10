@@ -75,7 +75,7 @@ use16
 
 ;; Gets the total amount of memory installed in real mode environment
 
-Hexagon.Kernel.Arch.i386.Mm.Mm.getInstalledMemory:
+Hexagon.Arch.i386.Mm.Mm.getInstalledMemory:
 
     push edx
     push ecx

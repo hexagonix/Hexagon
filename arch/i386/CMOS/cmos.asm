@@ -91,7 +91,7 @@ Hexagon.Arch.i386.CMOS:
 ;; This function is requested by the timer handler at each time interval,
 ;; keeping the Hexagon's real-time clock updated.
 
-Hexagon.Kernel.Arch.i386.CMOS.CMOS.updateCMOSData:
+Hexagon.Arch.i386.CMOS.CMOS.updateCMOSData:
 
     push ax
 
@@ -168,8 +168,8 @@ Hexagon.Kernel.Arch.i386.CMOS.CMOS.updateCMOSData:
 ;; Called by Hexagon instances for direct retrieval, independent of timer update.
 ;; Function with name kept to ensure compatibility with source code
 
-Hexagon.Kernel.Arch.i386.CMOS.CMOS.getCMOSData:
+Hexagon.Arch.i386.CMOS.CMOS.getCMOSData:
 
-    call Hexagon.Kernel.Arch.i386.CMOS.CMOS.updateCMOSData
+    call Hexagon.Arch.i386.CMOS.CMOS.updateCMOSData
 
     ret

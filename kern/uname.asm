@@ -84,7 +84,7 @@ use32
 ;; ESI - Kernel name string
 ;; EDI - Kernel build
 
-Hexagon.Kernel.Kernel.Uname.uname:
+Hexagon.Kern.Uname.uname:
 
     mov eax, Hexagon.Version.versionNumber
     mov ebx, Hexagon.Version.subversionNumber

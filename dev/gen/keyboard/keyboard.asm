@@ -441,10 +441,10 @@ Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.waitKeyboard:
 
     mov al, byte[.currentCodesIndex]
 
-    cmp byte[Hexagon.Int.keyboardHandler.scanCodes.index], al
+    cmp byte[Hexagon.Kern.Services.keyboardHandler.scanCodes.index], al
     je .keyLoop
 
-    mov ebx, Hexagon.Int.keyboardHandler.scanCodes
+    mov ebx, Hexagon.Kern.Services.keyboardHandler.scanCodes
 
     add bl, byte[.currentCodesIndex]
 
@@ -465,7 +465,7 @@ Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.waitKeyboard:
 
 ;; Check Shift
 
-    cmp byte[Hexagon.Int.keyboardHandler.sinalShift], 1
+    cmp byte[Hexagon.Kern.Services.keyboardHandler.sinalShift], 1
     je .useShiftCharacters
 
     mov ebx, Hexagon.Keyboard.keyboardDefaultLayout.keys ;; Scan code vector

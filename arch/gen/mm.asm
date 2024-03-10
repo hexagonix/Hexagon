@@ -125,7 +125,7 @@ Hexagon.Memory.Allocator Hexagon.Arch.Gen.Memory.Allocator Hexagon.Arch.Gen.Memo
 ;; EDX - Memory reserved for Hexagon, in bytes
 ;; ESI - Total allocated memory (reserved+processes), in kbytes
 
-Hexagon.Kernel.Arch.Gen.Mm.memoryUse:
+Hexagon.Arch.Gen.Mm.memoryUse:
 
     push ds ;; Kernel data segment
     pop es
@@ -177,7 +177,7 @@ Hexagon.Kernel.Arch.Gen.Mm.memoryUse:
 ;;
 ;; EAX - Amount of memory to be used
 
-Hexagon.Kernel.Arch.Gen.Mm.confirmMemoryUsage:
+Hexagon.Arch.Gen.Mm.confirmMemoryUsage:
 
     add dword[Hexagon.Memory.usedMemory], eax
 
@@ -191,7 +191,7 @@ Hexagon.Kernel.Arch.Gen.Mm.confirmMemoryUsage:
 ;;
 ;; EAX - Amount of memory to be freed
 
-Hexagon.Kernel.Arch.Gen.Mm.freeMemoryUsage:
+Hexagon.Arch.Gen.Mm.freeMemoryUsage:
 
     sub dword[Hexagon.Memory.usedMemory], eax
 
@@ -199,7 +199,7 @@ Hexagon.Kernel.Arch.Gen.Mm.freeMemoryUsage:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Arch.Gen.Mm.initMemory:
+Hexagon.Arch.Gen.Mm.initMemory:
 
 ;; Firstly, the starting address for allocating processes and data will be after the
 ;; space reserved for the kernel and its structures
@@ -213,16 +213,16 @@ Hexagon.Kernel.Arch.Gen.Mm.initMemory:
 
     sub ecx, Hexagon.Memory.initialAddress
 
-    call Hexagon.Kernel.Arch.Gen.Mm.configMemory ;; Start the memory handler
+    call Hexagon.Arch.Gen.Mm.configMemory ;; Start the memory handler
 
 ;; Now, the space reserved for processes will be defined, using the established standard
 ;; Hexagon.Memory.Allocator.initialReserved
 
     mov ebx, Hexagon.Memory.Allocator.initialReserved
 
-    call Hexagon.Kernel.Arch.Gen.Mm.malloc ;; Allocate memory to processes
+    call Hexagon.Arch.Gen.Mm.malloc ;; Allocate memory to processes
 
-    call Hexagon.Kernel.Kernel.Proc.configureProcessAllocation ;; Save the address used for allocation
+    call Hexagon.Kern.Proc.configureProcessAllocation ;; Save the address used for allocation
 
     ret
 
@@ -235,7 +235,7 @@ Hexagon.Kernel.Arch.Gen.Mm.initMemory:
 ;; EBX - Start of free memory
 ;; ECX - Total free memory size
 
-Hexagon.Kernel.Arch.Gen.Mm.configMemory:
+Hexagon.Arch.Gen.Mm.configMemory:
 
     push ecx
 
@@ -273,7 +273,7 @@ Hexagon.Kernel.Arch.Gen.Mm.configMemory:
 ;; EAX - 0 if failed
 ;; EBX - Pointer to allocated memory, if successful
 
-Hexagon.Kernel.Arch.Gen.Mm.malloc:
+Hexagon.Arch.Gen.Mm.malloc:
 
     push ecx
     push edx
@@ -509,7 +509,7 @@ Hexagon.Kernel.Arch.Gen.Mm.malloc:
 ;; EBX - Pointer to previously allocated memory
 ;; ECX - Size of previously allocated memory, in bytes
 
-Hexagon.Kernel.Arch.Gen.Mm.free:
+Hexagon.Arch.Gen.Mm.free:
 
     push eax
     push ebx
@@ -724,14 +724,14 @@ align 32
 ;;
 ;; This is a kernel-exclusive function!
 
-Hexagon.Kernel.Arch.Gen.Mm.dilateMemorySpace:
+Hexagon.Arch.Gen.Mm.dilateMemorySpace:
 
     mov ebx, eax
     mov ecx, eax
 
     push ecx
 
-    call Hexagon.Kernel.Arch.Gen.Mm.malloc
+    call Hexagon.Arch.Gen.Mm.malloc
 
     pop ecx
 

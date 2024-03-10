@@ -111,7 +111,7 @@ Hexagon.Users.Groups:
 ;; EAX - Logged in user id (provided by login manager)
 ;; ESI - Logged in username
 
-Hexagon.Kernel.Kernel.Users.setUser:
+Hexagon.Kern.Users.setUser:
 
     push eax
 
@@ -160,7 +160,7 @@ Hexagon.Kernel.Kernel.Users.setUser:
 ;; ESI - Logged in and registered username
 ;; EAX - Logged in user id
 
-Hexagon.Kernel.Kernel.Users.getUser:
+Hexagon.Kern.Users.getUser:
 
     cmp byte[Hexagon.Users.userLoggedIn], 00h
     je .fim
@@ -174,22 +174,22 @@ Hexagon.Kernel.Kernel.Users.getUser:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Users.checkUser:
+Hexagon.Kern.Users.checkUser:
 
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Users.codeUser:
+Hexagon.Kern.Users.codeUser:
 
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Users.validateUser:
+Hexagon.Kern.Users.validateUser:
 
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Users.getUserPermissions:
+Hexagon.Kern.Users.getUserPermissions:
 
     mov eax, [Hexagon.Users.userId]
 

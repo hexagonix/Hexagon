@@ -110,7 +110,7 @@ Hexagon.Dmesg.Priorities:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Dmesg.startLog:
+Hexagon.Kern.Dmesg.startLog:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.useKernelConsole
 
@@ -118,9 +118,9 @@ Hexagon.Kernel.Kernel.Dmesg.startLog:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
-    call Hexagon.Kernel.Kernel.Dmesg.dateToLog
+    call Hexagon.Kern.Dmesg.dateToLog
 
-    call Hexagon.Kernel.Kernel.Dmesg.hourToLog
+    call Hexagon.Kern.Dmesg.hourToLog
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.useMainConsole
 
@@ -130,7 +130,7 @@ Hexagon.Kernel.Kernel.Dmesg.startLog:
 
 ;; This function allows you to add a message to the kernel log
 
-Hexagon.Kernel.Kernel.Dmesg.addMessage:
+Hexagon.Kern.Dmesg.addMessage:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.useKernelConsole
 
@@ -142,7 +142,7 @@ Hexagon.Kernel.Kernel.Dmesg.addMessage:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Dmesg.dateToLog:
+Hexagon.Kern.Dmesg.dateToLog:
 
     push eax
     push ebx
@@ -152,7 +152,7 @@ Hexagon.Kernel.Kernel.Dmesg.dateToLog:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
-    call Hexagon.Kernel.Arch.i386.CMOS.CMOS.getCMOSData
+    call Hexagon.Arch.i386.CMOS.CMOS.getCMOSData
 
     mov al, [Hexagon.Arch.i386.CMOS.day]
 
@@ -226,7 +226,7 @@ Hexagon.Kernel.Kernel.Dmesg.dateToLog:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Dmesg.hourToLog:
+Hexagon.Kern.Dmesg.hourToLog:
 
     push eax
     push ebx
@@ -236,7 +236,7 @@ Hexagon.Kernel.Kernel.Dmesg.hourToLog:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
-    call Hexagon.Kernel.Arch.i386.CMOS.CMOS.getCMOSData
+    call Hexagon.Arch.i386.CMOS.CMOS.getCMOSData
 
     mov al, [Hexagon.Arch.i386.CMOS.hour]
 
@@ -312,7 +312,7 @@ Hexagon.Kernel.Kernel.Dmesg.hourToLog:
 ;; If the priority is greater than or equal to 4, messages will only be sent via
 ;; the serial port.
 
-Hexagon.Kernel.Kernel.Dmesg.createMessage:
+Hexagon.Kern.Dmesg.createMessage:
 
     cmp ebx, Hexagon.Dmesg.Priorities.p4
     je .justSerialOutput
@@ -333,7 +333,7 @@ Hexagon.Kernel.Kernel.Dmesg.createMessage:
 
     mov esi, Hexagon.Dmesg.hexagonIdentifier
 
-    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
+    call Hexagon.Kern.Dmesg.messageToSerial
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
@@ -343,7 +343,7 @@ Hexagon.Kernel.Kernel.Dmesg.createMessage:
 
     mov esi, Hexagon.Dmesg.userIdentifierOpen
 
-    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
+    call Hexagon.Kern.Dmesg.messageToSerial
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
@@ -353,13 +353,13 @@ Hexagon.Kernel.Kernel.Dmesg.createMessage:
 
     call Hexagon.Kernel.Lib.String.paraString ;; Transform into a string
 
-    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
+    call Hexagon.Kern.Dmesg.messageToSerial
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
     mov esi, Hexagon.Dmesg.userIdentifierClose
 
-    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
+    call Hexagon.Kern.Dmesg.messageToSerial
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
@@ -369,13 +369,13 @@ Hexagon.Kernel.Kernel.Dmesg.createMessage:
 
     pop esi
 
-    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
+    call Hexagon.Kern.Dmesg.messageToSerial
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
     mov esi, Hexagon.Dmesg.newLine
 
-    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
+    call Hexagon.Kern.Dmesg.messageToSerial
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
@@ -392,7 +392,7 @@ Hexagon.Kernel.Kernel.Dmesg.createMessage:
 
     mov esi, Hexagon.Dmesg.hexagonIdentifier
 
-    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
+    call Hexagon.Kern.Dmesg.messageToSerial
 
     jmp .serialMessageReceived
 
@@ -400,7 +400,7 @@ Hexagon.Kernel.Kernel.Dmesg.createMessage:
 
     mov esi, Hexagon.Dmesg.userIdentifierOpen
 
-    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
+    call Hexagon.Kern.Dmesg.messageToSerial
 
 ;; The process PID will be displayed on the screen
 
@@ -408,21 +408,21 @@ Hexagon.Kernel.Kernel.Dmesg.createMessage:
 
     call Hexagon.Kernel.Lib.String.paraString ;; Transform into a string
 
-    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
+    call Hexagon.Kern.Dmesg.messageToSerial
 
     mov esi, Hexagon.Dmesg.userIdentifierClose
 
-    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
+    call Hexagon.Kern.Dmesg.messageToSerial
 
 .serialMessageReceived:
 
     pop esi
 
-    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
+    call Hexagon.Kern.Dmesg.messageToSerial
 
     mov esi, Hexagon.Dmesg.newLine
 
-    call Hexagon.Kernel.Kernel.Dmesg.messageToSerial
+    call Hexagon.Kern.Dmesg.messageToSerial
 
     ret
 
@@ -435,10 +435,10 @@ Hexagon.Kernel.Kernel.Dmesg.createMessage:
 ;;
 ;; ESI - Full message to be displayed
 
-Hexagon.Kernel.Kernel.Dmesg.messageToSerial:
+Hexagon.Kern.Dmesg.messageToSerial:
 
 ;; First, save the message already present in ESI for future use
-;; in Hexagon.Kernel.Kernel.Dmesg.createMessage
+;; in Hexagon.Kern.Dmesg.createMessage
 
     push esi
 

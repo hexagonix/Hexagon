@@ -154,11 +154,11 @@ hexagonHeader:
 
 ;; Enable A20, necessary to address 4 GB of RAM and to enter protected mode
 
-    call Hexagon.Kernel.Arch.i386.CPU.CPU.enableA20Gate ;; Enable A20, required for protected mode
+    call Hexagon.Arch.i386.CPU.CPU.enableA20Gate ;; Enable A20, required for protected mode
 
-    call Hexagon.Kernel.Arch.i386.Mm.Mm.getInstalledMemory ;; Gets the total installed memory
+    call Hexagon.Arch.i386.Mm.Mm.getInstalledMemory ;; Gets the total installed memory
 
-    call Hexagon.Kernel.Arch.i386.CPU.CPU.goToProtectedMode32 ;; Configure 32-bit protected mode
+    call Hexagon.Arch.i386.CPU.CPU.goToProtectedMode32 ;; Configure 32-bit protected mode
 
 ;; Now the protected mode code will run (we are already on 32-bit!)
 

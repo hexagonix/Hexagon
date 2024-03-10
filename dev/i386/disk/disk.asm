@@ -305,7 +305,7 @@ Hexagon.Kernel.Dev.i386.Disk.Disk.resetDisk:
 
     mov ah, 00h
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int13h
+    call Hexagon.Arch.i386.BIOS.BIOS.int13h
 
     jc .error
 
@@ -359,7 +359,7 @@ Hexagon.Kernel.Dev.i386.Disk.Disk.detectDisk:
     mov al, 0xFF
     mov cx, 0xFFFF
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int13h
+    call Hexagon.Arch.i386.BIOS.BIOS.int13h
 
     jc .error
 
@@ -412,7 +412,7 @@ Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors:
     mov esi, .DAP
     mov ah, 42h ;; BIOS extended reading
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int13h ;; BIOS disk services
+    call Hexagon.Arch.i386.BIOS.BIOS.int13h ;; BIOS disk services
 
     jnc .withoutError
 
@@ -444,7 +444,7 @@ Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors:
 
     mov eax, 1
 
-    call Hexagon.Kernel.Kernel.Panic.panic
+    call Hexagon.Kern.Panic.panic
 
 .noMedia:
 
@@ -521,7 +521,7 @@ Hexagon.Kernel.Dev.i386.Disk.Disk.writeSectors:
     mov ah, 43h ;; BIOS extended writing
     mov al, 0
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int13h ;; BIOS disk services
+    call Hexagon.Arch.i386.BIOS.BIOS.int13h ;; BIOS disk services
 
     jnc .withoutError
 
@@ -597,7 +597,7 @@ Hexagon.Kernel.Dev.i386.Disk.Disk.writeSectors:
 
     mov eax, 1
 
-    call Hexagon.Kernel.Kernel.Panic.panic
+    call Hexagon.Kern.Panic.panic
 
 .noMedia:
 

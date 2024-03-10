@@ -73,21 +73,21 @@
 
 use32
 
-Hexagon.Syscall.Syscall.hexagonServices:
+Hexagon.Kern.Syscall.hexagonServices:
 
 .table:
 
 ;; Memory and process management
 
-    dd Hexagon.Syscall.Syscall.nullSystemCall                          ;; 0 - null function
-    dd Hexagon.Kernel.Arch.Gen.Mm.malloc                               ;; 1
-    dd Hexagon.Kernel.Arch.Gen.Mm.free                                 ;; 2
-    dd Hexagon.Kernel.Kernel.Proc.exec                                 ;; 3
-    dd Hexagon.Kernel.Kernel.Proc.exit                                 ;; 4
-    dd Hexagon.Kernel.Kernel.Proc.getPID                               ;; 5
-    dd Hexagon.Kernel.Arch.Gen.Mm.memoryUse                            ;; 6
-    dd Hexagon.Kernel.Kernel.Proc.getProcessTable                      ;; 7
-    dd Hexagon.Kernel.Kernel.Proc.getErrorCode                         ;; 8
+    dd Hexagon.Kern.Syscall.nullSystemCall                             ;; 0 - null function
+    dd Hexagon.Arch.Gen.Mm.malloc                                      ;; 1
+    dd Hexagon.Arch.Gen.Mm.free                                        ;; 2
+    dd Hexagon.Kern.Proc.exec                                          ;; 3
+    dd Hexagon.Kern.Proc.exit                                          ;; 4
+    dd Hexagon.Kern.Proc.getPID                                        ;; 5
+    dd Hexagon.Arch.Gen.Mm.memoryUse                                   ;; 6
+    dd Hexagon.Kern.Proc.getProcessTable                               ;; 7
+    dd Hexagon.Kern.Proc.getErrorCode                                  ;; 8
 
 ;; File and device management
 
@@ -107,23 +107,23 @@ Hexagon.Syscall.Syscall.hexagonServices:
 
 ;; User management
 
-    dd Hexagon.Kernel.Kernel.Proc.lock                                 ;; 19
-    dd Hexagon.Kernel.Kernel.Proc.unlock                               ;; 20
-    dd Hexagon.Kernel.Kernel.Users.setUser                             ;; 21
-    dd Hexagon.Kernel.Kernel.Users.getUser                             ;; 22
+    dd Hexagon.Kern.Proc.lock                                          ;; 19
+    dd Hexagon.Kern.Proc.unlock                                        ;; 20
+    dd Hexagon.Kern.Users.setUser                                      ;; 21
+    dd Hexagon.Kern.Users.getUser                                      ;; 22
 
 ;; Hexagon services
 
-    dd Hexagon.Kernel.Kernel.Uname.uname                               ;; 23
+    dd Hexagon.Kern.Uname.uname                                        ;; 23
     dd Hexagon.Kernel.Lib.Num.obterAleatorio                           ;; 24
     dd Hexagon.Kernel.Lib.Num.alimentarAleatorios                      ;; 25
-    dd Hexagon.Kernel.Arch.i386.Timer.Timer.sleep                      ;; 26
-    dd Hexagon.Syscall.Syscall.installInterruption                     ;; 27
+    dd Hexagon.Arch.i386.Timer.Timer.sleep                             ;; 26
+    dd Hexagon.Kern.Syscall.installInterruption                        ;; 27
 
 ;; Hexagon power management
 
-    dd Hexagon.Kernel.Arch.i386.APM.reboot                             ;; 28
-    dd Hexagon.Kernel.Arch.i386.APM.shutdown                           ;; 29
+    dd Hexagon.Arch.i386.APM.reboot                                    ;; 28
+    dd Hexagon.Arch.i386.APM.shutdown                                  ;; 29
 
 ;; Console output functions and Hexagon graphics
 
@@ -178,7 +178,7 @@ Hexagon.Syscall.Syscall.hexagonServices:
 
 ;; Hexagon messaging service
 
-    dd Hexagon.Kernel.Kernel.Dmesg.createMessage                       ;; 66
+    dd Hexagon.Kern.Dmesg.createMessage                                ;; 66
 
 ;; Hexagon real-time clock service
 

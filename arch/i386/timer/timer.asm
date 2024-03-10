@@ -75,7 +75,7 @@ use32
 
 ;; Initializes the timer, using the appropriate parameters
 
-Hexagon.Kernel.Arch.i386.Timer.Timer.setupTimer:
+Hexagon.Arch.i386.Timer.Timer.setupTimer:
 
 ;; Set timer frequency
 
@@ -99,27 +99,27 @@ Hexagon.Kernel.Arch.i386.Timer.Timer.setupTimer:
 ;;
 ;; ECX - Time to generate delay, in counting units
 
-Hexagon.Kernel.Arch.i386.Timer.Timer.sleep:
+Hexagon.Arch.i386.Timer.Timer.sleep:
 
     pusha
 
     sti ;; Enable interrupts so that the counter can be updated
 
-    mov ebx, dword[Hexagon.Int.timerHandler.timerCounter]
+    mov ebx, dword[Hexagon.Kern.Services.timerHandler.timerCounter]
 
 .waitOne: ;; Let's wait until the counter changes
 
-    cmp ebx, dword[Hexagon.Int.timerHandler.timerCounter]
+    cmp ebx, dword[Hexagon.Kern.Services.timerHandler.timerCounter]
     je .waitOne
 
 .waitChange:
 
-    cmp ebx, dword[Hexagon.Int.timerHandler.timerCounter]
+    cmp ebx, dword[Hexagon.Kern.Services.timerHandler.timerCounter]
     je .waitChange ;; As long as the counter has not changed its value, continue here
 
     dec ecx
 
-    mov ebx, dword[Hexagon.Int.timerHandler.timerCounter]
+    mov ebx, dword[Hexagon.Kern.Services.timerHandler.timerCounter]
 
     cmp ecx, 0
     ja .waitOne ;; If it's not over, keep counting...

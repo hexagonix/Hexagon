@@ -96,7 +96,7 @@ Hexagon.Syscall.Control:
 ;; EBP = 0xABC12345 in case of function not available
 ;; CF defined in case of function not available
 
-Hexagon.Syscall.Syscall.hexagonHandler:
+Hexagon.Kern.Syscall.hexagonHandler:
 
     push ebp
 
@@ -160,7 +160,7 @@ Hexagon.Syscall.Syscall.hexagonHandler:
     push dword[Hexagon.Syscall.Control.eip]
     push dword[Hexagon.Syscall.Control.cs]
 
-    call dword[Hexagon.Syscall.Syscall.hexagonServices.table+ebp*4]
+    call dword[Hexagon.Kern.Syscall.hexagonServices.table+ebp*4]
 
     pop dword[Hexagon.Syscall.Control.cs]
     pop dword[Hexagon.Syscall.Control.eip]
@@ -214,7 +214,7 @@ Hexagon.Syscall.Syscall.hexagonHandler:
 
 ;;************************************************************************************
 
-Hexagon.Syscall.Syscall.nullSystemCall:
+Hexagon.Kern.Syscall.nullSystemCall:
 
     mov ebp, 0xABC12345
 
@@ -224,10 +224,10 @@ Hexagon.Syscall.Syscall.nullSystemCall:
 
 ;;************************************************************************************
 
-Hexagon.Syscall.Syscall.installInterruption:
+Hexagon.Kern.Syscall.installInterruption:
 
     cli
 
-    call Hexagon.Int.installISR
+    call Hexagon.Kern.Services.installISR
 
     ret

@@ -89,7 +89,7 @@ Hexagon.Arch.i386.APM:
 
 ;; Restart the device
 
-Hexagon.Kernel.Arch.i386.APM.reboot:
+Hexagon.Arch.i386.APM.reboot:
 
 match =YES, VERBOSE
 {
@@ -97,12 +97,12 @@ match =YES, VERBOSE
     mov esi, Hexagon.Verbose.APM.serviceAPM
     mov ebx, Hexagon.Dmesg.Priorities.p5
 
-    call Hexagon.Kernel.Kernel.Dmesg.createMessage
+    call Hexagon.Kern.Dmesg.createMessage
 
     mov esi, Hexagon.Verbose.APM.rebootAPM
     mov ebx, Hexagon.Dmesg.Priorities.p5
 
-    call Hexagon.Kernel.Kernel.Dmesg.createMessage
+    call Hexagon.Kern.Dmesg.createMessage
 
 }
 
@@ -129,7 +129,7 @@ match =YES, VERBOSE
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Arch.i386.APM.shutdown:
+Hexagon.Arch.i386.APM.shutdown:
 
 match =YES, VERBOSE
 {
@@ -137,12 +137,12 @@ match =YES, VERBOSE
     mov esi, Hexagon.Verbose.APM.serviceAPM
     mov ebx, Hexagon.Dmesg.Priorities.p5
 
-    call Hexagon.Kernel.Kernel.Dmesg.createMessage
+    call Hexagon.Kern.Dmesg.createMessage
 
     mov esi, Hexagon.Verbose.APM.shutdownAPM
     mov ebx, Hexagon.Dmesg.Priorities.p5
 
-    call Hexagon.Kernel.Kernel.Dmesg.createMessage
+    call Hexagon.Kern.Dmesg.createMessage
 
 }
 
@@ -168,14 +168,14 @@ match =YES, VERBOSE
     mov ax, 5300h ;; Installation check function
     mov bx, 0 ;; The device ID (APM BIOS)
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h ;; Call APM interrupt
+    call Hexagon.Arch.i386.BIOS.BIOS.int15h ;; Call APM interrupt
 
     jc .failedToInstallAPM
 
     mov ax, 5301h ;; Real mode connection interface function
     mov bx, 0 ;; The device ID (APM BIOS)
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h ;; Call APM interrupt
+    call Hexagon.Arch.i386.BIOS.BIOS.int15h ;; Call APM interrupt
 
     jc .failedToConnectAPM
 
@@ -183,7 +183,7 @@ match =YES, VERBOSE
     mov bx, 0     ;; The device ID (APM BIOS)
     mov cx, 0102h ;; Select APM version 1.2
                   ;; The functionality is present after version 1.2
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h ;; Call APM interrupt
+    call Hexagon.Arch.i386.BIOS.BIOS.int15h ;; Call APM interrupt
 
     jc .failedToSelectAPMVersion
 
@@ -191,7 +191,7 @@ match =YES, VERBOSE
     mov cx, 0003h ;; Power off state
     mov bx, 0001h ;; All devices have ID 1
 
-    call Hexagon.Kernel.Arch.i386.BIOS.BIOS.int15h ;; Call APM interrupt
+    call Hexagon.Arch.i386.BIOS.BIOS.int15h ;; Call APM interrupt
 
 ;; If the system does not shut down properly, error codes will be returned to the
 ;; program that called the shutdown function.
@@ -204,7 +204,7 @@ match =YES, VERBOSE
     mov esi, Hexagon.Verbose.APM.commandErrorAPM
     mov ebx, Hexagon.Dmesg.Priorities.p5
 
-    call Hexagon.Kernel.Kernel.Dmesg.createMessage
+    call Hexagon.Kern.Dmesg.createMessage
 
 }
 
@@ -220,7 +220,7 @@ match =YES, VERBOSE
     mov esi, Hexagon.Verbose.APM.instalationErrorAPM
     mov ebx, Hexagon.Dmesg.Priorities.p5
 
-    call Hexagon.Kernel.Kernel.Dmesg.createMessage
+    call Hexagon.Kern.Dmesg.createMessage
 
 }
 
@@ -236,7 +236,7 @@ match =YES, VERBOSE
     mov esi, Hexagon.Verbose.APM.connectionErrorAPM
     mov ebx, Hexagon.Dmesg.Priorities.p5
 
-    call Hexagon.Kernel.Kernel.Dmesg.createMessage
+    call Hexagon.Kern.Dmesg.createMessage
 
 }
 
@@ -256,7 +256,7 @@ match =YES, VERBOSE
     mov esi, Hexagon.Verbose.APM.shutdownSuccessAPM
     mov ebx, Hexagon.Dmesg.Priorities.p5
 
-    call Hexagon.Kernel.Kernel.Dmesg.createMessage
+    call Hexagon.Kern.Dmesg.createMessage
 
 }
 
