@@ -391,7 +391,7 @@ Hexagon.Kernel.Dev.Dev.open:
 
 .storageVerifyPermissions:
 
-    call Hexagon.Kernel.Kernel.Usuarios.verificarPermissoes
+    call Hexagon.Kernel.Kernel.Users.getUserPermissions
 
     cmp eax, 03h ;; Group code for standard user
     je .storagePermissionDenied

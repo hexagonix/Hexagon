@@ -140,7 +140,7 @@ include "fs/dir.asm"
 
 Hexagon.Kernel.FS.VFS.createFile:
 
-    call Hexagon.Kernel.Kernel.Usuarios.verificarPermissoes
+    call Hexagon.Kernel.Kernel.Users.getUserPermissions
 
     cmp eax, 03h ;; Group code for default user
     je .permissionDenied
@@ -182,7 +182,7 @@ Hexagon.Kernel.FS.VFS.createFile:
 
 Hexagon.Kernel.FS.VFS.unlinkFile:
 
-    call Hexagon.Kernel.Kernel.Usuarios.verificarPermissoes
+    call Hexagon.Kernel.Kernel.Users.getUserPermissions
 
     cmp eax, 03h ;; Group code for default user
     je .permissionDenied

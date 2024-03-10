@@ -73,13 +73,13 @@
 
 ;;************************************************************************************
 ;;
-;;     Controle de usuários e políticas de segurança e acesso do kernel Hexagon
+;; Hexagon kernel user control and security and access policies
 ;;
-;; Este arquivo contém todas as funções de manipulação de usuários, assim como as variáveis
-;; relacionadas à estas tarefas. Também contém variáveis de controle de acesso por parte de
-;; usuários e sinalizadores de solicitações realizadas pelo Hexagon, além de definições e
-;; padronização de códigos para políticas de segurança. Este é o núcleo de segurança e
-;; proteção de sistema do Hexagon.
+;; This file contains all user manipulation functions, as well as variables related to
+;; these tasks.
+;; It also contains user access control variables and flags for requests made by Hexagon,
+;; as well as definitions and standardization of codes for security policies.
+;; This is the core security and system protection of Hexagon.
 ;;
 ;;************************************************************************************
 
@@ -87,31 +87,31 @@ use32
 
 ;;************************************************************************************
 
-Hexagon.Usuarios.ID:
+Hexagon.Users.ID:
 
 .Hexagon    = 000
 .root       = 777
 .supervisor = 699
-.default     = 555
+.default    = 555
 
-Hexagon.Usuarios.Grupos:
+Hexagon.Users.Groups:
 
 .Hexagon    = 00h
 .root       = 01h
 .supervisor = 02h
-.default     = 03h
+.default    = 03h
 .admin      = 04h
 
 ;;************************************************************************************
 
-;; Define o nome do usuário e seu respectivo ID
+;; Defines the username and its respective id
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; EAX - ID do usuário logado (fornecido por gerenciador de login)
-;; ESI - Nome do usuário logado
+;; EAX - Logged in user id (provided by login manager)
+;; ESI - Logged in username
 
-Hexagon.Kernel.Kernel.Usuarios.definirUsuario:
+Hexagon.Kernel.Kernel.Users.setUser:
 
     push eax
 
@@ -123,50 +123,50 @@ Hexagon.Kernel.Kernel.Usuarios.definirUsuario:
     call Hexagon.Kernel.Lib.String.tamanhoString
 
     cmp eax, 32
-    jl .nomeValido
+    jl .validName
 
     stc
 
     ret
 
-.nomeValido:
+.validName:
 
     mov ecx, eax
 
     inc ecx
 
-;; Copiar o nome do usuário
+;; Copy username
 
-    mov edi, nomeUsuario
+    mov edi, Hexagon.Users.username
 
     pop esi
 
-    rep movsb ;; Copiar (ECX) caracteres de ESI para EDI
+    rep movsb ;; Copy (ECX) characters from ESI to EDI
 
     pop eax
 
-    mov dword [IDUsuario], eax
+    mov dword [Hexagon.Users.userId], eax
 
-    mov byte[loginFeito], 01h
+    mov byte[Hexagon.Users.userLoggedIn], 01h
 
     ret
 
 ;;************************************************************************************
 
-;; Retorna para o processo o nome do usuário logado, assim como o ID do usuário
+;; Returns the name of the logged in user to the process, as well as the user id
 ;;
-;; Saída:
+;; Output:
 ;;
-;; ESI - Nome do usuário logado e registrado
-;; EAX - ID do usuário logado
+;; ESI - Logged in and registered username
+;; EAX - Logged in user id
 
-Hexagon.Kernel.Kernel.Usuarios.obterUsuario:
+Hexagon.Kernel.Kernel.Users.getUser:
 
-    cmp byte[loginFeito], 00h
+    cmp byte[Hexagon.Users.userLoggedIn], 00h
     je .fim
 
-    mov esi, nomeUsuario ;; Enviar o nome do usuário
-    mov eax, [IDUsuario] ;; Enviar o ID de grupo do usuário
+    mov esi, Hexagon.Users.username ;; Send username
+    mov eax, [Hexagon.Users.userId] ;; Send the user's group id
 
 .fim:
 
@@ -174,99 +174,100 @@ Hexagon.Kernel.Kernel.Usuarios.obterUsuario:
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Usuarios.verificarUsuario:
+Hexagon.Kernel.Kernel.Users.checkUser:
 
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Usuarios.codificarUsuario:
+Hexagon.Kernel.Kernel.Users.codeUser:
 
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Usuarios.validarUsuario:
+Hexagon.Kernel.Kernel.Users.validateUser:
 
 
 ;;************************************************************************************
 
-Hexagon.Kernel.Kernel.Usuarios.verificarPermissoes:
+Hexagon.Kernel.Kernel.Users.getUserPermissions:
 
-    mov eax, [IDUsuario]
+    mov eax, [Hexagon.Users.userId]
 
-    cmp eax, Hexagon.Usuarios.ID.root
+    cmp eax, Hexagon.Users.ID.root
     je .usuarioRaiz
 
-    cmp eax, Hexagon.Usuarios.ID.supervisor
+    cmp eax, Hexagon.Users.ID.supervisor
     je .supervisor
 
-    mov eax, Hexagon.Usuarios.Grupos.default
+    mov eax, Hexagon.Users.Groups.default
 
     ret
 
 .usuarioRaiz:
 
-    mov eax, Hexagon.Usuarios.Grupos.root
+    mov eax, Hexagon.Users.Groups.root
 
     ret
 
 .supervisor:
 
-    mov eax, Hexagon.Usuarios.Grupos.supervisor
+    mov eax, Hexagon.Users.Groups.supervisor
 
     ret
 
 ;;************************************************************************************
 
-;; O sistema de permissões do Hexagon trabalha com IDs de usuário. Cada tipo de usuário
-;; apresenta um ID específico que será utilizado para verificar a validade de operações
-;; solicitadas pelo usuário logado. Os IDs válidos são os designados à seguir:
+;; Hexagon's permissions system works with user ids.
+;; Each type of user has a specific id that will be used to check the validity of operations
+;; requested by the logged in user.
+;; Valid IDs are designated below:
 ;;
-;; Nome de usuário | ID de usuário |               Permissões               | Tipo de conta
+;; Username    | User ID |                 Permissions              | Account Type
+;; ------------|---------|------------------------------------------|-------------
+;; Hexagon     |   000   |        Total (Hardware, Software)        | Kernel
+;; root        |   777   | Reading, writing and execution (total)   | root
+;; supervisor  |   699   | Reading, writing and executing (debug)   | root
+;; Other names |   555   | Reading, writing and execution (partial) | Common
 ;;
-;; Hexagon           000                  Total (Hardware, Software)          Kernel
-;; root              777             Leitura, escrita e execução (total)      Raiz
-;; supervisor        699             Leitura, escrita e execução (debug)      Raiz
-;; Outros nomes      555             Leitura, escrita e execução (parcial)    Comum
+;; Names are not taken into account (except root, for login services).
+;; What Hexagon will validate are the ids, where the common user id may vary, but always
+;; starting with the number 555 and ending with 699, at most.
+
+Hexagon.Users.userId: dd 0 ;; Will store the id of the currently logged in user
+
+Hexagon.Users.username: ;; Will store the name of the currently logged in user
+times 32 db 0
+
+Hexagon.Users.userLoggedIn: db 0 ;; Stores whether or not the login was performed
+
+;; Hexagon may also change the permission state of user-requested operations or processes.
+;; These permissions will be stored in the variables below.
+
+Hexagon.Users.Permissions.read:      db 0
+Hexagon.Users.Permissions.write:     db 0
+Hexagon.Users.Permissions.execution: db 0
+
+;; So that the kernel can bypass security measures that distinguish users or input values ​​and be
+;; able to execute any function allocated to it, a variable will be used that indicates whether
+;; the order of execution of the function came from the kernel itself or not.
+;; Only functions that distinguish privileges and input values ​​should read/write to this variable.
+;; The values ​​used are also standardized, as below.
 ;;
-;; Os nomes não são levados em conta (exceto root, para serviços de login). O que o Hexagon
-;; validará são os IDs, onde o de usuário comum pode variar, mas sempre iniciando no número
-;; 555 e terminando em 699, no máximo.
-
-IDUsuario:            dd 0 ;; Armazenará o ID do usuário atualmente logado
-
-nomeUsuario: times 32 db 0 ;; Armazenará o nome do usuário atualmente logado
-
-loginFeito:           db 0 ;; Armazena se o login foi ou não realizado
-
-;; O Hexagon também poderá alter o estado de permissão de operações solicitadas pelo usuário
-;; ou processos. Essas permissões serão armazenadas nas variáveis abaixo.
-
-leitura:  db 0
-escrita:  db 0
-execucao: db 0
-
-;; Para que o kernel possa burlar medidas de segurança que distinguam usuários ou valores de
-;; entrada e consiga executar qualquer função nele alocada, será utilizada uma variável que indica
-;; se a ordem de execução da função partiu do próprio kernel ou não. Apenas as funções que fazem
-;; distinção de privilégios e também de valores de entrada devem ler/gravar nessa variável.
-;; Os valores utilizados também são padronizados, como abaixo.
+;; Object name             | Code | Type of access
+;; ------------------------|------|---------------
+;; kernelExecuteDisabled   |  00h | The kernel is not requesting operations that require
+;;                                  restricted access or analysis
+;; kernelExecutePermission |  01h | Execute the requested function
+;; orderKernelDeny         |  02h | Prevent the execution of any function until the state changes
+;; orderKernelDebug        |  04h | Use in the future for debugging
 ;;
-;; Nome do objeto                       | Código |               Tipo de acesso               |
-;;
-;; kernelExecuteDisabled                    00h      O kernel não está solicitando operações
-;;                                                   que demandem acesso restrito ou análise
-;; kernelExecutePermission                      01h           Executar a função solicitada
-;; ordemKernelNegar                         02h       Impedir a execução de qualquer função
-;;                                                             até mudança de estado
-;; ordemKernelDebug                         04h           Usar futuramente para depuração
-;;
-;; O sinalizador kernelExecutePermission é análogo ao login realizado com a conta de usuário
-;; raiz (root), permitindo a realização de tarefas com prerrogativas. Entretanto, permite o
-;; acesso a dados e funções não expostas ou permitidas ao usuário raiz.
+;; The kernelExecutePermission flag is analogous to logging in with the root user account,
+;; allowing tasks to be performed with privileges.
+;; However, it allows access to data and functions not exposed or permitted to the root user.
 
-kernelExecuteDisabled = 00h ;; Evidencia que a chamada não foi realizada pelo Hexagon
-kernelExecutePermission   = 01h ;; Este sinalizador é compatível com o usuário raiz (root)
-ordemKernelNegar      = 02h ;; Nega a execução de *QUALQUER* função compatível solicitada
-ordemKernelDebug      = 04h ;; Usada para depuração de funções compatíveis
+kernelExecuteDisabled   = 00h ;; Evidence that the call was not made by Hexagon
+kernelExecutePermission = 01h ;; This flag is supported by the root user (root)
+kernelExecuteDeny       = 02h ;; Denies execution of *ANY* requested supported function
+kernelExecuteDebug      = 04h ;; Used for debugging supported functions
 
-kernelExecute: dd 0 ;; Usado como chave de acesso para executar qualquer função privilegiada
+kernelExecute: dd 0 ;; Used as an access key to perform any privileged function

@@ -109,8 +109,8 @@ Hexagon.Syscall.Syscall.hexagonServices:
 
     dd Hexagon.Kernel.Kernel.Proc.lock                                 ;; 19
     dd Hexagon.Kernel.Kernel.Proc.unlock                               ;; 20
-    dd Hexagon.Kernel.Kernel.Usuarios.definirUsuario                   ;; 21
-    dd Hexagon.Kernel.Kernel.Usuarios.obterUsuario                     ;; 22
+    dd Hexagon.Kernel.Kernel.Users.setUser                             ;; 21
+    dd Hexagon.Kernel.Kernel.Users.getUser                             ;; 22
 
 ;; Hexagon services
 
