@@ -73,21 +73,21 @@
 
 use32
 
-;; Gerar número aleatório
+;; Generate random number
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; EAX - Máximo
+;; EAX - Maximum
 ;;
-;; Saída:
+;; Output:
 ;;
-;; EAX - Número gerado
+;; EAX - Generated number
 
-Hexagon.Libkern.Num.obterAleatorio:
+Hexagon.Libkern.Num.getRandomNumber:
 
     mov ecx, eax
 
-    mov eax, [.numeroAleatorio]
+    mov eax, [.randomNumber]
 
     push ecx
 
@@ -111,7 +111,7 @@ Hexagon.Libkern.Num.obterAleatorio:
 
     add eax, 15EA5h
 
-    mov [.numeroAleatorio], eax
+    mov [.randomNumber], eax
 
     mov ebx, 10000h
     mov edx, 0
@@ -123,39 +123,39 @@ Hexagon.Libkern.Num.obterAleatorio:
 
     div ebx
 
-    mov eax, edx ;; Resto da divisão
+    mov eax, edx ;; Rest of division
 
     ret
 
-.numeroAleatorio: dd 1
+.randomNumber: dd 1
 
 ;;************************************************************************************
 
-;; Alimentar o gerador de números aleatórios
+;; Feed the random number generator
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; EAX - Número
+;; EAX - Number
 
-Hexagon.Libkern.Num.alimentarAleatorios:
+Hexagon.Libkern.Num.feedRandomGenerator:
 
-    mov [Hexagon.Libkern.Num.obterAleatorio.numeroAleatorio], eax
+    mov [Hexagon.Libkern.Num.getRandomNumber.randomNumber], eax
 
     ret
 
 ;;************************************************************************************
 
-;; Realiza a conversão de BCD para binário
+;; Performs BCD to binary conversion
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; AL - Valor em BCD
+;; AL - Value in BCD
 ;;
-;; Saída:
+;; Output:
 ;;
-;; AL - Valor em binário
+;; AL - Value in binary
 
-Hexagon.Libkern.Num.BCDParaBinario:
+Hexagon.Libkern.Num.BCDtoBinary:
 
     push ebx
 
@@ -166,9 +166,9 @@ Hexagon.Libkern.Num.BCDParaBinario:
 
     mov bh, 10
 
-    mul bh ;; Multiplicar por 10
+    mul bh ;; Multiply by 10
 
-    add al, bl ;; Adicionar o produto a AL
+    add al, bl ;; Add the product to AL
 
     pop ebx
 

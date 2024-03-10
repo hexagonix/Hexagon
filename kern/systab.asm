@@ -115,8 +115,8 @@ Hexagon.Kern.Syscall.hexagonServices:
 ;; Hexagon services
 
     dd Hexagon.Kern.Uname.uname                                        ;; 23
-    dd Hexagon.Libkern.Num.obterAleatorio                           ;; 24
-    dd Hexagon.Libkern.Num.alimentarAleatorios                      ;; 25
+    dd Hexagon.Libkern.Num.getRandomNumber                           ;; 24
+    dd Hexagon.Libkern.Num.feedRandomGenerator                      ;; 25
     dd Hexagon.Arch.i386.Timer.Timer.sleep                             ;; 26
     dd Hexagon.Kern.Syscall.installInterruption                        ;; 27
 
