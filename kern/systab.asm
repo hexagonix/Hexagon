@@ -182,5 +182,5 @@ Hexagon.Kern.Syscall.hexagonServices:
 
 ;; Hexagon real-time clock service
 
-    dd Hexagon.Libkern.Clock.getDate                         ;; 67
-    dd Hexagon.Libkern.Clock.getTime                         ;; 68
+    dd Hexagon.Libkern.Clock.getDate                                   ;; 67
+    dd Hexagon.Libkern.Clock.getTime                                   ;; 68
