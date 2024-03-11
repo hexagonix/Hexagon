@@ -73,15 +73,15 @@
 
 use32
 
-;; Aqui temos um ponto de entrada com um stub que previne a execução da imagem do
-;; kernel, que é finalizada de forma graciosa
+;; Here we have an entry point with a stub that prevents the kernel image from running,
+;; which is terminated gracefully
 
 ;;************************************************************************************
 
-Hexagon.Libkern.HAPP.execucaoIndevida:
+Hexagon.Libkern.HAPP.denyExecution:
 
-    push 4 ;; Encerrar processo
+    push 4 ;; End process
 
     mov ebx, 00h
 
-    int 69h ;; Chamar Hexagon
+    int 69h ;; Call Hexagon

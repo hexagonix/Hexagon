@@ -75,31 +75,31 @@ use32
 
 ;;************************************************************************************
 
-;; Esquema de cores padrão do Hexagonix
-;; O esquema presente aqui é uma versão reduzida do encontrado em "lib/fasm/console.s",
-;; com os esquemas de cores necessários para a inicialização. As personalizações serão
-;; realizadas pelos utilitários
+;; Hexagonix default color scheme
+;; The scheme present here is a reduced version of the one found in "lib/fasm/console.s",
+;; with the necessary color schemes for initialization. Customizations will be carried out
+;; by the utilities
 
-;; Tema Blossom para Hexagon (apenas o esquema de cores necessário)
+;; Blossom Theme for Hexagon (only color scheme required)
 
 HEXAGONIX_BLOSSOM_CINZA   = 0x29282928
 HEXAGONIX_BLOSSOM_AMARELO = 0x00C7B898
 HEXAGONIX_BLOSSOM_AZUL    = 0x004682B4
 
-;; Tema clássico (descontinuado)
+;; Classic Theme (deprecated)
 
 HEXAGONIX_CLASSICO_PRETO  = 0x00000000
 HEXAGONIX_CLASSICO_BRANCO = 0xFFFFFFFF
 
 ;;************************************************************************************
 
-;; Aqui temos alguns macros úteis para o Hexagon
+;; Here we have some useful macros for Hexagon
 
-macro logHexagon mensagem, prioridade
+macro logHexagon message, priority
 {
 
-    mov esi, mensagem
-    mov ebx, prioridade
+    mov esi, message
+    mov ebx, priority
 
     call Hexagon.Kern.Dmesg.createMessage
 
@@ -116,9 +116,9 @@ macro kprint string
 
 ;;************************************************************************************
 
-;; Agora, função para codificação de data de build
+;; Now, function for encoding build date
 
-;; O código abaixo extrai e cria strings com informações sobre a build do Hexagon
+;; The code below extracts and creates strings with information about the Hexagon build
 
 __tempoatual   = %t
 __quadvalorano = (__tempoatual+31536000)/126230400

@@ -97,7 +97,7 @@ hexagonHeader:
 .architecture:  db 01h    ;; Architecture (i386 = 01h)
 .minVersion:    db 00h    ;; Minimum version of Hexagon (we don't care here)
 .minSubversion: db 00h    ;; Minimal subversion of Hexagon (we don't care here)
-.entryPoint:    dd Hexagon.Libkern.HAPP.execucaoIndevida ;; Entry point offset
+.entryPoint:    dd Hexagon.Libkern.HAPP.denyExecution ;; Entry point offset
 .execType:      db 01h    ;; This is an executable image
 .reserved0:     dd 0      ;; Reserved (Dword)
 .reserved1:     db 0      ;; Reserved (Byte)
