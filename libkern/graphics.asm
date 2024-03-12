@@ -75,26 +75,26 @@ use32
 
 ;;************************************************************************************
 
-;; Calcular deslocamento do pixel no buffer de vídeo
+;; Calculate pixel offset in video buffer
 ;;
-;; Entrada:
+;; Input:
 ;;
 ;; EAX - X
 ;; EBX - Y
 ;;
-;; Saída:
+;; Output:
 ;;
-;; ESI - Endereço do pixel
+;; ESI - Pixel address
 
-Hexagon.Libkern.Graficos.calcularDeslocamentoPixel:
+Hexagon.Libkern.Graphics.calculatePixelOffset:
 
     push eax ;; X
 
-    mov esi, dword[Hexagon.Console.Memory.addressLFB] ;; Ponteiro para a memória de vídeo
+    mov esi, dword[Hexagon.Console.Memory.addressLFB] ;; Pointer to video memory
 
     movzx eax, word[Hexagon.Console.bytesPerRow]
 
-    mul ebx ;; Y * bytes por linha
+    mul ebx ;; Y * bytes per row
 
     add esi, eax
 
@@ -102,23 +102,23 @@ Hexagon.Libkern.Graficos.calcularDeslocamentoPixel:
 
     movzx ebx, byte[Hexagon.Console.bytesPerPixel]
 
-    mul ebx ;; X * Bytes por pixel
+    mul ebx ;; X * bytes per pixel
 
-    add esi, eax ;; ESI é um ponteiro para a memória de vídeo
+    add esi, eax ;; ESI is a pointer to video memory
 
     ret
 
 ;;************************************************************************************
 
-;; Exibir caractere bitmap no modo gráfico
+;; Display bitmap character in graphics mode
 ;;
-;; Entrada:
+;; Input:
 ;;
-;; DL - Coluna
-;; DH - Linha
-;; AL - Caractere
+;; DL - Column
+;; DH - Line (row)
+;; AL - Character
 
-Hexagon.Libkern.Graficos.colocarCaractereBitmap:
+Hexagon.Libkern.Graphics.putCharacterBitmap:
 
     push edx
 
@@ -157,7 +157,7 @@ Hexagon.Libkern.Graficos.colocarCaractereBitmap:
 
     mul ebx
 
-    mov dword[.proximaLinha], eax
+    mov dword[.nextLine], eax
 
     movzx eax, word[.x]
 
@@ -165,11 +165,11 @@ Hexagon.Libkern.Graficos.colocarCaractereBitmap:
 
     movzx ebx, word[.y]
 
-    call Hexagon.Libkern.Graficos.calcularDeslocamentoPixel
+    call Hexagon.Libkern.Graphics.calculatePixelOffset
 
     mov ecx, Hexagon.Libkern.Fonts.height
 
-.colocarColuna:
+.putColumn:
 
     mov al, byte[edi]
 
@@ -179,22 +179,22 @@ Hexagon.Libkern.Graficos.colocarCaractereBitmap:
 
     mov ecx, Hexagon.Libkern.Fonts.width
 
-.colocarLinha:
+.putLine:
 
     bt ax, 7
-    jc .colocarPrimeiroPlano
+    jc .putInForeground
 
-.colocarPlanodeFundo:
+.putInBackground:
 
     mov edx, dword[Hexagon.Console.backgroundColor]
 
-    jmp .colocarLinha.proximo
+    jmp .next
 
-.colocarPrimeiroPlano:
+.putInForeground:
 
     mov edx, dword[Hexagon.Console.fontColor]
 
-.colocarLinha.proximo:
+.next:
 
     add esi, dword[Hexagon.Console.bytesPerPixel]
 
@@ -204,34 +204,34 @@ Hexagon.Libkern.Graficos.colocarCaractereBitmap:
 
     shl al, 1
 
-    loop .colocarLinha
+    loop .putLine
 
     pop ecx
 
     add esi, dword[Hexagon.Console.bytesPerRow]
-    sub esi, dword[.proximaLinha]
+    sub esi, dword[.nextLine]
 
-    loop .colocarColuna
+    loop .putColumn
 
-.fim:
+.end:
 
     ret
 
-.x:            dw 0
-.y:            dw 0
-.proximaLinha: dd 0
+.x:        dw 0
+.y:        dw 0
+.nextLine: dd 0
 
 ;;************************************************************************************
 
-;; Colocar um pixel na tela
+;; Put a pixel on the console
 ;;
-;; Entrada:
+;; Input:
 ;;
 ;; EAX - X
 ;; EBX - Y
-;; EDX - Cor em hexadecimal
+;; EDX - Color in hexadecimal
 
-Hexagon.Libkern.Graficos.colocarPixel:
+Hexagon.Libkern.Graphics.putPixel:
 
     push eax
     push edx
@@ -240,7 +240,7 @@ Hexagon.Libkern.Graficos.colocarPixel:
 
     push edx
 
-    call Hexagon.Libkern.Graficos.calcularDeslocamentoPixel ;; Obter deslocamento do pixel
+    call Hexagon.Libkern.Graphics.calculatePixelOffset ;; Get pixel offset
 
     pop edx
 
@@ -248,7 +248,7 @@ Hexagon.Libkern.Graficos.colocarPixel:
     shr edx, 8
     mov byte[gs:esi+2], dh
 
-.fim:
+.end:
 
     pop esi
     pop ebx
@@ -259,31 +259,31 @@ Hexagon.Libkern.Graficos.colocarPixel:
 
 ;;************************************************************************************
 
-Hexagon.Libkern.Graficos.desenharBlocoSyscall:
+Hexagon.Libkern.Graphics.drawBlockSyscall:
 
     sub esi, dword[Hexagon.Processes.PCB.processBaseMemory]
 
-;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+;; Correct address with segment base (physical address = address + segment base)
 
     add esi, 500h
 
     sub edi, dword[Hexagon.Processes.PCB.processBaseMemory]
 
-;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+;; Correct address with segment base (physical address = address + segment base)
 
     add edi, 500h
 
-    call Hexagon.Libkern.Graficos.desenharBloco
+    call Hexagon.Libkern.Graphics.drawBlock
 
     add esi, dword[Hexagon.Processes.PCB.processBaseMemory]
 
-;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+;; Correct address with segment base (physical address = address + segment base)
 
     sub esi, 500h
 
     add edi, dword[Hexagon.Processes.PCB.processBaseMemory]
 
-;; Corrigir endereço com a base do segmento (endereço físico = endereço + base do segmento)
+;; Correct address with segment base (physical address = address + segment base)
 
     sub edi, 500h
 
@@ -301,26 +301,26 @@ Hexagon.Libkern.Graficos.desenharBlocoSyscall:
 ;; EDI - Largura
 ;; EDX - Cor em hexadecimal
 
-Hexagon.Libkern.Graficos.desenharBloco:
+Hexagon.Libkern.Graphics.drawBlock:
 
     push eax
     push ebx
     push ecx
 
     cmp byte[Hexagon.Console.graphicMode], 1
-    jne .fim
+    jne .end
 
-    mov ecx, edi ;; Largura
+    mov ecx, edi ;; Width
 
 .y:
 
     push ecx
 
-    mov ecx, esi ;; Comprimento
+    mov ecx, esi ;; Length
 
 .x:
 
-    call Hexagon.Libkern.Graficos.colocarPixel
+    call Hexagon.Libkern.Graphics.putPixel
 
     inc eax
 
@@ -334,7 +334,7 @@ Hexagon.Libkern.Graficos.desenharBloco:
 
     loop .y
 
-.fim:
+.end:
 
     pop ecx
     pop ebx

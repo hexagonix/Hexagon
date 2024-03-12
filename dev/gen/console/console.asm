@@ -1192,7 +1192,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.printCharacterGraphicMode:
 
 .clearPreviousCursor:
 
-    call Hexagon.Libkern.Graficos.colocarPixel
+    call Hexagon.Libkern.Graphics.putPixel
 
     inc ebx
 
@@ -1234,7 +1234,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.printCharacterGraphicMode:
 
     push edx
 
-    call Hexagon.Libkern.Graficos.colocarCaractereBitmap
+    call Hexagon.Libkern.Graphics.putCharacterBitmap
 
     pop edx
 
@@ -1416,7 +1416,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.positionCursorGraphicMode:
 
 .clearPreviousCursor:
 
-    call Hexagon.Libkern.Graficos.colocarPixel
+    call Hexagon.Libkern.Graphics.putPixel
 
     inc ebx
 
@@ -1436,7 +1436,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.positionCursorGraphicMode:
 
 .drawCursor:
 
-    call Hexagon.Libkern.Graficos.colocarPixel
+    call Hexagon.Libkern.Graphics.putPixel
 
     inc ebx
 

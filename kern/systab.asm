@@ -115,8 +115,8 @@ Hexagon.Kern.Syscall.hexagonServices:
 ;; Hexagon services
 
     dd Hexagon.Kern.Uname.uname                                        ;; 23
-    dd Hexagon.Libkern.Num.getRandomNumber                           ;; 24
-    dd Hexagon.Libkern.Num.feedRandomGenerator                      ;; 25
+    dd Hexagon.Libkern.Num.getRandomNumber                             ;; 24
+    dd Hexagon.Libkern.Num.feedRandomGenerator                         ;; 25
     dd Hexagon.Arch.i386.Timer.Timer.sleep                             ;; 26
     dd Hexagon.Kern.Syscall.installInterruption                        ;; 27
 
@@ -132,8 +132,8 @@ Hexagon.Kern.Syscall.hexagonServices:
     dd Hexagon.Kernel.Dev.Gen.Console.Console.clearRow                 ;; 32
     dd Hexagon.Kernel.Dev.Gen.Console.Console.scrollConsole            ;; 33
     dd Hexagon.Kernel.Dev.Gen.Console.Console.positionCursor           ;; 34
-    dd Hexagon.Libkern.Graficos.colocarPixel                        ;; 35
-    dd Hexagon.Libkern.Graficos.desenharBlocoSyscall                ;; 36
+    dd Hexagon.Libkern.Graphics.putPixel                               ;; 35
+    dd Hexagon.Libkern.Graphics.drawBlockSyscall                       ;; 36
     dd Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter           ;; 37
     dd Hexagon.Kernel.Dev.Gen.Console.Console.setConsoleColor          ;; 38
     dd Hexagon.Kernel.Dev.Gen.Console.Console.getConsoleColor          ;; 39
