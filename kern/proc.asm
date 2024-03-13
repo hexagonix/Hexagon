@@ -421,12 +421,12 @@ Hexagon.Kern.Proc.exec:
 
     jc .missingImage
 
-    call Hexagon.Libkern.HAPP.verificarImagemHAPP
+    call Hexagon.Libkern.HAPP.checkHAPPImage
 
-    cmp byte[Hexagon.Imagem.Executavel.HAPP.incompatibleImage], 01h
+    cmp byte[Hexagon.Libkern.HAPP.imageHAPPHeader.incompatibleImage], 01h
     je .incompatibleImage
 
-    cmp byte[Hexagon.Imagem.Executavel.HAPP.incompatibleImage], 02h
+    cmp byte[Hexagon.Libkern.HAPP.imageHAPPHeader.incompatibleImage], 02h
     je .missingImage
 
     jmp Hexagon.Kern.Proc.addProcess
@@ -585,7 +585,7 @@ Hexagon.Kern.Proc.executeProcess:
 
     pushfd   ;; Flags
     push 30h ;; User environment code segment (process)
-    push dword [Hexagon.Imagem.Executavel.HAPP.entryHAPP] ;; Image entry point
+    push dword [Hexagon.Libkern.HAPP.imageHAPPHeader.entryHAPP] ;; Image entry point
 
     inc dword[Hexagon.Processes.PCB.processCount]
     inc dword[Hexagon.Processes.PCB.PID]
