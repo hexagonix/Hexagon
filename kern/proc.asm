@@ -382,7 +382,7 @@ Hexagon.Kern.Proc.exec:
 
     mov esi, edi
 
-    call Hexagon.Libkern.String.tamanhoString
+    call Hexagon.Libkern.String.stringSize
 
     mov ecx, eax
 
@@ -815,7 +815,7 @@ Hexagon.Kern.Proc.linkProcessStack:
 
     mov esi, [Hexagon.Processes.PCB.processName]
 
-    call Hexagon.Libkern.String.tamanhoString
+    call Hexagon.Libkern.String.stringSize
 
     mov ecx, eax
 
@@ -946,7 +946,7 @@ Hexagon.Kern.Proc.getProcessTable:
 
     mov esi, Hexagon.Heap.Temp
 
-    call Hexagon.Libkern.String.cortarString
+    call Hexagon.Libkern.String.trimString
 
     mov eax, dword[Hexagon.Processes.PCB.processCount]
 

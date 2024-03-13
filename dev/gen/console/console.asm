@@ -1476,7 +1476,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.printString:
 
 ;; Get string size
 
-    call Hexagon.Libkern.String.tamanhoString
+    call Hexagon.Libkern.String.stringSize
 
     mov ecx, eax
 

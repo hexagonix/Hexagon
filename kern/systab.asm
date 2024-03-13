@@ -159,17 +159,17 @@ Hexagon.Kern.Syscall.hexagonServices:
 
 ;; Hexagon data handling services
 
-    dd Hexagon.Libkern.String.compararPalavrasNaString              ;; 53
-    dd Hexagon.Libkern.String.removerCaractereNaString              ;; 54
-    dd Hexagon.Libkern.String.inserirCaractereNaString              ;; 55
-    dd Hexagon.Libkern.String.tamanhoString                         ;; 56
-    dd Hexagon.Libkern.String.compararString                        ;; 57
-    dd Hexagon.Libkern.String.stringParaMaiusculo                   ;; 58
-    dd Hexagon.Libkern.String.stringParaMinusculo                   ;; 59
-    dd Hexagon.Libkern.String.cortarString                          ;; 60
-    dd Hexagon.Libkern.String.encontrarCaractereNaString            ;; 61
-    dd Hexagon.Libkern.String.stringParaInteiro                     ;; 62
-    dd Hexagon.Libkern.String.paraString                            ;; 63
+    dd Hexagon.Libkern.String.compareWordsInString                     ;; 53
+    dd Hexagon.Libkern.String.removeCharacterInString                  ;; 54
+    dd Hexagon.Libkern.String.insertCharacterInString                  ;; 55
+    dd Hexagon.Libkern.String.stringSize                               ;; 56
+    dd Hexagon.Libkern.String.isEqual                                  ;; 57
+    dd Hexagon.Libkern.String.toUppercase                              ;; 58
+    dd Hexagon.Libkern.String.toLowercase                              ;; 59
+    dd Hexagon.Libkern.String.trimString                               ;; 60
+    dd Hexagon.Libkern.String.findCharacterInString                    ;; 61
+    dd Hexagon.Libkern.String.stringToInteger                          ;; 62
+    dd Hexagon.Libkern.String.integetToString                          ;; 63
 
 ;; Hexagon sound output services
 

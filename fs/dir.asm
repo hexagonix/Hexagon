@@ -120,7 +120,7 @@ Hexagon.Kernel.FS.Dir.setCurrentDirectory:
 
 ;; Now the given path length will be validated to check the requirement
 
-    call Hexagon.Libkern.String.tamanhoString ;; Hexagon function to check the size of a string
+    call Hexagon.Libkern.String.stringSize ;; Hexagon function to check the size of a string
 
     cmp eax, 2
     jg .continue ;; Greater than 2 (Character plus null)
@@ -143,7 +143,7 @@ Hexagon.Kernel.FS.Dir.setCurrentDirectory:
 
     mov esi, Hexagon.VFS.Directory.currentDirectory ;; Store this data
 
-    call Hexagon.Libkern.String.tamanhoString
+    call Hexagon.Libkern.String.stringSize
 
     mov ecx, eax
 
@@ -161,7 +161,7 @@ Hexagon.Kernel.FS.Dir.setCurrentDirectory:
 
     pop esi
 
-    call Hexagon.Libkern.String.tamanhoString
+    call Hexagon.Libkern.String.stringSize
 
     mov ecx, eax
 
@@ -223,7 +223,7 @@ Hexagon.Kernel.FS.Dir.setMountPoint:
 
 ;; Now the given path length will be validated to check the requirement
 
-    call Hexagon.Libkern.String.tamanhoString ;; Hexagon function to check the size of a string
+    call Hexagon.Libkern.String.stringSize ;; Hexagon function to check the size of a string
 
     cmp eax, 2
     jg .continue ;; Greater than 2 (Character plus null)
@@ -245,7 +245,7 @@ Hexagon.Kernel.FS.Dir.setMountPoint:
 
     pop esi
 
-    call Hexagon.Libkern.String.tamanhoString
+    call Hexagon.Libkern.String.stringSize
 
     mov ecx, eax
 

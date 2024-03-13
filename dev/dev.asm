@@ -573,75 +573,75 @@ Hexagon.Kernel.Dev.Dev.open:
 Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 
     mov edi, Hexagon.Dev.Devices.hd0
-    call Hexagon.Libkern.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compareWordsInString
     jc .hd0
 
     mov edi, Hexagon.Dev.Devices.hd1
-    call Hexagon.Libkern.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compareWordsInString
     jc .hd1
 
     mov edi, Hexagon.Dev.Devices.hd2
-    call Hexagon.Libkern.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compareWordsInString
     jc .hd2
 
     mov edi, Hexagon.Dev.Devices.hd3
-    call Hexagon.Libkern.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compareWordsInString
     jc .hd3
 
     mov edi, Hexagon.Dev.Devices.com1
-    call Hexagon.Libkern.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compareWordsInString
     jc .com1
 
     mov edi, Hexagon.Dev.Devices.com2
-    call Hexagon.Libkern.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compareWordsInString
     jc .com2
 
     mov edi, Hexagon.Dev.Devices.com3
-    call Hexagon.Libkern.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compareWordsInString
     jc .com3
 
     mov edi, Hexagon.Dev.Devices.com4
-    call Hexagon.Libkern.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compareWordsInString
     jc .com4
 
     mov edi, Hexagon.Dev.Devices.lpt0
-    call Hexagon.Libkern.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compareWordsInString
     jc .lpt0
 
     mov edi, Hexagon.Dev.Devices.lpt1
-    call Hexagon.Libkern.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compareWordsInString
     jc .lpt1
 
     mov edi, Hexagon.Dev.Devices.lpt2
-    call Hexagon.Libkern.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compareWordsInString
     jc .lpt2
 
     mov edi, Hexagon.Dev.Devices.tty0
-    call Hexagon.Libkern.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compareWordsInString
     jc .tty0
 
     mov edi, Hexagon.Dev.Devices.tty1
-    call Hexagon.Libkern.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compareWordsInString
     jc .tty1
 
     mov edi, Hexagon.Dev.Devices.tty2
-    call Hexagon.Libkern.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compareWordsInString
     jc .tty2
 
     mov edi,Hexagon.Dev.Devices.au0
-    call Hexagon.Libkern.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compareWordsInString
     jc .au0
 
     mov edi, Hexagon.Dev.Devices.mouse0
-    call Hexagon.Libkern.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compareWordsInString
     jc .mouse0
 
     mov edi, Hexagon.Dev.Devices.kbd0
-    call Hexagon.Libkern.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compareWordsInString
     jc .kbd0
 
     mov edi, Hexagon.Dev.Devices.proc0
-    call Hexagon.Libkern.String.compararPalavrasNaString
+    call Hexagon.Libkern.String.compareWordsInString
     jc .proc0
 
 ;; This name may refer to a common file!

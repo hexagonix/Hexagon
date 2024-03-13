@@ -156,7 +156,7 @@ Hexagon.Kern.Dmesg.dateToLog:
 
     mov al, [Hexagon.Arch.i386.CMOS.day]
 
-    call Hexagon.Libkern.String.BCDParaASCII
+    call Hexagon.Libkern.String.BCDToASCII
 
     push eax
 
@@ -174,7 +174,7 @@ Hexagon.Kern.Dmesg.dateToLog:
 
     mov al, [Hexagon.Arch.i386.CMOS.month]
 
-    call Hexagon.Libkern.String.BCDParaASCII
+    call Hexagon.Libkern.String.BCDToASCII
 
     push eax
 
@@ -192,7 +192,7 @@ Hexagon.Kern.Dmesg.dateToLog:
 
     mov al, [Hexagon.Arch.i386.CMOS.century]
 
-    call Hexagon.Libkern.String.BCDParaASCII
+    call Hexagon.Libkern.String.BCDToASCII
 
     push eax
 
@@ -206,7 +206,7 @@ Hexagon.Kern.Dmesg.dateToLog:
 
     mov al, [Hexagon.Arch.i386.CMOS.year]
 
-    call Hexagon.Libkern.String.BCDParaASCII
+    call Hexagon.Libkern.String.BCDToASCII
 
     push eax
 
@@ -240,7 +240,7 @@ Hexagon.Kern.Dmesg.hourToLog:
 
     mov al, [Hexagon.Arch.i386.CMOS.hour]
 
-    call Hexagon.Libkern.String.BCDParaASCII
+    call Hexagon.Libkern.String.BCDToASCII
 
     push eax
 
@@ -258,7 +258,7 @@ Hexagon.Kern.Dmesg.hourToLog:
 
     mov al, [Hexagon.Arch.i386.CMOS.minute]
 
-    call Hexagon.Libkern.String.BCDParaASCII
+    call Hexagon.Libkern.String.BCDToASCII
 
     push eax
 
@@ -276,7 +276,7 @@ Hexagon.Kern.Dmesg.hourToLog:
 
     mov al, [Hexagon.Arch.i386.CMOS.second]
 
-    call Hexagon.Libkern.String.BCDParaASCII
+    call Hexagon.Libkern.String.BCDToASCII
 
     push eax
 
@@ -351,7 +351,7 @@ Hexagon.Kern.Dmesg.createMessage:
 
     movzx eax, word[Hexagon.Processes.PCB.PID] ;; Get PID
 
-    call Hexagon.Libkern.String.paraString ;; Transform into a string
+    call Hexagon.Libkern.String.integetToString ;; Transform into a string
 
     call Hexagon.Kern.Dmesg.messageToSerial
 
@@ -406,7 +406,7 @@ Hexagon.Kern.Dmesg.createMessage:
 
     movzx eax, word[Hexagon.Processes.PCB.PID] ;; Get PID
 
-    call Hexagon.Libkern.String.paraString ;; Transform into a string
+    call Hexagon.Libkern.String.integetToString ;; Transform into a string
 
     call Hexagon.Kern.Dmesg.messageToSerial
 
