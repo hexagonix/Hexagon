@@ -89,7 +89,7 @@ Hexagon.Version:
 
 .versionNumber     = 1 ;; Hexagon major version number
 .subversionNumber  = 0 ;; Hexagon minor version number
-.revision          = 1 ;; Add revision character (if necessary, between quotation marks)
+.revision          = 0 ;; Add revision character (if necessary, between quotation marks)
 
 .kernelName: ;; Name given to userspace
 db "Hexagon", 0
