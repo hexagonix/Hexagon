@@ -73,7 +73,7 @@
 
 use32
 
-Hexagon.Arch.Gen.Memory.kernelReservedMemory  = 3145728
+Hexagon.Arch.Gen.Memory.kernelReservedMemory  = 3545728
 Hexagon.Arch.Gen.Memory.processReservedMemory = 16777216
 
 struc Hexagon.Arch.Gen.Memory initialAddress
