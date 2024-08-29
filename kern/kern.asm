@@ -349,7 +349,7 @@ Hexagon.userMode:
 Hexagon.Heap: ;; Kernel heap
 
 Hexagon.Heap.VBE        = Hexagon.Heap            + 0           ;; Video control block
-Hexagon.Heap.DiskCache  = Hexagon.Heap.VBE        + 80000       ;; Disk cache
+Hexagon.Heap.DiskCache  = Hexagon.Heap.VBE        + 90000       ;; Disk cache
 Hexagon.Heap.PCBs       = Hexagon.Heap.DiskCache  + 200000      ;; Process control block
 Hexagon.Heap.ProcTab    = Hexagon.Heap.PCBs       + 5000        ;; Process table
 Hexagon.Heap.ArgProc    = Hexagon.Heap.ProcTab    + 5000 + 500h ;; Arguments of a process

@@ -1547,8 +1547,18 @@ Hexagon.Kernel.FS.FAT16.initVolumeFAT16B:
 
     call Hexagon.Kernel.Dev.i386.Disk.Disk.readBPB
 
+    jc .error
+
     mov esi, dword[Hexagon.Memory.addressBPB]
 
     call Hexagon.Kernel.FS.FAT16.getFilesystemInfoFAT16B
+
+    clc
+
+    ret
+
+.error:
+
+    stc
 
     ret

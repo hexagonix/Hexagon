@@ -260,19 +260,50 @@ Hexagon.Kernel.Dev.i386.Disk.Disk.readMBR:
 ;;
 ;; Output:
 ;;
-;; Nothing, load directly at 0000:7C00h
+;; Nothing, load directly at kernel memory
 
 Hexagon.Kernel.Dev.i386.Disk.Disk.readBPB:
 
     push ds ;; Kernel data segment
     pop es
 
-;; First we must load the MBR into memory
+;; First, load MBR into disk cache in kernel memory
 
-    mov eax, 01h
-    mov esi, 00h
-    mov cx, 2000h ;; Segment
-    mov edi, 0x7C00 ;; Offset
+    mov eax, 01h ;; Read one sector
+    mov esi, 00h ;; Start LBA sector
+    mov cx, 50h  ;; Segment
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
+    mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk] ;; Current volume
+
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors
+
+    jc .error
+
+;; Check to MBR signatue (55AAh). If invalid, we don't load the right sector
+
+    mov edi, Hexagon.Heap.DiskCache + 500h + 20000
+
+    cmp word [es:edi + 0x1FE], 0xAA55
+    jne .error
+
+;; Calculates the LBA of the boot sector of the first partition (MBR + 1 sector)
+
+    mov bx, [es:edi + 0x1BE + 8] ;; Offset 0x1BE is the start of the partition table, byte 8-11 is the first 4 bytes of the partition LBA
+    mov si, [es:edi + 0x1BE + 10] ;; LBA bytes continues
+    add bx, 1 ;; Switch to the first sector of the partition (LBA + 1)
+
+;; Loads the BPB of the first partition directly into kernel memory
+
+    mov eax, 01h ;; Read one sector
+    mov cx, 2000h  ;; Segment
+    mov edi, dword[Hexagon.Memory.addressBPB]
+    mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
+
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors
+
+    mov eax, 01h ;; Read one sector
+    mov cx, 50h  ;; Segment
+    mov edi, dword[Hexagon.Memory.addressBPB]
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
 
     call Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors
@@ -288,6 +319,7 @@ Hexagon.Kernel.Dev.i386.Disk.Disk.readBPB:
 .end:
 
     ret
+
 
 ;;************************************************************************************
 
