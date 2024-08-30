@@ -1303,21 +1303,6 @@ Hexagon.Kernel.FS.FAT16.getFilesystemInfoFAT16B:
 
     mov byte[Hexagon.VFS.Control.volumeSerial+4], 0
 
-;; Get the label of the volume used
-
-    mov eax, dword[es:esi+40] ;; Volume label
-    mov dword[Hexagon.VFS.Control.volumeLabel], eax
-
-    mov eax, dword[es:esi+44] ;; Volume label
-    mov dword[Hexagon.VFS.Control.volumeLabel+4], eax
-
-    mov eax, dword[es:esi+48] ;; Volume label
-    mov dword[Hexagon.VFS.Control.volumeLabel+8], eax
-
-;; Now we must finish the volume label string
-
-    mov byte[Hexagon.VFS.Control.volumeLabel+11], 0
-
 ;; Calculate root directory size
 ;;
 ;; Formula:
@@ -1392,6 +1377,29 @@ Hexagon.Kernel.FS.FAT16.getFilesystemInfoFAT16B:
     mul ebx ;; AX = AX * BX
 
     mov dword[Hexagon.VFS.FAT16B.clusterSize], eax
+
+    ret
+
+;;************************************************************************************
+
+Hexagon.Kernel.FS.FAT16.getVolumeLabelFAT16B:
+
+    mov ebx, dword[Hexagon.Dev.Gen.Disk.Control.DiskGeometry]
+
+;; Get the label of the volume used
+
+    mov eax, dword[ebx+43] ;; Volume label
+    mov dword[Hexagon.VFS.Control.volumeLabel], eax
+
+    mov eax, dword[ebx+47] ;; Volume label
+    mov dword[Hexagon.VFS.Control.volumeLabel+4], eax
+
+    mov eax, dword[ebx+51] ;; Volume label
+    mov dword[Hexagon.VFS.Control.volumeLabel+8], eax
+
+;; Now we must finish the volume label string
+
+    mov byte[Hexagon.VFS.Control.volumeLabel+11], 0
 
     ret
 
@@ -1553,12 +1561,16 @@ Hexagon.Kernel.FS.FAT16.initVolumeFAT16B:
 
     call Hexagon.Kernel.FS.FAT16.getFilesystemInfoFAT16B
 
+    call Hexagon.Kernel.FS.FAT16.getVolumeLabelFAT16B
+
     clc
 
-    ret
+    jmp .end
 
 .error:
 
     stc
+
+.end:
 
     ret

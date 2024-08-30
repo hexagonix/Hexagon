@@ -185,8 +185,9 @@ struc Hexagon.Dev.Gen.Disk.HardDisk
 struc Hexagon.Dev.Gen.Disk.Control
 {
 
-.currentDisk: db 0
-.bootDisk:    db 0
+.currentDisk:  db 0
+.bootDisk:     db 0
+.DiskGeometry: dd 0 ;; BIOS Parameter Block
 
 }
 
@@ -272,7 +273,7 @@ Hexagon.Kernel.Dev.i386.Disk.Disk.readBPB:
     mov eax, 01h ;; Read one sector
     mov esi, 00h ;; Start LBA sector
     mov cx, 50h  ;; Segment
-    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
+    mov edi, Hexagon.Heap.DiskCache ;; Offset
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk] ;; Current volume
 
     call Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors
@@ -281,38 +282,33 @@ Hexagon.Kernel.Dev.i386.Disk.Disk.readBPB:
 
 ;; Check to MBR signatue (55AAh). If invalid, we don't load the right sector
 
-    mov edi, Hexagon.Heap.DiskCache + 500h + 20000
+    mov edi, Hexagon.Heap.DiskCache + 500h
 
-    cmp word [es:edi + 0x1FE], 0xAA55
+    cmp word [es:edi+0x1FE], 0xAA55
     jne .error
 
 ;; Calculates the LBA of the boot sector of the first partition (MBR + 1 sector)
 
-    mov bx, [es:edi + 0x1BE + 8] ;; Offset 0x1BE is the start of the partition table, byte 8-11 is the first 4 bytes of the partition LBA
-    mov si, [es:edi + 0x1BE + 10] ;; LBA bytes continues
-    add bx, 1 ;; Switch to the first sector of the partition (LBA + 1)
+    mov esi, [es:edi+0x1BE+08h] ;; LBA bytes continues
 
 ;; Loads the BPB of the first partition directly into kernel memory
 
     mov eax, 01h ;; Read one sector
-    mov cx, 2000h  ;; Segment
-    mov edi, dword[Hexagon.Memory.addressBPB]
-    mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
-
-    call Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors
-
-    mov eax, 01h ;; Read one sector
     mov cx, 50h  ;; Segment
-    mov edi, dword[Hexagon.Memory.addressBPB]
+    mov edi, Hexagon.Heap.DiskGeometry
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
 
     call Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors
+
+    mov dword[Hexagon.Dev.Gen.Disk.Control.DiskGeometry], Hexagon.Heap.DiskGeometry
 
     jc .error
 
     jmp .end
 
 .error:
+
+    jmp $
 
     stc
 

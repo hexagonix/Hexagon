@@ -87,8 +87,10 @@ Hexagon.VFS.FS:
 Hexagon.VFS.Control:
 
 .filesystemType: db 0 ;; Stores which filesystem is present on the volume
-.volumeLabel:    db 0
-.volumeSerial:   db 0
+.volumeLabel:
+times 12 db 0
+.volumeSerial:
+times 8 db 0
 
 ;; Structure with common variables and constants for FAT-type systems
 ;; Compatible with FAT12, FAT16 and FAT32. Must be instantiated in each application
@@ -493,6 +495,9 @@ Hexagon.Kernel.FS.VFS.getVolume:
     mov dl, [Hexagon.Dev.DeviceClasses.block] ;; Device class
 
     call Hexagon.Kernel.Dev.Dev.convertDeviceToDeviceName
+
+    xor eax, eax
+    xor edi, edi
 
     mov edi, Hexagon.VFS.Control.volumeLabel
     mov ah, byte[Hexagon.VFS.Control.filesystemType]
