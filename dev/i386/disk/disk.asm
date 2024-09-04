@@ -187,7 +187,7 @@ struc Hexagon.Dev.Gen.Disk.Control
 
 .currentDisk:  db 0
 .bootDisk:     db 0
-.DiskGeometry: dd 0 ;; BIOS Parameter Block
+.diskGeometry: dd 0 ;; BIOS Parameter Block
 
 }
 
@@ -300,7 +300,7 @@ Hexagon.Kernel.Dev.i386.Disk.Disk.readBPB:
 
     call Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors
 
-    mov dword[Hexagon.Dev.Gen.Disk.Control.DiskGeometry], Hexagon.Heap.DiskGeometry
+    mov dword[Hexagon.Dev.Gen.Disk.Control.diskGeometry], Hexagon.Heap.DiskGeometry
 
     jc .error
 

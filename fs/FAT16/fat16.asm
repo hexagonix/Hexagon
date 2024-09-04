@@ -1384,7 +1384,7 @@ Hexagon.Kernel.FS.FAT16.getFilesystemInfoFAT16B:
 
 Hexagon.Kernel.FS.FAT16.getVolumeLabelFAT16B:
 
-    mov ebx, dword[Hexagon.Dev.Gen.Disk.Control.DiskGeometry]
+    mov ebx, dword[Hexagon.Dev.Gen.Disk.Control.diskGeometry]
 
 ;; Get the label of the volume used
 
