@@ -226,11 +226,11 @@ end virtual
 
 Hexagon.Libkern.HAPP.checkHAPPImage:
 
-;; Let's save the filename for the function that called
+;; Let's save the filename
 
     push esi
 
-;; Does the file exist on the volume? We need the size data
+;; Does the file exist on the volume? We need the size of the file data
 
     call Hexagon.Kernel.FS.VFS.fileExists
 
@@ -238,14 +238,13 @@ Hexagon.Libkern.HAPP.checkHAPPImage:
 
     mov edi, Hexagon.Heap.Temp + 1000 ;; Use kernel heap
 
-;; Let's upload the image to start the analysis
+;; Let's load the image to analyze the image header
 
     call Hexagon.Kernel.FS.VFS.openFile
 
     jc .imageNotFound
 
 ;; Let's start checking the executable header of the loaded image
-;; Okay, now we must start analyzing the image
 
     mov edi, Hexagon.Heap.Temp + 1000 ;; Use kernel heap
 
@@ -263,7 +262,7 @@ Hexagon.Libkern.HAPP.checkHAPPImage:
     cmp byte[edi+3], "P" ;; P of HAPP
     jne .invalidHeader
 
-;; If we got this far, we have the header in the file, we must check the rest of the fields,
+;; If we got this far, we have the header in the file. We must check the rest of the fields,
 ;; such as the minimum kernel versions required for execution, as well as the architecture
 
 ;; Let's check if the image architecture is the same as Hexagon
@@ -293,9 +292,8 @@ Hexagon.Libkern.HAPP.checkHAPPImage:
     mov ah, byte[edi+6]
     mov byte[Hexagon.Libkern.HAPP.imageHAPPHeader.minSubversion], ah
 
-;; Now let's get the entry point.
-;; Hexagon no longer needs to know the exact entry point of the image, it is indicated
-;; in the HAPP header.
+;; Now let's get the entry point. Hexagon no longer needs to know the exact entry point
+;; of the image, it is indicated in the HAPP header.
 ;; Now, the order of the code no longer matters, Hexagon will find the relative offset
 ;; of the image, if it is declared in the header.
 
