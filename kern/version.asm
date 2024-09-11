@@ -83,24 +83,24 @@ use32
 
 Hexagon.Arch.support = 1 ;; Architecture of this image
 
-Hexagon.Version.definition equ "1.2.3-CURRENT"
+Hexagon.Version.definition equ "1.2.4-CURRENT"
 
 Hexagon.Version:
 
 .versionNumber     = 1 ;; Hexagon major version number
 .subversionNumber  = 2 ;; Hexagon minor version number
-.revision          = 3 ;; Add revision character (if necessary, between quotation marks)
+.revision          = 4 ;; Add revision character (if necessary, between quotation marks)
 
 .kernelName: ;; Name given to userspace
 db "Hexagon", 0
 .kernelBuild: ;; Current version build information
-db __stringdia, "/", __stringmes, "/", __stringano, " "
-db __stringhora, ":", __stringminuto, ":", __stringsegundo, " GMT", 0
+db __stringDay, "/", __stringMonth, "/", __stringYear, " "
+db __stringHour, ":", __stringMinutes, ":", __stringSeconds, " GMT", 0
 
 Hexagon.Info:
 
 .aboutHexagon:
 db 10, 10
 db "Hexagon kernel version ", Hexagon.Version.definition, 10
-db "Copyright (C) 2015-", __stringano, " Felipe Miguel Nery Lunkes", 10
+db "Copyright (C) 2015-", __stringYear, " Felipe Miguel Nery Lunkes", 10
 db "All rights reserved.", 0

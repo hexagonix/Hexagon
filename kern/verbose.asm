@@ -87,7 +87,7 @@ Hexagon.Verbose:
 
 .Hexagon:
 db "Welcome to Hexagon", 10
-db "Copyright (C) 2015-", __stringano, " Felipe Miguel Nery Lunkes", 10
+db "Copyright (C) 2015-", __stringYear, " Felipe Miguel Nery Lunkes", 10
 db "All rights reserved.", 10, 10, 0
 .version:
 db "Hexagon kernel version: ", Hexagon.Version.definition, 0
