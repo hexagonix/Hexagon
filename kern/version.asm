@@ -83,13 +83,13 @@ use32
 
 Hexagon.Arch.support = 1 ;; Architecture of this image
 
-Hexagon.Version.definition equ "1.2.4-CURRENT"
+Hexagon.Version.definition equ "1.2.5-CURRENT"
 
 Hexagon.Version:
 
 .versionNumber     = 1 ;; Hexagon major version number
 .subversionNumber  = 2 ;; Hexagon minor version number
-.revision          = 4 ;; Add revision character (if necessary, between quotation marks)
+.revision          = 5 ;; Add revision character (if necessary, between quotation marks)
 
 .kernelName: ;; Name given to userspace
 db "Hexagon", 0

@@ -115,7 +115,7 @@ use32
 
 ;;************************************************************************************
 
-struc Hexagon.Gerenciamento.Tasks
+struc Hexagon.Processes.Tasks
 {
 
 .emptyProcess: ;; Contents of an empty process
@@ -125,7 +125,7 @@ times 13 db ' '
 
 ;;************************************************************************************
 
-Hexagon.Processos Hexagon.Gerenciamento.Tasks
+Hexagon.Processes Hexagon.Processes.Tasks
 
 ;;************************************************************************************
 ;;
@@ -903,7 +903,7 @@ Hexagon.Kern.Proc.unlinkProcessStack:
 
     push edi
 
-    mov esi, Hexagon.Processos.emptyProcess
+    mov esi, Hexagon.Processes.emptyProcess
 
     mov eax, 13
 
@@ -911,7 +911,7 @@ Hexagon.Kern.Proc.unlinkProcessStack:
 
 ;; Copy process name
 
-    mov esi, Hexagon.Processos.emptyProcess
+    mov esi, Hexagon.Processes.emptyProcess
 
     pop edi
 
