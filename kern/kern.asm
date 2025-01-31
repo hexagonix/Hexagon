@@ -133,7 +133,7 @@ include "dev/dev.asm"                   ;; Hardware management and abstraction f
 
 include "kern/proc.asm"                 ;; Functions for handling processes
 include "libkern/HAPP.asm"              ;; Functions for HAPP image processing
-include "kern/init.asm"                 ;; Function to start user mode
+include "kern/init.asm"                 ;; Functions to start user mode and first process
 
 ;; Filesystems supported by Hexagon
 
@@ -164,7 +164,7 @@ include "kern/parameters.asm"           ;; Parameter analysis and processing cod
 
 ;;************************************************************************************
 
-;; Hexagon Entry Point - Kernel Boot
+;; Hexagon Entry Point
 
 ;; Here the initial configuration of the kernel environment will be carried out
 
@@ -201,13 +201,13 @@ Hexagon.Autoconfig:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.setupConsole ;; Configures default video resolution and settings
 
-    call Hexagon.Kern.Dmesg.startLog ;; Start Hexagon component report
+    call Hexagon.Kern.Dmesg.startLog ;; Start Hexagon report
 
 ;;************************************************************************************
 
 ;; This is where the warning messages start when Hexagon starts up
 
-    call Hexagon.Kernel.Dev.Gen.COM.Serial.setupSerialPort ;; Correctly start the serial interface
+    call Hexagon.Kernel.Dev.Gen.COM.Serial.setupSerialPort ;; Correctly starts the serial interface
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.clearConsole
 
@@ -318,13 +318,13 @@ Hexagon.Autoconfig:
 
     call Hexagon.Kernel.FS.Dir.setMountPoint
 
-    call Hexagon.Kernel.FS.VFS.mountVolume ;; Mounts the default volume used for booting
+    call Hexagon.Kernel.FS.VFS.mountVolume ;; Mount the default volume used for booting
 
     logHexagon Hexagon.Verbose.mountSuccess, Hexagon.Dmesg.Priorities.p5
 
 ;;************************************************************************************
 
-    call Hexagon.Kern.Services.installInterruptions ;; Installs Hexagon interrupt handlers
+    call Hexagon.Kern.Services.installInterruptions ;; Install Hexagon interrupt handlers
 
 ;; Firstly, the user must be prevented from killing processes with a special key,
 ;; preventing any relevant process, such as login, from being terminated prematurely
@@ -353,6 +353,6 @@ Hexagon.Heap.VBE          = Hexagon.Heap.DiskGeometry + 512         ;; Video con
 Hexagon.Heap.DiskCache    = Hexagon.Heap.VBE          + 90000       ;; Disk cache
 Hexagon.Heap.PCBs         = Hexagon.Heap.DiskCache    + 200000      ;; Process control block
 Hexagon.Heap.ProcTab      = Hexagon.Heap.PCBs         + 5000        ;; Process table
-Hexagon.Heap.ArgProc      = Hexagon.Heap.ProcTab      + 5000 + 500h ;; Arguments of a process
+Hexagon.Heap.ArgProc      = Hexagon.Heap.ProcTab      + 5000 + 500h ;; Arguments to process
 Hexagon.Heap.Temp         = Hexagon.Heap.ArgProc      + 2000        ;; Temporary kernel data
 
