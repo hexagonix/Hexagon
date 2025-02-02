@@ -184,6 +184,10 @@ Hexagon.Kern.Users.codeUser:
 
 ;;************************************************************************************
 
+Hexagon.Kern.Users.getUserGroup:
+
+;;************************************************************************************
+
 Hexagon.Kern.Users.validateUser:
 
 
@@ -194,7 +198,7 @@ Hexagon.Kern.Users.getUserPermissions:
     mov eax, [Hexagon.Users.userId]
 
     cmp eax, Hexagon.Users.ID.root
-    je .usuarioRaiz
+    je .rootUser
 
     cmp eax, Hexagon.Users.ID.supervisor
     je .supervisor
@@ -203,7 +207,7 @@ Hexagon.Kern.Users.getUserPermissions:
 
     ret
 
-.usuarioRaiz:
+.rootUser:
 
     mov eax, Hexagon.Users.Groups.root
 
@@ -233,7 +237,8 @@ Hexagon.Kern.Users.getUserPermissions:
 ;; What Hexagon will validate are the ids, where the common user id may vary, but always
 ;; starting with the number 555 and ending with 699, at most.
 
-Hexagon.Users.userId: dd 0 ;; Will store the id of the currently logged in user
+Hexagon.Users.userId:  dd 0 ;; Will store the id of the currently logged in user
+Hexagon.Users.groupId: dd 0 ;; Will store the group id of the currently logged in user
 
 Hexagon.Users.username: ;; Will store the name of the currently logged in user
 times 32 db 0
