@@ -1717,7 +1717,8 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
 
 ;; If found, mark the directory as available
 
-    mov edx, 1
+    mov edx, 01h
+    
     jmp .directoryFoundCheck
 
 .nextEntry:
@@ -1728,7 +1729,7 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
 
 ;; If not found, mark as not found
 
-    mov edx, 0
+    mov edx, 00h
 
     jmp .changeDirectoryError
 
@@ -1736,7 +1737,7 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
 
 ;; If EDX != 1, error while founding the directory
 
-    cmp edx, 1
+    cmp edx, 01h
     jne .changeDirectoryError
 
 .directoryFound:
