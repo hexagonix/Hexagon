@@ -1651,7 +1651,7 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
     mov al, [ebx]
 
     cmp al, '.'
-    jne .convertName
+    jne .convertNameToFAT16Entry
 
     inc ebx
 
@@ -1660,7 +1660,13 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
     cmp al, '.'
     jne .singleDot
 
+.goToPreviousDirectory:
+
+;; If we reach here, change to previous directory ("..")
+;; If already on root directory, return
+
     mov eax, dword[Hexagon.VFS.FAT16B.currentDirLBA]
+
     cmp eax, dword[Hexagon.VFS.FAT16B.rootDir]
     je .alreadyAtRoot
 
@@ -1672,13 +1678,7 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
 
     ret
 
-.singleDot:
-
-    clc
-
-    ret
-
-.convertName:
+.convertNameToFAT16Entry:
 
     mov [.directoryName], esi
 
@@ -1706,7 +1706,7 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
 
     mov esi, [.directoryName]
 
-    call .compareNames
+    call Hexagon.Kernel.FS.FAT16.compareNamesInRootDirectory
 
     jc .nextEntry
 
@@ -1751,6 +1751,8 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
     pop esi
     pop edi
 
+    jc .changeDirectoryError
+
     mov esi, edi
 
     movzx eax, word[esi + 26] ;; Cluster low
@@ -1772,6 +1774,7 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
     movzx ebx, byte[Hexagon.VFS.FAT16B.sectorsPerCluster]
 
     xor edx, edx
+
     mul ebx ;; EAX = cluster offset in sectors
 
     add eax, [Hexagon.VFS.FAT16B.dataArea]  ;; Add the base of the data area
@@ -1779,6 +1782,12 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
 .updateCurrentDir:
 
     mov dword[Hexagon.VFS.FAT16B.currentDirLBA], eax
+
+    clc
+
+    ret
+
+.singleDot:
 
     clc
 
@@ -1796,7 +1805,14 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
 
     ret
 
-.compareNames:
+.directoryName: dd 0
+
+;;************************************************************************************
+
+;; Compare FAT16 entry with directory name (in FAT16 format) and determine if
+;; are equal or not
+
+Hexagon.Kernel.FS.FAT16.compareNamesInRootDirectory:
 
     push ecx
     push esi
@@ -1809,8 +1825,8 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
     mov al, [edi]
 
     cmp al, [esi]
-
     jne .notEqual
+
     inc edi
     inc esi
 
@@ -1831,9 +1847,8 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
     pop ecx
 
     stc
-    ret
 
-.directoryName: dd 0
+    ret
 
 ;;************************************************************************************
 
@@ -1850,13 +1865,21 @@ Hexagon.Kernel.FS.FAT16.pushDirectory:
 
     mov edi, directoryStack ;; Load stack
 
-    lea edi, [edi + ecx*4] ;; Get position from stack
+    lea edi, [edi + ecx * 4] ;; Get position from stack
 
     mov [edi], eax ;; Store directory address in stack
 
+    mov [Hexagon.VFS.FAT16B.prevDirLBA], eax
+
     inc dword[ebx] ;; Increment counter
 
+    clc
+
+    ret
+
 .stackFull:
+
+    stc
 
     ret
 
@@ -1877,10 +1900,15 @@ Hexagon.Kernel.FS.FAT16.popDirectory:
 
     mov edi, directoryStack ;; Load stack
 
-    lea edi, [edi + ecx*4] ;; Go to position on the top of the stack
+    lea edi, [edi + ecx * 4] ;; Go to position on the top of the stack
+
+    mov eax, [Hexagon.VFS.FAT16B.currentDirLBA]
+    mov [Hexagon.VFS.FAT16B.prevDirLBA], eax
 
     mov eax, [edi] ;; Get previous directory entry
     mov [Hexagon.VFS.FAT16B.currentDirLBA], eax ;; Update directory
+
+    clc
 
     ret
 
