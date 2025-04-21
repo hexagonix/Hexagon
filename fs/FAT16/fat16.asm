@@ -116,6 +116,11 @@ use32
 
 ;;************************************************************************************
 
+directoryStack:
+times 32 dd 0  ; Espaço para 32 endereços LBA (4 bytes cada)
+stackIndex:
+dd 0  ; Inicializa o índice da pilha com 0
+
 ;; Structure used to manipulate FAT16B volumes, based on the FAT template provided by VFS
 
 Hexagon.VFS.FAT16B Hexagon.VFS.FAT
@@ -1655,11 +1660,13 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
     cmp al, '.'
     jne .singleDot
 
+    mov eax, dword[Hexagon.VFS.FAT16B.currentDirLBA]
+    cmp eax, dword[Hexagon.VFS.FAT16B.rootDir]
+    je .alreadyAtRoot
+
 ;; ".." -> change back to previous directory
 
-    mov eax, dword[Hexagon.VFS.FAT16B.prevDirLBA]
-    mov dword[Hexagon.VFS.FAT16B.currentDirLBA], eax
-    mov dword[Hexagon.VFS.FAT16B.rootDir], eax
+    call Hexagon.Kernel.FS.FAT16.popDirectory
 
     clc
 
@@ -1676,12 +1683,10 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
     mov [.directoryName], esi
 
     call Hexagon.Kernel.FS.FAT16.filenameToFATName
+
     jc .changeDirectoryError
 
-;; Save current directory address as previous directory address
-
-    mov eax, dword[Hexagon.VFS.FAT16B.currentDirLBA]
-    mov dword[Hexagon.VFS.FAT16B.prevDirLBA], eax
+.getEntries:
 
 ;; Read the sectors of the current directory
 
@@ -1736,12 +1741,31 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
 
 .directoryFound:
 
+    push edi
+    push esi
+
+;; Save current directory address as previous directory address
+
+    call Hexagon.Kernel.FS.FAT16.pushDirectory
+
+    pop esi
+    pop edi
+
     mov esi, edi
 
     movzx eax, word[esi + 26] ;; Cluster low
 
-    cmp eax, 0
-    je .changeDirectoryError
+    cmp eax, 00h
+    jne .normalCluster
+
+;; If cluster == 0 -> we are in the root directory or an error occurred.
+;; When an error occurred, restore root directory to make system usable
+
+    mov eax, [Hexagon.VFS.FAT16B.rootDir]
+
+    jmp .updateCurrentDir
+
+.normalCluster:
 
     sub eax, 2 ;; EAX = cluster - 2
 
@@ -1752,7 +1776,15 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
 
     add eax, [Hexagon.VFS.FAT16B.dataArea]  ;; Add the base of the data area
 
+.updateCurrentDir:
+
     mov dword[Hexagon.VFS.FAT16B.currentDirLBA], eax
+
+    clc
+
+    ret
+
+.alreadyAtRoot:
 
     clc
 
@@ -1802,3 +1834,59 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
     ret
 
 .directoryName: dd 0
+
+;;************************************************************************************
+
+;; Store current directory in stack before changing to a new one
+
+Hexagon.Kernel.FS.FAT16.pushDirectory:
+
+    mov eax, [Hexagon.VFS.FAT16B.currentDirLBA]
+    mov ebx, stackIndex  ;; Stack pointer
+    mov ecx, [ebx] ;; Load stack index
+
+    cmp ecx, 32  ;; Verify stack capacity
+    je .stackFull
+
+    mov edi, directoryStack ;; Load stack
+
+    lea edi, [edi + ecx*4] ;; Get position from stack
+
+    mov [edi], eax ;; Store directory address in stack
+
+    inc dword[ebx] ;; Increment counter
+
+.stackFull:
+
+    ret
+
+;;************************************************************************************
+
+;; Restores current directory in stack after returning to previous directory
+
+Hexagon.Kernel.FS.FAT16.popDirectory:
+
+    mov ebx, stackIndex ;; Load stack pointer
+
+    dec dword[ebx] ;; Decrease counter
+
+    mov ecx, [ebx] ;; Load stack index
+
+    cmp ecx, 00h ;; If empty, go to the root directory
+    je .stackEmpty
+
+    mov edi, directoryStack ;; Load stack
+
+    lea edi, [edi + ecx*4] ;; Go to position on the top of the stack
+
+    mov eax, [edi] ;; Get previous directory entry
+    mov [Hexagon.VFS.FAT16B.currentDirLBA], eax ;; Update directory
+
+    ret
+
+.stackEmpty:
+
+    mov eax, [Hexagon.VFS.FAT16B.rootDir]
+    mov [Hexagon.VFS.FAT16B.currentDirLBA], eax ;; Update current directory with root
+
+    ret
