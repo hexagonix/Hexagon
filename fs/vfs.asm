@@ -281,7 +281,7 @@ Hexagon.Kernel.FS.VFS.listFiles:
 ;;
 ;; Input:
 ;;
-;; ESI - Name from the directory
+;; ESI - Name of the directory
 ;;
 ;; Output:
 ;;
