@@ -840,14 +840,14 @@ Hexagon.Kernel.FS.FAT16.listFilesFAT16B:
     mov ebx, dword[Hexagon.VFS.FAT16B.rootDir]
 
     cmp eax, ebx
-    jne .not_root_dir
+    jne .notOnRootDir
 
 ;; If in root directory, use rootDirSize
 
     movzx eax, word[Hexagon.VFS.FAT16B.rootDirSize]
     jmp .continue
 
-.not_root_dir:
+.notOnRootDir:
 
     movzx eax, byte[Hexagon.VFS.FAT16B.sectorsPerCluster]
 
@@ -1645,15 +1645,15 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
     mov ebx, esi ;; Directory name
     mov al, [ebx]
 
-    cmp al, 2Eh ;; '.'
-    jne .convert_name
+    cmp al, '.'
+    jne .convertName
 
     inc ebx
 
     mov al, [ebx]
 
-    cmp al, 2Eh ;; '..'
-    jne .single_dot
+    cmp al, '.'
+    jne .singleDot
 
 ;; ".." -> change back to previous directory
 
@@ -1665,13 +1665,13 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
 
     ret
 
-.single_dot:
+.singleDot:
 
     clc
 
     ret
 
-.convert_name:
+.convertName:
 
     mov [.directoryName], esi
 
@@ -1697,29 +1697,29 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
     mov ecx, [Hexagon.VFS.FAT16B.maxFiles]
     xor edx, edx
 
-.check_directory_loop:
+.checkDirectoryLoop:
 
     mov esi, [.directoryName]
 
-    call .compare_names
+    call .compareNames
 
-    jc .next_entry
+    jc .nextEntry
 
 ;; If is not a directory, keep searching
 
     test byte [edi + 11], Hexagon.VFS.FAT16B.directoryAttribute
-    jz .next_entry
+    jz .nextEntry
 
 ;; If found, mark the directory as available
 
     mov edx, 1
-    jmp .directory_found_check
+    jmp .directoryFoundCheck
 
-.next_entry:
+.nextEntry:
 
     add edi, 32
 
-    loop .check_directory_loop
+    loop .checkDirectoryLoop
 
 ;; If not found, mark as not found
 
@@ -1727,14 +1727,14 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
 
     jmp .changeDirectoryError
 
-.directory_found_check:
+.directoryFoundCheck:
 
 ;; If EDX != 1, error while founding the directory
 
     cmp edx, 1
     jne .changeDirectoryError
 
-.directory_found:
+.directoryFound:
 
     mov esi, edi
 
@@ -1764,7 +1764,7 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
 
     ret
 
-.compare_names:
+.compareNames:
 
     push ecx
     push esi
@@ -1778,7 +1778,7 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
 
     cmp al, [esi]
 
-    jne .not_equal
+    jne .notEqual
     inc edi
     inc esi
 
@@ -1792,7 +1792,7 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
 
     ret
 
-.not_equal:
+.notEqual:
 
     pop edi
     pop esi
