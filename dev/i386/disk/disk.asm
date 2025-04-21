@@ -447,7 +447,7 @@ Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors:
 .checkError:
 
     cmp ah, Hexagon.Dev.Gen.Disk.Codes.invalidAddress
-    je .noMedia
+    je .generalError
 
     cmp ah, Hexagon.Dev.Gen.Disk.Codes.invalidSector
     je .noMedia

@@ -184,3 +184,7 @@ Hexagon.Kern.Syscall.hexagonServices:
 
     dd Hexagon.Libkern.Clock.getDate                                   ;; 67
     dd Hexagon.Libkern.Clock.getTime                                   ;; 68
+
+;; Extended (Dormin development branch) syscalls
+
+    dd Hexagon.Kernel.FS.VFS.changeDirectory

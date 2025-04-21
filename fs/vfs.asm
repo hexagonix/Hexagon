@@ -107,10 +107,13 @@ struc Hexagon.VFS.FAT
 .totalSectors:         dd 0       ;; Sectors on the disk
 .rootDirSize:          dw 0       ;; Size in sectors of the root directory
 .rootDir:              dd 0       ;; LBA address of the root directory
+.currentDirLBA:        dd 0       ;; LBA of the actual directory
+.prevDirLBA:           dd 0       ;; LBA of the previous directory
 .sizeFATs:             dw 0       ;; Size in sectors of the FAT(s)
 .FAT:                  dd 0       ;; LBA address of FAT
 .dataArea:             dd 0       ;; LBA address of the start of the data area
 .clusterSize:          dd 0       ;; Cluster size, in bytes
+.maxFiles:             dd 1000    ;; Number of files per directory
 .hiddenAttribute       equ 00h    ;; Attribute of a hidden file
 .systemAttribute       equ 04h    ;; Attribute of a file marked as system file
 .directoryAttribute    equ 10h    ;; Attribute of a directory
@@ -119,6 +122,8 @@ struc Hexagon.VFS.FAT
 .lastClusterAttribute  equ 0xFFF8 ;; Last cluster in chain attribute
 .directoryBit          equ 04h    ;; Bit of a directory = .directoryAttribute, but for bit check
 .volumeNameBit         equ 03h    ;; Bit of a volume name (label)
+.filenameSeparator     equ 90h    ;; Character used to separate filenames in lists
+.directorySeparator    equ 80h    ;; Character used to separate directories in lists
 
 }
 
@@ -248,12 +253,12 @@ Hexagon.Kernel.FS.VFS.saveFile:
 
 ;;************************************************************************************
 
-;; Obter a lista de arquivos no diretório raiz
+;; Get file list from current directory
 ;;
-;; Saída:
+;; Output:
 ;;
-;; ESI - Ponteiro para a lista de arquivos
-;; EAX - Número de arquivos total
+;; ESI - Pointer to the file/directory list
+;; EAX - Number of total entries
 
 Hexagon.Kernel.FS.VFS.listFiles:
 
@@ -267,6 +272,33 @@ Hexagon.Kernel.FS.VFS.listFiles:
 .listFilesFAT16B:
 
     call Hexagon.Kernel.FS.FAT16.listFilesFAT16B
+
+    ret
+
+;;************************************************************************************
+
+;; Changes the current work directory
+;;
+;; Input:
+;;
+;; ESI - Name from the directory
+;;
+;; Output:
+;;
+;; CF defined if the directory was not found or is invalid
+
+Hexagon.Kernel.FS.VFS.changeDirectory:
+
+    mov ah, byte[Hexagon.VFS.Control.filesystemType]
+
+    cmp ah, Hexagon.VFS.FS.FAT16B
+    je .changeDirectoryFAT16B
+
+    ret
+
+.changeDirectoryFAT16B:
+
+    call Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B
 
     ret
 

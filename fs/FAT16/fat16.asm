@@ -526,7 +526,7 @@ Hexagon.Kernel.FS.FAT16.renameFileFAT16B:
 ;; Write modified root directory to volume
 
     movzx eax, word[Hexagon.VFS.FAT16B.rootDirSize] ;; Sectors to write
-    mov esi, dword[Hexagon.VFS.FAT16B.rootDir] ;; LBA of the root directory
+    mov esi, dword[Hexagon.VFS.FAT16B.currentDirLBA] ;; LBA of the root directory
     mov cx, 50h ;; Segment
     mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
@@ -595,7 +595,7 @@ Hexagon.Kernel.FS.FAT16.fileExistsFAT16B:
 ;; Load root directory to volume
 
     movzx eax, word[Hexagon.VFS.FAT16B.rootDirSize] ;; Sectors to read
-    mov esi, dword[Hexagon.VFS.FAT16B.rootDir] ;; LBA of the root directory
+    mov esi, dword[Hexagon.VFS.FAT16B.currentDirLBA] ;; LBA of the root directory
     mov cx, 50h ;; Segment
     mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
@@ -834,10 +834,28 @@ Hexagon.Kernel.FS.FAT16.listFilesFAT16B:
     push edx
     push edi
 
+;; Configure directorySize
+
+    mov eax, dword[Hexagon.VFS.FAT16B.currentDirLBA]
+    mov ebx, dword[Hexagon.VFS.FAT16B.rootDir]
+
+    cmp eax, ebx
+    jne .not_root_dir
+
+;; If in root directory, use rootDirSize
+
+    movzx eax, word[Hexagon.VFS.FAT16B.rootDirSize]
+    jmp .continue
+
+.not_root_dir:
+
+    movzx eax, byte[Hexagon.VFS.FAT16B.sectorsPerCluster]
+
 ;; Load root directory
 
-    movzx eax, word[Hexagon.VFS.FAT16B.rootDirSize] ;; Sectors to read
-    mov esi, dword[Hexagon.VFS.FAT16B.rootDir] ;; LBA of the root directory
+.continue:
+
+    mov esi, dword[Hexagon.VFS.FAT16B.currentDirLBA] ;; LBA of the root directory
     mov cx, 50h ;; Segment
     mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
@@ -859,13 +877,15 @@ Hexagon.Kernel.FS.FAT16.listFilesFAT16B:
 
     add esi, 32 ;; Next entry (32 bytes per entry)
 
+    mov byte[.separatorConfig], Hexagon.VFS.FAT16B.filenameSeparator
+
 ;; Let's check some attributes of the entry, such as whether it is a directory or a volume label.
 ;; For now, if we are talking about these entries, we will skip until the support is completed.
 
     mov al, byte[esi+11] ;; File attributes
 
-    bt ax, Hexagon.VFS.FAT16B.directoryBit ;; If subdirectory, skip
-    jc .buildListLoop
+    bt ax, Hexagon.VFS.FAT16B.directoryBit ;; If subdirectory, mark as subdirectory
+    jc .markAsSubdirectory
 
     bt ax, Hexagon.VFS.FAT16B.volumeNameBit ;; If volume label, skip
     jc .buildListLoop
@@ -878,17 +898,36 @@ Hexagon.Kernel.FS.FAT16.listFilesFAT16B:
     cmp byte[esi], Hexagon.VFS.FAT16B.unlinkedAttribute ;; If file deleted, skip
     je .buildListLoop
 
+;; Check for current directory '.' and skip it
+
+    mov al, byte[esi]
+    cmp al, '.'
+    je .buildListLoop ;; Skip if it is '.' (current directory)
+
 ;; If this is the last file, we don't want to look any further in the directory for something
 ;; that doesn't exist ;-)
 
     cmp byte[esi], 0   ;; If last file, finish
     je .finishList
 
+    jmp .continueProcessing
+
+.markAsSubdirectory:
+
+    mov byte[.separatorConfig], Hexagon.VFS.FAT16B.directorySeparator
+
+.continueProcessing:
+
     call Hexagon.Kernel.FS.FAT16.FATnameToFilename ;; Convert name to 8.3 format
 
 ;; Add filename entry to list
 
+    call Hexagon.Libkern.String.trimString
+
     call Hexagon.Libkern.String.stringSize ;; Find entry size
+
+    cmp eax, 0
+    je .buildListLoop
 
     push esi
 
@@ -899,9 +938,15 @@ Hexagon.Kernel.FS.FAT16.listFilesFAT16B:
 
     pop esi
 
-;; Add a space between filenames, useful for list manipulation
+;; Add a separator between filenames, useful for list manipulation
 
-    mov byte[es:edx+eax], ' '
+    push ebx
+
+    mov bh, [.separatorConfig]
+
+    mov byte[es:edx+eax], bh
+
+    pop ebx
 
     inc eax ;; String size + 1 character
     inc ebx ;; Update file counter
@@ -933,6 +978,8 @@ Hexagon.Kernel.FS.FAT16.listFilesFAT16B:
     pop ebx
 
     ret
+
+.separatorConfig: db 0
 
 ;;************************************************************************************
 
@@ -1096,7 +1143,7 @@ Hexagon.Kernel.FS.FAT16.saveFileFAT16B:
 ;; Write modified root directory to volume
 
     movzx eax, word[Hexagon.VFS.FAT16B.rootDirSize] ;; Sectors to write
-    mov esi, dword[Hexagon.VFS.FAT16B.rootDir] ;; LBA of the root directory
+    mov esi, dword[Hexagon.VFS.FAT16B.currentDirLBA] ;; LBA of the root directory
     mov cx, 50h ;; Segment
     mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
@@ -1211,7 +1258,7 @@ Hexagon.Kernel.FS.FAT16.unlinkFileFAT16B:
 ;; Write modified root directory to volume
 
     movzx eax, word[Hexagon.VFS.FAT16B.rootDirSize] ;; Sectors to write
-    mov esi, dword[Hexagon.VFS.FAT16B.rootDir] ;; LBA of the root directory
+    mov esi, dword[Hexagon.VFS.FAT16B.currentDirLBA] ;; LBA of the root directory
     mov cx, 50h ;; Segment
     mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
@@ -1354,6 +1401,8 @@ Hexagon.Kernel.FS.FAT16.getFilesystemInfoFAT16B:
     movzx esi, word[Hexagon.VFS.FAT16B.reservedSectors]
     add si, word[Hexagon.VFS.FAT16B.sizeFATs]
     mov dword[Hexagon.VFS.FAT16B.rootDir], esi
+    mov dword[Hexagon.VFS.FAT16B.prevDirLBA], esi
+    mov dword[Hexagon.VFS.FAT16B.currentDirLBA], esi
 
 ;; Calculate LBA address from FAT table
 ;;
@@ -1455,7 +1504,7 @@ Hexagon.Kernel.FS.FAT16.createEmptyFileFAT16B:
 ;; Load root directory from volume
 
     movzx eax, word[Hexagon.VFS.FAT16B.rootDirSize] ;; Sectors to read
-    mov esi, dword[Hexagon.VFS.FAT16B.rootDir] ;; LBA of root directory
+    mov esi, dword[Hexagon.VFS.FAT16B.currentDirLBA] ;; LBA of root directory
     mov cx, 50h ;; Segment
     mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
@@ -1516,7 +1565,7 @@ Hexagon.Kernel.FS.FAT16.createEmptyFileFAT16B:
 ;; Write modified root directory to volume
 
     movzx eax, word[Hexagon.VFS.FAT16B.rootDirSize] ;; Sectors to write
-    mov esi, dword[Hexagon.VFS.FAT16B.rootDir] ;; LBA of the root directory
+    mov esi, dword[Hexagon.VFS.FAT16B.currentDirLBA] ;; LBA of the root directory
     mov cx, 50h ;; Segment
     mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
     mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
@@ -1574,3 +1623,182 @@ Hexagon.Kernel.FS.FAT16.initVolumeFAT16B:
 .end:
 
     ret
+
+;;************************************************************************************
+
+;; Changes the actual directory to any supplied
+;;
+;; Input:
+;;
+;;  ESI - Directory name (string)
+;;
+;; Output:
+;;
+;;   EAX = 0 if success, 1 if error or directory not found or invalid (not a directory)
+
+Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
+
+    mov [.directoryName], esi
+
+    clc
+
+    mov ebx, esi ;; Directory name
+    mov al, [ebx]
+
+    cmp al, 2Eh ;; '.'
+    jne .convert_name
+
+    inc ebx
+
+    mov al, [ebx]
+
+    cmp al, 2Eh ;; '..'
+    jne .single_dot
+
+;; ".." -> change back to previous directory
+
+    mov eax, dword[Hexagon.VFS.FAT16B.prevDirLBA]
+    mov dword[Hexagon.VFS.FAT16B.currentDirLBA], eax
+    mov dword[Hexagon.VFS.FAT16B.rootDir], eax
+
+    clc
+
+    ret
+
+.single_dot:
+
+    clc
+
+    ret
+
+.convert_name:
+
+    mov [.directoryName], esi
+
+    call Hexagon.Kernel.FS.FAT16.filenameToFATName
+    jc .changeDirectoryError
+
+;; Save current directory address as previous directory address
+
+    mov eax, dword[Hexagon.VFS.FAT16B.currentDirLBA]
+    mov dword[Hexagon.VFS.FAT16B.prevDirLBA], eax
+
+;; Read the sectors of the current directory
+
+    movzx eax, word[Hexagon.VFS.FAT16B.rootDirSize]
+    mov esi, dword[Hexagon.VFS.FAT16B.currentDirLBA]
+    mov ecx, 50h
+    mov edi, Hexagon.Heap.DiskCache + 20000
+    mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
+
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors
+
+    mov edi, Hexagon.Heap.DiskCache + 20000
+    mov ecx, [Hexagon.VFS.FAT16B.maxFiles]
+    xor edx, edx
+
+.check_directory_loop:
+
+    mov esi, [.directoryName]
+
+    call .compare_names
+
+    jc .next_entry
+
+;; If is not a directory, keep searching
+
+    test byte [edi + 11], Hexagon.VFS.FAT16B.directoryAttribute
+    jz .next_entry
+
+;; If found, mark the directory as available
+
+    mov edx, 1
+    jmp .directory_found_check
+
+.next_entry:
+
+    add edi, 32
+
+    loop .check_directory_loop
+
+;; If not found, mark as not found
+
+    mov edx, 0
+
+    jmp .changeDirectoryError
+
+.directory_found_check:
+
+;; If EDX != 1, error while founding the directory
+
+    cmp edx, 1
+    jne .changeDirectoryError
+
+.directory_found:
+
+    mov esi, edi
+
+    movzx eax, word[esi + 26] ;; Cluster low
+
+    cmp eax, 0
+    je .changeDirectoryError
+
+    sub eax, 2 ;; EAX = cluster - 2
+
+    movzx ebx, byte[Hexagon.VFS.FAT16B.sectorsPerCluster]
+
+    xor edx, edx
+    mul ebx ;; EAX = cluster offset in sectors
+
+    add eax, [Hexagon.VFS.FAT16B.dataArea]  ;; Add the base of the data area
+
+    mov dword[Hexagon.VFS.FAT16B.currentDirLBA], eax
+
+    clc
+
+    ret
+
+.changeDirectoryError:
+
+    stc
+
+    ret
+
+.compare_names:
+
+    push ecx
+    push esi
+    push edi
+
+    mov ecx, 11
+
+.loop:
+
+    mov al, [edi]
+
+    cmp al, [esi]
+
+    jne .not_equal
+    inc edi
+    inc esi
+
+    loop .loop
+
+    pop edi
+    pop esi
+    pop ecx
+
+    clc
+
+    ret
+
+.not_equal:
+
+    pop edi
+    pop esi
+    pop ecx
+
+    stc
+    ret
+
+.directoryName: dd 0
