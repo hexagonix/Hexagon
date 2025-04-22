@@ -1718,7 +1718,7 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
 ;; If found, mark the directory as available
 
     mov edx, 01h
-    
+
     jmp .directoryFound
 
 .nextEntry:
@@ -1771,10 +1771,10 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
 .validClusterFotSubdirectory:
 
 ;; EAX = cluster - 2. In FAT16, data clusters begin in the second cluster.
-;; The second cluster is the first fisical area to store data, because clusters 
+;; The second cluster is the first fisical area to store data, because clusters
 ;; 0 and 1 are reserved and not used to store data (like entries in directory)
 
-    sub eax, 2 
+    sub eax, 2
 
     movzx ebx, byte[Hexagon.VFS.FAT16B.sectorsPerCluster]
 
