@@ -1719,7 +1719,7 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
 
     mov edx, 01h
     
-    jmp .directoryFoundCheck
+    jmp .directoryFound
 
 .nextEntry:
 
@@ -1727,50 +1727,54 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
 
     loop .checkDirectoryLoop
 
-;; If not found, mark as not found
-
-    mov edx, 00h
+;; If not found, error
 
     jmp .changeDirectoryError
 
-.directoryFoundCheck:
-
-;; If EDX != 1, error while founding the directory
-
-    cmp edx, 01h
-    jne .changeDirectoryError
-
 .directoryFound:
+
+;; Save current directory address as previous directory address
+;; and in directory stack
 
     push edi
     push esi
-
-;; Save current directory address as previous directory address
 
     call Hexagon.Kernel.FS.FAT16.pushDirectory
 
     pop esi
     pop edi
 
+;; If stack is full, we cannot go further
+
     jc .changeDirectoryError
 
-    mov esi, edi
+    mov esi, edi ;; In EDI, the entry
+
+;; In FAT16, only the cluster low (position 26) is important to
+;; calculate the directory LBA address
 
     movzx eax, word[esi + 26] ;; Cluster low
 
     cmp eax, 00h
-    jne .normalCluster
+    jne .validClusterFotSubdirectory
 
-;; If cluster == 0 -> we are in the root directory or an error occurred.
-;; When an error occurred, restore root directory to make system usable
+;; If cluster = 0 -> we are in the root directory or an error occurred.
+;; When an error occurred, restore root directory to make system usable.
+;; Cluster = 0 also represents the ".." reference for the root directory
+;; on a subdirectory in root (example: ".." in "/directory"). Subdirectories
+;; created on another subdirectories have ".." referencing the parent directory.
 
     mov eax, [Hexagon.VFS.FAT16B.rootDir]
 
     jmp .updateCurrentDir
 
-.normalCluster:
+.validClusterFotSubdirectory:
 
-    sub eax, 2 ;; EAX = cluster - 2
+;; EAX = cluster - 2. In FAT16, data clusters begin in the second cluster.
+;; The second cluster is the first fisical area to store data, because clusters 
+;; 0 and 1 are reserved and not used to store data (like entries in directory)
+
+    sub eax, 2 
 
     movzx ebx, byte[Hexagon.VFS.FAT16B.sectorsPerCluster]
 
@@ -1782,6 +1786,9 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
 
 .updateCurrentDir:
 
+;; We now have the LBA address of the directory requested. Change the current
+;; directory reference and return
+
     mov dword[Hexagon.VFS.FAT16B.currentDirLBA], eax
 
     clc
@@ -1790,11 +1797,15 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
 
 .singleDot:
 
+;; When requesting ".", we do not need to do anything but return
+
     clc
 
     ret
 
 .alreadyAtRoot:
+
+;; If already on root directory, any request to ".." is invalid
 
     clc
 
