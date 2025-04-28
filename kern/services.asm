@@ -75,14 +75,14 @@ use32
 
 Hexagon.Kern.Services:
 
-.interruptionHexagon  = 80h ;; Hexagon services
-.interruptionTimer    = 08h ;; Interruption reserved for timer
-.interruptionKeyboard = 09h ;; Interruption reserved for keyboard
-.interruptionMouse    = 74h ;; Interrupt reserved for pointing device
+.hexagonInterruptNumber  = 80h ;; Hexagon services
+.timerInterruptNumber    = 08h ;; Interruption reserved for timer
+.keyboardInterruptNumber = 09h ;; Interruption reserved for keyboard
+.mouseInterruptNumber    = 74h ;; Interrupt reserved for pointing device
 
 ;;************************************************************************************
 
-;; Instala as rotinas de interrupção do Hexagon (ISR - Interrupt Service Routine)
+;; Installs Hexagon interrupt service routines (ISR) and hardware interruptions
 
 Hexagon.Kern.Services.installInterruptions:
 
@@ -91,24 +91,24 @@ Hexagon.Kern.Services.installInterruptions:
     mov dword[kernelExecute], kernelExecutePermission
 
     mov esi, Hexagon.Kern.Services.timerHandler ;; IRQ 0
-    mov eax, Hexagon.Kern.Services.interruptionTimer    ;; Interruption number
+    mov eax, Hexagon.Kern.Services.timerInterruptNumber ;; Interruption number
 
     call Hexagon.Kern.Services.installISR
 
     mov esi, Hexagon.Kern.Services.keyboardHandler ;; IRQ 1
-    mov eax, Hexagon.Kern.Services.interruptionKeyboard ;; Interruption number
+    mov eax, Hexagon.Kern.Services.keyboardInterruptNumber ;; Interruption number
 
     call Hexagon.Kern.Services.installISR
 
     mov esi, Hexagon.Kern.Services.PS2MouseHandler ;; IRQ 12
-    mov eax, Hexagon.Kern.Services.interruptionMouse ;; Interruption number
+    mov eax, Hexagon.Kern.Services.mouseInterruptNumber ;; Interruption number
 
     call Hexagon.Kern.Services.installISR
 
 ;; Install the Hexagon services handler
 
     mov esi, Hexagon.Kern.Syscall.hexagonHandler ;; Hexagon services
-    mov eax, Hexagon.Kern.Services.interruptionHexagon ;; Interruption number
+    mov eax, Hexagon.Kern.Services.hexagonInterruptNumber ;; Interruption number
 
     call Hexagon.Kern.Services.installISR
 
@@ -217,7 +217,7 @@ Hexagon.Kern.Services.keyboardHandler:
 
     or dword[keyStatus], 0x00000002
 
-    mov byte[.sinalShift], 1 ;; Shift pressionada
+    mov byte[.sinalShift], 1 ;; Shift pressed
 
     jmp .doNotStore
 
@@ -655,16 +655,16 @@ Hexagon.Kern.Services.installISR:
 ;; If the request came from the user or application, check whether the values ​​passed could
 ;; overwrite the interrupts previously installed by Hexagon
 
-    cmp eax, Hexagon.Kern.Services.interruptionHexagon ;; Attempt to replace Hexagon call
+    cmp eax, Hexagon.Kern.Services.hexagonInterruptNumber ;; Attempt to replace Hexagon call
     je .deny ;; Deny installation
 
-    cmp eax, Hexagon.Kern.Services.interruptionTimer ;; Attempt to change timer interrupt
+    cmp eax, Hexagon.Kern.Services.timerInterruptNumber ;; Attempt to change timer interrupt
     je .deny ;; Deny installation
 
-    cmp eax, Hexagon.Kern.Services.interruptionKeyboard ;; Attempting to change the keyboard interrupt
+    cmp eax, Hexagon.Kern.Services.keyboardInterruptNumber ;; Attempting to change the keyboard interrupt
     je .deny ;; Deny installation
 
-    cmp eax, Hexagon.Kern.Services.interruptionMouse ;; Attempt to change mouse interrupt
+    cmp eax, Hexagon.Kern.Services.mouseInterruptNumber ;; Attempt to change mouse interrupt
     je .deny ;; Deny installation
 
 .install:
