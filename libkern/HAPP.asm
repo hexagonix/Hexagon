@@ -157,7 +157,7 @@ use32
 ;; The process will be able to read and edit but the copy has already been transferred to the
 ;; kernel heap, and from there the data will be read to reestablish the process context.
 ;;
-;; Etapas:
+;; Steps:
 ;;
 ;; Process execution -> copy of initial structure to kernel heap and initialization
 ;; -> context switch request -> write context to fields #18 to #37 in user space
@@ -187,7 +187,7 @@ struc Hexagon.Libkern.HAPP.controlStructure
 .minSubversion:     db 0 ;; Subversion (or revision) of Hexagon required for execution (dependency)
 .entryHAPP:         dd 0 ;; Image entry point
 .imageType:         db 0 ;; Image executable type
-.exitCode:          dd 0 ;; Image code exit code (future)
+.exitCode:          dd 0 ;; Image exit code (future)
 .reserved1:         db 0 ;; Reserved (Byte)
 .reserved2:         db 0 ;; Reserved (Byte)
 .reserved3:         db 0 ;; Reserved (Byte)
@@ -208,7 +208,7 @@ struc Hexagon.Libkern.HAPP.controlStructure
 ;; by the virtual management and process scheduling functions.
 ;; The scheduler obtains the entry point and manipulates the header data in memory
 
-;; This object will be located in a reserved area of ​​kernel memory
+;; This object will be located in a reserved area of ​​kernel memory (heap)
 
 virtual at Hexagon.Heap.Temp
 

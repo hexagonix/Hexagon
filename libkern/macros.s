@@ -78,9 +78,9 @@ use32
 ;; Hexagonix default color scheme
 ;; The scheme present here is a reduced version of the one found in "lib/fasm/console.s",
 ;; with the necessary color schemes for initialization. Customizations will be carried out
-;; by the utilities
+;; by the userspace utilities
 
-;; Blossom Theme for Hexagon (only color scheme required)
+;; Blossom Theme (only color scheme required)
 
 HEXAGONIX_BLOSSOM_CINZA   = 0x29282928
 HEXAGONIX_BLOSSOM_AMARELO = 0x00C7B898

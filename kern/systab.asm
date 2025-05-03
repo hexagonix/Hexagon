@@ -187,4 +187,4 @@ Hexagon.Kern.Syscall.hexagonServices:
 
 ;; Extended (Dormin development branch) syscalls
 
-    dd Hexagon.Kernel.FS.VFS.changeDirectory
+    dd Hexagon.Kernel.FS.VFS.changeDirectory                           ;; 69

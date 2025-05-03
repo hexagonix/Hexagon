@@ -160,6 +160,7 @@ Hexagon.Libkern.Num.BCDtoBinary:
     push ebx
 
     mov bl, al ;; BL = AL mod 16
+
     and bl, 0x0F
 
     shr al, 4 ;; AL = AL/16

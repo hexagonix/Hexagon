@@ -75,10 +75,10 @@ use32
 
 Hexagon.Kern.Services:
 
-.hexagonInterruptNumber  = 80h ;; Hexagon services
-.timerInterruptNumber    = 08h ;; Interruption reserved for timer
-.keyboardInterruptNumber = 09h ;; Interruption reserved for keyboard
-.mouseInterruptNumber    = 74h ;; Interrupt reserved for pointing device
+.hexagonInterrupt  = 80h ;; Hexagon services
+.timerInterrupt    = 08h ;; Interrupt reserved for timer
+.keyboardInterrupt = 09h ;; Interrupt reserved for keyboard
+.mouseInterrupt    = 74h ;; Interrupt reserved for pointing device
 
 ;;************************************************************************************
 
@@ -91,24 +91,24 @@ Hexagon.Kern.Services.installInterruptions:
     mov dword[kernelExecute], kernelExecutePermission
 
     mov esi, Hexagon.Kern.Services.timerHandler ;; IRQ 0
-    mov eax, Hexagon.Kern.Services.timerInterruptNumber ;; Interruption number
+    mov eax, Hexagon.Kern.Services.timerInterrupt ;; Interrupt number
 
     call Hexagon.Kern.Services.installISR
 
     mov esi, Hexagon.Kern.Services.keyboardHandler ;; IRQ 1
-    mov eax, Hexagon.Kern.Services.keyboardInterruptNumber ;; Interruption number
+    mov eax, Hexagon.Kern.Services.keyboardInterrupt ;; Interrupt number
 
     call Hexagon.Kern.Services.installISR
 
     mov esi, Hexagon.Kern.Services.PS2MouseHandler ;; IRQ 12
-    mov eax, Hexagon.Kern.Services.mouseInterruptNumber ;; Interruption number
+    mov eax, Hexagon.Kern.Services.mouseInterrupt ;; Interrupt number
 
     call Hexagon.Kern.Services.installISR
 
 ;; Install the Hexagon services handler
 
     mov esi, Hexagon.Kern.Syscall.hexagonHandler ;; Hexagon services
-    mov eax, Hexagon.Kern.Services.hexagonInterruptNumber ;; Interruption number
+    mov eax, Hexagon.Kern.Services.hexagonInterrupt ;; Interrupt number
 
     call Hexagon.Kern.Services.installISR
 
@@ -182,7 +182,7 @@ Hexagon.Kern.Services.keyboardHandler:
     cmp al, Hexagon.Keyboard.keyCodes.ctrl
     je .controlKeyPressed
 
-    cmp al, 29+128
+    cmp al, 29 + 128
     je .controlKeyReleased
 
 ;; Check if the Shift key was pressed
@@ -193,10 +193,10 @@ Hexagon.Kern.Services.keyboardHandler:
     cmp al, Hexagon.Keyboard.keyCodes.shiftL ;; Left shift key
     je .shiftKeyPressed
 
-    cmp al, 54+128 ;; Right shift key released
+    cmp al, 54 + 128 ;; Right shift key released
     je .shiftKeyReleased
 
-    cmp al, 42+128 ;; Left shift key released
+    cmp al, 42 + 128 ;; Left shift key released
     je .shiftKeyReleased
 
     jmp .anotherKey
@@ -217,7 +217,7 @@ Hexagon.Kern.Services.keyboardHandler:
 
     or dword[keyStatus], 0x00000002
 
-    mov byte[.sinalShift], 1 ;; Shift pressed
+    mov byte[.shiftKeyStatus], 1 ;; Shift pressed
 
     jmp .doNotStore
 
@@ -225,7 +225,7 @@ Hexagon.Kern.Services.keyboardHandler:
 
     and dword[keyStatus], 0xFFFFFFFD
 
-    mov byte[.sinalShift], 0
+    mov byte[.shiftKeyStatus], 0
 
     jmp .doNotStore
 
@@ -273,7 +273,7 @@ Hexagon.Kern.Services.keyboardHandler:
 .scanCodes:
 times 32 db 0
 .scanCodes.index: db 0
-.sinalShift: db 0
+.shiftKeyStatus: db 0
 
 ;; Bit 0: Control key
 ;; Bit 1: Shift key
@@ -390,9 +390,11 @@ Hexagon.Kern.Services.PS2MouseHandler:
 .yNotGreater:
 
     push edx
+
     movzx edx, word[Hexagon.Console.Resolution.y]
     sub dx, word[.mouseY]
     mov ebx, edx
+
     pop edx
 
     mov dword[Hexagon.Kernel.Dev.Gen.Mouse.mouseX], eax
@@ -477,14 +479,21 @@ Hexagon.Kern.Services.touchpadHandler:
     mov bl, al
 
     and al, 1111b
+
     movzx eax, al
+
     shl eax, 8
+
     mov word[.X], ax
 
     mov al, bl
+
     and al, 11110000b
+
     movzx eax, al
+
     shl eax, 4
+
     mov word[.Y], ax
 
     mov al, bl
@@ -527,15 +536,21 @@ Hexagon.Kern.Services.touchpadHandler:
     mov bl, al
 
     movzx eax, al
+
     and eax, 00010000b
+
     shl eax, 8
+
     or word[.X], ax
 
     mov al, bl
 
     movzx eax, al
+
     and eax, 00100000b
+
     shl eax, 7
+
     or word[.Y], ax
 
     mov al, bl
@@ -559,6 +574,7 @@ Hexagon.Kern.Services.touchpadHandler:
     in al, 60h
 
     movzx ax, al
+
     or word[.X], ax
 
     movzx eax, word[.X]
@@ -600,7 +616,7 @@ Hexagon.Kern.Services.touchpadHandler:
 
 .end:
 
-    mov al, 20h ;; End of interruption handling
+    mov al, 20h ;; End of interrupt handling
 
     out 20h, al
 
@@ -655,16 +671,16 @@ Hexagon.Kern.Services.installISR:
 ;; If the request came from the user or application, check whether the values ​​passed could
 ;; overwrite the interrupts previously installed by Hexagon
 
-    cmp eax, Hexagon.Kern.Services.hexagonInterruptNumber ;; Attempt to replace Hexagon call
+    cmp eax, Hexagon.Kern.Services.hexagonInterrupt ;; Attempt to replace Hexagon call
     je .deny ;; Deny installation
 
-    cmp eax, Hexagon.Kern.Services.timerInterruptNumber ;; Attempt to change timer interrupt
+    cmp eax, Hexagon.Kern.Services.timerInterrupt ;; Attempt to change timer interrupt
     je .deny ;; Deny installation
 
-    cmp eax, Hexagon.Kern.Services.keyboardInterruptNumber ;; Attempting to change the keyboard interrupt
+    cmp eax, Hexagon.Kern.Services.keyboardInterrupt ;; Attempting to change the keyboard interrupt
     je .deny ;; Deny installation
 
-    cmp eax, Hexagon.Kern.Services.mouseInterruptNumber ;; Attempt to change mouse interrupt
+    cmp eax, Hexagon.Kern.Services.mouseInterrupt ;; Attempt to change mouse interrupt
     je .deny ;; Deny installation
 
 .install:
