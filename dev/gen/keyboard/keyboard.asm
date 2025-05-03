@@ -465,7 +465,7 @@ Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.waitKeyboard:
 
 ;; Check Shift
 
-    cmp byte[Hexagon.Kern.Services.keyboardHandler.sinalShift], 1
+    cmp byte[Hexagon.Kern.Services.keyboardHandler.shiftKeyStatus], 1
     je .useShiftCharacters
 
     mov ebx, Hexagon.Keyboard.keyboardDefaultLayout.keys ;; Scan code vector
