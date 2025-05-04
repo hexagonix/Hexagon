@@ -473,7 +473,7 @@ align 16
 
     loop .clearLoop
 
-    mov dx, 0
+    xor dx, dx
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.positionCursor
 
@@ -510,7 +510,7 @@ align 16
 
     pop ds
 
-    mov dx, 0
+    xor dx, dx
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.positionCursor
 

@@ -66,7 +66,7 @@
 ;;
 ;; $HexagonixOS$
 
-;; Version 1.5.1
+;; Version 1.5.2
 ;; Last update: 03/05/2025
 
 ;;************************************************************************************
@@ -75,40 +75,40 @@
 ;;
 ;;************************************************************************************
 
-assinatura: db "HFNT"
+header: db "HFNT"
 
-.espaco:        ;; Espaço
-
-    db 00000000b
-    db 00000000b
+.space:        ;; Space
 
     db 00000000b
     db 00000000b
-    db 00000000b
-    db 00000000b
-    db 00000000b
-    db 00000000b
-    db 00000000b
-    db 00000000b
-    db 00000000b
 
+    db 00000000b
+    db 00000000b
+    db 00000000b
+    db 00000000b
     db 00000000b
     db 00000000b
     db 00000000b
     db 00000000b
     db 00000000b
 
-.exclamacao:    ;; !
+    db 00000000b
+    db 00000000b
+    db 00000000b
+    db 00000000b
+    db 00000000b
+
+.exclamationMark: ;; !
 
     db 00000000b
     db 00000000b
 
+    db 00001000b
     db 00001000b
     db 00001000b
     db 00001000b
     db 00001000b
     db 00001000b
-    db 00001000b
     db 00000000b
     db 00000000b
     db 00001000b
@@ -119,7 +119,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.aspas:         ;; "
+.quotationMarks: ;; " 
 
     db 00000000b
     db 00000000b
@@ -140,7 +140,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.cerquilha:     ;; #
+.hash: ;; #
 
     db 00000000b
     db 00000000b
@@ -161,7 +161,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.dolar:         ;; $
+.dollar: ;; $
 
     db 00000000b
     db 00000000b
@@ -182,7 +182,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.porCento:      ;; %
+.percent: ;; %
 
     db 00000000b
     db 00000000b
@@ -202,7 +202,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.eComercial:    ;; &
+.ampersand: ;; &
 
     db 00000000b
     db 00000000b
@@ -223,7 +223,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.apostrofe:     ;; '
+.apostrophe: ;; '
 
     db 00000000b
     db 00000000b
@@ -244,7 +244,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.paranteses.Esquerdo:   ;; (
+.parentheses.Left: ;; (
 
     db 00000000b
     db 00000000b
@@ -265,7 +265,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.paranteses.Direito:    ;; )
+.parentheses.Right: ;; )
 
     db 00000000b
     db 00000000b
@@ -286,7 +286,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.asterisco:     ;; *
+.asterisk: ;; *
 
     db 00000000b
     db 00000000b
@@ -307,7 +307,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.mais:          ;; +
+.plus: ;; +
 
     db 00000000b
     db 00000000b
@@ -328,7 +328,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.virgula:       ;; ,
+.comma: ;; ,
 
     db 00000000b
     db 00000000b
@@ -349,7 +349,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.menos:         ;; -
+.minus: ;; -
 
     db 00000000b
     db 00000000b
@@ -370,7 +370,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.ponto:          ;; .
+.dot: ;; .
 
     db 00000000b
     db 00000000b
@@ -391,7 +391,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.barra:         ;; /
+.bar: ;; /
 
     db 00000000b
     db 00000000b
@@ -412,9 +412,9 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-;; Números
+;; Numbers
 
-.zero:          ;;0
+.zero: ;; 0
 
     db 00000000b
     db 00000000b
@@ -435,7 +435,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.um:            ;; 1
+.one: ;; 1
 
     db 00000000b
     db 00000000b
@@ -456,7 +456,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.dois:          ;; 2
+.two: ;; 2
 
     db 00000000b
     db 00000000b
@@ -477,7 +477,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.tres:          ;; 3
+.three: ;; 3
 
     db 00000000b
     db 00000000b
@@ -498,7 +498,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.quatro:        ;; 4
+.four: ;; 4
 
     db 00000000b
     db 00000000b
@@ -519,7 +519,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.cinco:         ;; 5
+.five: ;; 5
 
     db 00000000b
     db 00000000b
@@ -540,7 +540,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.seis:          ;; 6
+.six: ;; 6
 
     db 00000000b
     db 00000000b
@@ -561,7 +561,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.sete:          ;; 7
+.seven: ;; 7
 
     db 00000000b
     db 00000000b
@@ -582,7 +582,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.oito:          ;; 8
+.eight: ;; 8
 
     db 00000000b
     db 00000000b
@@ -603,7 +603,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.nove:          ;; 9
+.nine: ;; 9
 
     db 00000000b
     db 00000000b
@@ -624,7 +624,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.doisPontos:    ;; :
+.colon: ;; :
 
     db 00000000b
     db 00000000b
@@ -645,7 +645,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.pontoEVirgula: ;; ;
+.semicolon: ;; ;
 
     db 00000000b
     db 00000000b
@@ -666,7 +666,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.menorQue:      ;; <
+.lessThan: ;; <
 
     db 00000000b
     db 00000000b
@@ -687,7 +687,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.igual:         ;; =
+.equal: ;; =
 
     db 00000000b
     db 00000000b
@@ -708,7 +708,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.maiorQue:      ;; >
+.greaterThan: ;; >
 
     db 00000000b
     db 00000000b
@@ -729,7 +729,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.interrogacao:  ;; ?
+.quationMark: ;; ?
 
     db 00000000b
     db 00000000b
@@ -750,7 +750,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.arroba:        ;; @
+.atSign: ;; @
 
     db 00000000b
     db 00000000b
@@ -771,7 +771,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-;; Maiúsculo
+;; Uppercase
 
 .A:
 
@@ -1318,7 +1318,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.colchete.Esquerdo: ;; [
+.bracket.Left: ;; [
 
     db 00000000b
     db 00000000b
@@ -1339,7 +1339,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.barraInvertida:        ;; \
+.backslash: ;; \
 
     db 00000000b
     db 00000000b
@@ -1360,7 +1360,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.colchete.Direito:  ;; ]
+.bracket.Right: ;; ]
 
     db 00000000b
     db 00000000b
@@ -1381,7 +1381,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.circunflexo:   ;; ^
+.circumflex: ;; ^
 
     db 00000000b
     db 00000000b
@@ -1402,7 +1402,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.underScore:    ;; _
+.underscore: ;; _
 
     db 00000000b
     db 00000000b
@@ -1423,7 +1423,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.acentoGrave:   ;; `
+.graveAccent: ;; '
 
     db 00000000b
     db 00000000b
@@ -1444,7 +1444,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-;; Minúsculas
+;; Lowercase
 
 .a:
 
@@ -1992,7 +1992,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.chave.Esquerda: ;; {
+.brace.Left: ;; {
 
     db 00000000b
     db 00000000b
@@ -2013,7 +2013,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.barraVertical: ;; |
+.pipe: ;; |
 
     db 00000000b
     db 00000000b
@@ -2034,7 +2034,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.chave.Direita: ;; }
+.brace.Right: ;; }
 
     db 00000000b
     db 00000000b
@@ -2055,7 +2055,7 @@ assinatura: db "HFNT"
     db 00000000b
     db 00000000b
 
-.til:           ;; ~
+.tilde: ;; ~
 
     db 00000000b
     db 00000000b
