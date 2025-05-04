@@ -311,7 +311,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.setGraphicMode:
     mov word[Hexagon.Console.Resolution.y], ax ;; Save resolution Y
 
     movzx eax, word[Hexagon.Console.Resolution.x]
-    mov ebx, Hexagon.Libkern.Fonts.width
+    mov ebx, Hexagon.Libkern.Font.width
 
     xor edx, edx
 
@@ -322,7 +322,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.setGraphicMode:
     mov word[Hexagon.Console.maxColumns], ax
 
     movzx eax, word[Hexagon.Console.Resolution.y]
-    mov ebx, Hexagon.Libkern.Fonts.height
+    mov ebx, Hexagon.Libkern.Font.height
 
     xor edx, edx
 
@@ -342,7 +342,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.setGraphicMode:
     mov dword[Hexagon.Console.consoleSize], eax
 
     mov eax, dword[Hexagon.Console.bytesPerRow]
-    mov ebx, Hexagon.Libkern.Fonts.height
+    mov ebx, Hexagon.Libkern.Font.height
 
     mul ebx
 
@@ -595,7 +595,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.clearRow:
     mov esi, dword[Hexagon.Console.Memory.addressLFB]
 
     and eax, 0xFF
-    mov ebx, Hexagon.Libkern.Fonts.height
+    mov ebx, Hexagon.Libkern.Font.height
 
     mul ebx
 
@@ -606,7 +606,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.clearRow:
     add esi, eax
 
     movzx eax, word[Hexagon.Console.bytesPerRow]
-    mov ebx, Hexagon.Libkern.Fonts.height
+    mov ebx, Hexagon.Libkern.Font.height
 
     mul ebx
 
@@ -1187,7 +1187,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.printCharacterGraphicMode:
 
     push edx
 
-    mov ecx, Hexagon.Libkern.Fonts.height
+    mov ecx, Hexagon.Libkern.Font.height
     mov edx, [Hexagon.Kernel.Dev.Gen.Console.Console.positionCursorGraphicMode.previousCursorColor]
 
 .clearPreviousCursor:
@@ -1392,7 +1392,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.positionCursorGraphicMode:
 
     push edx
 
-    mov eax, Hexagon.Libkern.Fonts.width
+    mov eax, Hexagon.Libkern.Font.width
     movzx ebx, dl
 
     mul ebx
@@ -1401,7 +1401,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.positionCursorGraphicMode:
 
     pop edx
 
-    mov eax, Hexagon.Libkern.Fonts.height
+    mov eax, Hexagon.Libkern.Font.height
     movzx ebx, dh
 
     mul ebx
@@ -1411,7 +1411,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.positionCursorGraphicMode:
     movzx eax, word[.previousX]
     movzx ebx, word[.previousY]
 
-    mov ecx, Hexagon.Libkern.Fonts.height
+    mov ecx, Hexagon.Libkern.Font.height
     mov edx, [.previousCursorColor]
 
 .clearPreviousCursor:
@@ -1431,7 +1431,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.positionCursorGraphicMode:
     mov edx, dword[Hexagon.Console.backgroundColor]
     mov dword[.previousCursorColor], edx
 
-    mov ecx, Hexagon.Libkern.Fonts.height
+    mov ecx, Hexagon.Libkern.Font.height
     mov edx, dword[Hexagon.Console.fontColor]
 
 .drawCursor:
@@ -1620,7 +1620,7 @@ Hexagon.Kernel.Dev.Gen.Console.Console.changeFont:
     cmp byte[edi+3], "T"
     jne .incompatibleFont
 
-    mov edi, Hexagon.Libkern.Fonts.fontBuffer
+    mov edi, Hexagon.Libkern.Font.fontBuffer
 
     call Hexagon.Kernel.FS.VFS.openFile
 

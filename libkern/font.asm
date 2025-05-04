@@ -73,7 +73,7 @@
 
 use32
 
-Hexagon.Libkern.Fonts:
+Hexagon.Libkern.Font:
 
 .width = 8
 .height  = 16
@@ -84,7 +84,7 @@ Hexagon.Libkern.Fonts:
 
 ;; Now let's include a default font here, in Hexagonix font format
 
-include "../fonts/default.asm"
+include "font/default.asm"
 
 ;;************************************************************************************
 

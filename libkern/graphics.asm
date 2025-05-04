@@ -124,11 +124,11 @@ Hexagon.Libkern.Graphics.putCharacterBitmap:
 
     and eax, 0xFF
     sub eax, 32
-    mov ebx, Hexagon.Libkern.Fonts.height
+    mov ebx, Hexagon.Libkern.Font.height
 
     mul ebx
 
-    mov edi, Hexagon.Libkern.Fonts
+    mov edi, Hexagon.Libkern.Font
     add edi, 04h
     add edi, eax
 
@@ -136,7 +136,7 @@ Hexagon.Libkern.Graphics.putCharacterBitmap:
 
     push edx
 
-    mov eax, Hexagon.Libkern.Fonts.width
+    mov eax, Hexagon.Libkern.Font.width
     movzx ebx, dl
 
     mul ebx
@@ -145,14 +145,14 @@ Hexagon.Libkern.Graphics.putCharacterBitmap:
 
     pop edx
 
-    mov eax, Hexagon.Libkern.Fonts.height
+    mov eax, Hexagon.Libkern.Font.height
     movzx ebx, dh
 
     mul ebx
 
     mov word[.y], ax
 
-    mov eax, Hexagon.Libkern.Fonts.width
+    mov eax, Hexagon.Libkern.Font.width
     mov ebx, dword[Hexagon.Console.bytesPerPixel]
 
     mul ebx
@@ -167,7 +167,7 @@ Hexagon.Libkern.Graphics.putCharacterBitmap:
 
     call Hexagon.Libkern.Graphics.calculatePixelOffset
 
-    mov ecx, Hexagon.Libkern.Fonts.height
+    mov ecx, Hexagon.Libkern.Font.height
 
 .putColumn:
 
@@ -177,7 +177,7 @@ Hexagon.Libkern.Graphics.putCharacterBitmap:
 
     push ecx
 
-    mov ecx, Hexagon.Libkern.Fonts.width
+    mov ecx, Hexagon.Libkern.Font.width
 
 .putLine:
 
