@@ -78,13 +78,13 @@ Hexagon.Libkern.Fonts:
 .width = 8
 .height  = 16
 
-.fontBuffer: ;; Area reserved for loading a new font
+.fontBuffer: ;; Reserved area for loading a new font
 
 ;;************************************************************************************
 
-;; Now let's include a standard font here, in Hexagonix font format
+;; Now let's include a default font here, in Hexagonix font format
 
-include "../../Fonts/aurora.asm"
+include "../fonts/default.asm"
 
 ;;************************************************************************************
 
