@@ -117,7 +117,6 @@ Other features being developed:
 </details>
 
 <details title="Hexagon License" align='left'>
-<br>
 <summary align='left'>Licença do Hexagon/Hexagon License</summary>
 
 <div align="justify">
