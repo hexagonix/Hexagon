@@ -275,6 +275,13 @@ Hexagon.Arch.Gen.Mm.configMemory:
 
 Hexagon.Arch.Gen.Mm.malloc:
 
+;; The free-list below is a single global structure with no per-call locking.
+;; Disable interrupts for the duration of the call so a timer preemption can't
+;; run malloc/free again on top of an already in-progress update and corrupt it
+
+    pushfd
+    cli
+
     push ecx
     push edx
 
@@ -498,6 +505,8 @@ Hexagon.Arch.Gen.Mm.malloc:
     pop edx
     pop ecx
 
+    popfd
+
     ret
 
 ;;************************************************************************************
@@ -510,6 +519,11 @@ Hexagon.Arch.Gen.Mm.malloc:
 ;; ECX - Size of previously allocated memory, in bytes
 
 Hexagon.Arch.Gen.Mm.free:
+
+;; Same reentrancy concern as malloc: this manipulates the same global free-list
+
+    pushfd
+    cli
 
     push eax
     push ebx
@@ -704,6 +718,8 @@ Hexagon.Arch.Gen.Mm.free:
     pop ecx
     pop ebx
     pop eax
+
+    popfd
 
     ret
 
