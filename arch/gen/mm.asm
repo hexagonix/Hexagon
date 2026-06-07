@@ -215,14 +215,8 @@ Hexagon.Arch.Gen.Mm.initMemory:
 
     call Hexagon.Arch.Gen.Mm.configMemory ;; Start the memory handler
 
-;; Now, the space reserved for processes will be defined, using the established standard
-;; Hexagon.Memory.Allocator.initialReserved
-
-    mov ebx, Hexagon.Memory.Allocator.initialReserved
-
-    call Hexagon.Arch.Gen.Mm.malloc ;; Allocate memory to processes
-
-    call Hexagon.Kern.Proc.configureProcessAllocation ;; Save the address used for allocation
+;; Processes no longer reserve a single shared block up front - each one is
+;; allocated its own memory individually by Hexagon.Kern.Proc.addProcess
 
     ret
 

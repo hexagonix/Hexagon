@@ -140,7 +140,7 @@ times Hexagon.Processes.PCB.processLimit dd 0
 .pointer: dd 0 ;; Pointer to the process stack
 
 
-Hexagon.Processes.PCB.size:  ;; Memory mapping block
+Hexagon.Processes.PCB.base:  ;; Per-level allocated memory base (one malloc'd block per process)
 times Hexagon.Processes.PCB.processLimit dd 0
 .pointer: dd 0 ;; Pointer to the process's memory address
 
@@ -152,7 +152,7 @@ Hexagon.Processes.PCB:
 .processLimit        = 31 ;; Limit number of loaded processes (n-1)
 .processCount:      dd 0 ;; Number of processes currently on the execution stack
 .PID:               dd 0 ;; PID
-.lastProcessSize:   dd 0 ;; Size of last process
+.lastProcessSize:   dd 0 ;; No longer used (was for the old bump allocator); left in place
 .returnCode:        db 0 ;; Records error codes in process operations
 .currentPID:        dd 0 ;; Current PID
 .counter:           db 0 ;; Process counter
@@ -245,17 +245,6 @@ Hexagon.Kern.Proc.setupScheduler:
     ret
 
 .space: db ' '
-
-;;************************************************************************************
-
-;; Now the memory space allocated to the processes will be saved in
-;; the Hexagon process scheduler control structure
-
-Hexagon.Kern.Proc.configureProcessAllocation:
-
-    mov dword[Hexagon.Processes.PCB.processBaseMemory], ebx
-
-    ret
 
 ;;************************************************************************************
 
@@ -477,7 +466,40 @@ Hexagon.Kern.Proc.addProcess:
 
 ;; Data passed through the stack will be restored
 
-    pop eax
+    pop eax ;; EAX = exact declared file size
+
+;; Round the allocation up to a whole cluster. Hexagon.Kernel.FS.FAT16.loadFileFAT16B
+;; always copies whole clusters (see the "rep movsb" using clusterSize below), so a
+;; block sized to the exact file size can be overrun by up to one cluster, corrupting
+;; the free block allocated right after it
+
+    push edx ;; div/mul below clobber edx
+
+    xor edx, edx
+
+    div dword[Hexagon.VFS.FAT16B.clusterSize] ;; eax = clusters (floor), edx = remainder
+
+    cmp edx, 0
+    je .imageSizeAligned
+
+    inc eax ;; Round up to the next whole cluster
+
+.imageSizeAligned:
+
+    mul dword[Hexagon.VFS.FAT16B.clusterSize] ;; eax = size rounded up to a whole cluster
+
+    pop edx
+
+;; Many existing apps (login, logind, sh, anything using verUtils.s) read a
+;; configuration file straight into "appFileBuffer", a bare label placed right
+;; after their own code with no reserved space - relying on there being free
+;; slack past their own image at runtime. The old bump allocator always left
+;; plenty of such slack; this allocator packs processes tightly, so without
+;; this margin that file read overwrites the free-list header right after the
+;; block, corrupting the next allocation. 64 KB comfortably covers this until
+;; those apps reserve their own buffer space explicitly
+
+    add eax, 65536
 
     push eax
 
@@ -487,23 +509,27 @@ Hexagon.Kern.Proc.addProcess:
 
     call Hexagon.Arch.Gen.Mm.confirmMemoryUsage
 
-    pop ebx
+    pop ebx ;; EBX = size of the image to load
 
-    add ebx, [Hexagon.Processes.PCB.lastProcessSize]
+;; Allocate this process its own memory block, instead of bumping a pointer inside
+;; a single shared region. EBX (size) in, EAX=0/EBX=pointer out
 
-    mov eax, [Hexagon.Processes.PCB.size.pointer]
+    call Hexagon.Arch.Gen.Mm.malloc
 
-    add eax, Hexagon.Processes.PCB.size
+    cmp eax, 0
+    je .allocationError
 
-    mov dword[eax], ebx
+    mov eax, [Hexagon.Processes.PCB.base.pointer]
 
-    mov dword[Hexagon.Processes.PCB.lastProcessSize], ebx
+    add eax, Hexagon.Processes.PCB.base
 
-    add dword[Hexagon.Processes.PCB.size.pointer], 4
+    mov dword[eax], ebx ;; Remember this level's allocated base, to free it on exit
 
-    add dword[Hexagon.Processes.PCB.processBaseMemory], ebx
+    add dword[Hexagon.Processes.PCB.base.pointer], 4
 
-    mov edi, dword[Hexagon.Processes.PCB.processBaseMemory]
+    mov dword[Hexagon.Processes.PCB.processBaseMemory], ebx
+
+    mov edi, ebx
 
 ;; Correct address with segment base (physical address = address + segment base)
 
@@ -526,6 +552,20 @@ Hexagon.Kern.Proc.addProcess:
 .loadImageError:
 
 ;; An error occurred while loading the image present on volume
+
+    stc ;; Inform the process that called the function of the occurrence of an error
+
+    popa ;; Restore the stack
+
+    mov byte[Hexagon.Processes.PCB.returnCode], 02h
+
+    mov eax, 02h ;; Send error code
+
+    ret
+
+.allocationError:
+
+;; No memory available to load this process
 
     stc ;; Inform the process that called the function of the occurrence of an error
 
@@ -654,28 +694,54 @@ Hexagon.Kern.Proc.removeProcess:
     mov ax, 10h ;; Kernel data segment
     mov ds, ax
 
-    mov eax, [Hexagon.Processes.PCB.size.pointer]
+;; Free this process's own memory block (individually allocated in addProcess)
 
-    add eax, Hexagon.Processes.PCB.size
+    sub dword[Hexagon.Processes.PCB.base.pointer], 4
 
+    mov eax, [Hexagon.Processes.PCB.base.pointer]
+
+    add eax, Hexagon.Processes.PCB.base
+
+    mov ebx, dword[eax] ;; EBX = this process's allocated base
+
+    mov edx, dword[Hexagon.Processes.PCB.PID]
+    mov ecx, dword[Hexagon.Processes.PCB.imageSize+edx*4] ;; ECX = its size
+
+    push ebx
+    push ecx
+
+    call Hexagon.Arch.Gen.Mm.free
+
+    pop ecx
+    pop ebx
+
+;; Restore processBaseMemory to the parent process (new top of the base stack),
+;; or to 0 if this was the last process on the stack
+
+    mov eax, [Hexagon.Processes.PCB.base.pointer]
+
+    cmp eax, 0
+    je .noParent
+
+    add eax, Hexagon.Processes.PCB.base
     sub eax, 4
 
     mov ebx, dword[eax]
 
-    sub dword[Hexagon.Processes.PCB.processBaseMemory], ebx
+    jmp .haveParent
 
-    sub dword[Hexagon.Processes.PCB.size.pointer], 4
+.noParent:
 
-    mov eax, dword[Hexagon.Memory.bytesAllocated]
+    xor ebx, ebx
 
-    sub dword[Hexagon.Processes.PCB.processBaseMemory], eax
+.haveParent:
 
-    mov dword[Hexagon.Memory.bytesAllocated], 0
+    mov dword[Hexagon.Processes.PCB.processBaseMemory], ebx
 
 ;; Now we must calculate the program's code and data base addresses,
 ;; placing them in the program's GDT entry
 
-    mov eax, dword[Hexagon.Processes.PCB.processBaseMemory]
+    mov eax, ebx
     mov edx, eax
     and eax, 0xFFFF
 
