@@ -150,6 +150,7 @@ Hexagon.Processes.PCB:
 .endMode:           db 0 ;; Mark whether the process should remain resident or not
 .processLocked:     dd 0 ;; Marks whether the process can be terminated by a key or combination
 .processLimit        = 31 ;; Limit number of loaded processes (n-1)
+.stackSize            = 16384 ;; Dedicated stack space carved out of each process's own block
 .processCount:      dd 0 ;; Number of processes currently on the execution stack
 .PID:               dd 0 ;; PID
 .lastProcessSize:   dd 0 ;; No longer used (was for the old bump allocator); left in place
@@ -501,6 +502,12 @@ Hexagon.Kern.Proc.addProcess:
 
     add eax, 65536
 
+;; Also reserve this process its own dedicated stack at the top of the block
+;; (see Hexagon.Kern.Proc.executeProcess) instead of it sharing whatever stack
+;; happened to be active when it was started
+
+    add eax, Hexagon.Processes.PCB.stackSize
+
     push eax
 
     mov ebx, dword[Hexagon.Processes.PCB.PID]
@@ -620,6 +627,21 @@ Hexagon.Kern.Proc.executeProcess:
     add dword[Hexagon.Processes.PCB.esp.pointer], 4
 
     call Hexagon.Kern.Proc.calculateArgumentsAddress
+
+;; Switch to this process's own dedicated stack (top of its own allocated
+;; block - see the ".stackSize" addition in addProcess), instead of continuing
+;; to run on whatever stack happens to be active. Must happen after the esp
+;; save above (which saves the *caller's* stack) and before the pushes below,
+;; since those need to land on - and be popped back off by iret from - the
+;; new process's own stack
+
+    mov eax, dword[Hexagon.Processes.PCB.PID]
+    inc eax
+    mov ecx, dword[Hexagon.Processes.PCB.imageSize+eax*4] ;; ecx = total allocated size
+
+    mov esp, dword[Hexagon.Processes.PCB.processBaseMemory]
+    add esp, ecx
+    sub esp, 4 ;; Small headroom from the very top of the block
 
     sti ;; Make sure interrupts are available
 
