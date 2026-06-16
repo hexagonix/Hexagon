@@ -169,6 +169,42 @@ times 11 db 0
 end virtual
 
 ;;************************************************************************************
+;;
+;;      Hexagon.Processes.Spawned - non-blocking spawned process table
+;;
+;; Kept separate from the exec "stack" above for now: hx.exec keeps its
+;; existing blocking, nested behavior untouched, while hx.spawn (syscall 70)
+;; parks a fully loaded, independent process here without running it. Nothing
+;; dispatches these yet - that's the scheduler's job (not implemented yet).
+;; The two tables are expected to be unified once the scheduler exists and
+;; needs to treat every process uniformly.
+;;
+;;************************************************************************************
+
+virtual at Hexagon.Heap.SpawnTab
+
+Hexagon.Processes.Spawned.used:
+times Hexagon.Processes.Spawned.limit db 0 ;; 0 = free slot, 1 = in use
+
+Hexagon.Processes.Spawned.pid:
+times Hexagon.Processes.Spawned.limit dd 0 ;; Persistent PID, never reused while the slot is in use
+
+Hexagon.Processes.Spawned.base:
+times Hexagon.Processes.Spawned.limit dd 0 ;; Allocated physical base (own block, like exec'd processes)
+
+Hexagon.Processes.Spawned.size:
+times Hexagon.Processes.Spawned.limit dd 0 ;; Total allocated size, needed later to free it
+
+Hexagon.Processes.Spawned.name:
+times Hexagon.Processes.Spawned.limit*11 db 0 ;; Process name, for ps/hx.getProcesses
+
+Hexagon.Processes.Spawned.nextPID: dd 0 ;; Monotonic counter, next PID to hand out
+
+Hexagon.Processes.Spawned.limit = 8 ;; Small pool for now - independent of the exec stack's limit
+
+end virtual
+
+;;************************************************************************************
 
 ;; Unlock the process stack, allowing the user to terminate the process
 
@@ -1047,5 +1083,278 @@ Hexagon.Kern.Proc.getProcessTable:
 Hexagon.Kern.Proc.getErrorCode:
 
     mov eax, [Hexagon.Processes.PCB.errorCode]
+
+    ret
+
+;;************************************************************************************
+
+;; Allocates memory for and loads an executable image, without registering it
+;; anywhere or starting it. Shared by the blocking hx.exec path could reuse
+;; this too in the future, but for now only Hexagon.Kern.Proc.spawn calls it -
+;; hx.exec's own Hexagon.Kern.Proc.addProcess keeps its separate, already
+;; proven implementation untouched
+;;
+;; Input:
+;;
+;; EAX - Exact declared file size (from Hexagon.Kernel.FS.VFS.fileExists)
+;; ESI - Filename (already validated to exist and be a compatible HAPP image)
+;;
+;; Output:
+;;
+;; EBX - Allocated physical base (on success)
+;; ECX - Total allocated size, including margins and stack (on success) -
+;;       the caller must remember this, it is needed later by
+;;       Hexagon.Arch.Gen.Mm.free
+;; CF  - Set on error (out of memory, or the image failed to load)
+
+Hexagon.Kern.Proc.allocateAndLoadImage:
+
+    push edx
+
+    xor edx, edx
+
+    div dword[Hexagon.VFS.FAT16B.clusterSize] ;; eax = clusters (floor), edx = remainder
+
+    cmp edx, 0
+    je .imageSizeAligned
+
+    inc eax ;; Round up to the next whole cluster
+
+.imageSizeAligned:
+
+    mul dword[Hexagon.VFS.FAT16B.clusterSize] ;; eax = size rounded up to a whole cluster
+
+    pop edx
+
+    add eax, 65536 ;; appFileBuffer-style scratch margin, see addProcess for why
+
+    add eax, Hexagon.Processes.PCB.stackSize ;; dedicated stack for this process
+
+    push eax ;; remember the total size across the calls below
+
+    mov ebx, eax
+
+    call Hexagon.Arch.Gen.Mm.malloc
+
+    cmp eax, 0
+    je .allocError
+
+    push ebx ;; remember the allocated base across the openFile call
+
+    mov edi, ebx
+
+;; Correct address with segment base (physical address = address + segment base)
+
+    sub edi, 500h
+
+    push esi
+
+    call Hexagon.Kernel.FS.VFS.openFile
+
+    pop esi
+
+    jc .loadError
+
+    pop ebx ;; base
+
+    pop ecx ;; total size
+
+    clc
+
+    ret
+
+.loadError:
+
+    pop ebx ;; base
+    pop ecx ;; total size
+
+    push ebx
+    push ecx
+
+    call Hexagon.Arch.Gen.Mm.free ;; avoid leaking the block for an image that failed to load
+
+    pop ecx
+    pop ebx
+
+    stc
+
+    ret
+
+.allocError:
+
+    pop eax ;; discard the size pushed above, nothing was allocated
+
+    stc
+
+    ret
+
+;;************************************************************************************
+
+;; Creates a new process without blocking the caller. The process is fully
+;; validated, allocated and loaded, then parked in Hexagon.Processes.Spawned
+;; as an independent, ready process - it does not run yet, since there is no
+;; scheduler to dispatch it (that's phase 4 of the multitasking work). Does
+;; not support arguments yet, unlike hx.exec
+;;
+;; Input:
+;;
+;; ESI - Buffer containing the name of the file to be executed
+;;
+;; Output:
+;;
+;; EAX - PID of the new process (on success)
+;; CF  - Set on error (process limit reached, image not found or
+;;       incompatible, out of memory)
+
+Hexagon.Kern.Proc.spawn:
+
+    push esi
+
+    call Hexagon.Kernel.FS.VFS.fileExists ;; eax = file size, cf = not found
+
+    pop esi
+
+    jc .missingImage
+
+    push eax ;; save the file size across checkHAPPImage
+
+    call Hexagon.Libkern.HAPP.checkHAPPImage
+
+    cmp byte[Hexagon.Libkern.HAPP.imageHAPPHeader.incompatibleImage], 01h
+    je .incompatibleImage
+
+    cmp byte[Hexagon.Libkern.HAPP.imageHAPPHeader.incompatibleImage], 02h
+    je .missingImage2
+
+;; Find a free slot in the spawned-process table
+
+    xor ecx, ecx
+
+.findSlot:
+
+    cmp ecx, Hexagon.Processes.Spawned.limit
+    jae .limitReached
+
+    cmp byte[Hexagon.Processes.Spawned.used+ecx], 0
+    je .slotFound
+
+    inc ecx
+
+    jmp .findSlot
+
+.slotFound:
+
+    pop eax ;; restore the file size
+
+    push ecx ;; remember the free slot index across allocateAndLoadImage
+
+    call Hexagon.Kern.Proc.allocateAndLoadImage ;; ebx=base, ecx=total size, cf=error
+
+    pop edx ;; edx = free slot index
+
+    jc .allocOrLoadFailed
+
+;; Register the new process in the spawned-process table
+
+    mov byte[Hexagon.Processes.Spawned.used+edx], 1
+    mov dword[Hexagon.Processes.Spawned.base+edx*4], ebx
+    mov dword[Hexagon.Processes.Spawned.size+edx*4], ecx
+
+    push ebx
+    push ecx
+
+    mov eax, ecx
+
+    call Hexagon.Arch.Gen.Mm.confirmMemoryUsage ;; accounting, matches addProcess
+
+    pop ecx
+    pop ebx
+
+    inc dword[Hexagon.Processes.Spawned.nextPID]
+
+    mov eax, dword[Hexagon.Processes.Spawned.nextPID]
+
+    mov dword[Hexagon.Processes.Spawned.pid+edx*4], eax
+
+;; Copy the process name into the table (for ps/hx.getProcesses later)
+
+    mov edi, edx
+
+    imul edi, 11
+
+    add edi, Hexagon.Processes.Spawned.name
+
+    mov ecx, 11
+
+.copyNameLoop:
+
+    lodsb
+
+    cmp al, 0
+    je .padName
+
+    stosb
+
+    loop .copyNameLoop
+
+    jmp .nameCopied
+
+.padName:
+
+    mov al, ' '
+
+    rep stosb
+
+.nameCopied:
+
+    mov eax, dword[Hexagon.Processes.Spawned.pid+edx*4] ;; return the new PID
+
+    clc
+
+    ret
+
+.missingImage:
+
+    stc
+
+    mov eax, 01h
+
+    ret
+
+.missingImage2:
+
+    pop eax ;; discard the saved file size
+
+    stc
+
+    mov eax, 01h
+
+    ret
+
+.incompatibleImage:
+
+    pop eax ;; discard the saved file size
+
+    stc
+
+    mov eax, 04h
+
+    ret
+
+.limitReached:
+
+    pop eax ;; discard the saved file size
+
+    stc
+
+    mov eax, 03h
+
+    ret
+
+.allocOrLoadFailed:
+
+    stc
+
+    mov eax, 02h
 
     ret

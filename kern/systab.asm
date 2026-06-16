@@ -188,3 +188,7 @@ Hexagon.Kern.Syscall.hexagonServices:
 ;; Extended (Dormin development branch) syscalls
 
     dd Hexagon.Kernel.FS.VFS.changeDirectory                           ;; 69
+
+;; Multitasking (non-blocking process creation)
+
+    dd Hexagon.Kern.Proc.spawn                                         ;; 70

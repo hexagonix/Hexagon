@@ -355,4 +355,5 @@ Hexagon.Heap.PCBs         = Hexagon.Heap.DiskCache    + 200000      ;; Process c
 Hexagon.Heap.ProcTab      = Hexagon.Heap.PCBs         + 5000        ;; Process table
 Hexagon.Heap.ArgProc      = Hexagon.Heap.ProcTab      + 5000 + 500h ;; Arguments to process
 Hexagon.Heap.Temp         = Hexagon.Heap.ArgProc      + 2000        ;; Temporary kernel data
+Hexagon.Heap.SpawnTab     = Hexagon.Heap.Temp         + 4096        ;; Non-blocking spawned process table
 
