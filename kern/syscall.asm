@@ -114,13 +114,15 @@ Hexagon.Kern.Syscall.hexagonHandler:
 
     mov dword[Hexagon.Syscall.Control.eax], eax
 
-    add esi, dword[Hexagon.Processes.PCB.processBaseMemory]
+    call Hexagon.Kern.Proc.getCurrentProcessBase ;; eax = base of whichever process is running now
+
+    add esi, eax
 
 ;; Correct address with segment base (physical address = address + segment base)
 
     sub esi, 500h
 
-    add edi, dword[Hexagon.Processes.PCB.processBaseMemory]
+    add edi, eax
 
 ;; Correct address with segment base (physical address = address + segment base)
 
@@ -185,13 +187,21 @@ Hexagon.Kern.Syscall.hexagonHandler:
     push dword[Hexagon.Syscall.Control.cs]
     push dword[Hexagon.Syscall.Control.eip]
 
-    sub esi, dword[Hexagon.Processes.PCB.processBaseMemory]
+    push eax
+
+    call Hexagon.Kern.Proc.getCurrentProcessBase ;; eax = base of whichever process is running now
+
+    mov ebp, eax ;; ebp is free here - cs/eip were already pushed above
+
+    pop eax
+
+    sub esi, ebp
 
 ;; Correct address with segment base (physical address = address + segment base)
 
     add esi, 500h
 
-    sub edi, dword[Hexagon.Processes.PCB.processBaseMemory]
+    sub edi, ebp
 
 ;; Correct address with segment base (physical address = address + segment base)
 

@@ -77,9 +77,15 @@ use32
 
 Hexagon.Arch.i386.Timer.Timer.setupTimer:
 
-;; Set timer frequency
+;; Program the PIT's command register: channel 0, lobyte/hibyte access,
+;; mode 3 (square wave), binary counting
 
-    mov eax, 100 ;; Set frequency to 1.19 MHz / EAX
+    mov al, 00110110b
+    out 43h, al
+
+;; Set timer frequency to ~100 Hz (1193182 Hz / 11932)
+
+    mov eax, 11932
 
     out 40h, al ;; First send least significant byte
 

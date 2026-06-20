@@ -314,11 +314,21 @@ Hexagon.Kern.Dmesg.hourToLog:
 
 Hexagon.Kern.Dmesg.createMessage:
 
+;; Hexagon.Kernel.Dev.Dev.open/write below track which device is open via
+;; global state (Hexagon.Dev.Control.*), and Hexagon.Syscall.Control.systemCall
+;; is also read here - none of that is safe to interleave between two
+;; processes, so this whole function runs with interrupts disabled
+
+    pushfd
+    cli
+
     cmp ebx, Hexagon.Dmesg.Priorities.p4
     je .justSerialOutput
 
     cmp ebx, 05h
     je .defaultSent
+
+    popfd
 
     ret ;; Por enquanto, só essas opções são válidas
 
@@ -379,6 +389,8 @@ Hexagon.Kern.Dmesg.createMessage:
 
     call Hexagon.Kernel.Dev.Gen.Console.Console.printString
 
+    popfd
+
     ret
 
 .justSerialOutput:
@@ -423,6 +435,8 @@ Hexagon.Kern.Dmesg.createMessage:
     mov esi, Hexagon.Dmesg.newLine
 
     call Hexagon.Kern.Dmesg.messageToSerial
+
+    popfd
 
     ret
 

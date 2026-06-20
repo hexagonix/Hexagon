@@ -215,8 +215,8 @@ Hexagon.Arch.Gen.Mm.initMemory:
 
     call Hexagon.Arch.Gen.Mm.configMemory ;; Start the memory handler
 
-;; Processes no longer reserve a single shared block up front - each one is
-;; allocated its own memory individually by Hexagon.Kern.Proc.addProcess
+;; Each process is allocated its own memory individually by
+;; Hexagon.Kern.Proc.addProcess
 
     ret
 

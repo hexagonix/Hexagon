@@ -153,7 +153,6 @@ Hexagon.Processes.PCB:
 .stackSize            = 16384 ;; Dedicated stack space carved out of each process's own block
 .processCount:      dd 0 ;; Number of processes currently on the execution stack
 .PID:               dd 0 ;; PID
-.lastProcessSize:   dd 0 ;; No longer used (was for the old bump allocator); left in place
 .returnCode:        db 0 ;; Records error codes in process operations
 .currentPID:        dd 0 ;; Current PID
 .counter:           db 0 ;; Process counter
@@ -172,12 +171,11 @@ end virtual
 ;;
 ;;      Hexagon.Processes.Spawned - non-blocking spawned process table
 ;;
-;; Kept separate from the exec "stack" above for now: hx.exec keeps its
-;; existing blocking, nested behavior untouched, while hx.spawn (syscall 70)
-;; parks a fully loaded, independent process here without running it. Nothing
-;; dispatches these yet - that's the scheduler's job (not implemented yet).
-;; The two tables are expected to be unified once the scheduler exists and
-;; needs to treat every process uniformly.
+;; hx.spawn (syscall 70) parks a fully loaded, independent process here
+;; without running it. Nothing dispatches these yet - that's the scheduler's
+;; job. Separate from Hexagon.Processes.PCB above, which hx.exec uses for its
+;; own blocking, nested processes; the two are expected to be unified once
+;; the scheduler needs to treat every process uniformly.
 ;;
 ;;************************************************************************************
 
@@ -195,12 +193,18 @@ times Hexagon.Processes.Spawned.limit dd 0 ;; Allocated physical base (own block
 Hexagon.Processes.Spawned.size:
 times Hexagon.Processes.Spawned.limit dd 0 ;; Total allocated size, needed later to free it
 
+Hexagon.Processes.Spawned.entry:
+times Hexagon.Processes.Spawned.limit dd 0 ;; HAPP entry point offset, captured at spawn time
+
+Hexagon.Processes.Spawned.esp:
+times Hexagon.Processes.Spawned.limit dd 0 ;; Saved stack pointer; 0 means never dispatched yet
+
 Hexagon.Processes.Spawned.name:
 times Hexagon.Processes.Spawned.limit*11 db 0 ;; Process name, for ps/hx.getProcesses
 
 Hexagon.Processes.Spawned.nextPID: dd 0 ;; Monotonic counter, next PID to hand out
 
-Hexagon.Processes.Spawned.limit = 8 ;; Small pool for now - independent of the exec stack's limit
+Hexagon.Processes.Spawned.limit = 8
 
 end virtual
 
@@ -529,18 +533,14 @@ Hexagon.Kern.Proc.addProcess:
 
 ;; Many existing apps (login, logind, sh, anything using verUtils.s) read a
 ;; configuration file straight into "appFileBuffer", a bare label placed right
-;; after their own code with no reserved space - relying on there being free
-;; slack past their own image at runtime. The old bump allocator always left
-;; plenty of such slack; this allocator packs processes tightly, so without
-;; this margin that file read overwrites the free-list header right after the
-;; block, corrupting the next allocation. 64 KB comfortably covers this until
+;; after their own code with no reserved space of its own - they rely on free
+;; slack past their own image at runtime. 64 KB comfortably covers this until
 ;; those apps reserve their own buffer space explicitly
 
     add eax, 65536
 
 ;; Also reserve this process its own dedicated stack at the top of the block
-;; (see Hexagon.Kern.Proc.executeProcess) instead of it sharing whatever stack
-;; happened to be active when it was started
+;; (see Hexagon.Kern.Proc.executeProcess, which points esp there)
 
     add eax, Hexagon.Processes.PCB.stackSize
 
@@ -554,8 +554,7 @@ Hexagon.Kern.Proc.addProcess:
 
     pop ebx ;; EBX = size of the image to load
 
-;; Allocate this process its own memory block, instead of bumping a pointer inside
-;; a single shared region. EBX (size) in, EAX=0/EBX=pointer out
+;; Allocate this process its own memory block. EBX (size) in, EAX=0/EBX=pointer out
 
     call Hexagon.Arch.Gen.Mm.malloc
 
@@ -665,11 +664,10 @@ Hexagon.Kern.Proc.executeProcess:
     call Hexagon.Kern.Proc.calculateArgumentsAddress
 
 ;; Switch to this process's own dedicated stack (top of its own allocated
-;; block - see the ".stackSize" addition in addProcess), instead of continuing
-;; to run on whatever stack happens to be active. Must happen after the esp
-;; save above (which saves the *caller's* stack) and before the pushes below,
-;; since those need to land on - and be popped back off by iret from - the
-;; new process's own stack
+;; block - see the ".stackSize" addition in addProcess). Must happen after the
+;; esp save above (which saves the *caller's* stack) and before the pushes
+;; below, since those need to land on - and be popped back off by iret from -
+;; the new process's own stack
 
     mov eax, dword[Hexagon.Processes.PCB.PID]
     inc eax
@@ -1089,10 +1087,7 @@ Hexagon.Kern.Proc.getErrorCode:
 ;;************************************************************************************
 
 ;; Allocates memory for and loads an executable image, without registering it
-;; anywhere or starting it. Shared by the blocking hx.exec path could reuse
-;; this too in the future, but for now only Hexagon.Kern.Proc.spawn calls it -
-;; hx.exec's own Hexagon.Kern.Proc.addProcess keeps its separate, already
-;; proven implementation untouched
+;; anywhere or starting it. Used by Hexagon.Kern.Proc.spawn
 ;;
 ;; Input:
 ;;
@@ -1260,6 +1255,9 @@ Hexagon.Kern.Proc.spawn:
     mov dword[Hexagon.Processes.Spawned.base+edx*4], ebx
     mov dword[Hexagon.Processes.Spawned.size+edx*4], ecx
 
+    mov eax, dword[Hexagon.Libkern.HAPP.imageHAPPHeader.entryHAPP]
+    mov dword[Hexagon.Processes.Spawned.entry+edx*4], eax
+
     push ebx
     push ecx
 
@@ -1356,5 +1354,232 @@ Hexagon.Kern.Proc.spawn:
     stc
 
     mov eax, 02h
+
+    ret
+
+;;************************************************************************************
+;;
+;;              Minimal round-robin scheduler over Hexagon.Processes.Spawned
+;;
+;;************************************************************************************
+
+Hexagon.Scheduler.current: db 0xFF ;; 0xFF = the foreground/exec-chain context, else a Hexagon.Processes.Spawned index
+Hexagon.Scheduler.foregroundESP: dd 0
+Hexagon.Scheduler.ticks: dd 0
+Hexagon.Scheduler.sliceLength = 5 ;; timer ticks per time-slice
+
+;;************************************************************************************
+
+;; Reprograms the user code/data segment base in the GDT
+;;
+;; Input:
+;;
+;; EAX - New base address (preserved across the call)
+
+Hexagon.Kern.Proc.setUserSegmentBase:
+
+    push eax
+    push edx
+
+    mov edx, eax
+    and eax, 0xFFFF
+
+    mov word[GDT.userCode+2], ax
+    mov word[GDT.userData+2], ax
+
+    mov eax, edx
+    shr eax, 16
+    and eax, 0xFF
+
+    mov byte[GDT.userCode+4], al
+    mov byte[GDT.userData+4], al
+
+    mov eax, edx
+    shr eax, 24
+    and eax, 0xFF
+
+    mov byte[GDT.userCode+7], al
+    mov byte[GDT.userData+7], al
+
+    lgdt[GDTReg]
+
+    pop edx
+    pop eax
+
+    ret
+
+;;************************************************************************************
+
+;; Called from Hexagon.Kern.Services.timerHandler, via "call", once per
+;; time-slice - at that point eax and ds are already saved on the current
+;; stack and ds already points at the kernel data segment. Looks for the next
+;; ready process in round-robin order, treating the foreground/exec-chain
+;; context as one more participant alongside Hexagon.Processes.Spawned.
+;; Ends with a plain "ret" either way: with nothing else ready, that returns
+;; to the caller normally; when switching, it returns into whatever context
+;; is being resumed, at the same point in its own earlier call to this
+;; function, using the stack-swap itself to carry the CPU state across
+
+Hexagon.Kern.Proc.maybeSchedule:
+
+    pusha
+
+    movzx edx, byte[Hexagon.Scheduler.current] ;; edx = who is running now
+    mov ebx, edx ;; ebx = scan cursor
+
+    xor ecx, ecx
+
+.scan:
+
+    cmp ebx, 0xFF
+    jne .advance
+
+    mov ebx, 0
+
+    jmp .checkCandidate
+
+.advance:
+
+    inc ebx
+
+    cmp ebx, Hexagon.Processes.Spawned.limit
+    jb .checkCandidate
+
+    mov ebx, 0xFF
+
+.checkCandidate:
+
+;; Scanned all the way back to whoever is already running - nobody else is
+;; ready, stay put
+
+    cmp ebx, edx
+    je .noSwitch
+
+    cmp ebx, 0xFF
+    je .candidateValid ;; the foreground context is always a valid target
+
+    cmp byte[Hexagon.Processes.Spawned.used+ebx], 1
+    je .candidateValid
+
+    inc ecx
+
+    cmp ecx, 10
+    jae .noSwitch
+
+    jmp .scan
+
+.candidateValid:
+
+;; ebx = target to switch to (0xFF = foreground, else a Spawned index)
+;; edx = who is running now (same encoding)
+
+    cmp edx, 0xFF
+    je .saveForeground
+
+    mov dword[Hexagon.Processes.Spawned.esp+edx*4], esp
+
+    jmp .saved
+
+.saveForeground:
+
+    mov dword[Hexagon.Scheduler.foregroundESP], esp
+
+.saved:
+
+    mov byte[Hexagon.Scheduler.current], bl
+
+    cmp ebx, 0xFF
+    je .switchToForeground
+
+    cmp dword[Hexagon.Processes.Spawned.esp+ebx*4], 0
+    jne .resumeSpawned
+
+;; First ever dispatch of this process - build a fresh iret frame, matching
+;; Hexagon.Kern.Proc.executeProcess
+
+    mov eax, dword[Hexagon.Processes.Spawned.base+ebx*4]
+
+    call Hexagon.Kern.Proc.setUserSegmentBase
+
+    mov ecx, dword[Hexagon.Processes.Spawned.size+ebx*4]
+
+    add eax, ecx
+    sub eax, 4
+
+    mov esp, eax ;; top of this process's own allocated block
+
+    sti
+
+    pushfd
+    push 30h
+    push dword[Hexagon.Processes.Spawned.entry+ebx*4]
+
+    mov ax, 38h
+    mov ds, ax
+
+    iret
+
+.resumeSpawned:
+
+    mov eax, dword[Hexagon.Processes.Spawned.base+ebx*4]
+
+    call Hexagon.Kern.Proc.setUserSegmentBase
+
+    mov esp, dword[Hexagon.Processes.Spawned.esp+ebx*4]
+
+    popa
+
+    ret
+
+.switchToForeground:
+
+    mov eax, dword[Hexagon.Processes.PCB.processBaseMemory]
+
+    call Hexagon.Kern.Proc.setUserSegmentBase
+
+    mov esp, dword[Hexagon.Scheduler.foregroundESP]
+
+    popa
+
+    ret
+
+.noSwitch:
+
+    popa
+
+    ret
+
+;;************************************************************************************
+
+;; Returns the physical base address of whichever process is actually
+;; running right now - the foreground/exec-chain context, or a
+;; Hexagon.Processes.Spawned slot. Hexagon.Kern.Syscall.hexagonHandler uses
+;; this to translate ESI/EDI, instead of assuming it is always the
+;; foreground context
+;;
+;; Output:
+;;
+;; EAX - Base address
+
+Hexagon.Kern.Proc.getCurrentProcessBase:
+
+    push ebx
+
+    movzx ebx, byte[Hexagon.Scheduler.current]
+
+    cmp ebx, 0xFF
+    je .foreground
+
+    mov eax, dword[Hexagon.Processes.Spawned.base+ebx*4]
+
+    jmp .end
+
+.foreground:
+
+    mov eax, dword[Hexagon.Processes.PCB.processBaseMemory]
+
+.end:
+
+    pop ebx
 
     ret

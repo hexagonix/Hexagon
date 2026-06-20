@@ -144,7 +144,20 @@ Hexagon.Kern.Services.timerHandler:
 
     mov al, 20h
 
-    out 20h, al
+    out 20h, al ;; Sent unconditionally and up front - Hexagon.Kern.Proc.maybeSchedule
+                ;; below may switch to a different context and not return here
+                ;; for a while, and IRQ0 needs to be re-armed regardless
+
+    inc dword[Hexagon.Scheduler.ticks]
+
+    cmp dword[Hexagon.Scheduler.ticks], Hexagon.Scheduler.sliceLength
+    jb .noSchedule
+
+    mov dword[Hexagon.Scheduler.ticks], 0
+
+    call Hexagon.Kern.Proc.maybeSchedule
+
+.noSchedule:
 
     pop ds
     pop eax
