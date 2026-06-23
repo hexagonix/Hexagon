@@ -1583,3 +1583,76 @@ Hexagon.Kern.Proc.getCurrentProcessBase:
     pop ebx
 
     ret
+
+;;************************************************************************************
+
+;; Debug helper: writes EAX as 8 hex digits plus a newline directly to COM1
+;; (port 3F8h), bypassing Hexagon.Kernel.Dev.Dev.*/Hexagon.Dev.Control
+;; entirely, so it is safe to call from anywhere without side effects on
+;; kernel I/O state - useful when instrumenting code that runs concurrently
+;; with other processes, where Hexagon.Kern.Dmesg.createMessage's shared
+;; device state would otherwise interfere with what is being observed
+;;
+;; Input:
+;;
+;; EAX - Value to dump
+
+Hexagon.Kern.Proc.debugSerialHex:
+
+    push eax
+    push ebx
+    push ecx
+    push edx
+    push esi
+
+    mov ebx, eax ;; ebx = remaining value, rotated one nibble at a time
+
+    mov ecx, 8
+
+.digitLoop:
+
+    rol ebx, 4
+
+    mov esi, ebx
+    and esi, 0xF
+
+    cmp esi, 10
+    jb .digitChar
+
+    add esi, 7 ;; 'A' - '0' - 10
+
+.digitChar:
+
+    add esi, '0'
+
+.waitTx:
+
+    mov dx, 3FDh
+    in al, dx
+    test al, 00100000b
+    jz .waitTx
+
+    mov eax, esi
+    mov dx, 3F8h
+    out dx, al
+
+    loop .digitLoop
+
+.waitTxNL:
+
+    mov dx, 3FDh
+    in al, dx
+    test al, 00100000b
+    jz .waitTxNL
+
+    mov al, 10
+    mov dx, 3F8h
+    out dx, al
+
+    pop esi
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+
+    ret
