@@ -114,117 +114,94 @@
 use32
 
 ;;************************************************************************************
-
-struc Hexagon.Processes.Tasks
-{
-
-.emptyProcess: ;; Contents of an empty process
-times 13 db ' '
-
-}
-
-;;************************************************************************************
-
-Hexagon.Processes Hexagon.Processes.Tasks
-
-;;************************************************************************************
 ;;
-;;                    Hexagon Process Control Block (H-PCB)
+;;                    Hexagon.Processes.Table - unified process table
+;;
+;; Every process the kernel knows about gets one slot here, whether started by
+;; the blocking hx.exec or the non-blocking hx.spawn. hx.exec still blocks its
+;; caller exactly as before - the caller's own slot just sits in the BLOCKED
+;; state until its child exits, instead of the child being a nested call on
+;; the raw CPU stack, so Hexagon.Kern.Proc.maybeSchedule can round-robin
+;; between an exec chain and independently spawned processes uniformly
 ;;
 ;;************************************************************************************
 
-virtual at Hexagon.Heap.PCBs ;; This object is located at the defined position
+virtual at Hexagon.Heap.ProcessTable
 
-Hexagon.Processes.PCB.esp: ;; Process Control Block
-times Hexagon.Processes.PCB.processLimit dd 0
-.pointer: dd 0 ;; Pointer to the process stack
+Hexagon.Processes.Table.state:
+times Hexagon.Processes.Table.limit db 0 ;; Hexagon.Processes.Table.States.*
 
+Hexagon.Processes.Table.pid:
+times Hexagon.Processes.Table.limit dd 0 ;; Persistent PID, never reused while the slot is in use
 
-Hexagon.Processes.PCB.base:  ;; Per-level allocated memory base (one malloc'd block per process)
-times Hexagon.Processes.PCB.processLimit dd 0
-.pointer: dd 0 ;; Pointer to the process's memory address
+Hexagon.Processes.Table.parentSlot:
+times Hexagon.Processes.Table.limit dd 0 ;; Slot to wake on exit (hx.exec only); 0xFFFFFFFF = none
 
-Hexagon.Processes.PCB:
-.errorCode:         dd 0 ;; Error code issued by the last process
-.processBaseMemory: dd 0 ;; Process loading base address, provided by the allocator
-.endMode:           db 0 ;; Mark whether the process should remain resident or not
-.processLocked:     dd 0 ;; Marks whether the process can be terminated by a key or combination
-.processLimit        = 31 ;; Limit number of loaded processes (n-1)
-.stackSize            = 16384 ;; Dedicated stack space carved out of each process's own block
-.processCount:      dd 0 ;; Number of processes currently on the execution stack
-.PID:               dd 0 ;; PID
-.returnCode:        db 0 ;; Records error codes in process operations
-.currentPID:        dd 0 ;; Current PID
-.counter:           db 0 ;; Process counter
-.resident:          db 0 ;; Whether the process will be resident (future)
-.incompatibleImage: db 0 ;; Mark if an image is incompatible
-.entryHAPP:         dd 0 ;; HAPP image entry point
-.imageType:         db 0 ;; Image executable type
-.imageSize: ;; Size of the current program on the execution stack
-times Hexagon.Processes.PCB.processLimit -1  dd 0
-.processName: ;; Stores the process name
-times 11 db 0
+Hexagon.Processes.Table.parentPID:
+times Hexagon.Processes.Table.limit dd 0 ;; PID of whoever created this process, spawn included; 0 = none
+
+Hexagon.Processes.Table.base:
+times Hexagon.Processes.Table.limit dd 0 ;; Allocated physical base (own block per process)
+
+Hexagon.Processes.Table.size:
+times Hexagon.Processes.Table.limit dd 0 ;; Total allocated size, needed later to free it
+
+Hexagon.Processes.Table.entry:
+times Hexagon.Processes.Table.limit dd 0 ;; HAPP entry point; only meaningful before the first dispatch
+
+Hexagon.Processes.Table.esp:
+times Hexagon.Processes.Table.limit dd 0 ;; Saved stack pointer while not running; 0 = never dispatched
+
+Hexagon.Processes.Table.name:
+times Hexagon.Processes.Table.limit*13 db 0 ;; Process name, space-padded, for ps/hx.getProcesses
+
+Hexagon.Processes.Table.nextPID: dd 0 ;; Monotonic counter, next PID to hand out
+
+Hexagon.Processes.Table.limit = 16
 
 end virtual
 
-;;************************************************************************************
-;;
-;;      Hexagon.Processes.Spawned - non-blocking spawned process table
-;;
-;; hx.spawn (syscall 70) parks a fully loaded, independent process here
-;; without running it. Nothing dispatches these yet - that's the scheduler's
-;; job. Separate from Hexagon.Processes.PCB above, which hx.exec uses for its
-;; own blocking, nested processes; the two are expected to be unified once
-;; the scheduler needs to treat every process uniformly.
-;;
-;;************************************************************************************
+Hexagon.Processes.Table.States.free    = 0
+Hexagon.Processes.Table.States.ready   = 1
+Hexagon.Processes.Table.States.running = 2
+Hexagon.Processes.Table.States.blocked = 3
+Hexagon.Processes.Table.States.zombie  = 4
 
-virtual at Hexagon.Heap.SpawnTab
+Hexagon.Processes.Table.stackSize = 16384 ;; Dedicated stack space carved out of each process's own block
 
-Hexagon.Processes.Spawned.used:
-times Hexagon.Processes.Spawned.limit db 0 ;; 0 = free slot, 1 = in use
+;; Kernel's own boot-time stack, saved across the very first hx.exec (called
+;; directly by Hexagon.Kern.Init.startUserMode, before any process exists to
+;; own a table slot of its own)
 
-Hexagon.Processes.Spawned.pid:
-times Hexagon.Processes.Spawned.limit dd 0 ;; Persistent PID, never reused while the slot is in use
+Hexagon.Kern.Proc.bootCallerESP: dd 0
 
-Hexagon.Processes.Spawned.base:
-times Hexagon.Processes.Spawned.limit dd 0 ;; Allocated physical base (own block, like exec'd processes)
+;; Error code reported by the last process to exit, read back via hx.getErrorCode
 
-Hexagon.Processes.Spawned.size:
-times Hexagon.Processes.Spawned.limit dd 0 ;; Total allocated size, needed later to free it
+Hexagon.Kern.Proc.lastErrorCode: dd 0
 
-Hexagon.Processes.Spawned.entry:
-times Hexagon.Processes.Spawned.limit dd 0 ;; HAPP entry point offset, captured at spawn time
+;; Marks whether the currently running process can be terminated by a key
+;; combination (the "Kill process" key) - a safeguard against closing vital
+;; processes such as the login manager
 
-Hexagon.Processes.Spawned.esp:
-times Hexagon.Processes.Spawned.limit dd 0 ;; Saved stack pointer; 0 means never dispatched yet
-
-Hexagon.Processes.Spawned.name:
-times Hexagon.Processes.Spawned.limit*11 db 0 ;; Process name, for ps/hx.getProcesses
-
-Hexagon.Processes.Spawned.nextPID: dd 0 ;; Monotonic counter, next PID to hand out
-
-Hexagon.Processes.Spawned.limit = 8
-
-end virtual
+Hexagon.Kern.Proc.processLocked: dd 0
 
 ;;************************************************************************************
 
-;; Unlock the process stack, allowing the user to terminate the process
+;; Unlock the current process, allowing the user to terminate it
 
 Hexagon.Kern.Proc.unlock:
 
-    mov word[Hexagon.Processes.PCB.processLocked], 0h
+    mov dword[Hexagon.Kern.Proc.processLocked], 0
 
     ret
 
 ;;************************************************************************************
 
-;; Lock the foreground process, preventing it from exiting the execution stack
+;; Lock the current process, preventing it from being terminated by a key combination
 
 Hexagon.Kern.Proc.lock:
 
-    mov word[Hexagon.Processes.PCB.processLocked], 01h
+    mov dword[Hexagon.Kern.Proc.processLocked], 1
 
     ret
 
@@ -234,58 +211,22 @@ Hexagon.Kern.Proc.setupScheduler:
 
     logHexagon Hexagon.Verbose.heapKernel, Hexagon.Dmesg.Priorities.p5
 
-    push es
-
-;; Let's start the kernel heap memory area that will store the name of running processes,
-;; applying the formatting expected by the functions that manage these fields
-
     push ds
     pop es
 
-    mov edx, 13*Hexagon.Processes.PCB.processLimit
-    mov ebx, 0
+    mov edi, Hexagon.Processes.Table.state
+    mov ecx, Hexagon.Processes.Table.limit
+    mov al, Hexagon.Processes.Table.States.free
 
-.loop:
+    rep stosb
 
-    mov esi, .space
-    mov edi, Hexagon.Heap.ProcTab
-    add edi, ebx
-    mov ecx, 1
+    mov dword[Hexagon.Processes.Table.nextPID], 0
 
-    rep movsb
-
-    dec edx
-    inc ebx
-
-    cmp edx, 0
-    jne .loop
-
-    pop es
-
-    mov esi, Hexagon.Heap.ProcTab
-
-    mov ebx, 13*Hexagon.Processes.PCB.processLimit
-
-    mov byte[esi+ebx], 0
-
-;; Okay, everything done for the process name storage area, let's continue
-
-    mov dword[Hexagon.Processes.PCB.currentPID], 0
-
-    mov dword[Hexagon.Processes.PCB.PID], 0
-
-    mov dword[Hexagon.Processes.PCB.processCount], 0
+    mov byte[Hexagon.Scheduler.current], 0xFF
 
     logHexagon Hexagon.Verbose.scheduler, Hexagon.Dmesg.Priorities.p5
 
-;; Now a function to start PCBs
-;; This function can be performed, but the use of the new PCBs is still under development
-
-    ;; call Hexagon.Kern.Proc.setupPCB
-
     ret
-
-.space: db ' '
 
 ;;************************************************************************************
 
@@ -303,10 +244,10 @@ Hexagon.Kern.Proc.kill:
 
 ;; If the function is disabled, the occurrence will be ignored
 
-    cmp dword[Hexagon.Processes.PCB.processLocked], 1
+    cmp dword[Hexagon.Kern.Proc.processLocked], 1
     je .end
 
-    cmp byte[Hexagon.Processes.PCB.processCount], 0 ;; There is no process to be closed
+    cmp byte[Hexagon.Scheduler.current], 0xFF ;; There is no process to be closed
     je .end
 
 match =YES, VERBOSE
@@ -361,7 +302,8 @@ match =YES, VERBOSE
 
 ;;************************************************************************************
 
-;; Configures a new Hexagon process to run immediately
+;; Configures a new Hexagon process to run immediately, blocking the caller
+;; until it exits (via Hexagon.Kern.Proc.exit)
 ;;
 ;; Input:
 ;;
@@ -378,36 +320,32 @@ Hexagon.Kern.Proc.exec:
 
     pusha
 
-;; Now the limit of loaded processes will be checked.
-;; If there are already many processes in memory, another one will be prevented from loading
+;; Find a free slot in the process table - doubles as the process-limit check
 
-.checkLimit:
+    xor ecx, ecx
 
-    push eax
+.findSlot:
 
-    mov eax, [Hexagon.Processes.PCB.processCount]
+    cmp ecx, Hexagon.Processes.Table.limit
+    jae .limitReached
 
-;; If the number of loaded processes is less than the limit, proceed with the loading.
-;; Otherwise, prevent loading by returning an error
+    cmp byte[Hexagon.Processes.Table.state+ecx], Hexagon.Processes.Table.States.free
+    je .slotFound
 
-    cmp eax, Hexagon.Processes.PCB.processLimit - 1 ;; Limit number of loaded processes
-    jl .limitAvailable
+    inc ecx
 
-    pop eax
+    jmp .findSlot
 
-    jmp Hexagon.Kern.Proc.maxNumberProcessesReached
+.slotFound:
 
-.limitAvailable:
+    push ecx ;; remember the new slot index across everything below
 
 ;; Check if there are arguments for the process to be loaded
-
-    pop eax
 
     cmp eax, 0
     je .noArguments
 
     push esi
-
     push es
 
     mov esi, edi
@@ -443,13 +381,13 @@ Hexagon.Kern.Proc.exec:
 
     push esi
 
-    call Hexagon.Kernel.FS.VFS.fileExists
+    call Hexagon.Kernel.FS.VFS.fileExists ;; eax = file size, cf = not found
 
     pop esi
 
-    push eax
-
     jc .missingImage
+
+    push eax ;; save the file size across checkHAPPImage
 
     call Hexagon.Libkern.HAPP.checkHAPPImage
 
@@ -457,311 +395,138 @@ Hexagon.Kern.Proc.exec:
     je .incompatibleImage
 
     cmp byte[Hexagon.Libkern.HAPP.imageHAPPHeader.incompatibleImage], 02h
-    je .missingImage
+    je .missingImage2
 
-    jmp Hexagon.Kern.Proc.addProcess
+    pop eax ;; eax = file size
+
+    call Hexagon.Kern.Proc.allocateAndLoadImage ;; esi=filename, eax=size -> ebx=base, ecx=size, cf=error
+
+    pop edx ;; edx = new slot index
+
+    jc .allocOrLoadFailed
+
+    call Hexagon.Kern.Proc.registerSlot ;; edx=slot, ebx=base, ecx=size, esi=filename -> eax=new pid
+
+;; Block whoever is calling us until this child exits - the caller is either
+;; itself a table slot (a normal nested hx.exec) or, for the very first
+;; hx.exec, the kernel's own boot code, which has no slot of its own
+
+    movzx ecx, byte[Hexagon.Scheduler.current]
+
+    cmp ecx, 0xFF
+    je .blockBootCaller
+
+    mov byte[Hexagon.Processes.Table.state+ecx], Hexagon.Processes.Table.States.blocked
+    mov dword[Hexagon.Processes.Table.esp+ecx*4], esp
+
+    mov dword[Hexagon.Processes.Table.parentSlot+edx*4], ecx
+
+    jmp .blocked
+
+.blockBootCaller:
+
+    mov dword[Hexagon.Kern.Proc.bootCallerESP], esp
+
+.blocked:
+
+    mov byte[Hexagon.Processes.Table.state+edx], Hexagon.Processes.Table.States.running
+
+    mov byte[Hexagon.Scheduler.current], dl
+
+    mov ebx, edx
+
+    jmp Hexagon.Kern.Proc.dispatchSlot ;; builds the child's iret frame and never returns here
 
 .missingImage:
 
-    pop eax
+    pop ecx ;; discard the slot index, nothing was allocated
 
-;; The image containing the executable code was not found on disk
+    popa
 
-    stc ;; Inform the process that called the function of the absence of the image
+    mov dword[Hexagon.Kern.Proc.lastErrorCode], 01h
 
-    popa ;; Restore the stack
+    stc
 
-    mov byte[Hexagon.Processes.PCB.returnCode], 01h
+    mov eax, 01h
 
-    mov eax, 01h ;; Send error code
+    ret
+
+.missingImage2:
+
+    pop eax ;; discard the saved file size
+    pop ecx ;; discard the slot index
+
+    popa
+
+    mov dword[Hexagon.Kern.Proc.lastErrorCode], 01h
+
+    stc
+
+    mov eax, 01h
 
     ret
 
 .incompatibleImage:
 
-    pop eax
+    pop eax ;; discard the saved file size
+    pop ecx ;; discard the slot index
 
-;; A imagem que contêm o código executável não apresenta um formato compatível
+    popa
 
-    stc ;; Inform the process that called the function of the absence of the image
+    mov dword[Hexagon.Kern.Proc.lastErrorCode], 04h
 
-    popa ;; Restore the stack
+    stc
 
-    mov byte[Hexagon.Processes.PCB.returnCode], 04h
-
-    mov eax, 04h ;; Send error code
-
-    ret
-
-;;************************************************************************************
-
-;; Loads an executable from disk and runs it immediately
-;;
-;; Arguments must be passed through the stack
-;;
-;; Input:
-;;
-;; EAX - Size of the image containing the executable code
-
-Hexagon.Kern.Proc.addProcess:
-
-;; Data passed through the stack will be restored
-
-    pop eax ;; EAX = exact declared file size
-
-;; Round the allocation up to a whole cluster. Hexagon.Kernel.FS.FAT16.loadFileFAT16B
-;; always copies whole clusters (see the "rep movsb" using clusterSize below), so a
-;; block sized to the exact file size can be overrun by up to one cluster, corrupting
-;; the free block allocated right after it
-
-    push edx ;; div/mul below clobber edx
-
-    xor edx, edx
-
-    div dword[Hexagon.VFS.FAT16B.clusterSize] ;; eax = clusters (floor), edx = remainder
-
-    cmp edx, 0
-    je .imageSizeAligned
-
-    inc eax ;; Round up to the next whole cluster
-
-.imageSizeAligned:
-
-    mul dword[Hexagon.VFS.FAT16B.clusterSize] ;; eax = size rounded up to a whole cluster
-
-    pop edx
-
-;; Many existing apps (login, logind, sh, anything using verUtils.s) read a
-;; configuration file straight into "appFileBuffer", a bare label placed right
-;; after their own code with no reserved space of its own - they rely on free
-;; slack past their own image at runtime. 64 KB comfortably covers this until
-;; those apps reserve their own buffer space explicitly
-
-    add eax, 65536
-
-;; Also reserve this process its own dedicated stack at the top of the block
-;; (see Hexagon.Kern.Proc.executeProcess, which points esp there)
-
-    add eax, Hexagon.Processes.PCB.stackSize
-
-    push eax
-
-    mov ebx, dword[Hexagon.Processes.PCB.PID]
-    inc ebx
-    mov dword[Hexagon.Processes.PCB.imageSize+ebx*4], eax
-
-    call Hexagon.Arch.Gen.Mm.confirmMemoryUsage
-
-    pop ebx ;; EBX = size of the image to load
-
-;; Allocate this process its own memory block. EBX (size) in, EAX=0/EBX=pointer out
-
-    call Hexagon.Arch.Gen.Mm.malloc
-
-    cmp eax, 0
-    je .allocationError
-
-    mov eax, [Hexagon.Processes.PCB.base.pointer]
-
-    add eax, Hexagon.Processes.PCB.base
-
-    mov dword[eax], ebx ;; Remember this level's allocated base, to free it on exit
-
-    add dword[Hexagon.Processes.PCB.base.pointer], 4
-
-    mov dword[Hexagon.Processes.PCB.processBaseMemory], ebx
-
-    mov edi, ebx
-
-;; Correct address with segment base (physical address = address + segment base)
-
-    sub edi, 500h
-
-    push esi
-
-    call Hexagon.Kernel.FS.VFS.openFile
-
-    pop esi
-
-    jc .loadImageError
-
-    mov byte[Hexagon.Processes.PCB.returnCode], 00h ;; Remove the error flag
-
-    call Hexagon.Kern.Proc.linkProcessStack
-
-    jmp Hexagon.Kern.Proc.executeProcess
-
-.loadImageError:
-
-;; An error occurred while loading the image present on volume
-
-    stc ;; Inform the process that called the function of the occurrence of an error
-
-    popa ;; Restore the stack
-
-    mov byte[Hexagon.Processes.PCB.returnCode], 02h
-
-    mov eax, 02h ;; Send error code
+    mov eax, 04h
 
     ret
 
-.allocationError:
+.allocOrLoadFailed:
 
-;; No memory available to load this process
+    popa
 
-    stc ;; Inform the process that called the function of the occurrence of an error
+    mov dword[Hexagon.Kern.Proc.lastErrorCode], 02h
 
-    popa ;; Restore the stack
+    stc
 
-    mov byte[Hexagon.Processes.PCB.returnCode], 02h
-
-    mov eax, 02h ;; Send error code
+    mov eax, 02h
 
     ret
 
-;;************************************************************************************
+.limitReached:
 
-;; After the image has been loaded to the appropriate address, and the process has been
-;; configured for its stack and execution information, the process will run.
-;; To do so, it must be registered with the GDT and have its execution configured
+    popa
 
-Hexagon.Kern.Proc.executeProcess:
+    mov dword[Hexagon.Kern.Proc.lastErrorCode], 03h
 
-;; Now we must calculate the program's code and data base addresses,
-;; placing them in the program's GDT entry
+    stc
 
-    mov eax, dword[Hexagon.Processes.PCB.processBaseMemory]
-    mov edx, eax
-    and eax, 0xFFFF
+    mov eax, 03h
 
-    mov word[GDT.userCode+2], ax ;; Base
-    mov word[GDT.userData+2], ax ;; Base
-
-    mov eax, edx
-    shr eax, 16
-    and eax, 0xFF
-
-    mov byte[GDT.userCode+4], al ;; Base
-    mov byte[GDT.userData+4], al ;; Base
-
-    mov eax, edx
-    shr eax, 24
-    and eax, 0xFF
-
-    mov byte[GDT.userCode+7], al ;; Base
-    mov byte[GDT.userData+7], al ;; Base
-
-    lgdt[GDTReg] ;; Load the GDT containing the process entry
-
-    mov eax, [Hexagon.Processes.PCB.esp.pointer]
-
-    add eax, Hexagon.Processes.PCB.esp
-
-    mov dword[eax], esp
-
-    add dword[Hexagon.Processes.PCB.esp.pointer], 4
-
-    call Hexagon.Kern.Proc.calculateArgumentsAddress
-
-;; Switch to this process's own dedicated stack (top of its own allocated
-;; block - see the ".stackSize" addition in addProcess). Must happen after the
-;; esp save above (which saves the *caller's* stack) and before the pushes
-;; below, since those need to land on - and be popped back off by iret from -
-;; the new process's own stack
-
-    mov eax, dword[Hexagon.Processes.PCB.PID]
-    inc eax
-    mov ecx, dword[Hexagon.Processes.PCB.imageSize+eax*4] ;; ecx = total allocated size
-
-    mov esp, dword[Hexagon.Processes.PCB.processBaseMemory]
-    add esp, ecx
-    sub esp, 4 ;; Small headroom from the very top of the block
-
-    sti ;; Make sure interrupts are available
-
-    pushfd   ;; Flags
-    push 30h ;; User environment code segment (process)
-    push dword [Hexagon.Libkern.HAPP.imageHAPPHeader.entryHAPP] ;; Image entry point
-
-    inc dword[Hexagon.Processes.PCB.processCount]
-    inc dword[Hexagon.Processes.PCB.PID]
-
-    mov ax, 38h ;; User environment data segment (process)
-    mov ds, ax
-
-    iret
+    ret
 
 ;;************************************************************************************
 
 ;; Function that receives control after the process ends and performs the necessary
-;; operations to remove it from the execution stack
+;; operations to remove it from the process table
+;;
+;; Input:
+;;
+;; EAX - Error code reported by the exiting process, kept for hx.getErrorCode
 
 Hexagon.Kern.Proc.exit:
-
-;; First, store the error code of the process to be terminated
-
-    mov [Hexagon.Processes.PCB.errorCode], eax
-
-    mov ax, 10h
-    mov ds, ax
-
-    cmp byte[Hexagon.Console.graphicMode], 0
-    je .noGraphicMode
-
-.noGraphicMode:
-
-    cmp ebx, 00h
-    je .continue
-
-    cmp ebx, 1234h
-    je .terminateAndStayResident
-
-.terminateAndStayResident:
-
-    mov byte[Hexagon.Processes.PCB.endMode], 01h
-
-.continue:
-
-    mov eax, [Hexagon.Processes.PCB.esp.pointer]
-
-    add eax, Hexagon.Processes.PCB.esp
-    sub eax, 4
-
-    mov esp, dword[eax]
-
-;; Address of the function that will remove permissions from the process
-
-    mov eax, Hexagon.Kern.Proc.removeProcess
-
-    push 08h ;; Kernel code segment
-    push eax ;; retf return address
-
-    retf ;; Go to this function now, switching the context
-
-;;************************************************************************************
-
-;; Removes the process's credentials and permissions from the system execution
-;; stack and GDT, transferring control back to the kernel
-
-Hexagon.Kern.Proc.removeProcess:
-
-    call Hexagon.Kern.Proc.unlinkProcessStack
 
     mov ax, 10h ;; Kernel data segment
     mov ds, ax
 
-;; Free this process's own memory block (individually allocated in addProcess)
+    mov dword[Hexagon.Kern.Proc.lastErrorCode], eax
 
-    sub dword[Hexagon.Processes.PCB.base.pointer], 4
+    movzx edx, byte[Hexagon.Scheduler.current] ;; edx = my own slot
 
-    mov eax, [Hexagon.Processes.PCB.base.pointer]
+;; Free this process's own memory block (individually allocated in Hexagon.Kern.Proc.exec/spawn)
 
-    add eax, Hexagon.Processes.PCB.base
-
-    mov ebx, dword[eax] ;; EBX = this process's allocated base
-
-    mov edx, dword[Hexagon.Processes.PCB.PID]
-    mov ecx, dword[Hexagon.Processes.PCB.imageSize+edx*4] ;; ECX = its size
+    mov ebx, dword[Hexagon.Processes.Table.base+edx*4]
+    mov ecx, dword[Hexagon.Processes.Table.size+edx*4]
 
     push ebx
     push ecx
@@ -771,130 +536,61 @@ Hexagon.Kern.Proc.removeProcess:
     pop ecx
     pop ebx
 
-;; Restore processBaseMemory to the parent process (new top of the base stack),
-;; or to 0 if this was the last process on the stack
+    push ecx
 
-    mov eax, [Hexagon.Processes.PCB.base.pointer]
-
-    cmp eax, 0
-    je .noParent
-
-    add eax, Hexagon.Processes.PCB.base
-    sub eax, 4
-
-    mov ebx, dword[eax]
-
-    jmp .haveParent
-
-.noParent:
-
-    xor ebx, ebx
-
-.haveParent:
-
-    mov dword[Hexagon.Processes.PCB.processBaseMemory], ebx
-
-;; Now we must calculate the program's code and data base addresses,
-;; placing them in the program's GDT entry
-
-    mov eax, ebx
-    mov edx, eax
-    and eax, 0xFFFF
-
-    mov word[GDT.userCode+2], ax
-    mov word[GDT.userData+2], ax
-
-    mov eax, edx
-    shr eax, 16
-    and eax, 0xFF
-
-    mov byte[GDT.userCode+4], al
-    mov byte[GDT.userData+4], al
-
-    mov eax, edx
-    shr eax, 24
-    and eax, 0xFF
-
-    mov byte[GDT.userCode+7], al
-    mov byte[GDT.userData+7], al
-
-    lgdt[GDTReg]
-
-    sub dword[Hexagon.Processes.PCB.esp.pointer], 4
-
-    push eax
-    push ebx
-
-    mov ebx, dword[Hexagon.Processes.PCB.PID]
-    mov eax, dword[Hexagon.Processes.PCB.imageSize+ebx*4]
-    mov dword[Hexagon.Processes.PCB.imageSize+ebx*4], 00h
+    mov eax, ecx
 
     call Hexagon.Arch.Gen.Mm.freeMemoryUsage
 
-    pop ebx
-    pop eax
+    pop ecx
 
-    dec dword[Hexagon.Processes.PCB.processCount]
-    dec dword[Hexagon.Processes.PCB.PID]
+    mov byte[Hexagon.Processes.Table.state+edx], Hexagon.Processes.Table.States.free
 
-    cmp byte[Hexagon.Processes.PCB.endMode], 01h
-    je .starResident
+;; Resume whoever is blocked waiting for this process, if anyone - either the
+;; parent slot that called hx.exec, or the kernel's own boot code for the
+;; very first process - using the exact same esp-restore mechanism
+;; Hexagon.Kern.Proc.maybeSchedule already uses to resume any other process
 
-    clc
+    mov ecx, dword[Hexagon.Processes.Table.parentSlot+edx*4]
 
-    jmp short .end
+    cmp ecx, 0xFFFFFFFF
+    je .resumeBoot
 
-.starResident:
+    mov byte[Hexagon.Processes.Table.state+ecx], Hexagon.Processes.Table.States.ready
 
-    mov ebx, dword[Hexagon.Processes.PCB.PID]
+    mov byte[Hexagon.Scheduler.current], cl
 
-    mov eax, [Hexagon.Processes.PCB.processBaseMemory]
-    add eax, [Hexagon.Processes.PCB.imageSize+ebx*4]
+    mov esp, dword[Hexagon.Processes.Table.esp+ecx*4]
 
-    mov byte[Hexagon.Processes.PCB.endMode], 00h
+    mov eax, dword[Hexagon.Processes.Table.base+ecx*4]
 
-    clc
+    push ecx
 
-    jmp short .end
+    call Hexagon.Kern.Proc.setUserSegmentBase
 
-.end:
+    pop ecx
 
-    clc
+    mov byte[Hexagon.Processes.Table.state+ecx], Hexagon.Processes.Table.States.running
 
     popa
 
-.checkReturn:
+    xor eax, eax
 
     clc
 
-    mov ah, [Hexagon.Processes.PCB.returnCode]
-
-    cmp ah, 00h
-    je .finish
-
-    stc
-
-.finish:
-
-    mov eax, [Hexagon.Processes.PCB.returnCode]
-
     ret
 
-;;************************************************************************************
+.resumeBoot:
 
-;; Handler that returns error code for when the process limit is reached
+    mov byte[Hexagon.Scheduler.current], 0xFF
 
-Hexagon.Kern.Proc.maxNumberProcessesReached:
+    mov esp, dword[Hexagon.Kern.Proc.bootCallerESP]
 
-;; An error occurred while loading the image present on volume
+    popa
 
-    stc ;; Inform the process that called the function of the occurrence of an error
+    xor eax, eax
 
-    popa ;; Restore the stack
-
-    mov byte[Hexagon.Processes.PCB.returnCode], 03h
-
-    mov eax, 03h ;; Send error code
+    clc
 
     ret
 
@@ -904,52 +600,28 @@ Hexagon.Kern.Proc.maxNumberProcessesReached:
 ;;
 ;; Output:
 ;;
-;; EAX - Process PID
+;; EAX - Process PID, or 0 if no process is running
 
 Hexagon.Kern.Proc.getPID:
 
-    mov eax, dword[Hexagon.Processes.PCB.PID]
+    push ebx
 
-    ret
+    movzx ebx, byte[Hexagon.Scheduler.current]
 
-;;************************************************************************************
+    cmp ebx, 0xFF
+    je .none
 
-Hexagon.Kern.Proc.linkProcessStack:
+    mov eax, dword[Hexagon.Processes.Table.pid+ebx*4]
 
-    mov dword[Hexagon.Processes.PCB.processName], esi
+    jmp .end
 
-    push ds ;; Kernel data segment
-    pop es
+.none:
 
-    mov eax, dword[Hexagon.Processes.PCB.processCount]
+    xor eax, eax
 
-    mov ebx, 14
+.end:
 
-    mul ebx ;; EAX contain the offset
-
-    inc ebx
-
-    mov edi, Hexagon.Heap.ProcTab
-
-    add edi, eax
-
-    push edi
-
-    mov esi, [Hexagon.Processes.PCB.processName]
-
-    call Hexagon.Libkern.String.stringSize
-
-    mov ecx, eax
-
-;; Copy process name
-
-    mov esi, dword[Hexagon.Processes.PCB.processName]
-
-    pop edi
-
-    rep movsb ;; Copy (ECX) characters from ESI to EDI
-
-    mov byte[edi+1], ' '
+    pop ebx
 
     ret
 
@@ -996,50 +668,15 @@ Hexagon.Kern.Proc.calculateArgumentsAddress:
 ;; that will be translated into a logical address that will, in turn, be translated into a physical
 ;; address by the processor using the table present in the GDT
 
+    push eax
+
+    call Hexagon.Kern.Proc.getCurrentProcessBase
+
     mov edi, Hexagon.Heap.ArgProc ;; Offset, inside the kernel
 
-    sub edi, dword[Hexagon.Processes.PCB.processBaseMemory] ;; Get effective address (offset)
+    sub edi, eax ;; Get effective address (offset)
 
-    ret
-
-;;************************************************************************************
-
-Hexagon.Kern.Proc.unlinkProcessStack:
-
-    push ds ;; Kernel data segment
-    pop es
-
-    mov eax, dword[Hexagon.Processes.PCB.processCount]
-
-    dec eax
-
-    mov ebx, 14
-
-    mul ebx ;; EAX contain the offset
-
-    inc ebx
-
-    mov edi, Hexagon.Heap.ProcTab
-
-    add edi, eax
-
-    push edi
-
-    mov esi, Hexagon.Processes.emptyProcess
-
-    mov eax, 13
-
-    mov ecx, eax
-
-;; Copy process name
-
-    mov esi, Hexagon.Processes.emptyProcess
-
-    pop edi
-
-    rep movsb ;; Copy (ECX) characters from ESI to EDI
-
-    mov byte[edi+1], ' '
+    pop eax
 
     ret
 
@@ -1047,32 +684,60 @@ Hexagon.Kern.Proc.unlinkProcessStack:
 
 Hexagon.Kern.Proc.getProcessTable:
 
-;; Let's get the running processes
+;; Build a space-separated list of every process currently in the table, in
+;; slot order, the same shape ps/top already expect from hx.getProcesses
 
     push ds ;; Kernel data segment
     pop es
 
+    mov edi, Hexagon.Heap.Temp
+
+    xor ecx, ecx ;; ecx = slot index
+    xor edx, edx ;; edx = process count
+
 .loop:
 
-    mov esi, Hexagon.Heap.ProcTab
-    mov edi, Hexagon.Heap.Temp
-    mov ecx, 13*Hexagon.Processes.PCB.processLimit
+    cmp ecx, Hexagon.Processes.Table.limit
+    jae .done
+
+    cmp byte[Hexagon.Processes.Table.state+ecx], Hexagon.Processes.Table.States.free
+    je .next
+
+    push ecx
+
+    mov esi, ecx
+
+    imul esi, 13
+
+    add esi, Hexagon.Processes.Table.name
+
+    mov ecx, 13
 
     rep movsb
 
-    mov esi, Hexagon.Heap.Temp
+    mov byte[edi], ' '
 
-    mov ebx, 13*Hexagon.Processes.PCB.processLimit
+    inc edi
 
-    mov byte[esi+ebx], 0
+    pop ecx
+
+    inc edx
+
+.next:
+
+    inc ecx
+
+    jmp .loop
+
+.done:
+
+    mov byte[edi], 0
 
     mov esi, Hexagon.Heap.Temp
 
     call Hexagon.Libkern.String.trimString
 
-    mov eax, dword[Hexagon.Processes.PCB.processCount]
-
-.end:
+    mov eax, edx
 
     ret
 
@@ -1080,14 +745,14 @@ Hexagon.Kern.Proc.getProcessTable:
 
 Hexagon.Kern.Proc.getErrorCode:
 
-    mov eax, [Hexagon.Processes.PCB.errorCode]
+    mov eax, [Hexagon.Kern.Proc.lastErrorCode]
 
     ret
 
 ;;************************************************************************************
 
 ;; Allocates memory for and loads an executable image, without registering it
-;; anywhere or starting it. Used by Hexagon.Kern.Proc.spawn
+;; anywhere or starting it. Used by Hexagon.Kern.Proc.exec and Hexagon.Kern.Proc.spawn
 ;;
 ;; Input:
 ;;
@@ -1121,9 +786,15 @@ Hexagon.Kern.Proc.allocateAndLoadImage:
 
     pop edx
 
-    add eax, 65536 ;; appFileBuffer-style scratch margin, see addProcess for why
+    add eax, 65536 ;; appFileBuffer-style scratch margin, see below for why
 
-    add eax, Hexagon.Processes.PCB.stackSize ;; dedicated stack for this process
+;; Many existing apps (login, logind, sh, anything using verUtils.s) read a
+;; configuration file straight into "appFileBuffer", a bare label placed right
+;; after their own code with no reserved space of its own - they rely on free
+;; slack past their own image at runtime. 64 KB comfortably covers this until
+;; those apps reserve their own buffer space explicitly
+
+    add eax, Hexagon.Processes.Table.stackSize ;; dedicated stack for this process
 
     push eax ;; remember the total size across the calls below
 
@@ -1185,11 +856,116 @@ Hexagon.Kern.Proc.allocateAndLoadImage:
 
 ;;************************************************************************************
 
-;; Creates a new process without blocking the caller. The process is fully
-;; validated, allocated and loaded, then parked in Hexagon.Processes.Spawned
-;; as an independent, ready process - it does not run yet, since there is no
-;; scheduler to dispatch it (that's phase 4 of the multitasking work). Does
-;; not support arguments yet, unlike hx.exec
+;; Fills in a freshly-found, free table slot with a newly loaded process -
+;; common to both Hexagon.Kern.Proc.exec and Hexagon.Kern.Proc.spawn. Leaves
+;; the slot READY either way; hx.exec additionally blocks its caller and
+;; dispatches the slot immediately right after calling this
+;;
+;; Input:
+;;
+;; EDX - Slot index (already confirmed free)
+;; EBX - Allocated physical base
+;; ECX - Total allocated size
+;; ESI - Filename (used as the process's display name)
+;;
+;; Output:
+;;
+;; EAX - PID assigned to the new process
+
+Hexagon.Kern.Proc.registerSlot:
+
+    mov byte[Hexagon.Processes.Table.state+edx], Hexagon.Processes.Table.States.ready
+
+    mov dword[Hexagon.Processes.Table.base+edx*4], ebx
+    mov dword[Hexagon.Processes.Table.size+edx*4], ecx
+
+    mov eax, dword[Hexagon.Libkern.HAPP.imageHAPPHeader.entryHAPP]
+    mov dword[Hexagon.Processes.Table.entry+edx*4], eax
+
+    mov dword[Hexagon.Processes.Table.esp+edx*4], 0 ;; never dispatched yet
+
+    push ebx
+    push ecx
+
+    mov eax, ecx
+
+    call Hexagon.Arch.Gen.Mm.confirmMemoryUsage ;; accounting
+
+    pop ecx
+    pop ebx
+
+    inc dword[Hexagon.Processes.Table.nextPID]
+
+    mov eax, dword[Hexagon.Processes.Table.nextPID]
+
+    mov dword[Hexagon.Processes.Table.pid+edx*4], eax
+
+;; Record who created this process - 0 if launched directly by the kernel at
+;; boot, otherwise whoever is currently running. Kept for spawned processes
+;; too, purely so ps/debugging can trace where they came from
+
+    mov dword[Hexagon.Processes.Table.parentSlot+edx*4], 0xFFFFFFFF ;; only hx.exec fills this in for real
+
+    movzx ecx, byte[Hexagon.Scheduler.current]
+
+    cmp ecx, 0xFF
+    je .noParent
+
+    mov ecx, dword[Hexagon.Processes.Table.pid+ecx*4]
+
+    jmp .parentKnown
+
+.noParent:
+
+    xor ecx, ecx
+
+.parentKnown:
+
+    mov dword[Hexagon.Processes.Table.parentPID+edx*4], ecx
+
+;; Copy the process name into the table (for ps/hx.getProcesses)
+
+    push eax
+
+    mov edi, edx
+
+    imul edi, 13
+
+    add edi, Hexagon.Processes.Table.name
+
+    mov ecx, 13
+
+.copyNameLoop:
+
+    lodsb
+
+    cmp al, 0
+    je .padName
+
+    stosb
+
+    loop .copyNameLoop
+
+    jmp .nameCopied
+
+.padName:
+
+    mov al, ' '
+
+    rep stosb
+
+.nameCopied:
+
+    pop eax ;; eax = new PID
+
+    ret
+
+;;************************************************************************************
+
+;; Creates a new process without blocking the caller. Fully validated,
+;; allocated and loaded, then left READY in the process table for
+;; Hexagon.Kern.Proc.maybeSchedule to dispatch on its own schedule. Does not
+;; support arguments yet, unlike hx.exec
 ;;
 ;; Input:
 ;;
@@ -1221,16 +997,16 @@ Hexagon.Kern.Proc.spawn:
     cmp byte[Hexagon.Libkern.HAPP.imageHAPPHeader.incompatibleImage], 02h
     je .missingImage2
 
-;; Find a free slot in the spawned-process table
+;; Find a free slot in the process table
 
     xor ecx, ecx
 
 .findSlot:
 
-    cmp ecx, Hexagon.Processes.Spawned.limit
+    cmp ecx, Hexagon.Processes.Table.limit
     jae .limitReached
 
-    cmp byte[Hexagon.Processes.Spawned.used+ecx], 0
+    cmp byte[Hexagon.Processes.Table.state+ecx], Hexagon.Processes.Table.States.free
     je .slotFound
 
     inc ecx
@@ -1249,63 +1025,7 @@ Hexagon.Kern.Proc.spawn:
 
     jc .allocOrLoadFailed
 
-;; Register the new process in the spawned-process table
-
-    mov byte[Hexagon.Processes.Spawned.used+edx], 1
-    mov dword[Hexagon.Processes.Spawned.base+edx*4], ebx
-    mov dword[Hexagon.Processes.Spawned.size+edx*4], ecx
-
-    mov eax, dword[Hexagon.Libkern.HAPP.imageHAPPHeader.entryHAPP]
-    mov dword[Hexagon.Processes.Spawned.entry+edx*4], eax
-
-    push ebx
-    push ecx
-
-    mov eax, ecx
-
-    call Hexagon.Arch.Gen.Mm.confirmMemoryUsage ;; accounting, matches addProcess
-
-    pop ecx
-    pop ebx
-
-    inc dword[Hexagon.Processes.Spawned.nextPID]
-
-    mov eax, dword[Hexagon.Processes.Spawned.nextPID]
-
-    mov dword[Hexagon.Processes.Spawned.pid+edx*4], eax
-
-;; Copy the process name into the table (for ps/hx.getProcesses later)
-
-    mov edi, edx
-
-    imul edi, 11
-
-    add edi, Hexagon.Processes.Spawned.name
-
-    mov ecx, 11
-
-.copyNameLoop:
-
-    lodsb
-
-    cmp al, 0
-    je .padName
-
-    stosb
-
-    loop .copyNameLoop
-
-    jmp .nameCopied
-
-.padName:
-
-    mov al, ' '
-
-    rep stosb
-
-.nameCopied:
-
-    mov eax, dword[Hexagon.Processes.Spawned.pid+edx*4] ;; return the new PID
+    call Hexagon.Kern.Proc.registerSlot ;; edx=slot, ebx=base, ecx=size, esi=filename -> eax=new pid
 
     clc
 
@@ -1359,12 +1079,11 @@ Hexagon.Kern.Proc.spawn:
 
 ;;************************************************************************************
 ;;
-;;              Minimal round-robin scheduler over Hexagon.Processes.Spawned
+;;                     Round-robin scheduler over Hexagon.Processes.Table
 ;;
 ;;************************************************************************************
 
-Hexagon.Scheduler.current: db 0xFF ;; 0xFF = the foreground/exec-chain context, else a Hexagon.Processes.Spawned index
-Hexagon.Scheduler.foregroundESP: dd 0
+Hexagon.Scheduler.current: db 0xFF ;; 0xFF = kernel boot context, else a Hexagon.Processes.Table index
 Hexagon.Scheduler.ticks: dd 0
 Hexagon.Scheduler.sliceLength = 5 ;; timer ticks per time-slice
 
@@ -1410,42 +1129,69 @@ Hexagon.Kern.Proc.setUserSegmentBase:
 
 ;;************************************************************************************
 
+;; Builds a fresh iret frame for a slot's very first dispatch and jumps into
+;; it - shared by Hexagon.Kern.Proc.exec (launching a fresh child) and
+;; Hexagon.Kern.Proc.maybeSchedule (first dispatch of a spawned process).
+;; Never returns to its caller - reached with a plain "jmp", not "call"
+;;
+;; Input:
+;;
+;; EBX - Slot index to dispatch
+
+Hexagon.Kern.Proc.dispatchSlot:
+
+    mov eax, dword[Hexagon.Processes.Table.base+ebx*4]
+
+    call Hexagon.Kern.Proc.setUserSegmentBase
+
+    mov ecx, dword[Hexagon.Processes.Table.size+ebx*4]
+
+    add eax, ecx
+    sub eax, 4 ;; Small headroom from the very top of the block
+
+    mov esp, eax ;; top of this process's own allocated block
+
+    sti ;; Make sure interrupts are available
+
+    pushfd   ;; Flags
+    push 30h ;; User environment code segment (process)
+    push dword[Hexagon.Processes.Table.entry+ebx*4] ;; Image entry point
+
+    mov ax, 38h ;; User environment data segment (process)
+    mov ds, ax
+
+    iret
+
+;;************************************************************************************
+
 ;; Called from Hexagon.Kern.Services.timerHandler, via "call", once per
 ;; time-slice - at that point eax and ds are already saved on the current
 ;; stack and ds already points at the kernel data segment. Looks for the next
-;; ready process in round-robin order, treating the foreground/exec-chain
-;; context as one more participant alongside Hexagon.Processes.Spawned.
-;; Ends with a plain "ret" either way: with nothing else ready, that returns
-;; to the caller normally; when switching, it returns into whatever context
-;; is being resumed, at the same point in its own earlier call to this
-;; function, using the stack-swap itself to carry the CPU state across
+;; READY process in round-robin order. Ends with a plain "ret" either way:
+;; with nothing else ready, that returns to the caller normally; when
+;; switching, it returns into whatever context is being resumed, at the same
+;; point in its own earlier call to this function, using the stack-swap
+;; itself to carry the CPU state across
 
 Hexagon.Kern.Proc.maybeSchedule:
 
     pusha
 
     movzx edx, byte[Hexagon.Scheduler.current] ;; edx = who is running now
-    mov ebx, edx ;; ebx = scan cursor
 
-    xor ecx, ecx
+    cmp edx, 0xFF
+    je .noSwitch ;; still in raw kernel-boot context, nothing to preempt yet
+
+    mov ebx, edx ;; ebx = scan cursor
 
 .scan:
 
-    cmp ebx, 0xFF
-    jne .advance
-
-    mov ebx, 0
-
-    jmp .checkCandidate
-
-.advance:
-
     inc ebx
 
-    cmp ebx, Hexagon.Processes.Spawned.limit
+    cmp ebx, Hexagon.Processes.Table.limit
     jb .checkCandidate
 
-    mov ebx, 0xFF
+    xor ebx, ebx
 
 .checkCandidate:
 
@@ -1455,89 +1201,34 @@ Hexagon.Kern.Proc.maybeSchedule:
     cmp ebx, edx
     je .noSwitch
 
-    cmp ebx, 0xFF
-    je .candidateValid ;; the foreground context is always a valid target
-
-    cmp byte[Hexagon.Processes.Spawned.used+ebx], 1
+    cmp byte[Hexagon.Processes.Table.state+ebx], Hexagon.Processes.Table.States.ready
     je .candidateValid
-
-    inc ecx
-
-    cmp ecx, 10
-    jae .noSwitch
 
     jmp .scan
 
 .candidateValid:
 
-;; ebx = target to switch to (0xFF = foreground, else a Spawned index)
-;; edx = who is running now (same encoding)
+;; ebx = target slot to switch to, edx = who is running now
 
-    cmp edx, 0xFF
-    je .saveForeground
+    mov dword[Hexagon.Processes.Table.esp+edx*4], esp
 
-    mov dword[Hexagon.Processes.Spawned.esp+edx*4], esp
-
-    jmp .saved
-
-.saveForeground:
-
-    mov dword[Hexagon.Scheduler.foregroundESP], esp
-
-.saved:
+    mov byte[Hexagon.Processes.Table.state+edx], Hexagon.Processes.Table.States.ready
+    mov byte[Hexagon.Processes.Table.state+ebx], Hexagon.Processes.Table.States.running
 
     mov byte[Hexagon.Scheduler.current], bl
 
-    cmp ebx, 0xFF
-    je .switchToForeground
+    cmp dword[Hexagon.Processes.Table.esp+ebx*4], 0
+    jne .resumeSlot
 
-    cmp dword[Hexagon.Processes.Spawned.esp+ebx*4], 0
-    jne .resumeSpawned
+    jmp Hexagon.Kern.Proc.dispatchSlot ;; first ever dispatch of this slot
 
-;; First ever dispatch of this process - build a fresh iret frame, matching
-;; Hexagon.Kern.Proc.executeProcess
+.resumeSlot:
 
-    mov eax, dword[Hexagon.Processes.Spawned.base+ebx*4]
+    mov eax, dword[Hexagon.Processes.Table.base+ebx*4]
 
     call Hexagon.Kern.Proc.setUserSegmentBase
 
-    mov ecx, dword[Hexagon.Processes.Spawned.size+ebx*4]
-
-    add eax, ecx
-    sub eax, 4
-
-    mov esp, eax ;; top of this process's own allocated block
-
-    sti
-
-    pushfd
-    push 30h
-    push dword[Hexagon.Processes.Spawned.entry+ebx*4]
-
-    mov ax, 38h
-    mov ds, ax
-
-    iret
-
-.resumeSpawned:
-
-    mov eax, dword[Hexagon.Processes.Spawned.base+ebx*4]
-
-    call Hexagon.Kern.Proc.setUserSegmentBase
-
-    mov esp, dword[Hexagon.Processes.Spawned.esp+ebx*4]
-
-    popa
-
-    ret
-
-.switchToForeground:
-
-    mov eax, dword[Hexagon.Processes.PCB.processBaseMemory]
-
-    call Hexagon.Kern.Proc.setUserSegmentBase
-
-    mov esp, dword[Hexagon.Scheduler.foregroundESP]
+    mov esp, dword[Hexagon.Processes.Table.esp+ebx*4]
 
     popa
 
@@ -1552,14 +1243,13 @@ Hexagon.Kern.Proc.maybeSchedule:
 ;;************************************************************************************
 
 ;; Returns the physical base address of whichever process is actually
-;; running right now - the foreground/exec-chain context, or a
-;; Hexagon.Processes.Spawned slot. Hexagon.Kern.Syscall.hexagonHandler uses
-;; this to translate ESI/EDI, instead of assuming it is always the
-;; foreground context
+;; running right now. Hexagon.Kern.Syscall.hexagonHandler uses this to
+;; translate ESI/EDI, and Hexagon.Libkern.Graphics.drawBlockSyscall uses it
+;; the same way for graphics coordinates
 ;;
 ;; Output:
 ;;
-;; EAX - Base address
+;; EAX - Base address, or 0 if no process is running
 
 Hexagon.Kern.Proc.getCurrentProcessBase:
 
@@ -1568,15 +1258,15 @@ Hexagon.Kern.Proc.getCurrentProcessBase:
     movzx ebx, byte[Hexagon.Scheduler.current]
 
     cmp ebx, 0xFF
-    je .foreground
+    je .none
 
-    mov eax, dword[Hexagon.Processes.Spawned.base+ebx*4]
+    mov eax, dword[Hexagon.Processes.Table.base+ebx*4]
 
     jmp .end
 
-.foreground:
+.none:
 
-    mov eax, dword[Hexagon.Processes.PCB.processBaseMemory]
+    xor eax, eax
 
 .end:
 

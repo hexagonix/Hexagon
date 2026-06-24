@@ -359,7 +359,7 @@ Hexagon.Kern.Dmesg.createMessage:
 
 ;; The process PID will be displayed on the screen
 
-    movzx eax, word[Hexagon.Processes.PCB.PID] ;; Get PID
+    call Hexagon.Kern.Proc.getPID
 
     call Hexagon.Libkern.String.integetToString ;; Transform into a string
 
@@ -416,7 +416,7 @@ Hexagon.Kern.Dmesg.createMessage:
 
 ;; The process PID will be displayed on the screen
 
-    movzx eax, word[Hexagon.Processes.PCB.PID] ;; Get PID
+    call Hexagon.Kern.Proc.getPID
 
     call Hexagon.Libkern.String.integetToString ;; Transform into a string
 

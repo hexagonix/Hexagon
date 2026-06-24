@@ -261,13 +261,17 @@ Hexagon.Libkern.Graphics.putPixel:
 
 Hexagon.Libkern.Graphics.drawBlockSyscall:
 
-    sub esi, dword[Hexagon.Processes.PCB.processBaseMemory]
+    call Hexagon.Kern.Proc.getCurrentProcessBase ;; eax = base of whichever process is running now
+
+    mov ecx, eax
+
+    sub esi, ecx
 
 ;; Correct address with segment base (physical address = address + segment base)
 
     add esi, 500h
 
-    sub edi, dword[Hexagon.Processes.PCB.processBaseMemory]
+    sub edi, ecx
 
 ;; Correct address with segment base (physical address = address + segment base)
 
@@ -275,13 +279,13 @@ Hexagon.Libkern.Graphics.drawBlockSyscall:
 
     call Hexagon.Libkern.Graphics.drawBlock
 
-    add esi, dword[Hexagon.Processes.PCB.processBaseMemory]
+    add esi, ecx
 
 ;; Correct address with segment base (physical address = address + segment base)
 
     sub esi, 500h
 
-    add edi, dword[Hexagon.Processes.PCB.processBaseMemory]
+    add edi, ecx
 
 ;; Correct address with segment base (physical address = address + segment base)
 

@@ -348,12 +348,10 @@ Hexagon.userMode:
 
 Hexagon.Heap: ;; Kernel heap
 
-Hexagon.Heap.DiskGeometry = Hexagon.Heap              + 0           ;; Disk geometry
-Hexagon.Heap.VBE          = Hexagon.Heap.DiskGeometry + 512         ;; Video control block
-Hexagon.Heap.DiskCache    = Hexagon.Heap.VBE          + 90000       ;; Disk cache
-Hexagon.Heap.PCBs         = Hexagon.Heap.DiskCache    + 200000      ;; Process control block
-Hexagon.Heap.ProcTab      = Hexagon.Heap.PCBs         + 5000        ;; Process table
-Hexagon.Heap.ArgProc      = Hexagon.Heap.ProcTab      + 5000 + 500h ;; Arguments to process
-Hexagon.Heap.Temp         = Hexagon.Heap.ArgProc      + 2000        ;; Temporary kernel data
-Hexagon.Heap.SpawnTab     = Hexagon.Heap.Temp         + 200000      ;; Non-blocking spawned process table
+Hexagon.Heap.DiskGeometry  = Hexagon.Heap               + 0           ;; Disk geometry
+Hexagon.Heap.VBE           = Hexagon.Heap.DiskGeometry  + 512         ;; Video control block
+Hexagon.Heap.DiskCache     = Hexagon.Heap.VBE           + 90000       ;; Disk cache
+Hexagon.Heap.ProcessTable  = Hexagon.Heap.DiskCache     + 200000      ;; Hexagon.Processes.Table
+Hexagon.Heap.ArgProc       = Hexagon.Heap.ProcessTable  + 5000        ;; Arguments to process
+Hexagon.Heap.Temp          = Hexagon.Heap.ArgProc       + 2000        ;; Temporary kernel data
 
