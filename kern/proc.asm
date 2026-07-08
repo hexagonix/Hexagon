@@ -682,10 +682,22 @@ Hexagon.Kern.Proc.calculateArgumentsAddress:
 
 ;;************************************************************************************
 
-Hexagon.Kern.Proc.getProcessTable:
+;; Record layout Hexagon.Kern.Proc.getProcessTable emits into Hexagon.Heap.Temp,
+;; one per Hexagon.Processes.Table slot that isn't FREE, in slot order:
+;;
+;; +0  dd PID
+;; +4  dd Parent PID (0 = launched directly by the kernel, no parent process)
+;; +8  db State (Hexagon.Processes.Table.States.*)
+;; +9  db Name, NUL-terminated within a fixed 13-byte field
 
-;; Build a space-separated list of every process currently in the table, in
-;; slot order, the same shape ps/top already expect from hx.getProcesses
+Hexagon.Kern.Proc.getProcessTable.recordSize = 22
+
+;; Output:
+;;
+;; EAX - Number of records
+;; ESI - Hexagon.Heap.Temp, the first record
+
+Hexagon.Kern.Proc.getProcessTable:
 
     push ds ;; Kernel data segment
     pop es
@@ -693,7 +705,7 @@ Hexagon.Kern.Proc.getProcessTable:
     mov edi, Hexagon.Heap.Temp
 
     xor ecx, ecx ;; ecx = slot index
-    xor edx, edx ;; edx = process count
+    xor edx, edx ;; edx = record count
 
 .loop:
 
@@ -705,19 +717,53 @@ Hexagon.Kern.Proc.getProcessTable:
 
     push ecx
 
+    mov eax, dword[Hexagon.Processes.Table.pid+ecx*4]
+
+    stosd
+
+    mov eax, dword[Hexagon.Processes.Table.parentPID+ecx*4]
+
+    stosd
+
+    mov al, byte[Hexagon.Processes.Table.state+ecx]
+
+    stosb
+
+;; Find the real length of this slot's name, capped at 12 so a NUL
+;; terminator always fits within the fixed 13-byte name field
+
     mov esi, ecx
 
     imul esi, 13
 
     add esi, Hexagon.Processes.Table.name
 
+    xor ebx, ebx
+
+.measureName:
+
+    cmp ebx, 12
+    jae .measured
+
+    cmp byte[esi+ebx], ' '
+    je .measured
+
+    inc ebx
+
+    jmp .measureName
+
+.measured:
+
+    mov ecx, ebx
+
+    rep movsb ;; copy the real name characters
+
     mov ecx, 13
+    sub ecx, ebx
 
-    rep movsb
+    xor al, al
 
-    mov byte[edi], ' '
-
-    inc edi
+    rep stosb ;; NUL-terminate and pad out the rest of the name field
 
     pop ecx
 
@@ -731,13 +777,9 @@ Hexagon.Kern.Proc.getProcessTable:
 
 .done:
 
-    mov byte[edi], 0
+    mov eax, edx
 
     mov esi, Hexagon.Heap.Temp
-
-    call Hexagon.Libkern.String.trimString
-
-    mov eax, edx
 
     ret
 
