@@ -682,20 +682,25 @@ Hexagon.Kern.Proc.calculateArgumentsAddress:
 
 ;;************************************************************************************
 
-;; Record layout Hexagon.Kern.Proc.getProcessTable emits into Hexagon.Heap.Temp,
-;; one per Hexagon.Processes.Table slot that isn't FREE, in slot order:
+;; Hexagon.Kern.Proc.getProcessTable emits into Hexagon.Heap.Temp a 4-byte
+;; record size, followed by one record per Hexagon.Processes.Table slot that
+;; isn't FREE, in slot order, each shaped like this:
 ;;
 ;; +0  dd PID
 ;; +4  dd Parent PID (0 = launched directly by the kernel, no parent process)
 ;; +8  db State (Hexagon.Processes.Table.States.*)
 ;; +9  db Name, NUL-terminated within a fixed 13-byte field
+;;
+;; The record size travels with the data instead of being a constant the
+;; caller has to already know, so ps/top don't need to be rebuilt in lockstep
+;; whenever the record shape changes here
 
 Hexagon.Kern.Proc.getProcessTable.recordSize = 22
 
 ;; Output:
 ;;
 ;; EAX - Number of records
-;; ESI - Hexagon.Heap.Temp, the first record
+;; ESI - Hexagon.Heap.Temp: a dd record size, followed by that many records
 
 Hexagon.Kern.Proc.getProcessTable:
 
@@ -703,6 +708,10 @@ Hexagon.Kern.Proc.getProcessTable:
     pop es
 
     mov edi, Hexagon.Heap.Temp
+
+    mov dword[edi], Hexagon.Kern.Proc.getProcessTable.recordSize
+
+    add edi, 4
 
     xor ecx, ecx ;; ecx = slot index
     xor edx, edx ;; edx = record count
