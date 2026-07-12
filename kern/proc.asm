@@ -925,6 +925,15 @@ Hexagon.Kern.Proc.allocateAndLoadImage:
 
 Hexagon.Kern.Proc.registerSlot:
 
+;; The name-copy loop below writes through ES:EDI (stosb) - hexagonHandler
+;; leaves ES on the kernel linear segment (base 0), but Hexagon.Processes.Table
+;; is addressed relative to the kernel data segment (base 500h), so ES needs
+;; to be realigned with DS first or the name lands 500h bytes away from
+;; where Hexagon.Kern.Proc.getProcessTable later reads it
+
+    push ds
+    pop es
+
     mov byte[Hexagon.Processes.Table.state+edx], Hexagon.Processes.Table.States.ready
 
     mov dword[Hexagon.Processes.Table.base+edx*4], ebx
@@ -1201,6 +1210,8 @@ Hexagon.Kern.Proc.dispatchSlot:
     sub eax, 4 ;; Small headroom from the very top of the block
 
     mov esp, eax ;; top of this process's own allocated block
+
+    call Hexagon.Kern.Proc.calculateArgumentsAddress ;; edi = arguments address for the new process
 
     sti ;; Make sure interrupts are available
 
