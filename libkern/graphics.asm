@@ -261,9 +261,13 @@ Hexagon.Libkern.Graphics.putPixel:
 
 Hexagon.Libkern.Graphics.drawBlockSyscall:
 
+    push eax ;; X - getCurrentProcessBase below returns its result in eax, save X first
+
     call Hexagon.Kern.Proc.getCurrentProcessBase ;; eax = base of whichever process is running now
 
     mov ecx, eax
+
+    pop eax ;; restore X
 
     sub esi, ecx
 
