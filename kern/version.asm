@@ -83,12 +83,12 @@ use32
 
 Hexagon.Arch.support = 1 ;; Architecture of this image
 
-Hexagon.Version.definition equ "1.4.0"
+Hexagon.Version.definition equ "1.5.0-RC1"
 
 Hexagon.Version:
 
 .versionNumber     = 1 ;; Hexagon major version number
-.subversionNumber  = 4 ;; Hexagon minor version number
+.subversionNumber  = 5 ;; Hexagon minor version number
 .revision          = 0 ;; Add revision character (if necessary, between quotation marks)
 
 .kernelName: ;; Name given to userspace

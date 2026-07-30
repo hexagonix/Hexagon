@@ -85,7 +85,7 @@ Hexagon.Syscall.Control:
 .es:                dw 0
 .eip:               dd 0
 .ebp:               dd 0
-.totalCalls:        dd 70
+.totalCalls:        dd 71
 
 ;;************************************************************************************
 
@@ -191,7 +191,7 @@ Hexagon.Kern.Syscall.hexagonHandler:
 
     call Hexagon.Kern.Proc.getCurrentProcessBase ;; EAX = base of whichever process is running now
 
-    mov ebp, eax ;; EBP is free here - CS/EIP were already pushed above
+    mov ebp, eax ;; EBP is free here. CS/EIP were already pushed above
 
     pop eax
 

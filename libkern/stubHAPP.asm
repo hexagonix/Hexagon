@@ -84,4 +84,4 @@ Hexagon.Libkern.HAPP.denyExecution:
 
     mov ebx, 00h
 
-    int 69h ;; Call Hexagon
+    int 80h ;; Call Hexagon

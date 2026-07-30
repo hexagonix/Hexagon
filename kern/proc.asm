@@ -175,6 +175,14 @@ Hexagon.Processes.Table.stackSize = 16384 ;; Dedicated stack space carved out of
 
 Hexagon.Kern.Proc.bootCallerESP: dd 0
 
+;; Slot of the very first process the kernel ever launched (the one whose
+;; hx.exec blocked Hexagon.Kern.Proc.bootCallerESP above, not a table slot).
+;; Hexagon.Kern.Proc.exit needs this to tell that process apart from a
+;; spawned process, since hx.spawn also leaves parentSlot at 0xFFFFFFFF for
+;; every process it creates, having no blocking caller to record either
+
+Hexagon.Kern.Proc.bootChildSlot: dd 0xFFFFFFFF
+
 ;; Error code reported by the last process to exit, read back via hx.getErrorCode
 
 Hexagon.Kern.Proc.lastErrorCode: dd 0
@@ -430,6 +438,7 @@ Hexagon.Kern.Proc.exec:
 .blockBootCaller:
 
     mov dword[Hexagon.Kern.Proc.bootCallerESP], esp
+    mov dword[Hexagon.Kern.Proc.bootChildSlot], edx
 
 .blocked:
 
@@ -558,7 +567,69 @@ Hexagon.Kern.Proc.exit:
     mov ecx, dword[Hexagon.Processes.Table.parentSlot+edx*4]
 
     cmp ecx, 0xFFFFFFFF
+    jne .resumeParent
+
+;; Nobody has parentSlot pointing here to be woken. This is either the very
+;; first process the kernel ever launched, which should return into the
+;; kernel's own boot stack, or a process hx.spawn created, which never had a
+;; blocking caller to record in the first place
+
+    cmp edx, dword[Hexagon.Kern.Proc.bootChildSlot]
     je .resumeBoot
+
+;; A spawned process exited with nobody waiting on it. Hand off to whichever
+;; other process is READY next, exactly like a normal preemption would.
+;; There is no specific caller context to return to here
+
+    mov ebx, edx
+
+.scanNext:
+
+    inc ebx
+
+    cmp ebx, Hexagon.Processes.Table.limit
+    jb .checkNext
+
+    xor ebx, ebx
+
+.checkNext:
+
+    cmp ebx, edx
+    je .resumeBoot ;; Nothing else is READY either, fall back to the boot context
+
+    cmp byte[Hexagon.Processes.Table.state+ebx], Hexagon.Processes.Table.States.ready
+    je .scheduleNext
+
+    jmp .scanNext
+
+.scheduleNext:
+
+    mov byte[Hexagon.Scheduler.current], bl
+
+    cmp dword[Hexagon.Processes.Table.esp+ebx*4], 0
+    jne .resumeNext
+
+    jmp Hexagon.Kern.Proc.dispatchSlot ;; First ever dispatch of this slot
+
+.resumeNext:
+
+    mov eax, dword[Hexagon.Processes.Table.base+ebx*4]
+
+    call Hexagon.Kern.Proc.setUserSegmentBase
+
+    mov esp, dword[Hexagon.Processes.Table.esp+ebx*4]
+
+    mov byte[Hexagon.Processes.Table.state+ebx], Hexagon.Processes.Table.States.running
+
+    popa
+
+    xor eax, eax
+
+    clc
+
+    ret
+
+.resumeParent:
 
     mov byte[Hexagon.Processes.Table.state+ecx], Hexagon.Processes.Table.States.ready
 
@@ -964,7 +1035,7 @@ Hexagon.Kern.Proc.registerSlot:
 
     mov dword[Hexagon.Processes.Table.pid+edx*4], eax
 
-;; Record who created this process - 0 if launched directly by the kernel at
+;; Record who created this process: 0 if launched directly by the kernel at
 ;; boot, otherwise whoever is currently running. Kept for spawned processes
 ;; too, purely so ps/debugging can trace where they came from
 
@@ -1146,6 +1217,110 @@ Hexagon.Kern.Proc.spawn:
     ret
 
 ;;************************************************************************************
+
+;; Terminates an arbitrary process by PID, requested through hx.kill. Unlike
+;; Hexagon.Kern.Proc.kill (the F1 hotkey handler, which always targets whichever
+;; process is currently in the foreground), this looks the target up in
+;; Hexagon.Processes.Table and can be called from any process against any other
+;;
+;; Input:
+;;
+;; EBX - Target PID
+;;
+;; Output:
+;;
+;; CF - Set on error (no process with this PID); EAX = 05h
+;;      Cleared on success
+
+Hexagon.Kern.Proc.killPID:
+
+    xor ecx, ecx
+
+.findSlot:
+
+    cmp ecx, Hexagon.Processes.Table.limit
+    jae .notFound
+
+    cmp byte[Hexagon.Processes.Table.state+ecx], Hexagon.Processes.Table.States.free
+    je .next
+
+    cmp dword[Hexagon.Processes.Table.pid+ecx*4], ebx
+    je .slotFound
+
+.next:
+
+    inc ecx
+
+    jmp .findSlot
+
+.slotFound:
+
+    movzx edx, byte[Hexagon.Scheduler.current]
+
+    cmp ecx, edx
+    jne .killOther
+
+;; Killing the caller itself, same as a plain hx.exit, never returns here
+
+    xor eax, eax
+
+    jmp Hexagon.Kern.Proc.exit
+
+.killOther:
+
+    mov edx, ecx ;; EDX = slot to terminate
+
+    mov ebx, dword[Hexagon.Processes.Table.base+edx*4]
+    mov ecx, dword[Hexagon.Processes.Table.size+edx*4]
+
+    push ebx
+    push ecx
+
+    call Hexagon.Arch.Gen.Mm.free
+
+    pop ecx
+    pop ebx
+
+    push ecx
+
+    mov eax, ecx
+
+    call Hexagon.Arch.Gen.Mm.freeMemoryUsage
+
+    pop ecx
+
+    mov byte[Hexagon.Processes.Table.state+edx], Hexagon.Processes.Table.States.free
+
+;; If another process's hx.exec is BLOCKED waiting on this one, wake it by
+;; marking it READY. Hexagon.Kern.Proc.maybeSchedule will resume it through
+;; the normal round-robin path on its own next turn. This does not reproduce
+;; Hexagon.Kern.Proc.exit's own resume trick (swapping ESP to jump straight
+;; into the parent), which would hijack the caller's own stack here instead
+;; of the killed process's, so the resumed hx.exec call does not get exit's
+;; usual clean EAX=0/CF=0 "child succeeded" result injected into it
+
+    mov ecx, dword[Hexagon.Processes.Table.parentSlot+edx*4]
+
+    cmp ecx, 0xFFFFFFFF
+    je .done
+
+    mov byte[Hexagon.Processes.Table.state+ecx], Hexagon.Processes.Table.States.ready
+
+.done:
+
+    clc
+
+    ret
+
+.notFound:
+
+    stc
+
+    mov eax, 05h
+
+    ret
+
+;;************************************************************************************
 ;;
 ;;                     Round-robin scheduler over Hexagon.Processes.Table
 ;;
@@ -1153,7 +1328,7 @@ Hexagon.Kern.Proc.spawn:
 
 Hexagon.Scheduler.current: db 0xFF ;; 0xFF = kernel boot context, else a Hexagon.Processes.Table index
 Hexagon.Scheduler.ticks: dd 0
-Hexagon.Scheduler.sliceLength = 5 ;; timer ticks per time-slice
+Hexagon.Scheduler.sliceLength = 5 ;; Timer ticks per time-slice
 
 ;;************************************************************************************
 
@@ -1198,9 +1373,9 @@ Hexagon.Kern.Proc.setUserSegmentBase:
 ;;************************************************************************************
 
 ;; Builds a fresh iret frame for a slot's very first dispatch and jumps into
-;; it - shared by Hexagon.Kern.Proc.exec (launching a fresh child) and
+;; it. Shared by Hexagon.Kern.Proc.exec (launching a fresh child) and
 ;; Hexagon.Kern.Proc.maybeSchedule (first dispatch of a spawned process).
-;; Never returns to its caller - reached with a plain "jmp", not "call"
+;; Never returns to its caller. Reached with a plain "jmp", not "call"
 ;;
 ;; Input:
 ;;

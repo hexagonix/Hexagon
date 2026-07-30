@@ -192,3 +192,7 @@ Hexagon.Kern.Syscall.hexagonServices:
 ;; Multitasking (non-blocking process creation)
 
     dd Hexagon.Kern.Proc.spawn                                         ;; 70
+
+;; Kill a process by PID
+
+    dd Hexagon.Kern.Proc.killPID                                       ;; 71

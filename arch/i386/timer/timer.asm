@@ -111,24 +111,20 @@ Hexagon.Arch.i386.Timer.Timer.sleep:
 
     sti ;; Enable interrupts so that the counter can be updated
 
-    mov ebx, dword[Hexagon.Kern.Services.timerHandler.timerCounter]
+;; Wait for an absolute tick target rather than counting discrete counter
+;; changes one at a time. A preempted process only gets to observe the
+;; counter when the scheduler resumes it, so counting "changes" undercounts
+;; real elapsed time by however many ticks went by while it was preempted.
+;; The more other processes are READY, the worse this gets. Comparing
+;; against a fixed target is immune to however many times this process gets
+;; swapped out and back in while waiting
 
-.waitOne: ;; Let's wait until the counter changes
+    add ecx, dword[Hexagon.Kern.Services.timerHandler.timerCounter]
 
-    cmp ebx, dword[Hexagon.Kern.Services.timerHandler.timerCounter]
-    je .waitOne
+.wait:
 
-.waitChange:
-
-    cmp ebx, dword[Hexagon.Kern.Services.timerHandler.timerCounter]
-    je .waitChange ;; As long as the counter has not changed its value, continue here
-
-    dec ecx
-
-    mov ebx, dword[Hexagon.Kern.Services.timerHandler.timerCounter]
-
-    cmp ecx, 0
-    ja .waitOne ;; If it's not over, keep counting...
+    cmp dword[Hexagon.Kern.Services.timerHandler.timerCounter], ecx
+    jb .wait
 
     popa
 
