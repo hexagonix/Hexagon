@@ -330,7 +330,7 @@ Hexagon.Kern.Dmesg.createMessage:
 
     popfd
 
-    ret ;; Por enquanto, só essas opções são válidas
+    ret ;; Only this options are valid for now
 
 .defaultSent:
 

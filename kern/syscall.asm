@@ -114,7 +114,7 @@ Hexagon.Kern.Syscall.hexagonHandler:
 
     mov dword[Hexagon.Syscall.Control.eax], eax
 
-    call Hexagon.Kern.Proc.getCurrentProcessBase ;; eax = base of whichever process is running now
+    call Hexagon.Kern.Proc.getCurrentProcessBase ;; EAX = base of whichever process is running now
 
     add esi, eax
 
@@ -189,9 +189,9 @@ Hexagon.Kern.Syscall.hexagonHandler:
 
     push eax
 
-    call Hexagon.Kern.Proc.getCurrentProcessBase ;; eax = base of whichever process is running now
+    call Hexagon.Kern.Proc.getCurrentProcessBase ;; EAX = base of whichever process is running now
 
-    mov ebp, eax ;; ebp is free here - cs/eip were already pushed above
+    mov ebp, eax ;; EBP is free here - CS/EIP were already pushed above
 
     pop eax
 
