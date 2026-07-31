@@ -337,7 +337,7 @@ Hexagon.Kern.Proc.exec:
     cmp ecx, Hexagon.Processes.Table.limit
     jae .limitReached
 
-    cmp byte[Hexagon.Processes.Table.state+ecx], Hexagon.Processes.Table.States.free
+    cmp byte[Hexagon.Processes.Table.state + ecx], Hexagon.Processes.Table.States.free
     je .slotFound
 
     inc ecx
@@ -428,10 +428,10 @@ Hexagon.Kern.Proc.exec:
     cmp ecx, 0xFF
     je .blockBootCaller
 
-    mov byte[Hexagon.Processes.Table.state+ecx], Hexagon.Processes.Table.States.blocked
-    mov dword[Hexagon.Processes.Table.esp+ecx*4], esp
+    mov byte[Hexagon.Processes.Table.state + ecx], Hexagon.Processes.Table.States.blocked
+    mov dword[Hexagon.Processes.Table.esp + ecx * 4], esp
 
-    mov dword[Hexagon.Processes.Table.parentSlot+edx*4], ecx
+    mov dword[Hexagon.Processes.Table.parentSlot + edx * 4], ecx
 
     jmp .blocked
 
@@ -442,7 +442,7 @@ Hexagon.Kern.Proc.exec:
 
 .blocked:
 
-    mov byte[Hexagon.Processes.Table.state+edx], Hexagon.Processes.Table.States.running
+    mov byte[Hexagon.Processes.Table.state + edx], Hexagon.Processes.Table.States.running
 
     mov byte[Hexagon.Scheduler.current], dl
 
@@ -538,8 +538,8 @@ Hexagon.Kern.Proc.exit:
 
 ;; Free this process's own memory block (individually allocated in Hexagon.Kern.Proc.exec/spawn)
 
-    mov ebx, dword[Hexagon.Processes.Table.base+edx*4]
-    mov ecx, dword[Hexagon.Processes.Table.size+edx*4]
+    mov ebx, dword[Hexagon.Processes.Table.base + edx * 4]
+    mov ecx, dword[Hexagon.Processes.Table.size + edx * 4]
 
     push ebx
     push ecx
@@ -557,14 +557,14 @@ Hexagon.Kern.Proc.exit:
 
     pop ecx
 
-    mov byte[Hexagon.Processes.Table.state+edx], Hexagon.Processes.Table.States.free
+    mov byte[Hexagon.Processes.Table.state + edx], Hexagon.Processes.Table.States.free
 
 ;; Resume whoever is blocked waiting for this process, if anyone, either the
 ;; parent slot that called hx.exec, or the kernel's own boot code for the
 ;; very first process - using the exact same esp-restore mechanism
 ;; Hexagon.Kern.Proc.maybeSchedule already uses to resume any other process
 
-    mov ecx, dword[Hexagon.Processes.Table.parentSlot+edx*4]
+    mov ecx, dword[Hexagon.Processes.Table.parentSlot + edx * 4]
 
     cmp ecx, 0xFFFFFFFF
     jne .resumeParent
@@ -597,7 +597,7 @@ Hexagon.Kern.Proc.exit:
     cmp ebx, edx
     je .resumeBoot ;; Nothing else is READY either, fall back to the boot context
 
-    cmp byte[Hexagon.Processes.Table.state+ebx], Hexagon.Processes.Table.States.ready
+    cmp byte[Hexagon.Processes.Table.state + ebx], Hexagon.Processes.Table.States.ready
     je .scheduleNext
 
     jmp .scanNext
@@ -606,20 +606,20 @@ Hexagon.Kern.Proc.exit:
 
     mov byte[Hexagon.Scheduler.current], bl
 
-    cmp dword[Hexagon.Processes.Table.esp+ebx*4], 0
+    cmp dword[Hexagon.Processes.Table.esp + ebx * 4], 0
     jne .resumeNext
 
     jmp Hexagon.Kern.Proc.dispatchSlot ;; First ever dispatch of this slot
 
 .resumeNext:
 
-    mov eax, dword[Hexagon.Processes.Table.base+ebx*4]
+    mov eax, dword[Hexagon.Processes.Table.base + ebx * 4]
 
     call Hexagon.Kern.Proc.setUserSegmentBase
 
-    mov esp, dword[Hexagon.Processes.Table.esp+ebx*4]
+    mov esp, dword[Hexagon.Processes.Table.esp + ebx * 4]
 
-    mov byte[Hexagon.Processes.Table.state+ebx], Hexagon.Processes.Table.States.running
+    mov byte[Hexagon.Processes.Table.state + ebx], Hexagon.Processes.Table.States.running
 
     popa
 
@@ -631,13 +631,13 @@ Hexagon.Kern.Proc.exit:
 
 .resumeParent:
 
-    mov byte[Hexagon.Processes.Table.state+ecx], Hexagon.Processes.Table.States.ready
+    mov byte[Hexagon.Processes.Table.state + ecx], Hexagon.Processes.Table.States.ready
 
     mov byte[Hexagon.Scheduler.current], cl
 
-    mov esp, dword[Hexagon.Processes.Table.esp+ecx*4]
+    mov esp, dword[Hexagon.Processes.Table.esp + ecx * 4]
 
-    mov eax, dword[Hexagon.Processes.Table.base+ecx*4]
+    mov eax, dword[Hexagon.Processes.Table.base + ecx * 4]
 
     push ecx
 
@@ -645,7 +645,7 @@ Hexagon.Kern.Proc.exit:
 
     pop ecx
 
-    mov byte[Hexagon.Processes.Table.state+ecx], Hexagon.Processes.Table.States.running
+    mov byte[Hexagon.Processes.Table.state + ecx], Hexagon.Processes.Table.States.running
 
     popa
 
@@ -686,7 +686,7 @@ Hexagon.Kern.Proc.getPID:
     cmp ebx, 0xFF
     je .none
 
-    mov eax, dword[Hexagon.Processes.Table.pid+ebx*4]
+    mov eax, dword[Hexagon.Processes.Table.pid + ebx * 4]
 
     jmp .end
 
@@ -796,20 +796,20 @@ Hexagon.Kern.Proc.getProcessTable:
     cmp ecx, Hexagon.Processes.Table.limit
     jae .done
 
-    cmp byte[Hexagon.Processes.Table.state+ecx], Hexagon.Processes.Table.States.free
+    cmp byte[Hexagon.Processes.Table.state + ecx], Hexagon.Processes.Table.States.free
     je .next
 
     push ecx
 
-    mov eax, dword[Hexagon.Processes.Table.pid+ecx*4]
+    mov eax, dword[Hexagon.Processes.Table.pid + ecx * 4]
 
     stosd
 
-    mov eax, dword[Hexagon.Processes.Table.parentPID+ecx*4]
+    mov eax, dword[Hexagon.Processes.Table.parentPID + ecx * 4]
 
     stosd
 
-    mov al, byte[Hexagon.Processes.Table.state+ecx]
+    mov al, byte[Hexagon.Processes.Table.state + ecx]
 
     stosb
 
@@ -829,7 +829,7 @@ Hexagon.Kern.Proc.getProcessTable:
     cmp ebx, 12
     jae .measured
 
-    cmp byte[esi+ebx], ' '
+    cmp byte[esi + ebx], ' '
     je .measured
 
     inc ebx
@@ -1009,15 +1009,15 @@ Hexagon.Kern.Proc.registerSlot:
     push ds
     pop es
 
-    mov byte[Hexagon.Processes.Table.state+edx], Hexagon.Processes.Table.States.ready
+    mov byte[Hexagon.Processes.Table.state + edx], Hexagon.Processes.Table.States.ready
 
-    mov dword[Hexagon.Processes.Table.base+edx*4], ebx
-    mov dword[Hexagon.Processes.Table.size+edx*4], ecx
+    mov dword[Hexagon.Processes.Table.base + edx * 4], ebx
+    mov dword[Hexagon.Processes.Table.size + edx * 4], ecx
 
     mov eax, dword[Hexagon.Libkern.HAPP.imageHAPPHeader.entryHAPP]
-    mov dword[Hexagon.Processes.Table.entry+edx*4], eax
+    mov dword[Hexagon.Processes.Table.entry + edx * 4], eax
 
-    mov dword[Hexagon.Processes.Table.esp+edx*4], 0 ;; Never dispatched yet
+    mov dword[Hexagon.Processes.Table.esp + edx * 4], 0 ;; Never dispatched yet
 
     push ebx
     push ecx
@@ -1033,7 +1033,7 @@ Hexagon.Kern.Proc.registerSlot:
 
     mov eax, dword[Hexagon.Processes.Table.nextPID]
 
-    mov dword[Hexagon.Processes.Table.pid+edx*4], eax
+    mov dword[Hexagon.Processes.Table.pid + edx * 4], eax
 
 ;; Record who created this process: 0 if launched directly by the kernel at
 ;; boot, otherwise whoever is currently running. Kept for spawned processes
@@ -1041,14 +1041,14 @@ Hexagon.Kern.Proc.registerSlot:
 
 ;; Only hx.exec fills this in for real
 
-    mov dword[Hexagon.Processes.Table.parentSlot+edx*4], 0xFFFFFFFF 
+    mov dword[Hexagon.Processes.Table.parentSlot + edx * 4], 0xFFFFFFFF 
 
     movzx ecx, byte[Hexagon.Scheduler.current]
 
     cmp ecx, 0xFF
     je .noParent
 
-    mov ecx, dword[Hexagon.Processes.Table.pid+ecx*4]
+    mov ecx, dword[Hexagon.Processes.Table.pid + ecx * 4]
 
     jmp .parentKnown
 
@@ -1058,7 +1058,7 @@ Hexagon.Kern.Proc.registerSlot:
 
 .parentKnown:
 
-    mov dword[Hexagon.Processes.Table.parentPID+edx*4], ecx
+    mov dword[Hexagon.Processes.Table.parentPID + edx * 4], ecx
 
 ;; Copy the process name into the table (for ps/hx.getProcesses)
 
@@ -1143,7 +1143,7 @@ Hexagon.Kern.Proc.spawn:
     cmp ecx, Hexagon.Processes.Table.limit
     jae .limitReached
 
-    cmp byte[Hexagon.Processes.Table.state+ecx], Hexagon.Processes.Table.States.free
+    cmp byte[Hexagon.Processes.Table.state + ecx], Hexagon.Processes.Table.States.free
     je .slotFound
 
     inc ecx
@@ -1241,10 +1241,10 @@ Hexagon.Kern.Proc.killPID:
     cmp ecx, Hexagon.Processes.Table.limit
     jae .notFound
 
-    cmp byte[Hexagon.Processes.Table.state+ecx], Hexagon.Processes.Table.States.free
+    cmp byte[Hexagon.Processes.Table.state + ecx], Hexagon.Processes.Table.States.free
     je .next
 
-    cmp dword[Hexagon.Processes.Table.pid+ecx*4], ebx
+    cmp dword[Hexagon.Processes.Table.pid + ecx * 4], ebx
     je .slotFound
 
 .next:
@@ -1270,8 +1270,8 @@ Hexagon.Kern.Proc.killPID:
 
     mov edx, ecx ;; EDX = slot to terminate
 
-    mov ebx, dword[Hexagon.Processes.Table.base+edx*4]
-    mov ecx, dword[Hexagon.Processes.Table.size+edx*4]
+    mov ebx, dword[Hexagon.Processes.Table.base + edx * 4]
+    mov ecx, dword[Hexagon.Processes.Table.size + edx * 4]
 
     push ebx
     push ecx
@@ -1289,7 +1289,7 @@ Hexagon.Kern.Proc.killPID:
 
     pop ecx
 
-    mov byte[Hexagon.Processes.Table.state+edx], Hexagon.Processes.Table.States.free
+    mov byte[Hexagon.Processes.Table.state + edx], Hexagon.Processes.Table.States.free
 
 ;; If another process's hx.exec is BLOCKED waiting on this one, wake it by
 ;; marking it READY. Hexagon.Kern.Proc.maybeSchedule will resume it through
@@ -1299,12 +1299,12 @@ Hexagon.Kern.Proc.killPID:
 ;; of the killed process's, so the resumed hx.exec call does not get exit's
 ;; usual clean EAX=0/CF=0 "child succeeded" result injected into it
 
-    mov ecx, dword[Hexagon.Processes.Table.parentSlot+edx*4]
+    mov ecx, dword[Hexagon.Processes.Table.parentSlot + edx * 4]
 
     cmp ecx, 0xFFFFFFFF
     je .done
 
-    mov byte[Hexagon.Processes.Table.state+ecx], Hexagon.Processes.Table.States.ready
+    mov byte[Hexagon.Processes.Table.state + ecx], Hexagon.Processes.Table.States.ready
 
 .done:
 
@@ -1346,22 +1346,22 @@ Hexagon.Kern.Proc.setUserSegmentBase:
     mov edx, eax
     and eax, 0xFFFF
 
-    mov word[GDT.userCode+2], ax
-    mov word[GDT.userData+2], ax
+    mov word[GDT.userCode + 2], ax
+    mov word[GDT.userData + 2], ax
 
     mov eax, edx
     shr eax, 16
     and eax, 0xFF
 
-    mov byte[GDT.userCode+4], al
-    mov byte[GDT.userData+4], al
+    mov byte[GDT.userCode + 4], al
+    mov byte[GDT.userData + 4], al
 
     mov eax, edx
     shr eax, 24
     and eax, 0xFF
 
-    mov byte[GDT.userCode+7], al
-    mov byte[GDT.userData+7], al
+    mov byte[GDT.userCode + 7], al
+    mov byte[GDT.userData + 7], al
 
     lgdt[GDTReg]
 
@@ -1383,11 +1383,11 @@ Hexagon.Kern.Proc.setUserSegmentBase:
 
 Hexagon.Kern.Proc.dispatchSlot:
 
-    mov eax, dword[Hexagon.Processes.Table.base+ebx*4]
+    mov eax, dword[Hexagon.Processes.Table.base + ebx * 4]
 
     call Hexagon.Kern.Proc.setUserSegmentBase
 
-    mov ecx, dword[Hexagon.Processes.Table.size+ebx*4]
+    mov ecx, dword[Hexagon.Processes.Table.size + ebx * 4]
 
     add eax, ecx
     sub eax, 4 ;; Small headroom from the very top of the block
@@ -1400,7 +1400,7 @@ Hexagon.Kern.Proc.dispatchSlot:
 
     pushfd   ;; Flags
     push 30h ;; User environment code segment (process)
-    push dword[Hexagon.Processes.Table.entry+ebx*4] ;; Image entry point
+    push dword[Hexagon.Processes.Table.entry + ebx * 4] ;; Image entry point
 
     mov ax, 38h ;; User environment data segment (process)
     mov ds, ax
@@ -1446,7 +1446,7 @@ Hexagon.Kern.Proc.maybeSchedule:
     cmp ebx, edx
     je .noSwitch
 
-    cmp byte[Hexagon.Processes.Table.state+ebx], Hexagon.Processes.Table.States.ready
+    cmp byte[Hexagon.Processes.Table.state + ebx], Hexagon.Processes.Table.States.ready
     je .candidateValid
 
     jmp .scan
@@ -1455,14 +1455,14 @@ Hexagon.Kern.Proc.maybeSchedule:
 
 ;; EBX = target slot to switch to, EDX = who is running now
 
-    mov dword[Hexagon.Processes.Table.esp+edx*4], esp
+    mov dword[Hexagon.Processes.Table.esp + edx * 4], esp
 
-    mov byte[Hexagon.Processes.Table.state+edx], Hexagon.Processes.Table.States.ready
-    mov byte[Hexagon.Processes.Table.state+ebx], Hexagon.Processes.Table.States.running
+    mov byte[Hexagon.Processes.Table.state + edx], Hexagon.Processes.Table.States.ready
+    mov byte[Hexagon.Processes.Table.state + ebx], Hexagon.Processes.Table.States.running
 
     mov byte[Hexagon.Scheduler.current], bl
 
-    cmp dword[Hexagon.Processes.Table.esp+ebx*4], 0
+    cmp dword[Hexagon.Processes.Table.esp + ebx * 4], 0
     jne .resumeSlot
 
     jmp Hexagon.Kern.Proc.dispatchSlot ;; First ever dispatch of this slot
@@ -1505,7 +1505,7 @@ Hexagon.Kern.Proc.getCurrentProcessBase:
     cmp ebx, 0xFF
     je .none
 
-    mov eax, dword[Hexagon.Processes.Table.base+ebx*4]
+    mov eax, dword[Hexagon.Processes.Table.base + ebx * 4]
 
     jmp .end
 
