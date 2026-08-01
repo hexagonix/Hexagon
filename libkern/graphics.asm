@@ -261,9 +261,9 @@ Hexagon.Libkern.Graphics.putPixel:
 
 Hexagon.Libkern.Graphics.drawBlockSyscall:
 
-    push eax ;; X - getCurrentProcessBase below returns its result in eax, save X first
+    push eax ;; X - getCurrentProcessBase below returns its result in EAX, save X first
 
-    call Hexagon.Kern.Proc.getCurrentProcessBase ;; eax = base of whichever process is running now
+    call Hexagon.Kern.Sched.getCurrentProcessBase ;; EAX = base of whichever process is running now
 
     mov ecx, eax
 
@@ -299,15 +299,15 @@ Hexagon.Libkern.Graphics.drawBlockSyscall:
 
 ;;************************************************************************************
 
-;; Desenhar um bloco de cor específica
+;; Draw a block of a specific color
 ;;
-;; Entrada:
+;; Input:
 ;;
 ;; EAX - X
 ;; EBX - Y
-;; ESI - Comprimento
-;; EDI - Largura
-;; EDX - Cor em hexadecimal
+;; ESI - Length
+;; EDI - Width
+;; EDX - Color in hexadecimal
 
 Hexagon.Libkern.Graphics.drawBlock:
 

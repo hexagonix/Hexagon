@@ -132,6 +132,7 @@ include "dev/dev.asm"                   ;; Hardware management and abstraction f
 ;; Processes, process model and executable images
 
 include "kern/proc.asm"                 ;; Functions for handling processes
+include "kern/sched.asm"                ;; Round robin scheduler and context switch
 include "libkern/HAPP.asm"              ;; Functions for HAPP image processing
 include "kern/init.asm"                 ;; Functions to start user mode and first process
 
@@ -253,7 +254,7 @@ Hexagon.Autoconfig:
 
     call Hexagon.Arch.i386.Timer.Timer.setupTimer ;; Initializes the Hexagon timer service
 
-    call Hexagon.Kern.Proc.setupScheduler ;; Starts the Hexagon process scheduler
+    call Hexagon.Kern.Sched.setupScheduler ;; Starts the Hexagon process scheduler
 
     call Hexagon.Kernel.Dev.Gen.COM.Serial.setupCOM1 ;; Start first serial port for debugging
 
@@ -348,10 +349,10 @@ Hexagon.userMode:
 
 Hexagon.Heap: ;; Kernel heap
 
-Hexagon.Heap.DiskGeometry  = Hexagon.Heap               + 0           ;; Disk geometry
-Hexagon.Heap.VBE           = Hexagon.Heap.DiskGeometry  + 512         ;; Video control block
-Hexagon.Heap.DiskCache     = Hexagon.Heap.VBE           + 90000       ;; Disk cache
-Hexagon.Heap.ProcessTable  = Hexagon.Heap.DiskCache     + 200000      ;; Hexagon.Processes.Table
-Hexagon.Heap.ArgProc       = Hexagon.Heap.ProcessTable  + 5000        ;; Arguments to process
-Hexagon.Heap.Temp          = Hexagon.Heap.ArgProc       + 2000        ;; Temporary kernel data
+Hexagon.Heap.DiskGeometry  = Hexagon.Heap               + 0      ;; Disk geometry
+Hexagon.Heap.VBE           = Hexagon.Heap.DiskGeometry  + 512    ;; Video control block
+Hexagon.Heap.DiskCache     = Hexagon.Heap.VBE           + 90000  ;; Disk cache
+Hexagon.Heap.ProcessTable  = Hexagon.Heap.DiskCache     + 200000 ;; Hexagon.Processes.Table
+Hexagon.Heap.ArgProc       = Hexagon.Heap.ProcessTable  + 5000   ;; Arguments to process
+Hexagon.Heap.Temp          = Hexagon.Heap.ArgProc       + 2000   ;; Temporary kernel data
 

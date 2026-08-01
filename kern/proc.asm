@@ -121,7 +121,7 @@ use32
 ;; the blocking hx.exec or the non-blocking hx.spawn. hx.exec still blocks its
 ;; caller exactly as before: the caller's own slot just sits in the BLOCKED
 ;; state until its child exits, instead of the child being a nested call on
-;; the raw CPU stack, so Hexagon.Kern.Proc.maybeSchedule can round-robin
+;; the raw CPU stack, so Hexagon.Kern.Sched.maybeSchedule can round-robin
 ;; between an exec chain and independently spawned processes uniformly
 ;;
 ;;************************************************************************************
@@ -152,6 +152,9 @@ times Hexagon.Processes.Table.limit dd 0 ;; HAPP entry point; only meaningful be
 Hexagon.Processes.Table.esp:
 times Hexagon.Processes.Table.limit dd 0 ;; Saved stack pointer while not running; 0 = never dispatched
 
+Hexagon.Processes.Table.wakeTick:
+times Hexagon.Processes.Table.limit dd 0 ;; Absolute tick target while in States.sleeping
+
 Hexagon.Processes.Table.name:
 times Hexagon.Processes.Table.limit*13 db 0 ;; Process name, space-padded, for ps/hx.getProcesses
 
@@ -161,11 +164,12 @@ Hexagon.Processes.Table.limit = 16
 
 end virtual
 
-Hexagon.Processes.Table.States.free    = 0
-Hexagon.Processes.Table.States.ready   = 1
-Hexagon.Processes.Table.States.running = 2
-Hexagon.Processes.Table.States.blocked = 3
-Hexagon.Processes.Table.States.zombie  = 4
+Hexagon.Processes.Table.States.free     = 0
+Hexagon.Processes.Table.States.ready    = 1
+Hexagon.Processes.Table.States.running  = 2
+Hexagon.Processes.Table.States.blocked  = 3
+Hexagon.Processes.Table.States.zombie   = 4
+Hexagon.Processes.Table.States.sleeping = 5
 
 Hexagon.Processes.Table.stackSize = 16384 ;; Dedicated stack space carved out of each process's own block
 
@@ -215,33 +219,10 @@ Hexagon.Kern.Proc.lock:
 
 ;;************************************************************************************
 
-Hexagon.Kern.Proc.setupScheduler:
-
-    logHexagon Hexagon.Verbose.heapKernel, Hexagon.Dmesg.Priorities.p5
-
-    push ds
-    pop es
-
-    mov edi, Hexagon.Processes.Table.state
-    mov ecx, Hexagon.Processes.Table.limit
-    mov al, Hexagon.Processes.Table.States.free
-
-    rep stosb
-
-    mov dword[Hexagon.Processes.Table.nextPID], 0
-
-    mov byte[Hexagon.Scheduler.current], 0xFF
-
-    logHexagon Hexagon.Verbose.scheduler, Hexagon.Dmesg.Priorities.p5
-
-    ret
-
-;;************************************************************************************
-
 ;; Allows you to terminate a process currently running by the system, if such
 ;; termination is possible
 
-Hexagon.Kern.Proc.kill:
+Hexagon.Kern.Proc.killForegroundProcess:
 
 ;; End current running process
 
@@ -448,7 +429,7 @@ Hexagon.Kern.Proc.exec:
 
     mov ebx, edx
 
-    jmp Hexagon.Kern.Proc.dispatchSlot ;; Builds the child's iret frame and never returns here
+    jmp Hexagon.Kern.Sched.dispatchSlot ;; Builds the child's iret frame and never returns here
 
 .missingImage:
 
@@ -561,8 +542,8 @@ Hexagon.Kern.Proc.exit:
 
 ;; Resume whoever is blocked waiting for this process, if anyone, either the
 ;; parent slot that called hx.exec, or the kernel's own boot code for the
-;; very first process - using the exact same esp-restore mechanism
-;; Hexagon.Kern.Proc.maybeSchedule already uses to resume any other process
+;; very first process, using the exact same esp-restore mechanism
+;; Hexagon.Kern.Sched.maybeSchedule already uses to resume any other process
 
     mov ecx, dword[Hexagon.Processes.Table.parentSlot + edx * 4]
 
@@ -609,13 +590,13 @@ Hexagon.Kern.Proc.exit:
     cmp dword[Hexagon.Processes.Table.esp + ebx * 4], 0
     jne .resumeNext
 
-    jmp Hexagon.Kern.Proc.dispatchSlot ;; First ever dispatch of this slot
+    jmp Hexagon.Kern.Sched.dispatchSlot ;; First ever dispatch of this slot
 
 .resumeNext:
 
     mov eax, dword[Hexagon.Processes.Table.base + ebx * 4]
 
-    call Hexagon.Kern.Proc.setUserSegmentBase
+    call Hexagon.Kern.Sched.setUserSegmentBase
 
     mov esp, dword[Hexagon.Processes.Table.esp + ebx * 4]
 
@@ -641,7 +622,7 @@ Hexagon.Kern.Proc.exit:
 
     push ecx
 
-    call Hexagon.Kern.Proc.setUserSegmentBase
+    call Hexagon.Kern.Sched.setUserSegmentBase
 
     pop ecx
 
@@ -745,7 +726,7 @@ Hexagon.Kern.Proc.calculateArgumentsAddress:
 
     push eax
 
-    call Hexagon.Kern.Proc.getCurrentProcessBase
+    call Hexagon.Kern.Sched.getCurrentProcessBase
 
     mov edi, Hexagon.Heap.ArgProc ;; Offset, inside the kernel
 
@@ -1101,7 +1082,7 @@ Hexagon.Kern.Proc.registerSlot:
 
 ;; Creates a new process without blocking the caller. Fully validated,
 ;; allocated and loaded, then left READY in the process table for
-;; Hexagon.Kern.Proc.maybeSchedule to dispatch on its own schedule. Does not
+;; Hexagon.Kern.Sched.maybeSchedule to dispatch on its own schedule. Does not
 ;; support arguments yet, unlike hx.exec
 ;;
 ;; Input:
@@ -1219,9 +1200,10 @@ Hexagon.Kern.Proc.spawn:
 ;;************************************************************************************
 
 ;; Terminates an arbitrary process by PID, requested through hx.kill. Unlike
-;; Hexagon.Kern.Proc.kill (the F1 hotkey handler, which always targets whichever
-;; process is currently in the foreground), this looks the target up in
-;; Hexagon.Processes.Table and can be called from any process against any other
+;; Hexagon.Kern.Proc.killForegroundProcess (the F1 hotkey handler, which
+;; always targets whichever process is currently in the foreground), this
+;; looks the target up in Hexagon.Processes.Table and can be called from any
+;; process against any other
 ;;
 ;; Input:
 ;;
@@ -1232,7 +1214,7 @@ Hexagon.Kern.Proc.spawn:
 ;; CF - Set on error (no process with this PID); EAX = 05h
 ;;      Cleared on success
 
-Hexagon.Kern.Proc.killPID:
+Hexagon.Kern.Proc.kill:
 
     xor ecx, ecx
 
@@ -1291,8 +1273,37 @@ Hexagon.Kern.Proc.killPID:
 
     mov byte[Hexagon.Processes.Table.state + edx], Hexagon.Processes.Table.States.free
 
+;; If the process being killed had itself exec'd a child that hasn't
+;; finished yet (sh running the "kill" command that then targets sh's
+;; own PID), that child's parentSlot still points at this slot. Left alone,
+;; the child's own eventual hx.exit would resume this slot through the
+;; base/esp it still remembers, even though the memory backing it was just
+;; freed above and may belong to someone else by then. Sever the link so
+;; exit treats it as an orphan instead, the same path already used for
+;; hx.spawn'd processes with no blocking caller
+
+    xor ebx, ebx
+
+.severChildren:
+
+    cmp ebx, Hexagon.Processes.Table.limit
+    jae .wakeParent
+
+    cmp dword[Hexagon.Processes.Table.parentSlot + ebx * 4], edx
+    jne .nextChild
+
+    mov dword[Hexagon.Processes.Table.parentSlot + ebx * 4], 0xFFFFFFFF
+
+.nextChild:
+
+    inc ebx
+
+    jmp .severChildren
+
+.wakeParent:
+
 ;; If another process's hx.exec is BLOCKED waiting on this one, wake it by
-;; marking it READY. Hexagon.Kern.Proc.maybeSchedule will resume it through
+;; marking it READY. Hexagon.Kern.Sched.maybeSchedule will resume it through
 ;; the normal round-robin path on its own next turn. This does not reproduce
 ;; Hexagon.Kern.Proc.exit's own resume trick (swapping ESP to jump straight
 ;; into the parent), which would hijack the caller's own stack here instead
@@ -1317,204 +1328,5 @@ Hexagon.Kern.Proc.killPID:
     stc
 
     mov eax, 05h
-
-    ret
-
-;;************************************************************************************
-;;
-;;                     Round-robin scheduler over Hexagon.Processes.Table
-;;
-;;************************************************************************************
-
-Hexagon.Scheduler.current: db 0xFF ;; 0xFF = kernel boot context, else a Hexagon.Processes.Table index
-Hexagon.Scheduler.ticks: dd 0
-Hexagon.Scheduler.sliceLength = 5 ;; Timer ticks per time-slice
-
-;;************************************************************************************
-
-;; Reprograms the user code/data segment base in the GDT
-;;
-;; Input:
-;;
-;; EAX - New base address (preserved across the call)
-
-Hexagon.Kern.Proc.setUserSegmentBase:
-
-    push eax
-    push edx
-
-    mov edx, eax
-    and eax, 0xFFFF
-
-    mov word[GDT.userCode + 2], ax
-    mov word[GDT.userData + 2], ax
-
-    mov eax, edx
-    shr eax, 16
-    and eax, 0xFF
-
-    mov byte[GDT.userCode + 4], al
-    mov byte[GDT.userData + 4], al
-
-    mov eax, edx
-    shr eax, 24
-    and eax, 0xFF
-
-    mov byte[GDT.userCode + 7], al
-    mov byte[GDT.userData + 7], al
-
-    lgdt[GDTReg]
-
-    pop edx
-    pop eax
-
-    ret
-
-;;************************************************************************************
-
-;; Builds a fresh iret frame for a slot's very first dispatch and jumps into
-;; it. Shared by Hexagon.Kern.Proc.exec (launching a fresh child) and
-;; Hexagon.Kern.Proc.maybeSchedule (first dispatch of a spawned process).
-;; Never returns to its caller. Reached with a plain "jmp", not "call"
-;;
-;; Input:
-;;
-;; EBX - Slot index to dispatch
-
-Hexagon.Kern.Proc.dispatchSlot:
-
-    mov eax, dword[Hexagon.Processes.Table.base + ebx * 4]
-
-    call Hexagon.Kern.Proc.setUserSegmentBase
-
-    mov ecx, dword[Hexagon.Processes.Table.size + ebx * 4]
-
-    add eax, ecx
-    sub eax, 4 ;; Small headroom from the very top of the block
-
-    mov esp, eax ;; Top of this process's own allocated block
-
-    call Hexagon.Kern.Proc.calculateArgumentsAddress ;; EDI = arguments address for the new process
-
-    sti ;; Make sure interrupts are available
-
-    pushfd   ;; Flags
-    push 30h ;; User environment code segment (process)
-    push dword[Hexagon.Processes.Table.entry + ebx * 4] ;; Image entry point
-
-    mov ax, 38h ;; User environment data segment (process)
-    mov ds, ax
-
-    iret
-
-;;************************************************************************************
-
-;; Called from Hexagon.Kern.Services.timerHandler, via "call", once per
-;; time-slice. At that point EAX and DS are already saved on the current
-;; stack and ds already points at the kernel data segment. Looks for the next
-;; READY process in round-robin order. Ends with a plain "ret" either way:
-;; with nothing else ready, that returns to the caller normally; when
-;; switching, it returns into whatever context is being resumed, at the same
-;; point in its own earlier call to this function, using the stack-swap
-;; itself to carry the CPU state across
-
-Hexagon.Kern.Proc.maybeSchedule:
-
-    pusha
-
-    movzx edx, byte[Hexagon.Scheduler.current] ;; EDX = who is running now
-
-    cmp edx, 0xFF
-    je .noSwitch ;; Still in raw kernel-boot context, nothing to preempt yet
-
-    mov ebx, edx ;; EBX = scan cursor
-
-.scan:
-
-    inc ebx
-
-    cmp ebx, Hexagon.Processes.Table.limit
-    jb .checkCandidate
-
-    xor ebx, ebx
-
-.checkCandidate:
-
-;; Scanned all the way back to whoever is already running. Nobody else is
-;; ready, stay put
-
-    cmp ebx, edx
-    je .noSwitch
-
-    cmp byte[Hexagon.Processes.Table.state + ebx], Hexagon.Processes.Table.States.ready
-    je .candidateValid
-
-    jmp .scan
-
-.candidateValid:
-
-;; EBX = target slot to switch to, EDX = who is running now
-
-    mov dword[Hexagon.Processes.Table.esp + edx * 4], esp
-
-    mov byte[Hexagon.Processes.Table.state + edx], Hexagon.Processes.Table.States.ready
-    mov byte[Hexagon.Processes.Table.state + ebx], Hexagon.Processes.Table.States.running
-
-    mov byte[Hexagon.Scheduler.current], bl
-
-    cmp dword[Hexagon.Processes.Table.esp + ebx * 4], 0
-    jne .resumeSlot
-
-    jmp Hexagon.Kern.Proc.dispatchSlot ;; First ever dispatch of this slot
-
-.resumeSlot:
-
-    mov eax, dword[Hexagon.Processes.Table.base+ebx*4]
-
-    call Hexagon.Kern.Proc.setUserSegmentBase
-
-    mov esp, dword[Hexagon.Processes.Table.esp+ebx*4]
-
-    popa
-
-    ret
-
-.noSwitch:
-
-    popa
-
-    ret
-
-;;************************************************************************************
-
-;; Returns the physical base address of whichever process is actually
-;; running right now. Hexagon.Kern.Syscall.hexagonHandler uses this to
-;; translate ESI/EDI, and Hexagon.Libkern.Graphics.drawBlockSyscall uses it
-;; the same way for graphics coordinates
-;;
-;; Output:
-;;
-;; EAX - Base address, or 0 if no process is running
-
-Hexagon.Kern.Proc.getCurrentProcessBase:
-
-    push ebx
-
-    movzx ebx, byte[Hexagon.Scheduler.current]
-
-    cmp ebx, 0xFF
-    je .none
-
-    mov eax, dword[Hexagon.Processes.Table.base + ebx * 4]
-
-    jmp .end
-
-.none:
-
-    xor eax, eax
-
-.end:
-
-    pop ebx
 
     ret

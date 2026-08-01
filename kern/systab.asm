@@ -117,7 +117,7 @@ Hexagon.Kern.Syscall.hexagonServices:
     dd Hexagon.Kern.Uname.uname                                        ;; 23
     dd Hexagon.Libkern.Num.getRandomNumber                             ;; 24
     dd Hexagon.Libkern.Num.feedRandomGenerator                         ;; 25
-    dd Hexagon.Arch.i386.Timer.Timer.sleep                             ;; 26
+    dd Hexagon.Kern.Sched.sleep                                        ;; 26
     dd Hexagon.Kern.Syscall.installInterruption                        ;; 27
 
 ;; Hexagon power management
@@ -189,10 +189,7 @@ Hexagon.Kern.Syscall.hexagonServices:
 
     dd Hexagon.Kernel.FS.VFS.changeDirectory                           ;; 69
 
-;; Multitasking (non-blocking process creation)
+;; Multitasking
 
     dd Hexagon.Kern.Proc.spawn                                         ;; 70
-
-;; Kill a process by PID
-
-    dd Hexagon.Kern.Proc.killPID                                       ;; 71
+    dd Hexagon.Kern.Proc.kill                                          ;; 71

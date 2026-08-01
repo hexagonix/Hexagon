@@ -316,7 +316,7 @@ Hexagon.Kern.Dmesg.createMessage:
 
 ;; Hexagon.Kernel.Dev.Dev.open/write below track which device is open via
 ;; global state (Hexagon.Dev.Control.*), and Hexagon.Syscall.Control.systemCall
-;; is also read here - none of that is safe to interleave between two
+;; is also read here. None of that is safe to interleave between two
 ;; processes, so this whole function runs with interrupts disabled
 
     pushfd
