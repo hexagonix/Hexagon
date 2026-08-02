@@ -353,6 +353,5 @@ Hexagon.Heap.DiskGeometry  = Hexagon.Heap               + 0      ;; Disk geometr
 Hexagon.Heap.VBE           = Hexagon.Heap.DiskGeometry  + 512    ;; Video control block
 Hexagon.Heap.DiskCache     = Hexagon.Heap.VBE           + 90000  ;; Disk cache
 Hexagon.Heap.ProcessTable  = Hexagon.Heap.DiskCache     + 200000 ;; Hexagon.Processes.Table
-Hexagon.Heap.ArgProc       = Hexagon.Heap.ProcessTable  + 5000   ;; Arguments to process
-Hexagon.Heap.Temp          = Hexagon.Heap.ArgProc       + 2000   ;; Temporary kernel data
+Hexagon.Heap.Temp          = Hexagon.Heap.ProcessTable  + 5000   ;; Temporary kernel data
 

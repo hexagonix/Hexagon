@@ -115,7 +115,7 @@ use32
 
 ;;************************************************************************************
 ;;
-;;                    Hexagon.Processes.Table - unified process table
+;;                         Hexagon unified process table
 ;;
 ;; Every process the kernel knows about gets one slot here, whether started by
 ;; the blocking hx.exec or the non-blocking hx.spawn. hx.exec still blocks its
@@ -129,7 +129,7 @@ use32
 virtual at Hexagon.Heap.ProcessTable
 
 Hexagon.Processes.Table.state:
-times Hexagon.Processes.Table.limit db 0 ;; Hexagon.Processes.Table.States.*
+times Hexagon.Processes.Table.limit db 0
 
 Hexagon.Processes.Table.pid:
 times Hexagon.Processes.Table.limit dd 0 ;; Persistent PID, never reused while the slot is in use
@@ -154,6 +154,12 @@ times Hexagon.Processes.Table.limit dd 0 ;; Saved stack pointer while not runnin
 
 Hexagon.Processes.Table.wakeTick:
 times Hexagon.Processes.Table.limit dd 0 ;; Absolute tick target while in States.sleeping
+
+Hexagon.Processes.Table.argBase:
+times Hexagon.Processes.Table.limit dd 0 ;; Alloc process arguments buffer, own life as the process; 0 = none
+
+Hexagon.Processes.Table.tempBase:
+times Hexagon.Processes.Table.limit dd 0 ;; Alloc temp scratch buffer for process, lazily allocated on first use; 0 = none
 
 Hexagon.Processes.Table.name:
 times Hexagon.Processes.Table.limit*13 db 0 ;; Process name, space-padded, for ps/hx.getProcesses
@@ -180,6 +186,8 @@ Hexagon.Processes.Table.States.sleeping = 5
 Hexagon.Processes.Table.States.idle     = 6
 
 Hexagon.Processes.Table.stackSize = 16384 ;; Dedicated stack space carved out of each process's own block
+
+Hexagon.Kern.Proc.maxArgumentsLength = 2000 ;; Longer arguments are truncated to fit Hexagon.Processes.Table.argBase's allocation
 
 ;; Kernel's own boot-time stack, saved across the very first hx.exec (called
 ;; directly by Hexagon.Kern.Init.startUserMode, before any process exists to
@@ -337,32 +345,73 @@ Hexagon.Kern.Proc.exec:
 
     push ecx ;; Remember the new slot index across everything below
 
+    push eax ;; Remember "has arguments" (0 = no) across the allocation below
+
+;; Give this new process its own arguments buffer up front, whether or not
+;; it actually has arguments - a dedicated allocation freed at
+;; Hexagon.Kern.Proc.exit, rather than a fixed shared address any other
+;; process's own hx.exec could stomp on. Hexagon.Kern.Proc.calculateArgumentsAddress
+;; lets a process keep reading its own arguments at any later point in its
+;; life, not just once at startup, so that address has to stay this
+;; process's own for as long as it's alive
+
+    mov ebx, Hexagon.Kern.Proc.maxArgumentsLength
+
+    call Hexagon.Arch.Gen.Mm.malloc
+
+    cmp eax, 0
+    je .argAllocFailed
+
+    mov ecx, dword[esp + 4] ;; New slot index, under the flag just pushed
+
+    mov dword[Hexagon.Processes.Table.argBase + ecx * 4], ebx
+
+    mov ebx, ecx ;; Keep the slot in EBX for the rest of the argument handling below
+
+    pop eax ;; Restore "has arguments" flag
+
 ;; Check if there are arguments for the process to be loaded
 
     cmp eax, 0
     je .noArguments
 
     push esi
-    push es
 
     mov esi, edi
 
-    call Hexagon.Libkern.String.stringSize
+    call Hexagon.Libkern.String.stringSize ;; Preserves EBX, ECX, ESI, EDI, ES; EAX = length
 
     mov ecx, eax
 
     inc ecx
 
+;; Arguments longer than Hexagon.Kern.Proc.maxArgumentsLength are truncated
+;; rather than overflowing past this process's own arguments allocation,
+;; the same way Hexagon.Kern.Proc.getProcessTable caps process names to
+;; their fixed field width
+
+    cmp ecx, Hexagon.Kern.Proc.maxArgumentsLength
+    jb .argLengthOk
+
+    mov ecx, Hexagon.Kern.Proc.maxArgumentsLength - 1
+
+.argLengthOk:
+
+    push es
+
     push 18h ;; Kernel linear segment
     pop es
 
-;; Copy arguments to a known address
+;; Copy arguments into this new child's own dedicated buffer, recorded in
+;; Hexagon.Processes.Table.argBase above (EBX still holds its slot)
 
     mov esi, edi
 
-    mov edi, Hexagon.Heap.ArgProc
+    mov edi, dword[Hexagon.Processes.Table.argBase + ebx * 4]
 
     rep movsb ;; Copy (ECX) characters from ESI to EDI
+
+    mov byte[es:edi], 0 ;; Guarantee NUL-termination even when truncated above
 
     pop es
 
@@ -372,7 +421,26 @@ Hexagon.Kern.Proc.exec:
 
 .noArguments:
 
-    mov byte[gs:Hexagon.Heap.ArgProc], 0
+    mov edi, dword[Hexagon.Processes.Table.argBase + ebx * 4]
+
+    mov byte[gs:edi], 0
+
+    jmp .checkImage
+
+.argAllocFailed:
+
+    pop eax ;; Discard the "has arguments" flag pushed above
+    pop ecx ;; Discard the slot index pushed at .slotFound
+
+    popa
+
+    mov dword[Hexagon.Kern.Proc.lastErrorCode], 05h
+
+    stc
+
+    mov eax, 05h
+
+    ret
 
 .checkImage:
 
@@ -398,7 +466,7 @@ Hexagon.Kern.Proc.exec:
 
 ;; ESI = filename, EAX = size -> EBX =base, ECX =size, CF =error
 
-    call Hexagon.Kern.Proc.allocateAndLoadImage 
+    call Hexagon.Kern.Proc.allocateAndLoadImage
 
     pop edx ;; EDX = new slot index
 
@@ -406,11 +474,25 @@ Hexagon.Kern.Proc.exec:
 
 ;; EDX = slot, EBX = base, ECX = size, ESI = filename -> EAX = new pid
 
-    call Hexagon.Kern.Proc.registerSlot 
+    call Hexagon.Kern.Proc.registerSlot
 
 ;; Block whoever is calling us until this child exits. The caller is either
 ;; itself a table slot (a normal nested hx.exec) or, for the very first
 ;; hx.exec, the kernel's own boot code, which has no slot of its own
+
+;; Hexagon.Kern.Proc.registerSlot above already left EDX sitting in the
+;; table as States.ready, so a timer-driven Hexagon.Kern.Sched.maybeSchedule
+;; landing anywhere between here and Hexagon.Scheduler.current actually
+;; being moved to EDX below would find it a perfectly valid candidate,
+;; dispatch it on the spot, and in doing so overwrite the caller's own
+;; States.blocked just set below back to States.ready, the same as any
+;; ordinary preempted process. The caller would then resume, still
+;; believing itself mid-hx.exec, and re-run the rest of this function on
+;; top of whatever is by then using this slot. dispatchSlot's own "sti"
+;; closes this back out once Hexagon.Scheduler.current genuinely points at
+;; EDX
+
+    cli
 
     movzx ecx, byte[Hexagon.Scheduler.current]
 
@@ -441,7 +523,9 @@ Hexagon.Kern.Proc.exec:
 
 .missingImage:
 
-    pop ecx ;; Discard the slot index, nothing was allocated
+    pop edx ;; Slot index, pushed at .slotFound
+
+    call .freeArgBase
 
     popa
 
@@ -456,7 +540,9 @@ Hexagon.Kern.Proc.exec:
 .missingImage2:
 
     pop eax ;; Discard the saved file size
-    pop ecx ;; Discard the slot index
+    pop edx ;; Slot index, pushed at .slotFound
+
+    call .freeArgBase
 
     popa
 
@@ -471,7 +557,9 @@ Hexagon.Kern.Proc.exec:
 .incompatibleImage:
 
     pop eax ;; Discard the saved file size
-    pop ecx ;; Discard the slot index
+    pop edx ;; Slot index, pushed at .slotFound
+
+    call .freeArgBase
 
     popa
 
@@ -485,6 +573,10 @@ Hexagon.Kern.Proc.exec:
 
 .allocOrLoadFailed:
 
+;; EDX is already the slot index here, popped above at "pop edx ;; EDX = new slot index"
+
+    call .freeArgBase
+
     popa
 
     mov dword[Hexagon.Kern.Proc.lastErrorCode], 02h
@@ -492,6 +584,31 @@ Hexagon.Kern.Proc.exec:
     stc
 
     mov eax, 02h
+
+    ret
+
+;; Frees the arguments buffer Hexagon.Kern.Proc.exec allocates for this new
+;; slot up front, at .slotFound, before it's known whether the image itself
+;; can even be loaded. Every error path from here through .allocOrLoadFailed
+;; leaves the slot itself still States.free (Hexagon.Kern.Proc.registerSlot
+;; never ran), so without this the allocation would just leak: the slot
+;; stays free, a later hx.exec reusing it allocates a fresh buffer into
+;; Hexagon.Processes.Table.argBase and overwrites this pointer with no
+;; record of it left to free
+;;
+;; Input:
+;;
+;; EDX - Slot index whose argBase to free
+
+.freeArgBase:
+
+    mov ebx, dword[Hexagon.Processes.Table.argBase + edx * 4]
+
+    mov ecx, Hexagon.Kern.Proc.maxArgumentsLength
+
+    call Hexagon.Arch.Gen.Mm.free
+
+    mov dword[Hexagon.Processes.Table.argBase + edx * 4], 0
 
     ret
 
@@ -545,6 +662,50 @@ Hexagon.Kern.Proc.exit:
     call Hexagon.Arch.Gen.Mm.freeMemoryUsage
 
     pop ecx
+
+;; Free this process's own arguments buffer and hx.getProcesses scratch
+;; buffer, if it ever called hx.getProcesses - both Hexagon.Arch.Gen.Mm.malloc'd
+;; on demand and recorded per slot rather than living at a fixed address
+
+    mov ebx, dword[Hexagon.Processes.Table.argBase + edx * 4]
+
+    cmp ebx, 0
+    je .noArgBaseToFree
+
+    mov ecx, Hexagon.Kern.Proc.maxArgumentsLength
+
+    call Hexagon.Arch.Gen.Mm.free
+
+    mov dword[Hexagon.Processes.Table.argBase + edx * 4], 0
+
+.noArgBaseToFree:
+
+    mov ebx, dword[Hexagon.Processes.Table.tempBase + edx * 4]
+
+    cmp ebx, 0
+    je .noTempBaseToFree
+
+    mov ecx, Hexagon.Kern.Proc.getProcessTable.bufferSize
+
+    call Hexagon.Arch.Gen.Mm.free
+
+    mov dword[Hexagon.Processes.Table.tempBase + edx * 4], 0
+
+.noTempBaseToFree:
+
+;; Hexagon.Scheduler.current still points at edx below, and is about to
+;; keep doing so all the way through the parentSlot/bootChildSlot checks
+;; that decide who to resume. A timer-driven Hexagon.Kern.Sched.maybeSchedule
+;; landing anywhere from the States.free write below until whichever of
+;; .resumeParent/.resumeBoot/.scanNext's own cli takes over would still find
+;; Hexagon.Scheduler.current pointing at this slot, its state already
+;; States.free, and treat it as an ordinary running process to preempt,
+;; writing States.ready right back over the free slot and resurrecting it
+;; as a ghost entry with a bogus saved context, exactly the scenario the
+;; comment further below already describes for the spawned-process case,
+;; just reachable a few instructions earlier than that cli currently covers
+
+    cli
 
     mov byte[Hexagon.Processes.Table.state + edx], Hexagon.Processes.Table.States.free
 
@@ -654,6 +815,19 @@ Hexagon.Kern.Proc.exit:
 
 .resumeParent:
 
+;; Interrupts stay off until state[ecx] reaches States.running below. A
+;; timer-driven Hexagon.Kern.Sched.maybeSchedule landing anywhere in this
+;; window would find Hexagon.Scheduler.current already pointing at ecx
+;; while its state is still States.ready, and either abandon the rest of
+;; .resumeParent mid-flight via its own "ret" (leaving ecx stuck at
+;; States.ready forever, never getting setUserSegmentBase or its final
+;; States.running) or, if esp below hasn't loaded yet, save the exiting
+;; child's own esp into this slot instead of the parent's, corrupting its
+;; saved context outright. Same class of race .scanNext/.resumeNext above
+;; already closes with its own cli/sti pair
+
+    cli
+
     mov byte[Hexagon.Processes.Table.state + ecx], Hexagon.Processes.Table.States.ready
 
     mov byte[Hexagon.Scheduler.current], cl
@@ -670,6 +844,8 @@ Hexagon.Kern.Proc.exit:
 
     mov byte[Hexagon.Processes.Table.state + ecx], Hexagon.Processes.Table.States.running
 
+    sti
+
     popa
 
     xor eax, eax
@@ -683,6 +859,12 @@ Hexagon.Kern.Proc.exit:
     mov byte[Hexagon.Scheduler.current], 0xFF
 
     mov esp, dword[Hexagon.Kern.Proc.bootCallerESP]
+
+;; Re-enable interrupts now that Hexagon.Scheduler.current is 0xFF (raw
+;; kernel-boot context) rather than this now-free slot; see the cli before
+;; the States.free write above
+
+    sti
 
     popa
 
@@ -770,7 +952,9 @@ Hexagon.Kern.Proc.calculateArgumentsAddress:
 
     call Hexagon.Kern.Sched.getCurrentProcessBase
 
-    mov edi, Hexagon.Heap.ArgProc ;; Offset, inside the kernel
+    movzx edi, byte[Hexagon.Scheduler.current]
+
+    mov edi, dword[Hexagon.Processes.Table.argBase + edi * 4] ;; This process's own allocated arguments buffer
 
     sub edi, eax ;; Get effective address (offset)
 
@@ -780,9 +964,10 @@ Hexagon.Kern.Proc.calculateArgumentsAddress:
 
 ;;************************************************************************************
 
-;; Hexagon.Kern.Proc.getProcessTable emits into Hexagon.Heap.Temp a 4-byte
-;; record size, followed by one record per Hexagon.Processes.Table slot that
-;; isn't FREE, in slot order, each shaped like this:
+;; Hexagon.Kern.Proc.getProcessTable emits into this caller's own
+;; Hexagon.Processes.Table.tempBase buffer a 4-byte record size, followed by
+;; one record per Hexagon.Processes.Table slot that isn't FREE, in slot
+;; order, each shaped like this:
 ;;
 ;; +0  dd PID
 ;; +4  dd Parent PID (0 = launched directly by the kernel, no parent process)
@@ -795,17 +980,52 @@ Hexagon.Kern.Proc.calculateArgumentsAddress:
 
 Hexagon.Kern.Proc.getProcessTable.recordSize = 22
 
+;; Hexagon.Processes.Table.tempBase is this large, lazily
+;; Hexagon.Arch.Gen.Mm.malloc'd on this caller's first hx.getProcesses call
+;; and kept for the rest of its life (freed at Hexagon.Kern.Proc.exit)
+;; rather than a single shared buffer. ps/top keep reading their result
+;; across many further syscalls while printing each row, and a single
+;; shared buffer would let any other process's own concurrent
+;; hx.getProcesses call - init's own child monitoring loop calls this
+;; constantly - overwrite it out from under a slower reader mid-print
+
+Hexagon.Kern.Proc.getProcessTable.bufferSize = 4 + (Hexagon.Processes.Table.limit * Hexagon.Kern.Proc.getProcessTable.recordSize)
+
 ;; Output:
 ;;
-;; EAX - Number of records
-;; ESI - Hexagon.Heap.Temp: a dd record size, followed by that many records
+;; EAX - Number of records, or 0 if this caller's own scratch buffer
+;;       couldn't be allocated (out of memory)
+;; ESI - This caller's own Hexagon.Processes.Table.tempBase buffer: a dd
+;;       record size, followed by that many records
 
 Hexagon.Kern.Proc.getProcessTable:
 
     push ds ;; Kernel data segment
     pop es
 
-    mov edi, Hexagon.Heap.Temp
+    movzx edx, byte[Hexagon.Scheduler.current]
+
+    mov edi, dword[Hexagon.Processes.Table.tempBase + edx * 4]
+
+    cmp edi, 0
+    jne .bufferReady
+
+    push ebx
+
+    mov ebx, Hexagon.Kern.Proc.getProcessTable.bufferSize
+
+    call Hexagon.Arch.Gen.Mm.malloc
+
+    cmp eax, 0
+    je .allocFailed
+
+    mov edi, ebx
+
+    pop ebx
+
+    mov dword[Hexagon.Processes.Table.tempBase + edx * 4], edi
+
+.bufferReady:
 
     mov dword[edi], Hexagon.Kern.Proc.getProcessTable.recordSize
 
@@ -886,7 +1106,17 @@ Hexagon.Kern.Proc.getProcessTable:
 
     mov eax, edx
 
-    mov esi, Hexagon.Heap.Temp
+    movzx esi, byte[Hexagon.Scheduler.current]
+    mov esi, dword[Hexagon.Processes.Table.tempBase + esi * 4]
+
+    ret
+
+.allocFailed:
+
+    pop ebx
+
+    xor eax, eax
+    xor esi, esi
 
     ret
 
@@ -1051,6 +1281,35 @@ Hexagon.Kern.Proc.registerSlot:
 
     pop ecx
     pop ebx
+
+;; Hexagon.Kern.Proc.spawn doesn't support arguments and never fills in
+;; Hexagon.Processes.Table.argBase, so give this slot an empty one here if
+;; Hexagon.Kern.Proc.exec hasn't already allocated and filled one in above.
+;; Hexagon.Kern.Proc.calculateArgumentsAddress always computes an address
+;; from this field regardless of how the process was created, so it must
+;; never be left at 0
+
+    cmp dword[Hexagon.Processes.Table.argBase + edx * 4], 0
+    jne .argBaseReady
+
+    push ebx
+
+    mov ebx, Hexagon.Kern.Proc.maxArgumentsLength
+
+    call Hexagon.Arch.Gen.Mm.malloc
+
+    cmp eax, 0
+    je .argBaseSkip ;; Best effort; leave it 0 on out-of-memory rather than failing an already-loaded process
+
+    mov dword[Hexagon.Processes.Table.argBase + edx * 4], ebx
+
+    mov byte[gs:ebx], 0 ;; Empty arguments string
+
+.argBaseSkip:
+
+    pop ebx
+
+.argBaseReady:
 
     inc dword[Hexagon.Processes.Table.nextPID]
 
