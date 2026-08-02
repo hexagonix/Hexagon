@@ -108,6 +108,8 @@ Hexagon.Kern.Sched.setupScheduler:
 
     mov byte[Hexagon.Scheduler.current], 0xFF
 
+    call Hexagon.Kern.Sched.installIdle
+
     logHexagon Hexagon.Verbose.scheduler, Hexagon.Dmesg.Priorities.p5
 
     ret
@@ -120,7 +122,7 @@ Hexagon.Kern.Sched.setupScheduler:
 
 Hexagon.Scheduler.current: db 0xFF ;; 0xFF = kernel boot context, else a Hexagon.Processes.Table index
 Hexagon.Scheduler.ticks:   dd 0
-Hexagon.Scheduler.sliceLength = 5  ;; Timer ticks per time-slice
+Hexagon.Scheduler.sliceLength = 1  ;; Timer ticks per time-slice
 
 ;;************************************************************************************
 
@@ -334,6 +336,128 @@ Hexagon.Kern.Sched.maybeSchedule:
 .noSwitch:
 
     popa
+
+    ret
+
+;;************************************************************************************
+
+;; Slot 0 is permanently reserved for the idle loop below, installed once at
+;; boot by Hexagon.Kern.Sched.installIdle, before init (PID 1) ever runs.
+;; Unlike every other slot, it is never hx.spawn/hx.exec'd from a HAPP file
+;; on disk and never exits; it is simply always there, in
+;; Hexagon.Processes.Table.States.idle, as the last-resort candidate
+;; Hexagon.Kern.Proc.exit's own "nothing else is READY" fallback dispatches
+
+Hexagon.Kern.Sched.idleSlot = 0
+
+Hexagon.Kern.Sched.idleName:
+db "idle", 0
+
+;; The idle loop itself. Note this is never reached through
+;; Hexagon.Kern.Sched.dispatchSlot/iret like a normal HAPP image's first
+;; dispatch: dispatchSlot treats Hexagon.Processes.Table.entry as an offset
+;; relative to Table.base, since a real process is relocated to start at its
+;; own allocated block, and patches the 30h/38h GDT descriptors' base to
+;; match. idleLoop is not a relocatable image, it is this fixed address in
+;; the kernel's own code, so Hexagon.Kern.Sched.installIdle instead seeds a
+;; synthetic frame below for Hexagon.Kern.Proc.exit's ordinary ".resumeNext"
+;; path to "return" into directly, the same plain "ret" (no segment change)
+;; it already uses to resume any other process's own saved context. Once
+;; running, it needs no special handling at all: the timer interrupt's own
+;; Hexagon.Kern.Sched.maybeSchedule preempts it away, and later resumes it,
+;; exactly like it already does between any two ordinary processes
+
+Hexagon.Kern.Sched.idleLoop:
+
+.spin:
+
+    sti
+
+    hlt
+
+    jmp .spin
+
+;; Dedicated stack for Hexagon.Kern.Sched.idleLoop, with a synthetic,
+;; ready-made ".resumeNext" frame pre-built at the top: 8 dummy registers in
+;; popa's own load order (EDI, ESI, EBP, a discarded saved-ESP slot, EBX,
+;; EDX, ECX, EAX), followed by idleLoop's own address in the spot where
+;; "ret" expects to find one. Hexagon.Kern.Sched.installIdle points
+;; Table.esp at Hexagon.Kern.Sched.idleFrame, so the very first time
+;; anything dispatches Hexagon.Kern.Sched.idleSlot, popa harmlessly loads
+;; zeroes and "ret" lands on idleLoop, no differently from every later
+;; resume once real register/return values have been saved there instead
+
+Hexagon.Kern.Sched.idleStack:
+times 480 db 0
+Hexagon.Kern.Sched.idleFrame:
+dd 0, 0, 0, 0, 0, 0, 0, 0
+dd Hexagon.Kern.Sched.idleLoop
+Hexagon.Kern.Sched.idleStackTop:
+
+;; Installs the idle loop into Hexagon.Kern.Sched.idleSlot. Called once from
+;; Hexagon.Kern.Sched.setupScheduler, before init is ever dispatched.
+;; Bypasses Hexagon.Kern.Proc.registerSlot, since that expects a HAPP image
+;; already loaded from disk (Hexagon.Libkern.HAPP.imageHAPPHeader,
+;; Hexagon.Processes.Table.nextPID) and idle has neither: its "image" is the
+;; loop above, hand-placed here, and it keeps PID 0 forever rather than
+;; taking the next one init would otherwise get
+
+Hexagon.Kern.Sched.installIdle:
+
+    push ds
+    pop es
+
+    mov byte[Hexagon.Processes.Table.state + Hexagon.Kern.Sched.idleSlot], Hexagon.Processes.Table.States.idle
+
+    mov dword[Hexagon.Processes.Table.pid + Hexagon.Kern.Sched.idleSlot * 4], 0
+    mov dword[Hexagon.Processes.Table.parentSlot + Hexagon.Kern.Sched.idleSlot * 4], 0xFFFFFFFF
+    mov dword[Hexagon.Processes.Table.parentPID + Hexagon.Kern.Sched.idleSlot * 4], 0
+
+;; Table.base and Table.esp end up loaded straight into ESP (here, and in
+;; every ordinary resume) and passed to setUserSegmentBase, both of which
+;; treat them as flat physical addresses, the same way SS (0018h) itself
+;; has base 0 rather than the 500h every plain "[label]" access already gets
+;; from DS/CS. A real process's Table.base comes from Mm.allocate, already
+;; physical; idleStack/idleFrame are ordinary kernel-image labels instead,
+;; so they need the same "+ 500h" correction syscall.asm/fat16.asm already
+;; apply whenever a kernel-image address crosses over to that flat side.
+;; Table.entry (unused here, .resumeNext never falls into dispatchSlot for
+;; idleSlot: Table.esp is never 0) and the frame's own saved "return
+;; address" are the other way around, read back through CS/DS, so they are
+;; left exactly as the assembler already computed them
+
+    mov dword[Hexagon.Processes.Table.base + Hexagon.Kern.Sched.idleSlot * 4], Hexagon.Kern.Sched.idleStack + 500h
+    mov dword[Hexagon.Processes.Table.size + Hexagon.Kern.Sched.idleSlot * 4], Hexagon.Kern.Sched.idleStackTop - Hexagon.Kern.Sched.idleStack
+    mov dword[Hexagon.Processes.Table.entry + Hexagon.Kern.Sched.idleSlot * 4], Hexagon.Kern.Sched.idleLoop
+    mov dword[Hexagon.Processes.Table.esp + Hexagon.Kern.Sched.idleSlot * 4], Hexagon.Kern.Sched.idleFrame + 500h
+
+    mov edi, Hexagon.Kern.Sched.idleSlot
+    imul edi, 13
+    add edi, Hexagon.Processes.Table.name
+
+    mov esi, Hexagon.Kern.Sched.idleName
+    mov ecx, 13
+
+.copyName:
+
+    lodsb
+
+    cmp al, 0
+    je .padName
+
+    stosb
+
+    loop .copyName
+
+    jmp .named
+
+.padName:
+
+    mov al, ' '
+
+    rep stosb
+
+.named:
 
     ret
 

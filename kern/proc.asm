@@ -171,6 +171,14 @@ Hexagon.Processes.Table.States.blocked  = 3
 Hexagon.Processes.Table.States.zombie   = 4
 Hexagon.Processes.Table.States.sleeping = 5
 
+;; Permanently owned by Hexagon.Kern.Sched.idleSlot, never anyone else's.
+;; Deliberately distinct from States.ready so the ordinary round robin scans
+;; in Hexagon.Kern.Sched.maybeSchedule/Hexagon.Kern.Sched.sleep skip straight
+;; over it instead of giving it a turn on equal footing with real work; only
+;; Hexagon.Kern.Proc.exit's own "nothing else is READY" fallback looks for it
+
+Hexagon.Processes.Table.States.idle     = 6
+
 Hexagon.Processes.Table.stackSize = 16384 ;; Dedicated stack space carved out of each process's own block
 
 ;; Kernel's own boot-time stack, saved across the very first hx.exec (called
@@ -562,6 +570,21 @@ Hexagon.Kern.Proc.exit:
 ;; other process is READY next, exactly like a normal preemption would.
 ;; There is no specific caller context to return to here
 
+;; Hexagon.Scheduler.current still points at this slot, which the state=free
+;; write above already turned into stale garbage. A concurrent, timer-driven
+;; Hexagon.Kern.Sched.maybeSchedule reading Hexagon.Scheduler.current before
+;; the scan below settles on someone real would treat this freed slot as an
+;; ordinary running process to preempt, saving its own ESP there and marking
+;; it READY again, resurrecting it as a ghost entry with a bogus saved
+;; context. Interrupts stay off until .scheduleNext/.resumeNext (or
+;; dispatchSlot's own "sti") has moved Hexagon.Scheduler.current somewhere
+;; real, closing the window entirely rather than just narrowing it: the wait
+;; for someone to become READY can now take up to roughly a second (parked
+;; in Hexagon.Kern.Sched.idleSlot), not just the few instructions this scan
+;; used to take
+
+    cli
+
     mov ebx, edx
 
 .scanNext:
@@ -576,12 +599,24 @@ Hexagon.Kern.Proc.exit:
 .checkNext:
 
     cmp ebx, edx
-    je .resumeBoot ;; Nothing else is READY either, fall back to the boot context
+    je .useIdleSlot ;; Nothing else is READY either. Everyone still around
+                    ;; (init, typically) is presumably just asleep in
+                    ;; Hexagon.Kern.Sched.sleep, not gone, so this is not the
+                    ;; boot child exiting
 
     cmp byte[Hexagon.Processes.Table.state + ebx], Hexagon.Processes.Table.States.ready
     je .scheduleNext
 
     jmp .scanNext
+
+.useIdleSlot:
+
+;; Dispatch Hexagon.Kern.Sched.idleSlot exactly like any other READY
+;; candidate below. It is never itself in States.ready (see the comment by
+;; States.idle), which is what keeps it out of everyone else's round robin,
+;; but it is always available as this last resort
+
+    mov ebx, Hexagon.Kern.Sched.idleSlot
 
 .scheduleNext:
 
@@ -601,6 +636,13 @@ Hexagon.Kern.Proc.exit:
     mov esp, dword[Hexagon.Processes.Table.esp + ebx * 4]
 
     mov byte[Hexagon.Processes.Table.state + ebx], Hexagon.Processes.Table.States.running
+
+;; Re-enable interrupts now that Hexagon.Scheduler.current (set above, in
+;; .scheduleNext) points at ebx instead of the freed slot this fallback
+;; started from; see the "cli" before .scanNext. dispatchSlot, the other
+;; place .scheduleNext can lead to, already has its own "sti"
+
+    sti
 
     popa
 
