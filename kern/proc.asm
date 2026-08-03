@@ -187,6 +187,23 @@ Hexagon.Processes.Table.States.sleeping = 5
 
 Hexagon.Processes.Table.States.idle     = 6
 
+;; Claimed by Hexagon.Kern.Proc.exec/spawn's own "findSlot" scan the instant a
+;; free slot is picked, before any of the (possibly disk I/O bound) work to
+;; actually populate it has even started. Without this, findSlot's scan for
+;; States.free and Hexagon.Kern.Proc.registerSlot's eventual States.ready
+;; write are far apart in time, with interrupts enabled the whole way through
+;; (checkHAPPImage, allocateAndLoadImage, argument buffer setup). A second,
+;; unrelated exec/spawn call preempting in anywhere in that window would run
+;; its own findSlot scan, see the same slot still States.free, and claim it
+;; too, so both processes end up writing their own base/entry/argBase into
+;; the one shared slot, and both later free the same memory at exit,
+;; corrupting the heap allocator's free list. Never a valid maybeSchedule
+;; candidate (only States.ready is), and never matched by findSlot's own
+;; States.free check either, so a second caller now genuinely waits for a
+;; different slot instead of colliding with this one
+
+Hexagon.Processes.Table.States.reserved = 7
+
 Hexagon.Processes.Table.stackSize = 16384 ;; Dedicated stack space carved out of each process's own block
 
 Hexagon.Kern.Proc.maxArgumentsLength = 2000 ;; Longer arguments are truncated to fit Hexagon.Processes.Table.argBase's allocation
@@ -327,7 +344,12 @@ Hexagon.Kern.Proc.exec:
 
     pusha
 
-;; Find a free slot in the process table, doubles as the process-limit check
+;; Find a free slot in the process table, doubles as the process-limit check.
+;; Claimed with States.reserved the instant it's found (see the comment by
+;; that state), under cli, so a second exec/spawn preempting in anywhere
+;; during the rest of this function can never see this same slot as free too
+
+    cli
 
     xor ecx, ecx
 
@@ -344,6 +366,10 @@ Hexagon.Kern.Proc.exec:
     jmp .findSlot
 
 .slotFound:
+
+    mov byte[Hexagon.Processes.Table.state + ecx], Hexagon.Processes.Table.States.reserved
+
+    sti
 
     push ecx ;; Remember the new slot index across everything below
 
@@ -432,7 +458,9 @@ Hexagon.Kern.Proc.exec:
 .argAllocFailed:
 
     pop eax ;; Discard the "has arguments" flag pushed above
-    pop ecx ;; Discard the slot index pushed at .slotFound
+    pop ecx ;; Slot index pushed at .slotFound
+
+    mov byte[Hexagon.Processes.Table.state + ecx], Hexagon.Processes.Table.States.free
 
     popa
 
@@ -455,6 +483,24 @@ Hexagon.Kern.Proc.exec:
     jc .missingImage
 
     push eax ;; Save the file size across checkHAPPImage
+
+;; Hexagon.Libkern.HAPP.checkHAPPImage reads the image into a single shared
+;; scratch buffer (Hexagon.Heap.Temp + 1000) and reports back through a
+;; single shared Hexagon.Libkern.HAPP.imageHAPPHeader struct, both global,
+;; with no per-call copy. entryHAPP in particular isn't actually consumed
+;; until Hexagon.Kern.Proc.registerSlot, well after
+;; Hexagon.Kern.Proc.allocateAndLoadImage's own disk read further down. A
+;; second exec/spawn preempting in anywhere between here and registerSlot
+;; (entirely plausible, this whole span is disk I/O bound) would run its own
+;; checkHAPPImage over the same buffer and struct and hand this call a
+;; completely different image's header data, most visibly Table.entry
+;; ending up as some other file's entry point. Held through registerSlot
+;; itself, the only place that actually reads imageHAPPHeader.entryHAPP. The
+;; success path never needs an explicit "sti" of its own, since it always
+;; ends up at Hexagon.Kern.Sched.dispatchSlot, which already has one. Every
+;; path that returns without reaching there needs its own "sti" instead
+
+    cli
 
     call Hexagon.Libkern.HAPP.checkHAPPImage
 
@@ -546,6 +592,8 @@ Hexagon.Kern.Proc.exec:
 
     call .freeArgBase
 
+    sti
+
     popa
 
     mov dword[Hexagon.Kern.Proc.lastErrorCode], 01h
@@ -563,6 +611,8 @@ Hexagon.Kern.Proc.exec:
 
     call .freeArgBase
 
+    sti
+
     popa
 
     mov dword[Hexagon.Kern.Proc.lastErrorCode], 04h
@@ -579,6 +629,8 @@ Hexagon.Kern.Proc.exec:
 
     call .freeArgBase
 
+    sti
+
     popa
 
     mov dword[Hexagon.Kern.Proc.lastErrorCode], 02h
@@ -591,12 +643,14 @@ Hexagon.Kern.Proc.exec:
 
 ;; Frees the arguments buffer Hexagon.Kern.Proc.exec allocates for this new
 ;; slot up front, at .slotFound, before it's known whether the image itself
-;; can even be loaded. Every error path from here through .allocOrLoadFailed
-;; leaves the slot itself still States.free (Hexagon.Kern.Proc.registerSlot
-;; never ran), so without this the allocation would just leak: the slot
-;; stays free, a later hx.exec reusing it allocates a fresh buffer into
-;; Hexagon.Processes.Table.argBase and overwrites this pointer with no
-;; record of it left to free
+;; can even be loaded, and releases the slot itself back to States.free
+;; (still States.reserved from .slotFound, since Hexagon.Kern.Proc.registerSlot
+;; never ran on any path that reaches here). Every error path from here
+;; through .allocOrLoadFailed calls this. Without it the argBase allocation
+;; would leak (a later hx.exec reusing this slot would allocate a fresh
+;; buffer into Hexagon.Processes.Table.argBase and overwrite this pointer
+;; with no record of it left to free), and the slot itself would stay
+;; States.reserved forever, never usable again
 ;;
 ;; Input:
 ;;
@@ -612,9 +666,15 @@ Hexagon.Kern.Proc.exec:
 
     mov dword[Hexagon.Processes.Table.argBase + edx * 4], 0
 
+    mov byte[Hexagon.Processes.Table.state + edx], Hexagon.Processes.Table.States.free
+
     ret
 
 .limitReached:
+
+;; The findSlot scan above never reached its own "sti" at .slotFound
+
+    sti
 
     popa
 
@@ -1036,6 +1096,13 @@ Hexagon.Kern.Proc.getProcessTable:
     cmp byte[Hexagon.Processes.Table.state + ecx], Hexagon.Processes.Table.States.free
     je .next
 
+;; Skip slots States.reserved by a concurrent exec/spawn's findSlot: claimed,
+;; but with base/pid/name not populated yet, so nothing here is meaningful
+;; to show a caller of hx.getProcesses yet either
+
+    cmp byte[Hexagon.Processes.Table.state + ecx], Hexagon.Processes.Table.States.reserved
+    je .next
+
     push ecx
 
     mov eax, dword[Hexagon.Processes.Table.pid + ecx * 4]
@@ -1256,7 +1323,15 @@ Hexagon.Kern.Proc.registerSlot:
     push ds
     pop es
 
-    mov byte[Hexagon.Processes.Table.state + edx], Hexagon.Processes.Table.States.ready
+;; States.ready is written only at the very end of this function, once every
+;; other field below is in place. Hexagon.Kern.Sched.maybeSchedule runs off
+;; the timer interrupt, which stays enabled for the whole duration of a
+;; syscall (hexagonHandler's own "sti"), so it can land anywhere in the
+;; middle of this function. If the slot were marked ready up front, a tick
+;; landing before base/entry/pid/name were actually written would have
+;; maybeSchedule dispatch it immediately off of whatever stale or
+;; uninitialized bytes still sit in those fields, a jump into garbage code
+;; through a garbage segment base
 
     mov dword[Hexagon.Processes.Table.base + edx * 4], ebx
     mov dword[Hexagon.Processes.Table.size + edx * 4], ecx
@@ -1361,6 +1436,11 @@ Hexagon.Kern.Proc.registerSlot:
 
     pop eax ;; EAX = new PID
 
+;; Everything else about this slot is now in place, so this is the point
+;; where it actually becomes visible to maybeSchedule/getProcessTable
+
+    mov byte[Hexagon.Processes.Table.state + edx], Hexagon.Processes.Table.States.ready
+
     ret
 
 ;;************************************************************************************
@@ -1392,6 +1472,23 @@ Hexagon.Kern.Proc.spawn:
 
     push eax ;; Save the file size across checkHAPPImage
 
+;; Hexagon.Libkern.HAPP.checkHAPPImage reads the image into a single shared
+;; scratch buffer (Hexagon.Heap.Temp + 1000) and reports back through a
+;; single shared Hexagon.Libkern.HAPP.imageHAPPHeader struct, both global,
+;; with no per-call copy. entryHAPP in particular isn't actually consumed
+;; until Hexagon.Kern.Proc.registerSlot, well after
+;; Hexagon.Kern.Proc.allocateAndLoadImage's own disk read further down.
+;; Nothing before this held cli, so a second exec/spawn preempting in
+;; anywhere between here and registerSlot (entirely plausible, this whole
+;; span is disk I/O bound) would run its own checkHAPPImage over the same
+;; buffer and struct and hand this call a completely different image's
+;; header data, most visibly Table.entry ending up as some other file's
+;; entry point. Held through registerSlot itself, the only place that
+;; actually reads imageHAPPHeader.entryHAPP, and closed on every path that
+;; returns without reaching it
+
+    cli
+
     call Hexagon.Libkern.HAPP.checkHAPPImage
 
     cmp byte[Hexagon.Libkern.HAPP.imageHAPPHeader.incompatibleImage], 01h
@@ -1400,7 +1497,9 @@ Hexagon.Kern.Proc.spawn:
     cmp byte[Hexagon.Libkern.HAPP.imageHAPPHeader.incompatibleImage], 02h
     je .missingImage2
 
-;; Find a free slot in the process table
+;; Find a free slot in the process table. Claimed with States.reserved the
+;; instant it's found (see the comment by that state), already covered by
+;; the same cli as above, so no separate one is needed here anymore
 
     xor ecx, ecx
 
@@ -1418,6 +1517,8 @@ Hexagon.Kern.Proc.spawn:
 
 .slotFound:
 
+    mov byte[Hexagon.Processes.Table.state + ecx], Hexagon.Processes.Table.States.reserved
+
     pop eax ;; Restore the file size
 
     push ecx ;; Remember the free slot index across allocateAndLoadImage
@@ -1431,6 +1532,8 @@ Hexagon.Kern.Proc.spawn:
 ;; EDX = slot, EBX = base, ECX = size, ESI = filename -> EAX = new pid
 
     call Hexagon.Kern.Proc.registerSlot
+
+    sti
 
     clc
 
@@ -1448,6 +1551,8 @@ Hexagon.Kern.Proc.spawn:
 
     pop eax ;; Discard the saved file size
 
+    sti
+
     stc
 
     mov eax, 01h
@@ -1457,6 +1562,8 @@ Hexagon.Kern.Proc.spawn:
 .incompatibleImage:
 
     pop eax ;; Discard the saved file size
+
+    sti
 
     stc
 
@@ -1468,6 +1575,8 @@ Hexagon.Kern.Proc.spawn:
 
     pop eax ;; Discard the saved file size
 
+    sti
+
     stc
 
     mov eax, 03h
@@ -1475,6 +1584,15 @@ Hexagon.Kern.Proc.spawn:
     ret
 
 .allocOrLoadFailed:
+
+;; EDX is already the slot index here, popped above at "pop edx ;; EDX = free
+;; slot index". Hexagon.Kern.Proc.registerSlot never ran on this path, so the
+;; slot claimed at .slotFound (States.reserved) needs to go back to
+;; States.free itself, or it would stay reserved and unusable forever
+
+    mov byte[Hexagon.Processes.Table.state + edx], Hexagon.Processes.Table.States.free
+
+    sti
 
     stc
 
@@ -1544,6 +1662,17 @@ Hexagon.Kern.Proc.kill:
 
     mov edx, ecx ;; EDX = slot to terminate
 
+;; Unlike Hexagon.Kern.Proc.exit tearing down its own slot (always
+;; States.running, and maybeSchedule never re-selects whoever is already
+;; current), EDX here is a third-party slot that can still legitimately be
+;; States.ready right up until the state=free write below. A timer-driven
+;; Hexagon.Kern.Sched.maybeSchedule landing anywhere between the
+;; Hexagon.Arch.Gen.Mm.free call and that write would find EDX still marked
+;; ready and dispatch/resume it straight off memory this function is in the
+;; middle of freeing out from under it
+
+    cli
+
     mov ebx, dword[Hexagon.Processes.Table.base + edx * 4]
     mov ecx, dword[Hexagon.Processes.Table.size + edx * 4]
 
@@ -1556,6 +1685,8 @@ Hexagon.Kern.Proc.kill:
     pop ebx
 
     mov byte[Hexagon.Processes.Table.state + edx], Hexagon.Processes.Table.States.free
+
+    sti
 
 ;; If the process being killed had itself exec'd a child that hasn't
 ;; finished yet (sh running the "kill" command that then targets sh's

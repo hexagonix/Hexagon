@@ -267,6 +267,8 @@ Hexagon.Arch.Gen.Mm.configMemory:
 ;; EAX - 0 if failed
 ;; EBX - Pointer to allocated memory, if successful
 
+;;************************************************************************************
+
 Hexagon.Arch.Gen.Mm.malloc:
 
 ;; The free-list below is a single global structure with no per-call locking.
@@ -387,11 +389,10 @@ Hexagon.Arch.Gen.Mm.malloc:
     mov [ecx], edx
     mov edx, [Hexagon.Memory.Allocator.blockSize]
 
-    sub edx, ebx
-
-    mov ebx, [Hexagon.Memory.Allocator.nextPointer+4]
-
-    add edx, ebx
+    sub edx, ebx ;; Remainder's own size. This remainder is not adjacent to
+                 ;; the next free block in the general case (they merely
+                 ;; happen to be neighbors in list order), so nothing further
+                 ;; gets added to it here
 
     mov [ecx+4], edx
     mov edx, [Hexagon.Memory.Allocator.nextPointer] ;; Address of the next free block
@@ -428,11 +429,10 @@ Hexagon.Arch.Gen.Mm.malloc:
     mov dword [ecx], 0
     mov edx, [Hexagon.Memory.Allocator.blockSize]
 
-    sub edx, ebx
-
-    mov ebx, [Hexagon.Memory.Allocator.nextPointer+4]
-
-    add edx, ebx
+    sub edx, ebx ;; Remainder's own size. This remainder is not adjacent to
+                 ;; the next free block in the general case (they merely
+                 ;; happen to be neighbors in list order), so nothing further
+                 ;; gets added to it here
 
     mov [ecx+4], edx
     mov edx, [Hexagon.Memory.Allocator.nextPointer]
@@ -620,7 +620,20 @@ Hexagon.Arch.Gen.Mm.free:
 
 .mergeOnlyFirst:
 
+;; Adjacency test. EAX still holds the previous block's own start address,
+;; not its end, so its end has to be computed first, same as the "both
+;; mergeable" check above. Comparing EBX to EAX directly, as this used to,
+;; tests something that can never be true, since EBX is always a distinct,
+;; new block
+
+    push eax
+
+    add eax, [eax + 4]
+
     cmp ebx, eax
+
+    pop eax
+
     jne .end
 
     mov ecx, [ebx+4] ;; Get current block size
