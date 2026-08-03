@@ -12,7 +12,7 @@
 ;;
 ;;                          Kernel Hexagon - Hexagon kernel
 ;;
-;;                 Copyright (c) 2015-2025 Felipe Miguel Nery Lunkes
+;;                 Copyright (c) 2015-2026 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
 ;;
 ;;************************************************************************************
@@ -35,7 +35,7 @@
 ;;
 ;; BSD 3-Clause License
 ;;
-;; Copyright (c) 2015-2025, Felipe Miguel Nery Lunkes
+;; Copyright (c) 2015-2026, Felipe Miguel Nery Lunkes
 ;; All rights reserved.
 ;;
 ;; Redistribution and use in source and binary forms, with or without
@@ -144,7 +144,7 @@ Hexagon.Kern.Services.timerHandler:
 
     mov al, 20h
 
-    out 20h, al ;; Sent unconditionally and up front - Hexagon.Kern.Proc.maybeSchedule
+    out 20h, al ;; Sent unconditionally and up front. Hexagon.Kern.Sched.maybeSchedule
                 ;; below may switch to a different context and not return here
                 ;; for a while, and IRQ0 needs to be re-armed regardless
 
@@ -155,7 +155,7 @@ Hexagon.Kern.Services.timerHandler:
 
     mov dword[Hexagon.Scheduler.ticks], 0
 
-    call Hexagon.Kern.Proc.maybeSchedule
+    call Hexagon.Kern.Sched.maybeSchedule
 
 .noSchedule:
 
@@ -250,7 +250,7 @@ Hexagon.Kern.Services.keyboardHandler:
 
 .killCurrentProcess:
 
-    call Hexagon.Kern.Proc.kill
+    call Hexagon.Kern.Proc.killForegroundProcess
 
 ;;************************************************************************************
 

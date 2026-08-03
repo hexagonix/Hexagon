@@ -12,7 +12,7 @@
 ;;
 ;;                          Kernel Hexagon - Hexagon kernel
 ;;
-;;                 Copyright (c) 2015-2025 Felipe Miguel Nery Lunkes
+;;                 Copyright (c) 2015-2026 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
 ;;
 ;;************************************************************************************
@@ -35,7 +35,7 @@
 ;;
 ;; BSD 3-Clause License
 ;;
-;; Copyright (c) 2015-2025, Felipe Miguel Nery Lunkes
+;; Copyright (c) 2015-2026, Felipe Miguel Nery Lunkes
 ;; All rights reserved.
 ;;
 ;; Redistribution and use in source and binary forms, with or without
@@ -261,9 +261,9 @@ Hexagon.Libkern.Graphics.putPixel:
 
 Hexagon.Libkern.Graphics.drawBlockSyscall:
 
-    push eax ;; X - getCurrentProcessBase below returns its result in eax, save X first
+    push eax ;; X - getCurrentProcessBase below returns its result in EAX, save X first
 
-    call Hexagon.Kern.Proc.getCurrentProcessBase ;; eax = base of whichever process is running now
+    call Hexagon.Kern.Sched.getCurrentProcessBase ;; EAX = base of whichever process is running now
 
     mov ecx, eax
 
@@ -299,15 +299,15 @@ Hexagon.Libkern.Graphics.drawBlockSyscall:
 
 ;;************************************************************************************
 
-;; Desenhar um bloco de cor específica
+;; Draw a block of a specific color
 ;;
-;; Entrada:
+;; Input:
 ;;
 ;; EAX - X
 ;; EBX - Y
-;; ESI - Comprimento
-;; EDI - Largura
-;; EDX - Cor em hexadecimal
+;; ESI - Length
+;; EDI - Width
+;; EDX - Color in hexadecimal
 
 Hexagon.Libkern.Graphics.drawBlock:
 

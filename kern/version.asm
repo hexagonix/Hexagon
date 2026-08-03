@@ -12,7 +12,7 @@
 ;;
 ;;                          Kernel Hexagon - Hexagon kernel
 ;;
-;;                 Copyright (c) 2015-2025 Felipe Miguel Nery Lunkes
+;;                 Copyright (c) 2015-2026 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
 ;;
 ;;************************************************************************************
@@ -35,7 +35,7 @@
 ;;
 ;; BSD 3-Clause License
 ;;
-;; Copyright (c) 2015-2025, Felipe Miguel Nery Lunkes
+;; Copyright (c) 2015-2026, Felipe Miguel Nery Lunkes
 ;; All rights reserved.
 ;;
 ;; Redistribution and use in source and binary forms, with or without
@@ -83,13 +83,13 @@ use32
 
 Hexagon.Arch.support = 1 ;; Architecture of this image
 
-Hexagon.Version.definition equ "1.5.1"
+Hexagon.Version.definition equ "1.6.0"
 
 Hexagon.Version:
 
 .versionNumber     = 1 ;; Hexagon major version number
-.subversionNumber  = 5 ;; Hexagon minor version number
-.revision          = 1 ;; Add revision character (if necessary, between quotation marks)
+.subversionNumber  = 6 ;; Hexagon minor version number
+.revision          = 0 ;; Add revision character (if necessary, between quotation marks)
 
 .kernelName: ;; Name given to userspace
 db "Hexagon", 0

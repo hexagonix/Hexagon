@@ -12,7 +12,7 @@
 ;;
 ;;                          Kernel Hexagon - Hexagon kernel
 ;;
-;;                 Copyright (c) 2015-2025 Felipe Miguel Nery Lunkes
+;;                 Copyright (c) 2015-2026 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
 ;;
 ;;************************************************************************************
@@ -35,7 +35,7 @@
 ;;
 ;; BSD 3-Clause License
 ;;
-;; Copyright (c) 2015-2025, Felipe Miguel Nery Lunkes
+;; Copyright (c) 2015-2026, Felipe Miguel Nery Lunkes
 ;; All rights reserved.
 ;;
 ;; Redistribution and use in source and binary forms, with or without
@@ -114,7 +114,7 @@ Hexagon.Kern.Syscall.hexagonHandler:
 
     mov dword[Hexagon.Syscall.Control.eax], eax
 
-    call Hexagon.Kern.Proc.getCurrentProcessBase ;; EAX = base of whichever process is running now
+    call Hexagon.Kern.Sched.getCurrentProcessBase ;; EAX = base of whichever process is running now
 
     add esi, eax
 
@@ -189,7 +189,7 @@ Hexagon.Kern.Syscall.hexagonHandler:
 
     push eax
 
-    call Hexagon.Kern.Proc.getCurrentProcessBase ;; EAX = base of whichever process is running now
+    call Hexagon.Kern.Sched.getCurrentProcessBase ;; EAX = base of whichever process is running now
 
     mov ebp, eax ;; EBP is free here. CS/EIP were already pushed above
 

@@ -12,7 +12,7 @@
 ;;
 ;;                          Kernel Hexagon - Hexagon kernel
 ;;
-;;                 Copyright (c) 2015-2025 Felipe Miguel Nery Lunkes
+;;                 Copyright (c) 2015-2026 Felipe Miguel Nery Lunkes
 ;;                Todos os direitos reservados - All rights reserved.
 ;;
 ;;************************************************************************************
@@ -35,7 +35,7 @@
 ;;
 ;; BSD 3-Clause License
 ;;
-;; Copyright (c) 2015-2025, Felipe Miguel Nery Lunkes
+;; Copyright (c) 2015-2026, Felipe Miguel Nery Lunkes
 ;; All rights reserved.
 ;;
 ;; Redistribution and use in source and binary forms, with or without
@@ -81,6 +81,7 @@ Hexagon.Arch.i386.Timer.Timer.setupTimer:
 ;; mode 3 (square wave), binary counting
 
     mov al, 00110110b
+
     out 43h, al
 
 ;; Set timer frequency to ~100 Hz (1193182 Hz / 11932)
@@ -94,38 +95,5 @@ Hexagon.Arch.i386.Timer.Timer.setupTimer:
     out 40h, al
 
     logHexagon Hexagon.Verbose.timer, Hexagon.Dmesg.Priorities.p5
-
-    ret
-
-;;************************************************************************************
-
-;; Pauses the execution of a task for the specified time
-;;
-;; Input:
-;;
-;; ECX - Time to generate delay, in counting units
-
-Hexagon.Arch.i386.Timer.Timer.sleep:
-
-    pusha
-
-    sti ;; Enable interrupts so that the counter can be updated
-
-;; Wait for an absolute tick target rather than counting discrete counter
-;; changes one at a time. A preempted process only gets to observe the
-;; counter when the scheduler resumes it, so counting "changes" undercounts
-;; real elapsed time by however many ticks went by while it was preempted.
-;; The more other processes are READY, the worse this gets. Comparing
-;; against a fixed target is immune to however many times this process gets
-;; swapped out and back in while waiting
-
-    add ecx, dword[Hexagon.Kern.Services.timerHandler.timerCounter]
-
-.wait:
-
-    cmp dword[Hexagon.Kern.Services.timerHandler.timerCounter], ecx
-    jb .wait
-
-    popa
 
     ret
