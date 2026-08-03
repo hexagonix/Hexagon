@@ -33,14 +33,17 @@
 
 <div align="justify">
 
-O Hexagon é um `núcleo` (kernel) monolítico executado em `modo protegido` 32-bit, desenvolvido puramente em Assembly para a arquitetura PC (i386). É um kernel escrito do zero, visando a velocidade e a compatibilidade de harware moderno, mas também sendo capaz de ser executado em hardware mais antigo (Pentium III ou superiores, com 32 MB de memória RAM ou mais). No momento, garante um ambiente monoutilizador, apesar do uso de terminais virtuais, e monotarefa, apesar da capacidade de carregar, manter em memória e controlar mais de um processo por vez, em uma pilha de execução de ordem cronológica. Futuramente o kernel poderá receber suporte a execução de múltiplos processos em multitarefa preemptiva. O Hexagon foi projetado para ser um kernel Unix-like e compõe a base do `Hexagonix`, embora independente deste. Ele executa imagens executáveis no formato `HAPP`, desenvolvido exclusivamente para o Hexagon. Ele também implementa uma API bastante sofisticada acessível através de uma chamada de sistema padronizada e documentada, como você pode ver abaixo.
+O Hexagon é um `núcleo` (kernel) monolítico executado em `modo protegido` 32-bit, desenvolvido puramente em Assembly para a arquitetura PC (i386). É um kernel escrito do zero, visando a velocidade e a compatibilidade de harware moderno, mas também sendo capaz de ser executado em hardware mais antigo (Pentium III ou superiores, com 32 MB de memória RAM ou mais). No momento, garante um ambiente monoutilizador, mas já suporta multitarefa preemptiva: múltiplos processos ficam em memória e são executados de forma concorrente por um escalonador round-robin. Um processo idle dedicado (PID 0) está presente para quando não há nada pronto para ser executado. O Hexagon foi projetado para ser um kernel Unix-like e compõe a base do `Hexagonix`, embora independente deste. Ele executa imagens executáveis no formato `HAPP`, desenvolvido exclusivamente para o Hexagon. Ele também implementa uma API bastante sofisticada acessível através de uma chamada de sistema padronizada e documentada, como você pode ver abaixo.
 
 Algumas características do Hexagon:
 
 - [x] Suporte a processadores i386 (Pentium III ou superiores);
 - [x] Suporte a dispositivos com 32 MB de memória RAM ou mais;
 - [x] Suporte a ambiente de usuário;
-- [x] Chamada de sistema com 68 funções sofisticadas acessadas pelo ambiente de usuário;
+- [x] Multitarefa preemptiva, com escalonador round-robin e processo idle dedicado;
+- [x] Sete estados de processo (livre, pronto, em execução, bloqueado, dormindo, zumbi e idle);
+- [x] Criação de processos não bloqueante (spawn) e encerramento de processos por PID (kill);
+- [x] Chamada de sistema com 72 funções acessadas pelo ambiente de usuário;
 - [x] Formato binário executável próprio (HAPP);
 - [x] Unix-like;
 - [x] Completamente escrito em Assembly i386;
@@ -58,8 +61,7 @@ Algumas características do Hexagon:
 
 Outras características que estão sendo desenvolvidas:
 
-- [ ] Procura e enumeração de todos os dispositivos PCI;
-- [ ] Multitarefa preemptiva.
+- [ ] Procura e enumeração de todos os dispositivos PCI.
 
 > Você pode ajudar a implementar as funções em desenvolvimento acima!
 
@@ -80,14 +82,17 @@ Outras características que estão sendo desenvolvidas:
 
 <div align="justify">
 
-Hexagon is a monolithic `kernel` running in 32-bit `protected mode`, developed purely in Assembly for the PC (i386) architecture. It is a kernel written from scratch, aiming for the speed and compatibility of modern hardware, but also being able to run on older hardware (Pentium III or higher, with 32 MB of RAM or more). At the moment, it guarantees a single-user environment, despite the use of virtual terminals, and single-tasking, despite the ability to load, keep in memory and control more than one process at a time, in a chronological order execution stack. In the future, the kernel may support the execution of multiple processes in preemptive multitasking. Hexagon was designed to be a Unix-like kernel and forms the basis of `Hexagonix`, albeit independently of it. It runs executable images in the `HAPP` format, developed exclusively for Hexagon. It also implements a very sophisticated API accessible through a standardized and documented system call, as you can see below.
+Hexagon is a monolithic `kernel` running in 32-bit `protected mode`, developed purely in Assembly for the PC (i386) architecture. It is a kernel written from scratch, aiming for the speed and compatibility of modern hardware, but also being able to run on older hardware (Pentium III or higher, with 32 MB of RAM or more). At the moment, it guarantees a single-user environment, but it already supports preemptive multitasking: multiple processes are kept in memory and run concurrently through a round-robin scheduler. An idle process (PID 0) takes over when nothing is ready to run. Hexagon was designed to be a Unix-like kernel and forms the basis of `Hexagonix`, albeit independently of it. It runs executable images in the `HAPP` format, developed exclusively for Hexagon. It also implements a very sophisticated API accessible through a standardized and documented system call, as you can see below.
 
 Some features of Hexagon:
 
 - [x] Support for i386 processors (Pentium III or higher);
 - [x] Support for devices with 32 MB of RAM or more;
 - [x] User environment support;
-- [x] System call with 68 sophisticated functions accessed by the user environment;
+- [x] Preemptive multitasking, with a round-robin scheduler and a dedicated idle process;
+- [x] Seven process states (free, ready, running, blocked, sleeping, zombie and idle);
+- [x] Non-blocking process creation (spawn) and process termination by PID (kill);
+- [x] System call with 72 functions accessed by the user environment;
 - [x] Own executable binary format (HAPP);
 - [x] Unix-like;
 - [x] Completely written in i386 Assembly;
@@ -105,8 +110,7 @@ Some features of Hexagon:
 
 Other features being developed:
 
-- [ ] Search and enumeration of all PCI devices;
-- [ ] Preemptive multitasking.
+- [ ] Search and enumeration of all PCI devices.
 
 > You can help implement the above development functions!
 
