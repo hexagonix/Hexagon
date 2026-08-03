@@ -349,9 +349,9 @@ Hexagon.userMode:
 
 Hexagon.Heap: ;; Kernel heap
 
-Hexagon.Heap.DiskGeometry  = Hexagon.Heap               + 0      ;; Disk geometry
-Hexagon.Heap.VBE           = Hexagon.Heap.DiskGeometry  + 512    ;; Video control block
-Hexagon.Heap.DiskCache     = Hexagon.Heap.VBE           + 90000  ;; Disk cache
-Hexagon.Heap.ProcessTable  = Hexagon.Heap.DiskCache     + 200000 ;; Hexagon.Processes.Table
-Hexagon.Heap.Temp          = Hexagon.Heap.ProcessTable  + 5000   ;; Temporary kernel data
+Hexagon.Heap.DiskGeometry  = Hexagon.Heap+ 0      ;; Disk geometry
+Hexagon.Heap.VBE           = Hexagon.Heap.DiskGeometry + 512 ;; Video control block
+Hexagon.Heap.DiskCache     = Hexagon.Heap.VBE+ Hexagon.Console.VBE.maxSize ;; Disk cache
+Hexagon.Heap.ProcessTable  = Hexagon.Heap.DiskCache + Hexagon.Disk.DiskCache.maxSize
+Hexagon.Heap.Temp          = Hexagon.Heap.ProcessTable + Hexagon.Processes.Table.byteSize ;; Temporary kernel data
 

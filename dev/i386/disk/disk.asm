@@ -199,6 +199,8 @@ Hexagon.Dev.Gen.Disk:
 
 .operationCode: db 0
 
+Hexagon.Disk.DiskCache.maxSize = 200000 ;; Budget reserved for FAT/root directory reads; not yet enforced at every read site
+
 ;;************************************************************************************
 
 align 4

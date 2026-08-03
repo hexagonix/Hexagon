@@ -278,6 +278,10 @@ Hexagon.Arch.Gen.Mm.malloc:
 
     push ecx
     push edx
+    push ebx ;; Requested size, for the accounting call at .end below. The
+             ;; body repurposes EBX as scratch/return pointer throughout, so
+             ;; the original request would otherwise be lost by the time
+             ;; execution gets there
 
     mov eax, [Hexagon.Memory.Allocator.firstFreeBlock]
 
@@ -496,6 +500,17 @@ Hexagon.Arch.Gen.Mm.malloc:
 
 .end:
 
+    pop edx ;; Requested size, saved as EBX at entry, before it's known whether this call succeeded
+
+    cmp eax, 0
+    je .noAccounting
+
+    mov eax, edx
+
+    call Hexagon.Arch.Gen.Mm.confirmMemoryUsage
+
+.noAccounting:
+
     pop edx
     pop ecx
 
@@ -523,6 +538,11 @@ Hexagon.Arch.Gen.Mm.free:
     push ebx
     push ecx
     push edx
+
+    push ecx ;; Extra copy of the freed size, for the accounting call at .end
+             ;; below. The body repurposes ECX as scratch throughout, and
+             ;; the copy pushed above is only restored to the caller there,
+             ;; not usable mid-function
 
     cmp ebx, [Hexagon.Memory.Allocator.firstFreeBlock]
     jb .newFirstFree
@@ -708,6 +728,10 @@ Hexagon.Arch.Gen.Mm.free:
 
 .end:
 
+    pop eax ;; Freed size, saved as an extra copy of ECX at entry
+
+    call Hexagon.Arch.Gen.Mm.freeMemoryUsage
+
     pop edx
     pop ecx
     pop ebx
@@ -746,5 +770,13 @@ Hexagon.Arch.Gen.Mm.dilateMemorySpace:
     pop ecx
 
     add dword[Hexagon.Memory.Allocator.processReserved], ecx
+
+;; The malloc above already added this block to Hexagon.Memory.usedMemory.
+;; It is growing the allocator's own backing pool, not memory a process is
+;; actually holding, so cancel that back out here
+
+    mov eax, ecx
+
+    call Hexagon.Arch.Gen.Mm.freeMemoryUsage
 
     ret

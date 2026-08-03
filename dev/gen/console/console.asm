@@ -136,6 +136,11 @@ Hexagon.Console.textMode:
 
 ;;************************************************************************************
 
+;; Budget reserved for the VBE control block. Not yet enforced at every read/write site
+Hexagon.Console.VBE.maxSize = 90000
+
+;;************************************************************************************
+
 ;; Defines the resolution to be used for display
 ;;
 ;; Input:

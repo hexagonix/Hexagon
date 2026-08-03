@@ -166,7 +166,9 @@ times Hexagon.Processes.Table.limit*13 db 0 ;; Process name, space-padded, for p
 
 Hexagon.Processes.Table.nextPID: dd 0 ;; Monotonic counter, next PID to hand out
 
-Hexagon.Processes.Table.limit = 16
+Hexagon.Processes.Table.byteSize = $ - Hexagon.Heap.ProcessTable ;; Real size, so Hexagon.Heap.Temp never has to guess a gap
+
+Hexagon.Processes.Table.limit = 40
 
 end virtual
 
@@ -650,18 +652,10 @@ Hexagon.Kern.Proc.exit:
     push ebx
     push ecx
 
-    call Hexagon.Arch.Gen.Mm.free
+    call Hexagon.Arch.Gen.Mm.free ;; Now accounts for Hexagon.Memory.usedMemory itself
 
     pop ecx
     pop ebx
-
-    push ecx
-
-    mov eax, ecx
-
-    call Hexagon.Arch.Gen.Mm.freeMemoryUsage
-
-    pop ecx
 
 ;; Free this process's own arguments buffer and hx.getProcesses scratch
 ;; buffer, if it ever called hx.getProcesses - both Hexagon.Arch.Gen.Mm.malloc'd
@@ -1272,16 +1266,6 @@ Hexagon.Kern.Proc.registerSlot:
 
     mov dword[Hexagon.Processes.Table.esp + edx * 4], 0 ;; Never dispatched yet
 
-    push ebx
-    push ecx
-
-    mov eax, ecx
-
-    call Hexagon.Arch.Gen.Mm.confirmMemoryUsage ;; Accounting
-
-    pop ecx
-    pop ebx
-
 ;; Hexagon.Kern.Proc.spawn doesn't support arguments and never fills in
 ;; Hexagon.Processes.Table.argBase, so give this slot an empty one here if
 ;; Hexagon.Kern.Proc.exec hasn't already allocated and filled one in above.
@@ -1538,6 +1522,13 @@ Hexagon.Kern.Proc.kill:
 
 .slotFound:
 
+;; Slot 0 is the permanent idle process, never allocated like a real process.
+;; Tearing it down here would free a bogus base/size and erase the scheduler's
+;; last-resort fallback, so refuse exactly like an unknown PID instead
+
+    cmp ecx, Hexagon.Kern.Sched.idleSlot
+    je .notFound
+
     movzx edx, byte[Hexagon.Scheduler.current]
 
     cmp ecx, edx
@@ -1559,18 +1550,10 @@ Hexagon.Kern.Proc.kill:
     push ebx
     push ecx
 
-    call Hexagon.Arch.Gen.Mm.free
+    call Hexagon.Arch.Gen.Mm.free ;; Now accounts for Hexagon.Memory.usedMemory itself
 
     pop ecx
     pop ebx
-
-    push ecx
-
-    mov eax, ecx
-
-    call Hexagon.Arch.Gen.Mm.freeMemoryUsage
-
-    pop ecx
 
     mov byte[Hexagon.Processes.Table.state + edx], Hexagon.Processes.Table.States.free
 
