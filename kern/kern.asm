@@ -349,7 +349,7 @@ Hexagon.userMode:
 
 Hexagon.Heap: ;; Kernel heap
 
-Hexagon.Heap.DiskGeometry  = Hexagon.Heap+ 0      ;; Disk geometry
+Hexagon.Heap.DiskGeometry  = Hexagon.Heap + 0 ;; Disk geometry
 Hexagon.Heap.VBE           = Hexagon.Heap.DiskGeometry + 512 ;; Video control block
 Hexagon.Heap.DiskCache     = Hexagon.Heap.VBE+ Hexagon.Console.VBE.maxSize ;; Disk cache
 Hexagon.Heap.ProcessTable  = Hexagon.Heap.DiskCache + Hexagon.Disk.DiskCache.maxSize
