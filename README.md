@@ -46,7 +46,7 @@ Algumas características do Hexagon:
 - [x] Chamada de sistema com 72 funções acessadas pelo ambiente de usuário;
 - [x] Formato binário executável próprio (HAPP);
 - [x] Unix-like;
-- [x] Completamente escrito em Assembly i386;
+- [x] Completamente escrito em Assembly x86;
 - [x] Self-hosting (o montador usado para construir o Hexagon pode ser executado sobre ele);
 - [x] Sistema de arquivos virtual;
 - [x] Abstração de dispositivos;
@@ -95,7 +95,7 @@ Some features of Hexagon:
 - [x] System call with 72 functions accessed by the user environment;
 - [x] Own executable binary format (HAPP);
 - [x] Unix-like;
-- [x] Completely written in i386 Assembly;
+- [x] Completely written in x86 Assembly;
 - [x] Self-hosting (the assembler used to build the Hexagon can run on top of it);
 - [x] Virtual file system;
 - [x] Device abstraction;
