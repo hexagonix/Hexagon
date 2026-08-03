@@ -292,10 +292,10 @@ Hexagon.Arch.Gen.Mm.malloc:
     mov ecx, [eax]
     mov [Hexagon.Memory.Allocator.previousPointer], ecx
 
-    mov ecx, [eax+4]
+    mov ecx, [eax + 4]
     mov [Hexagon.Memory.Allocator.blockSize], ecx
 
-    mov ecx, [eax+8]
+    mov ecx, [eax + 8]
     mov [Hexagon.Memory.Allocator.nextPointer], ecx
 
     cmp [Hexagon.Memory.Allocator.blockSize], ebx
@@ -339,8 +339,8 @@ Hexagon.Arch.Gen.Mm.malloc:
 
     sub edx, ebx ;; Remaining space on EDX
 
-    mov [ecx+4], edx ;; Save to header
-    mov dword [ecx+8], 0 ;; No pointer to next block
+    mov [ecx + 4], edx ;; Save to header
+    mov dword [ecx + 8], 0 ;; No pointer to next block
 
     mov [Hexagon.Memory.Allocator.firstFreeBlock], ecx
     mov ebx, eax ;; EAX unchanged
@@ -366,7 +366,13 @@ Hexagon.Arch.Gen.Mm.malloc:
     mov [ecx+4], edx ;; Save in new header
     mov dword [ecx+8], 0 ;; No next pointer
 
-    mov [Hexagon.Memory.Allocator.previousPointer+8], ecx
+;; Relink the actual previous free block's own next pointer to the new
+;; remainder. Allocator.previousPointer is a plain variable holding that
+;; block's address, not the block itself, so it has to be dereferenced
+;; first, same as EDX already was just above for the same field
+
+    mov edx, [Hexagon.Memory.Allocator.previousPointer]
+    mov [edx + 8], ecx
     mov ebx, eax
 
     jmp .end
@@ -394,16 +400,22 @@ Hexagon.Arch.Gen.Mm.malloc:
                  ;; happen to be neighbors in list order), so nothing further
                  ;; gets added to it here
 
-    mov [ecx+4], edx
+    mov [ecx + 4], edx
     mov edx, [Hexagon.Memory.Allocator.nextPointer] ;; Address of the next free block
 
     cmp dword [edx], 0
     je .notNextPointer
 
     mov dword [edx], ecx
-    mov dword [ecx+8], edx ;; Address to next pointer
+    mov dword [ecx + 8], edx ;; Address to next pointer
 
-    mov [Hexagon.Memory.Allocator.previousPointer+8], ecx
+;; Relink the actual previous free block's own next pointer to the new
+;; remainder. Allocator.previousPointer is a plain variable holding that
+;; block's address, not the block itself, so it has to be dereferenced
+;; first
+
+    mov edx, [Hexagon.Memory.Allocator.previousPointer]
+    mov [edx + 8], ecx
     mov ebx, eax
 
     jmp .end
@@ -411,8 +423,12 @@ Hexagon.Arch.Gen.Mm.malloc:
 .notNextPointer:
 
     mov dword [edx], 0
-    mov dword [ecx+8], 0
-    mov [Hexagon.Memory.Allocator.previousPointer+8], ecx
+    mov dword [ecx+8], edx ;; Remainder still links forward to the next
+                           ;; free block regardless of whatever its own
+                           ;; prev field held before the write just above
+
+    mov edx, [Hexagon.Memory.Allocator.previousPointer]
+    mov [edx + 8], ecx
     mov ebx, eax
 
     jmp .end
@@ -434,14 +450,14 @@ Hexagon.Arch.Gen.Mm.malloc:
                  ;; happen to be neighbors in list order), so nothing further
                  ;; gets added to it here
 
-    mov [ecx+4], edx
+    mov [ecx + 4], edx
     mov edx, [Hexagon.Memory.Allocator.nextPointer]
 
     cmp dword [edx], 0
     je .notNext
 
     mov dword [edx], ecx
-    mov dword [ecx+8], edx
+    mov dword [ecx + 8], edx
 
     mov [Hexagon.Memory.Allocator.firstFreeBlock], ecx ;; Zero and update first free block
     mov ebx, eax
@@ -451,9 +467,15 @@ Hexagon.Arch.Gen.Mm.malloc:
 .notNext:
 
     mov dword [edx], 0
-    mov ecx, [ecx+8]
-    mov dword [ecx], 0
-    mov [Hexagon.Memory.Allocator.previousPointer+8], ecx
+    mov dword [ecx + 8], edx ;; Remainder still links forward to the next
+                           ;; free block regardless of whatever its own
+                           ;; prev field held before the write just above
+
+;; No previous free block exists in this branch (Allocator.previousPointer
+;; is 0, that's what led here), so the remainder becomes the new head
+;; instead of relinking a previous block's own next pointer
+
+    mov [Hexagon.Memory.Allocator.firstFreeBlock], ecx
     mov ebx, eax
 
     jmp .end
@@ -473,7 +495,8 @@ Hexagon.Arch.Gen.Mm.malloc:
 
 .previousnotNextPointer2:
 
-    mov dword [Hexagon.Memory.Allocator.previousPointer+8], 0
+    mov edx, [Hexagon.Memory.Allocator.previousPointer]
+    mov dword [edx + 8], 0
     mov ebx, eax
 
     jmp .end
@@ -485,7 +508,7 @@ Hexagon.Arch.Gen.Mm.malloc:
 
     mov ecx, [Hexagon.Memory.Allocator.previousPointer]
     mov edx, [Hexagon.Memory.Allocator.nextPointer]
-    mov [ecx+8], edx
+    mov [ecx + 8], edx
     mov [edx], ecx
     mov ebx, eax
 
@@ -493,7 +516,7 @@ Hexagon.Arch.Gen.Mm.malloc:
 
 .nextNotPrevious2:
 
-    mov ecx, [eax+8] ;; Get address from next header
+    mov ecx, [eax + 8] ;; Get address from next header
     mov dword [ecx], 0 ;; Set previous header to 0 and update
     mov [Hexagon.Memory.Allocator.firstFreeBlock], ecx ;; Also update the first free block
     mov ebx, eax
@@ -555,7 +578,7 @@ Hexagon.Arch.Gen.Mm.free:
 ;; to know if they can be merged
 
     mov eax, [Hexagon.Memory.Allocator.firstFreeBlock] ;; Current free block
-    mov edx, [eax+8] ;; Next free block
+    mov edx, [eax + 8] ;; Next free block
 
 .nextPosition:
 
@@ -566,7 +589,7 @@ Hexagon.Arch.Gen.Mm.free:
     jb .blockFoundBetween ;; EBX found in the middle
 
     mov eax, edx ;; Update pointers to another loop
-    mov edx, [eax+8]
+    mov edx, [eax + 8]
 
     jmp .nextPosition
 
@@ -575,10 +598,10 @@ Hexagon.Arch.Gen.Mm.free:
 .blockFoundBetween:
 
     mov [ebx], eax ;; Create header
-    mov [ebx+4], ecx
-    mov [ebx+8], edx
+    mov [ebx + 4], ecx
+    mov [ebx + 8], edx
 
-    mov [eax+8], ebx ;; Update previous header
+    mov [eax + 8], ebx ;; Update previous header
     mov [edx], ebx ;; Update next header
 
 ;; Check if the blocks can be merged
@@ -590,7 +613,7 @@ Hexagon.Arch.Gen.Mm.free:
 
     push eax
 
-    add eax, [eax+4]
+    add eax, [eax + 4]
 
     cmp ebx, eax
 
@@ -600,16 +623,16 @@ Hexagon.Arch.Gen.Mm.free:
 
 ;; The previous and next can be merged
 
-    mov ecx, [ebx+4] ;; Get current block size
+    mov ecx, [ebx + 4] ;; Get current block size
 
-    add [eax+4], ecx ;; Add this to the size of the previous one
+    add [eax + 4], ecx ;; Add this to the size of the previous one
 
-    mov ecx, [edx+4] ;; Get the size of the next block
+    mov ecx, [edx + 4] ;; Get the size of the next block
 
-    add [eax+4], ecx ;; Add this to the previous size
+    add [eax + 4], ecx ;; Add this to the previous size
 
-    mov ecx, [edx+8] ;; Get the next pointer
-    mov [eax+8], ecx ;; Store it
+    mov ecx, [edx + 8] ;; Get the next pointer
+    mov [eax + 8], ecx ;; Store it
 
     cmp ecx, 0
     je .end
@@ -636,12 +659,12 @@ Hexagon.Arch.Gen.Mm.free:
 
     jne .end
 
-    mov ecx, [ebx+4] ;; Get current block size
+    mov ecx, [ebx + 4] ;; Get current block size
 
-    add [eax+4], ecx ;; Add this to the size of the previous one
+    add [eax + 4], ecx ;; Add this to the size of the previous one
 
     mov [edx], eax ;; Update the previous and next pointers
-    mov [eax+8], edx
+    mov [eax + 8], edx
 
     jmp .end
 
@@ -650,12 +673,12 @@ Hexagon.Arch.Gen.Mm.free:
     cmp edx, ecx
     jne .end
 
-    mov ecx, [edx+4]
+    mov ecx, [edx + 4]
 
-    add [ebx+4], ecx
+    add [ebx + 4], ecx
 
-    mov ecx, [edx+8]
-    mov [ebx+8], ecx
+    mov ecx, [edx + 8]
+    mov [ebx + 8], ecx
 
     cmp ecx, 0
     je .end
@@ -669,26 +692,26 @@ Hexagon.Arch.Gen.Mm.free:
 .blockFoundAtEnd:
 
     mov [ebx], eax ;; Create header
-    mov [ebx+4], ecx
-    mov [ebx+8], edx
+    mov [ebx + 4], ecx
+    mov [ebx + 8], edx
 
-    mov [eax+8], ebx ;; Update previous header
+    mov [eax + 8], ebx ;; Update previous header
 
 ;; Check if blocks can be merged
 
     mov ecx, eax
 
-    add ecx, [eax+4]
+    add ecx, [eax + 4]
 
     cmp ebx, ecx
     jne .end
 
-    mov ecx, [ebx+4]
+    mov ecx, [ebx + 4]
 
-    add [eax+4], ecx
+    add [eax + 4], ecx
 
-    mov ecx, [ebx+8]
-    mov [eax+8], ecx
+    mov ecx, [ebx + 8]
+    mov [eax + 8], ecx
 
     jmp .end
 
@@ -697,13 +720,13 @@ Hexagon.Arch.Gen.Mm.free:
 .newFirstFree:
 
     mov dword [ebx], 0
-    mov [ebx+4], ecx ;; Create the new header
+    mov [ebx + 4], ecx ;; Create the new header
     mov edx, [Hexagon.Memory.Allocator.firstFreeBlock]
-    mov [ebx+8], edx
+    mov [ebx + 8], edx
 
     mov edx, ebx
 
-    add edx, [ebx+4] ;; Check if the first block hits
+    add edx, [ebx + 4] ;; Check if the first block hits
 
     cmp edx, [Hexagon.Memory.Allocator.firstFreeBlock] ;; Current position + blocksize?
     je .mergeFirstFree ;; If yes, merge the two
@@ -711,7 +734,7 @@ Hexagon.Arch.Gen.Mm.free:
     cmp [Hexagon.Memory.Allocator.firstFreeBlock], 0 ;; If not, check if the first block exists
     je .cont1
 
-    mov edx, [ebx+8] ;; If yes, update the previous pointer
+    mov edx, [ebx + 8] ;; If yes, update the previous pointer
     mov [edx], ebx
 
 .cont1:
@@ -722,13 +745,13 @@ Hexagon.Arch.Gen.Mm.free:
 
 .mergeFirstFree: ;; Merge the first two
 
-    mov edx, [ebx+8] ;; Add the block size with the previous one into the new one
-    mov ecx, [edx+4]
+    mov edx, [ebx + 8] ;; Add the block size with the previous one into the new one
+    mov ecx, [edx + 4]
 
-    add [ebx+4], ecx
+    add [ebx + 4], ecx
 
-    mov ecx, [edx+8] ;; Get the next pointer from the previous block
-    mov [ebx+8], ecx
+    mov ecx, [edx + 8] ;; Get the next pointer from the previous block
+    mov [ebx + 8], ecx
 
     cmp ecx, 0
     je .cont2
