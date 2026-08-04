@@ -43,7 +43,7 @@ Algumas características do Hexagon:
 - [x] Multitarefa preemptiva, com escalonador round-robin e processo idle dedicado;
 - [x] Sete estados de processo (livre, pronto, em execução, bloqueado, dormindo, zumbi e idle);
 - [x] Criação de processos não bloqueante (spawn) e encerramento de processos por PID (kill);
-- [x] Chamada de sistema com 72 funções acessadas pelo ambiente de usuário;
+- [x] Chamada de sistema com 71 funções acessadas pelo ambiente de usuário;
 - [x] Formato binário executável próprio (HAPP);
 - [x] Unix-like;
 - [x] Completamente escrito em Assembly x86;
@@ -92,7 +92,7 @@ Some features of Hexagon:
 - [x] Preemptive multitasking, with a round-robin scheduler and a dedicated idle process;
 - [x] Seven process states (free, ready, running, blocked, sleeping, zombie and idle);
 - [x] Non-blocking process creation (spawn) and process termination by PID (kill);
-- [x] System call with 72 functions accessed by the user environment;
+- [x] System call with 71 functions accessed by the user environment;
 - [x] Own executable binary format (HAPP);
 - [x] Unix-like;
 - [x] Completely written in x86 Assembly;
