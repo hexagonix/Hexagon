@@ -28,7 +28,7 @@
 ## Kernel Hexagon
 
 <p align="center">
-<img src="https://raw.githubusercontent.com/hexagonix/Doc/refs/heads/main/Img/LogoHexagon.png" width="200" height="200">
+<img src="https://github.com/hexagonix/Doc/blob/main/Img/LogoHexagon.png" width="200" height="200">
 </p>
 
 <div align="justify">
@@ -77,7 +77,7 @@ Outras características que estão sendo desenvolvidas:
 ## Hexagon kernel
 
 <p align="center">
-<img src="https://raw.githubusercontent.com/hexagonix/Doc/refs/heads/main/Img/LogoHexagon.png" width="200" height="200">
+<img src="https://github.com/hexagonix/Doc/blob/main/Img/LogoHexagon.png" width="200" height="200">
 </p>
 
 <div align="justify">
