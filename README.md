@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://github.com/hexagonix/Doc/blob/main/Img/banner.png">
+<img src="https://raw.githubusercontent.com/hexagonix/Doc/refs/heads/main/Img/banner.png">
 </p>
 
 <div align="center">
@@ -28,16 +28,16 @@
 ## Kernel Hexagon
 
 <p align="center">
-<img src="https://github.com/hexagonix/Doc/blob/main/Img/LogoHexagon.png" width="200" height="200">
+<img src="https://raw.githubusercontent.com/hexagonix/Doc/refs/heads/main/Img/LogoHexagon.png" width="200" height="200">
 </p>
 
 <div align="justify">
 
-O Hexagon é um `núcleo` (kernel) monolítico executado em `modo protegido` 32-bit, desenvolvido puramente em Assembly para a arquitetura PC (i386). É um kernel escrito do zero, visando a velocidade e a compatibilidade de harware moderno, mas também sendo capaz de ser executado em hardware mais antigo (Pentium III ou superiores, com 32 MB de memória RAM ou mais). Suporta multitarefa preemptiva: múltiplos processos ficam em memória e são executados de forma concorrente por um escalonador round-robin. Um processo idle dedicado (PID 0) está presente para quando não há nada pronto para ser executado. O Hexagon foi projetado para ser um kernel Unix-like e compõe a base do `Hexagonix`, embora independente deste. Ele executa imagens executáveis no formato `HAPP`, desenvolvido exclusivamente para o Hexagon. Ele também implementa uma API bastante sofisticada acessível através de uma chamada de sistema padronizada e documentada, como você pode ver abaixo.
+O Hexagon é um `núcleo` (kernel) monolítico executado em `modo protegido` 32-bit, desenvolvido puramente em Assembly x86 para a arquitetura PC (x86). É um kernel escrito do zero, visando a velocidade e a compatibilidade de harware moderno, mas também sendo capaz de ser executado em hardware mais antigo (Pentium III ou superiores, com 32 MB de memória RAM ou mais). Suporta multitarefa preemptiva: múltiplos processos ficam em memória e são executados de forma concorrente por um escalonador round-robin. Um processo idle dedicado (PID 0) está presente para quando não há nada pronto para ser executado. O Hexagon foi projetado para ser um kernel Unix-like e compõe a base do `Hexagonix`, embora independente deste. Ele executa imagens executáveis no formato `HAPP`, desenvolvido exclusivamente para o Hexagon. Ele também implementa uma API bastante sofisticada acessível através de uma chamada de sistema padronizada e documentada, como você pode ver abaixo.
 
 Algumas características do Hexagon:
 
-- [x] Suporte a processadores i386 (Pentium III ou superiores);
+- [x] Suporte a processadores x86 (Pentium III ou superiores);
 - [x] Suporte a dispositivos com 32 MB de memória RAM ou mais;
 - [x] Suporte a ambiente de usuário;
 - [x] Multitarefa preemptiva, com escalonador round-robin e processo idle dedicado;
@@ -77,16 +77,16 @@ Outras características que estão sendo desenvolvidas:
 ## Hexagon kernel
 
 <p align="center">
-<img src="https://github.com/hexagonix/Doc/blob/main/Img/LogoHexagon.png" width="200" height="200">
+<img src="https://raw.githubusercontent.com/hexagonix/Doc/refs/heads/main/Img/LogoHexagon.png" width="200" height="200">
 </p>
 
 <div align="justify">
 
-Hexagon is a monolithic `kernel` running in 32-bit `protected mode`, developed purely in Assembly for the PC (i386) architecture. It is a kernel written from scratch, aiming for the speed and compatibility of modern hardware, but also being able to run on older hardware (Pentium III or higher, with 32 MB of RAM or more). Supports preemptive multitasking: multiple processes are kept in memory and run concurrently through a round-robin scheduler. An idle process (PID 0) takes over when nothing is ready to run. Hexagon was designed to be a Unix-like kernel and forms the basis of `Hexagonix`, albeit independently of it. It runs executable images in the `HAPP` format, developed exclusively for Hexagon. It also implements a very sophisticated API accessible through a standardized and documented system call, as you can see below.
+Hexagon is a monolithic `kernel` running in 32-bit `protected mode`, developed purely in x86 Assembly for the PC (x86) architecture. It is a kernel written from scratch, aiming for the speed and compatibility of modern hardware, but also being able to run on older hardware (Pentium III or higher, with 32 MB of RAM or more). Supports preemptive multitasking: multiple processes are kept in memory and run concurrently through a round-robin scheduler. An idle process (PID 0) takes over when nothing is ready to run. Hexagon was designed to be a Unix-like kernel and forms the basis of `Hexagonix`, albeit independently of it. It runs executable images in the `HAPP` format, developed exclusively for Hexagon. It also implements a very sophisticated API accessible through a standardized and documented system call, as you can see below.
 
 Some features of Hexagon:
 
-- [x] Support for i386 processors (Pentium III or higher);
+- [x] Support for x86 processors (Pentium III or higher);
 - [x] Support for devices with 32 MB of RAM or more;
 - [x] User environment support;
 - [x] Preemptive multitasking, with a round-robin scheduler and a dedicated idle process;
