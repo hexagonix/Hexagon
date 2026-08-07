@@ -198,3 +198,10 @@ Hexagon.Kern.Syscall.hexagonServices:
 
     dd Hexagon.Kernel.FS.VFS.createDirectory                           ;; 72
     dd Hexagon.Kernel.FS.VFS.removeDirectory                           ;; 73
+
+;; Environment variables
+
+    dd Hexagon.Kern.Proc.getenv                                        ;; 74
+    dd Hexagon.Kern.Proc.setenv                                        ;; 75
+    dd Hexagon.Kern.Proc.unsetenv                                      ;; 76
+    dd Hexagon.Kern.Proc.environ                                       ;; 77
