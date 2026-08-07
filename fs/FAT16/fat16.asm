@@ -778,12 +778,14 @@ Hexagon.Kernel.FS.FAT16.fileExistsFAT16B:
 .end:
 
 ;; Restore the directory we were in before resolving the path, since a
-;; simple existence check must not move the shell's current directory
+;; simple existence check must not move the shell's current directory.
+;; EDX is used here instead of EAX since EAX carries the error code (or
+;; the file size, on success) back out to the caller
 
-    mov eax, dword[.savedDirLBA]
-    mov dword[Hexagon.VFS.FAT16B.currentDirLBA], eax
-    mov eax, dword[.savedStackIndex]
-    mov dword[stackIndex], eax
+    mov edx, dword[.savedDirLBA]
+    mov dword[Hexagon.VFS.FAT16B.currentDirLBA], edx
+    mov edx, dword[.savedStackIndex]
+    mov dword[stackIndex], edx
 
     pop esi
     pop edi
@@ -1814,7 +1816,14 @@ Hexagon.Kernel.FS.FAT16.createEmptyFileFAT16B:
 
 Hexagon.Kernel.FS.FAT16.createDirectoryFAT16B:
 
-    pushad
+;; EAX is not preserved here, unlike the other FAT16 functions: it carries
+;; the error code (see errors.s) back out on failure
+
+    push ebx
+    push ecx
+    push edx
+    push esi
+    push edi
 
     mov eax, dword[Hexagon.VFS.FAT16B.currentDirLBA]
     mov dword[.savedDirLBA], eax
@@ -2012,14 +2021,20 @@ Hexagon.Kernel.FS.FAT16.createDirectoryFAT16B:
 
 .end:
 
-;; Restore the directory we were in before resolving the path
+;; Restore the directory we were in before resolving the path. EBX is used
+;; here instead of EAX since EAX carries the error code back out to the
+;; caller on failure
 
-    mov eax, dword[.savedDirLBA]
-    mov dword[Hexagon.VFS.FAT16B.currentDirLBA], eax
-    mov eax, dword[.savedStackIndex]
-    mov dword[stackIndex], eax
+    mov ebx, dword[.savedDirLBA]
+    mov dword[Hexagon.VFS.FAT16B.currentDirLBA], ebx
+    mov ebx, dword[.savedStackIndex]
+    mov dword[stackIndex], ebx
 
-    popad
+    pop edi
+    pop esi
+    pop edx
+    pop ecx
+    pop ebx
 
     ret
 
@@ -2046,7 +2061,14 @@ Hexagon.Kernel.FS.FAT16.createDirectoryFAT16B:
 
 Hexagon.Kernel.FS.FAT16.removeDirectoryFAT16B:
 
-    pushad
+;; EAX is not preserved here, unlike the other FAT16 functions: it carries
+;; the error code (see errors.s) back out on failure
+
+    push ebx
+    push ecx
+    push edx
+    push esi
+    push edi
 
     mov eax, dword[Hexagon.VFS.FAT16B.currentDirLBA]
     mov dword[.savedDirLBA], eax
@@ -2115,7 +2137,7 @@ Hexagon.Kernel.FS.FAT16.removeDirectoryFAT16B:
     je .nextEntry
 
     cmp byte[edi], '.'
-    jne .failure ;; A real name means the directory still has content
+    jne .notEmpty ;; A real name means the directory still has content
 
 .nextEntry:
 
@@ -2177,20 +2199,30 @@ Hexagon.Kernel.FS.FAT16.removeDirectoryFAT16B:
 
     jmp .end
 
+.notEmpty:
+
+    mov eax, 08h ;; IO.directoryNotEmpty
+
 .failure:
 
     stc
 
 .end:
 
-;; Restore the directory we were in before resolving the path
+;; Restore the directory we were in before resolving the path. EBX is used
+;; here instead of EAX since EAX carries the error code back out to the
+;; caller on failure
 
-    mov eax, dword[.savedDirLBA]
-    mov dword[Hexagon.VFS.FAT16B.currentDirLBA], eax
-    mov eax, dword[.savedStackIndex]
-    mov dword[stackIndex], eax
+    mov ebx, dword[.savedDirLBA]
+    mov dword[Hexagon.VFS.FAT16B.currentDirLBA], ebx
+    mov ebx, dword[.savedStackIndex]
+    mov dword[stackIndex], ebx
 
-    popad
+    pop edi
+    pop esi
+    pop edx
+    pop ecx
+    pop ebx
 
     ret
 
@@ -2532,6 +2564,8 @@ Hexagon.Kernel.FS.FAT16.resolvePathFAT16B:
     jmp .end
 
 .invalid:
+
+    mov eax, 07h ;; IO.pathNotFound
 
     stc
 
