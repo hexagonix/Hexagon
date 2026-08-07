@@ -1801,6 +1801,406 @@ Hexagon.Kernel.FS.FAT16.createEmptyFileFAT16B:
 
 ;;************************************************************************************
 
+;; Create a new, empty directory
+;;
+;; Input:
+;;
+;; ESI - Path of the directory to create
+;;
+;; Output:
+;;
+;; CF set if the name already exists, an intermediate path component is
+;; invalid, or there is no free cluster left for the new directory
+
+Hexagon.Kernel.FS.FAT16.createDirectoryFAT16B:
+
+    pushad
+
+    mov eax, dword[Hexagon.VFS.FAT16B.currentDirLBA]
+    mov dword[.savedDirLBA], eax
+    mov eax, dword[stackIndex]
+    mov dword[.savedStackIndex], eax
+
+;; Check if a file or directory with this name already exists
+
+    call Hexagon.Kernel.FS.FAT16.fileExistsFAT16B
+
+    jnc .failure
+
+;; Resolve the path down to the parent directory
+
+    call Hexagon.Kernel.FS.FAT16.resolvePathFAT16B ;; ESI = last path component
+
+    jc .failure
+
+    mov edi, .dirName
+    mov ecx, 13
+
+    cld
+
+    rep movsb
+
+;; Remember the parent's own cluster number now, needed for the new
+;; directory's ".." entry. 0 means the parent is the root directory
+
+    mov eax, dword[Hexagon.VFS.FAT16B.currentDirLBA]
+
+    cmp eax, dword[Hexagon.VFS.FAT16B.rootDir]
+    je .parentIsRoot
+
+    sub eax, dword[Hexagon.VFS.FAT16B.dataArea]
+
+    xor edx, edx
+    movzx ebx, byte[Hexagon.VFS.FAT16B.sectorsPerCluster]
+
+    div ebx ;; EAX = (LBA - dataArea) / sectorsPerCluster
+
+    add eax, 2 ;; Data clusters begin at cluster 2
+
+    jmp .parentClusterReady
+
+.parentIsRoot:
+
+    xor eax, eax
+
+.parentClusterReady:
+
+    mov dword[.parentCluster], eax
+
+;; Create the entry itself, as an empty file for now
+
+    mov esi, .dirName
+
+    call Hexagon.Kernel.FS.FAT16.createEmptyFileFAT16B
+
+    jc .failure
+
+;; Find a free cluster in the FAT for the new directory's own content
+
+    movzx eax, word[Hexagon.VFS.FAT16B.sectorsPerFAT] ;; Sectors to read
+    mov esi, dword[Hexagon.VFS.FAT16B.FAT] ;; FAT LBA
+    mov ecx, 50h ;; Segment
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
+    mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
+
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors
+
+    mov esi, Hexagon.Heap.DiskCache + 20000
+
+    add esi, (3*2) ;; Reserved clusters
+
+    mov edx, 3 ;; Logical cluster counter
+
+.findFreeClusterLoop:
+
+    mov ax, word[esi]
+
+    or ax, ax
+    jz .freeClusterFound
+
+    add esi, 2
+    inc edx
+
+    jmp .findFreeClusterLoop
+
+.freeClusterFound:
+
+    mov word[esi], 0xFFFF ;; The new directory is a single cluster
+
+    mov dword[.newCluster], edx
+
+;; Write the FAT back with the new cluster marked
+
+    movzx eax, word[Hexagon.VFS.FAT16B.sectorsPerFAT] ;; Sectors to write
+    mov esi, dword[Hexagon.VFS.FAT16B.FAT] ;; FAT LBA
+    mov ecx, 50h ;; Segment
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
+    mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
+
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.writeSectors
+
+;; Point the parent's entry at the new cluster and mark it as a directory
+
+    mov esi, .dirName
+
+    call Hexagon.Kernel.FS.FAT16.fileExistsFAT16B
+
+    jc .failure
+
+    mov byte[ebx+11], Hexagon.VFS.FAT16B.directoryAttribute
+
+    mov eax, dword[.newCluster]
+    mov word[ebx+26], ax ;; First cluster
+
+;; Write modified parent directory to volume
+
+    call Hexagon.Kernel.FS.FAT16.getCurrentDirGeometry ;; EAX = sectors to write
+    mov esi, dword[Hexagon.VFS.FAT16B.currentDirLBA] ;; LBA of the parent directory
+    mov cx, 50h ;; Segment
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
+    mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
+
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.writeSectors
+
+;; Build the new cluster's content: "." and ".." entries, the rest zeroed
+
+    mov edi, Hexagon.Heap.DiskCache + 500h + 20000
+    mov ecx, dword[Hexagon.VFS.FAT16B.clusterSize]
+    mov al, 0
+
+    cld
+
+    rep stosb
+
+    mov edi, Hexagon.Heap.DiskCache + 500h + 20000
+    mov esi, .dotEntry
+    mov ecx, 11
+
+    rep movsb ;; EDI now at the attribute byte of the "." entry
+
+    mov byte[edi], Hexagon.VFS.FAT16B.directoryAttribute
+
+    mov eax, dword[.newCluster]
+    mov word[edi + 15], ax ;; First cluster (offset 26, 11 already consumed)
+
+    mov edi, Hexagon.Heap.DiskCache + 500h + 20000 + 32
+    mov esi, .dotDotEntry
+    mov ecx, 11
+
+    rep movsb ;; EDI now at the attribute byte of the ".." entry
+
+    mov byte[edi], Hexagon.VFS.FAT16B.directoryAttribute
+
+    mov eax, dword[.parentCluster]
+    mov word[edi + 15], ax ;; First cluster (0 if the parent is the root)
+
+;; Write the new cluster to disk
+
+    mov eax, dword[.newCluster]
+
+    sub eax, 2
+
+    movzx ebx, byte[Hexagon.VFS.FAT16B.sectorsPerCluster]
+
+    xor edx, edx
+
+    mul ebx ;; EAX = (cluster - 2) * sectorsPerCluster
+
+    add eax, dword[Hexagon.VFS.FAT16B.dataArea]
+
+    mov esi, eax
+
+    movzx ax, byte[Hexagon.VFS.FAT16B.sectorsPerCluster]
+
+    mov edi, Hexagon.Heap.DiskCache + 500h + 20000
+    mov ecx, 0 ;; Real mode segment
+    mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
+
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.writeSectors
+
+    jc .failure
+
+.operationSuccess:
+
+    clc
+
+    jmp .end
+
+.failure:
+
+    stc
+
+.end:
+
+;; Restore the directory we were in before resolving the path
+
+    mov eax, dword[.savedDirLBA]
+    mov dword[Hexagon.VFS.FAT16B.currentDirLBA], eax
+    mov eax, dword[.savedStackIndex]
+    mov dword[stackIndex], eax
+
+    popad
+
+    ret
+
+.dotEntry:         db ".", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "
+.dotDotEntry:      db ".", ".", " ", " ", " ", " ", " ", " ", " ", " ", " "
+.dirName:          times 13 db 0
+.parentCluster:    dd 0
+.newCluster:       dd 0
+.savedDirLBA:      dd 0
+.savedStackIndex:  dd 0
+
+;;************************************************************************************
+
+;; Remove an empty directory
+;;
+;; Input:
+;;
+;; ESI - Path of the directory to remove
+;;
+;; Output:
+;;
+;; CF set if the path is invalid, the name isn't a directory, or the
+;; directory still has entries other than "." and ".."
+
+Hexagon.Kernel.FS.FAT16.removeDirectoryFAT16B:
+
+    pushad
+
+    mov eax, dword[Hexagon.VFS.FAT16B.currentDirLBA]
+    mov dword[.savedDirLBA], eax
+    mov eax, dword[stackIndex]
+    mov dword[.savedStackIndex], eax
+
+    call Hexagon.Kernel.FS.FAT16.resolvePathFAT16B ;; ESI = last path component
+
+    jc .failure
+
+    mov edi, .dirName
+    mov ecx, 13
+
+    cld
+
+    rep movsb
+
+    mov esi, .dirName
+
+    call Hexagon.Kernel.FS.FAT16.fileExistsFAT16B
+
+    jc .failure
+
+    test byte[ebx+11], Hexagon.VFS.FAT16B.directoryAttribute
+    jz .failure ;; Not a directory
+
+    mov ax, word[ebx+26]
+    mov word[.targetCluster], ax
+
+;; Read the target directory's own cluster to make sure it has nothing in
+;; it besides "." and ".."
+
+    movzx eax, word[.targetCluster]
+
+    sub eax, 2
+
+    movzx ebx, byte[Hexagon.VFS.FAT16B.sectorsPerCluster]
+
+    xor edx, edx
+
+    mul ebx ;; EAX = (cluster - 2) * sectorsPerCluster
+
+    add eax, dword[Hexagon.VFS.FAT16B.dataArea]
+
+    mov esi, eax
+
+    movzx ax, byte[Hexagon.VFS.FAT16B.sectorsPerCluster]
+
+    mov cx, 50h ;; Segment
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
+    mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
+
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors
+
+    mov edi, Hexagon.Heap.DiskCache + 20000
+
+    mov ecx, dword[Hexagon.VFS.FAT16B.clusterSize]
+    shr ecx, 5 ;; Entries per cluster
+
+.checkEmptyLoop:
+
+    cmp byte[edi], 0
+    je .isEmpty ;; No entry was ever used beyond this point
+
+    cmp byte[edi], Hexagon.VFS.FAT16B.unlinkedAttribute
+    je .nextEntry
+
+    cmp byte[edi], '.'
+    jne .failure ;; A real name means the directory still has content
+
+.nextEntry:
+
+    add edi, 32
+
+    loop .checkEmptyLoop
+
+.isEmpty:
+
+;; Free the target's cluster in the FAT
+
+    movzx eax, word[Hexagon.VFS.FAT16B.sectorsPerFAT] ;; Sectors to read
+    mov esi, dword[Hexagon.VFS.FAT16B.FAT] ;; FAT LBA
+    mov ecx, 50h ;; Segment
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
+    mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
+
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors
+
+    movzx esi, word[.targetCluster]
+    shl esi, 1 ;; Multiply by 2
+
+    add esi, Hexagon.Heap.DiskCache + 20000
+
+    mov word[esi], 0 ;; Mark cluster as free
+
+    movzx eax, word[Hexagon.VFS.FAT16B.sectorsPerFAT] ;; Sectors to write
+    mov esi, dword[Hexagon.VFS.FAT16B.FAT] ;; FAT LBA
+    mov ecx, 50h ;; Segment
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
+    mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
+
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.writeSectors
+
+;; Look up the parent's entry again, since the FAT read above reused the
+;; same buffer and the old pointer into it is no longer valid
+
+    mov esi, .dirName
+
+    call Hexagon.Kernel.FS.FAT16.fileExistsFAT16B
+
+    jc .failure
+
+    mov byte[ebx], Hexagon.VFS.FAT16B.unlinkedAttribute
+
+    call Hexagon.Kernel.FS.FAT16.getCurrentDirGeometry ;; EAX = sectors to write
+    mov esi, dword[Hexagon.VFS.FAT16B.currentDirLBA] ;; LBA of the parent directory
+    mov cx, 50h ;; Segment
+    mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
+    mov dl, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
+
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.writeSectors
+
+    jc .failure
+
+.operationSuccess:
+
+    clc
+
+    jmp .end
+
+.failure:
+
+    stc
+
+.end:
+
+;; Restore the directory we were in before resolving the path
+
+    mov eax, dword[.savedDirLBA]
+    mov dword[Hexagon.VFS.FAT16B.currentDirLBA], eax
+    mov eax, dword[.savedStackIndex]
+    mov dword[stackIndex], eax
+
+    popad
+
+    ret
+
+.dirName:          times 13 db 0
+.targetCluster:    dw 0
+.savedDirLBA:      dd 0
+.savedStackIndex:  dd 0
+
+;;************************************************************************************
+
 ;; Initialize the volumes
 
 Hexagon.Kernel.FS.FAT16.initVolumeFAT16B:
