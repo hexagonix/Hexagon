@@ -546,7 +546,7 @@ Hexagon.Kernel.FS.FAT16.renameFileFAT16B:
 
     jc .failure
 
-    mov edi, .sourceName
+    mov edi, .sourceName + 500h ;; Correct EDI with the segment base for the string copy
     mov ecx, 13
 
     cld
@@ -578,7 +578,7 @@ Hexagon.Kernel.FS.FAT16.renameFileFAT16B:
     push esi
 
     mov esi, edi
-    mov edi, .destName
+    mov edi, .destName + 500h ;; Correct EDI with the segment base for the string copy
     mov ecx, 13
 
     cld
@@ -1144,7 +1144,7 @@ Hexagon.Kernel.FS.FAT16.saveFileFAT16B:
 
     jc .failure
 
-    mov edi, .resolvedName
+    mov edi, .resolvedName + 500h ;; Correct EDI with the segment base for the string copy
     mov ecx, 13
 
     cld
@@ -1408,7 +1408,7 @@ Hexagon.Kernel.FS.FAT16.unlinkFileFAT16B:
 
     jc .end
 
-    mov edi, .resolvedName
+    mov edi, .resolvedName + 500h ;; Correct EDI with the segment base for the string copy
     mov ecx, 13
 
     cld
@@ -1842,7 +1842,7 @@ Hexagon.Kernel.FS.FAT16.createDirectoryFAT16B:
 
     jc .failure
 
-    mov edi, .dirName
+    mov edi, .dirName + 500h ;; Correct EDI with the segment base for the string copy
     mov ecx, 13
 
     cld
@@ -2079,7 +2079,7 @@ Hexagon.Kernel.FS.FAT16.removeDirectoryFAT16B:
 
     jc .failure
 
-    mov edi, .dirName
+    mov edi, .dirName + 500h ;; Correct EDI with the segment base for the string copy
     mov ecx, 13
 
     cld
@@ -2419,15 +2419,17 @@ Hexagon.Kernel.FS.FAT16.nextPathComponent:
     cmp ecx, 12
     ja .invalidComponent
 
-;; Copy the component to a private buffer
+;; Copy the component to a private buffer. Correct EDI with the segment
+;; base, since string instructions write through ES, not DS
 
-    mov edi, .componentBuffer
+    mov edi, .componentBuffer + 500h
 
     cld
 
     rep movsb ;; Advances ESI and EDI by ECX bytes
 
-    mov byte[edi], 0 ;; Null terminator
+    mov al, 0
+    stosb ;; Null terminator, through ES like the copy above
 
     mov edi, .componentBuffer
 
@@ -2500,7 +2502,7 @@ Hexagon.Kernel.FS.FAT16.resolvePathFAT16B:
     push esi ;; Save the path cursor
 
     mov esi, edi
-    mov edi, .currentComponent
+    mov edi, .currentComponent + 500h
 
     call .copy13
 
@@ -2524,7 +2526,7 @@ Hexagon.Kernel.FS.FAT16.resolvePathFAT16B:
     push esi
 
     mov esi, edi
-    mov edi, .nextComponent
+    mov edi, .nextComponent + 500h
 
     call .copy13
 
@@ -2547,7 +2549,7 @@ Hexagon.Kernel.FS.FAT16.resolvePathFAT16B:
     push esi
 
     mov esi, .nextComponent
-    mov edi, .currentComponent
+    mov edi, .currentComponent + 500h
 
     call .copy13
 
