@@ -127,6 +127,48 @@ Hexagon.VFS.FAT16B Hexagon.VFS.FAT
 
 ;;************************************************************************************
 
+;; Determine the size of the current directory, in sectors and in entries.
+;; The root directory has a fixed size; a subdirectory is a single cluster
+;;
+;; Output:
+;;
+;; EAX - Sectors used by the current directory
+;; ECX - Total entries in the current directory
+
+Hexagon.Kernel.FS.FAT16.getCurrentDirGeometry:
+
+    push ebx
+
+    mov eax, dword[Hexagon.VFS.FAT16B.currentDirLBA]
+    mov ebx, dword[Hexagon.VFS.FAT16B.rootDir]
+
+    cmp eax, ebx
+    jne .subdirectory
+
+;; In the root directory, use the fixed root directory size
+
+    movzx eax, word[Hexagon.VFS.FAT16B.rootDirSize]
+    movzx ecx, word[Hexagon.VFS.FAT16B.rootEntries]
+
+    jmp .end
+
+.subdirectory:
+
+;; Subdirectories occupy a single cluster
+
+    movzx eax, byte[Hexagon.VFS.FAT16B.sectorsPerCluster]
+
+    mov ecx, dword[Hexagon.VFS.FAT16B.clusterSize]
+    shr ecx, 5 ;; Entries per cluster (32 bytes each)
+
+.end:
+
+    pop ebx
+
+    ret
+
+;;************************************************************************************
+
 ;; Converts the name in FAT format to a name in the 8.3 standard
 ;;
 ;; Input:
@@ -530,7 +572,7 @@ Hexagon.Kernel.FS.FAT16.renameFileFAT16B:
 
 ;; Write modified root directory to volume
 
-    movzx eax, word[Hexagon.VFS.FAT16B.rootDirSize] ;; Sectors to write
+    call Hexagon.Kernel.FS.FAT16.getCurrentDirGeometry ;; EAX = sectors to write
     mov esi, dword[Hexagon.VFS.FAT16B.currentDirLBA] ;; LBA of the root directory
     mov cx, 50h ;; Segment
     mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
@@ -599,7 +641,7 @@ Hexagon.Kernel.FS.FAT16.fileExistsFAT16B:
 
 ;; Load root directory to volume
 
-    movzx eax, word[Hexagon.VFS.FAT16B.rootDirSize] ;; Sectors to read
+    call Hexagon.Kernel.FS.FAT16.getCurrentDirGeometry ;; EAX = sectors to read
     mov esi, dword[Hexagon.VFS.FAT16B.currentDirLBA] ;; LBA of the root directory
     mov cx, 50h ;; Segment
     mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
@@ -609,7 +651,8 @@ Hexagon.Kernel.FS.FAT16.fileExistsFAT16B:
 
 ;; Search name in all entries
 
-    movzx edx, word[Hexagon.VFS.FAT16B.rootEntries] ;; Total folders or files in the root directory
+    call Hexagon.Kernel.FS.FAT16.getCurrentDirGeometry ;; ECX = total folders or files
+    mov edx, ecx
     mov ebx, Hexagon.Heap.DiskCache + 500h + 20000
 
     cld ;; Clear direction flag
@@ -841,24 +884,9 @@ Hexagon.Kernel.FS.FAT16.listFilesFAT16B:
 
 ;; Configure directorySize
 
-    mov eax, dword[Hexagon.VFS.FAT16B.currentDirLBA]
-    mov ebx, dword[Hexagon.VFS.FAT16B.rootDir]
-
-    cmp eax, ebx
-    jne .notOnRootDir
-
-;; If in root directory, use rootDirSize
-
-    movzx eax, word[Hexagon.VFS.FAT16B.rootDirSize]
-    jmp .continue
-
-.notOnRootDir:
-
-    movzx eax, byte[Hexagon.VFS.FAT16B.sectorsPerCluster]
+    call Hexagon.Kernel.FS.FAT16.getCurrentDirGeometry ;; EAX = sectors to read
 
 ;; Load root directory
-
-.continue:
 
     mov esi, dword[Hexagon.VFS.FAT16B.currentDirLBA] ;; LBA of the root directory
     mov cx, 50h ;; Segment
@@ -1147,7 +1175,7 @@ Hexagon.Kernel.FS.FAT16.saveFileFAT16B:
 
 ;; Write modified root directory to volume
 
-    movzx eax, word[Hexagon.VFS.FAT16B.rootDirSize] ;; Sectors to write
+    call Hexagon.Kernel.FS.FAT16.getCurrentDirGeometry ;; EAX = sectors to write
     mov esi, dword[Hexagon.VFS.FAT16B.currentDirLBA] ;; LBA of the root directory
     mov cx, 50h ;; Segment
     mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
@@ -1262,7 +1290,7 @@ Hexagon.Kernel.FS.FAT16.unlinkFileFAT16B:
 
 ;; Write modified root directory to volume
 
-    movzx eax, word[Hexagon.VFS.FAT16B.rootDirSize] ;; Sectors to write
+    call Hexagon.Kernel.FS.FAT16.getCurrentDirGeometry ;; EAX = sectors to write
     mov esi, dword[Hexagon.VFS.FAT16B.currentDirLBA] ;; LBA of the root directory
     mov cx, 50h ;; Segment
     mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
@@ -1508,7 +1536,7 @@ Hexagon.Kernel.FS.FAT16.createEmptyFileFAT16B:
 
 ;; Load root directory from volume
 
-    movzx eax, word[Hexagon.VFS.FAT16B.rootDirSize] ;; Sectors to read
+    call Hexagon.Kernel.FS.FAT16.getCurrentDirGeometry ;; EAX = sectors to read
     mov esi, dword[Hexagon.VFS.FAT16B.currentDirLBA] ;; LBA of root directory
     mov cx, 50h ;; Segment
     mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
@@ -1517,7 +1545,8 @@ Hexagon.Kernel.FS.FAT16.createEmptyFileFAT16B:
     call Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors
 
     mov edi, Hexagon.Heap.DiskCache + 20000
-    movzx ecx, word[Hexagon.VFS.FAT16B.rootEntries]
+
+    call Hexagon.Kernel.FS.FAT16.getCurrentDirGeometry ;; ECX = total entries
 
 ;; Search for empty entry in root directory
 
@@ -1569,7 +1598,7 @@ Hexagon.Kernel.FS.FAT16.createEmptyFileFAT16B:
 
 ;; Write modified root directory to volume
 
-    movzx eax, word[Hexagon.VFS.FAT16B.rootDirSize] ;; Sectors to write
+    call Hexagon.Kernel.FS.FAT16.getCurrentDirGeometry ;; EAX = sectors to write
     mov esi, dword[Hexagon.VFS.FAT16B.currentDirLBA] ;; LBA of the root directory
     mov cx, 50h ;; Segment
     mov edi, Hexagon.Heap.DiskCache + 20000 ;; Offset
@@ -1690,7 +1719,8 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
 
 ;; Read the sectors of the current directory
 
-    movzx eax, word[Hexagon.VFS.FAT16B.rootDirSize]
+    call Hexagon.Kernel.FS.FAT16.getCurrentDirGeometry ;; EAX = sectors, ECX = entries
+    push ecx
     mov esi, dword[Hexagon.VFS.FAT16B.currentDirLBA]
     mov ecx, 50h
     mov edi, Hexagon.Heap.DiskCache + 20000
@@ -1699,7 +1729,7 @@ Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B:
     call Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors
 
     mov edi, Hexagon.Heap.DiskCache + 20000
-    mov ecx, [Hexagon.VFS.FAT16B.maxFiles]
+    pop ecx
     xor edx, edx
 
 .checkDirectoryLoop:
