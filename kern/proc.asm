@@ -158,6 +158,9 @@ times Hexagon.Processes.Table.limit dd 0 ;; Absolute tick target while in States
 Hexagon.Processes.Table.argBase:
 times Hexagon.Processes.Table.limit dd 0 ;; Alloc process arguments buffer, own life as the process; 0 = none
 
+Hexagon.Processes.Table.envBase:
+times Hexagon.Processes.Table.limit dd 0 ;; Alloc process environment buffer, own life as the process; 0 = none
+
 Hexagon.Processes.Table.tempBase:
 times Hexagon.Processes.Table.limit dd 0 ;; Alloc temp scratch buffer for process, lazily allocated on first use; 0 = none
 
@@ -207,6 +210,8 @@ Hexagon.Processes.Table.States.reserved = 7
 Hexagon.Processes.Table.stackSize = 16384 ;; Dedicated stack space carved out of each process's own block
 
 Hexagon.Kern.Proc.maxArgumentsLength = 2000 ;; Longer arguments are truncated to fit Hexagon.Processes.Table.argBase's allocation
+
+Hexagon.Kern.Proc.maxEnvironmentLength = 2000 ;; Bytes, not variable count; Hexagon.Processes.Table.envBase's allocation
 
 ;; Kernel's own boot-time stack, saved across the very first hx.exec (called
 ;; directly by Hexagon.Kern.Init.startUserMode, before any process exists to
@@ -733,6 +738,19 @@ Hexagon.Kern.Proc.exit:
     mov dword[Hexagon.Processes.Table.argBase + edx * 4], 0
 
 .noArgBaseToFree:
+
+    mov ebx, dword[Hexagon.Processes.Table.envBase + edx * 4]
+
+    cmp ebx, 0
+    je .noEnvBaseToFree
+
+    mov ecx, Hexagon.Kern.Proc.maxEnvironmentLength
+
+    call Hexagon.Arch.Gen.Mm.free
+
+    mov dword[Hexagon.Processes.Table.envBase + edx * 4], 0
+
+.noEnvBaseToFree:
 
     mov ebx, dword[Hexagon.Processes.Table.tempBase + edx * 4]
 
@@ -1370,6 +1388,30 @@ Hexagon.Kern.Proc.registerSlot:
 
 .argBaseReady:
 
+;; Every new process gets its own environment, whether created by exec or
+;; spawn, inherited as a copy of the calling process's own environment
+;; (Hexagon.Kern.Proc.copyCallerEnvironment). Best effort, same reasoning
+;; as the argBase fallback above: the image is already loaded and
+;; committed by this point, so out-of-memory here just means an empty
+;; environment instead of failing the whole exec/spawn
+
+    push ebx
+
+    mov ebx, Hexagon.Kern.Proc.maxEnvironmentLength
+
+    call Hexagon.Arch.Gen.Mm.malloc
+
+    cmp eax, 0
+    je .envBaseSkip
+
+    mov dword[Hexagon.Processes.Table.envBase + edx * 4], ebx
+
+    call Hexagon.Kern.Proc.copyCallerEnvironment ;; EDX = new slot, whose envBase is now allocated
+
+.envBaseSkip:
+
+    pop ebx
+
     inc dword[Hexagon.Processes.Table.nextPID]
 
     mov eax, dword[Hexagon.Processes.Table.nextPID]
@@ -1440,6 +1482,62 @@ Hexagon.Kern.Proc.registerSlot:
 ;; where it actually becomes visible to maybeSchedule/getProcessTable
 
     mov byte[Hexagon.Processes.Table.state + edx], Hexagon.Processes.Table.States.ready
+
+    ret
+
+;;************************************************************************************
+
+;; Fills a freshly allocated envBase with a copy of the calling process's
+;; own environment, bounded by Hexagon.Kern.Proc.maxEnvironmentLength. The
+;; very first hx.exec has no calling process slot yet
+;; (Hexagon.Scheduler.current is still 0xFF at boot) and gets an empty
+;; environment instead
+;;
+;; Input:
+;;
+;; EDX - New slot index (Hexagon.Processes.Table.envBase already allocated)
+
+Hexagon.Kern.Proc.copyCallerEnvironment:
+
+    pushad
+
+;; Hexagon.Processes.Table.envBase points at a Hexagon.Arch.Gen.Mm.malloc'd
+;; block, addressed through the kernel linear segment rather than the
+;; kernel data segment Hexagon.Processes.Table itself lives on - see the
+;; equivalent note by the arguments buffer copy in Hexagon.Kern.Proc.exec
+
+    push es
+
+    push 18h ;; Kernel linear segment
+    pop es
+
+    mov edi, dword[Hexagon.Processes.Table.envBase + edx * 4]
+
+    cmp byte[Hexagon.Scheduler.current], 0xFF
+    je .emptyEnvironment
+
+    movzx eax, byte[Hexagon.Scheduler.current]
+
+    mov esi, dword[Hexagon.Processes.Table.envBase + eax * 4]
+
+    mov ecx, Hexagon.Kern.Proc.maxEnvironmentLength
+
+    cld
+
+    rep movsb
+
+    jmp .end
+
+.emptyEnvironment:
+
+    mov byte[es:edi], 0 ;; Terminates the current entry (none)
+    mov byte[es:edi + 1], 0 ;; Terminates the whole block
+
+.end:
+
+    pop es
+
+    popad
 
     ret
 
