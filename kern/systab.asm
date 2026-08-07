@@ -193,3 +193,8 @@ Hexagon.Kern.Syscall.hexagonServices:
 
     dd Hexagon.Kern.Proc.spawn                                         ;; 70
     dd Hexagon.Kern.Proc.kill                                          ;; 71
+
+;; Filesystem hierarchy
+
+    dd Hexagon.Kernel.FS.VFS.createDirectory                           ;; 72
+    dd Hexagon.Kernel.FS.VFS.removeDirectory                           ;; 73

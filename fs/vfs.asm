@@ -217,6 +217,91 @@ Hexagon.Kernel.FS.VFS.unlinkFile:
 
 ;;************************************************************************************
 
+;; Create a new, empty directory
+;;
+;; Input:
+;;
+;; ESI - Pointer to the path of the directory to create
+;;
+;; Output:
+;;
+;; EAX - Error code, if applicable
+;;     - 05h for permission denied
+;; CF defined if the directory already exists or the path is invalid
+
+Hexagon.Kernel.FS.VFS.createDirectory:
+
+    call Hexagon.Kern.Users.getUserPermissions
+
+    cmp eax, 03h ;; Group code for default user
+    je .permissionDenied
+
+    mov ah, byte[Hexagon.VFS.Control.filesystemType]
+
+    cmp ah, Hexagon.VFS.FS.FAT16B
+    je .newDirectoryFAT16B
+
+    ret
+
+.newDirectoryFAT16B:
+
+    call Hexagon.Kernel.FS.FAT16.createDirectoryFAT16B
+
+    ret
+
+.permissionDenied:
+
+    stc
+
+    mov eax, 05h
+
+    ret
+
+;;************************************************************************************
+
+;; Remove an empty directory from volume
+;;
+;; Input:
+;;
+;; ESI - Pointer to the path of the directory to remove
+;;
+;; Output:
+;;
+;; EAX - Error code, if applicable
+;;     - 05h for permission denied
+;; CF defined if the directory was not found, isn't empty, or isn't a
+;; directory
+
+Hexagon.Kernel.FS.VFS.removeDirectory:
+
+    call Hexagon.Kern.Users.getUserPermissions
+
+    cmp eax, 03h ;; Group code for default user
+    je .permissionDenied
+
+    mov ah, byte[Hexagon.VFS.Control.filesystemType]
+
+    cmp ah, Hexagon.VFS.FS.FAT16B
+    je .removeDirectoryFAT16B
+
+    ret
+
+.removeDirectoryFAT16B:
+
+    call Hexagon.Kernel.FS.FAT16.removeDirectoryFAT16B
+
+    ret
+
+.permissionDenied:
+
+    stc
+
+    mov eax, 05h
+
+    ret
+
+;;************************************************************************************
+
 ;; Save file to volume
 ;;
 ;; Input:
