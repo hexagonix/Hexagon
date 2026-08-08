@@ -462,8 +462,43 @@ Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.waitKeyboard:
 
     inc byte[.currentCodesIndex]
 
+;; Numpad / sends the same 35h as the regular ; key, the only difference
+;; being this E0 prefix sent right before it. Both still land in
+;; keyboardHandler.scanCodes exactly as the interrupt handler stored them;
+;; the prefix is only skipped here, in the consumer, rather than by
+;; touching the handler itself. E0 has to be caught before the bit7 check
+;; below, since 0E0h itself already has bit7 set and would otherwise be
+;; dropped there as if it were a release code
+
+    cmp al, 0E0h
+    jne .notExtendedPrefix
+
+    mov byte[.extendedPending], 1
+
+    jmp .keyLoop
+
+.notExtendedPrefix:
+
+;; Clear the pending flag on this byte no matter what it turns out to be,
+;; make or break code, so a release right after E0 (Numpad / being let go)
+;; can't leave it stuck set for whatever key comes next
+
+    cmp byte[.extendedPending], 0
+    je .checkRelease
+
+    mov byte[.extendedPending], 0
+
+    cmp al, 35h
+    jne .checkRelease
+
+    add al, 40h ;; Numpad /, tell it apart from ; sharing this same code
+
+.checkRelease:
+
     bt ax, 7
     jc .keyLoop
+
+.lookup:
 
 ;; Check Shift
 
@@ -489,6 +524,7 @@ Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.waitKeyboard:
     ret
 
 .currentCodesIndex: db 0
+.extendedPending: db 0
 
 ;;************************************************************************************
 
@@ -498,24 +534,24 @@ Hexagon.Keyboard.keyboardDefaultLayout:
 
     db 27, 0, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 8, ' ', 'q', 'w', 'e'
     db 'r', 't', 'y', 'u', 'i', 'o', 'p', "'", '[', 10, 29, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k'
-    db 'l', 127, '~', "'", 42, ']', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', ';', 0xFF, 0xFF
+    db 'l', 127, '~', "'", 42, ']', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', ';', 0xFF, '*'
     db 0xFF, ' '
 
     db 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, '7', '8', '9'
     db '-', '4', '5', '6', '+', '1', '2', '3', '0', '.', 0xFF, 0xFF, '\', 0xFF, 0xFF, 0xFF, 0xFF
     db 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
-    db 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, '/', 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+    db 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, '/', 0xFF, '/', 0xFF, 0xFF, 0xFF ;; Last '/' is Numpad /, tagged 40h by keyboardHandler to tell it apart from the one above sharing 35h with ;
     db 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 
 .shiftKeys:
 
     db 27, 0, '!', '@', '#', '$', '%', '?', '&', '*', '(', ')', '_', '+', 8, 9, 'Q', 'W', 'E', 'R'
     db 'T', 'Y', 'U', 'I', 'O', 'P', '`', '{', 10, 29, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'
-    db 127, '^', '"', 42, '}', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', ':', 0xFF, 0xFF, 0xFF
+    db 127, '^', '"', 42, '}', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', ':', 0xFF, 0xFF, '*'
     db ' '
 
     db 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, '7', '8', '9'
     db '-', '4', '5', '6', '+', '1', '2', '3', '0', '.', 0xFF, 0xFF, '|', 0xFF, 0xFF, 0xFF, 0xFF
     db 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
-    db 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, '?', 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+    db 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, '?', 0xFF, '/', 0xFF, 0xFF, 0xFF ;; Numpad / stays '/' even shifted, like on real hardware
     db 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
