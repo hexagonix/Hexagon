@@ -1273,6 +1273,8 @@ Hexagon.Kern.Proc.allocateAndLoadImage:
 
     push esi
 
+    xor ecx, ecx ;; Load the whole image, uncapped
+
     call Hexagon.Kernel.FS.VFS.openFile
 
     pop esi
