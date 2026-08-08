@@ -1004,6 +1004,18 @@ Hexagon.Kernel.FS.FAT16.listFilesFAT16B:
 
     mov byte[.separatorConfig], Hexagon.VFS.FAT16B.filenameSeparator
 
+;; Check whether this entry is deleted or marks the end of the directory
+;; before looking at its attribute byte. A removed directory's attribute
+;; byte still has the directory bit set, since removing one only writes
+;; the unlinked marker over its name, so this must be checked first or
+;; a removed directory reaches .markAsSubdirectory and still gets listed
+
+    cmp byte[esi], 0   ;; If last file, finish
+    je .finishList
+
+    cmp byte[esi], Hexagon.VFS.FAT16B.unlinkedAttribute ;; If file deleted, skip
+    je .buildListLoop
+
 ;; Let's check some attributes of the entry, such as whether it is a directory or a volume label.
 ;; For now, if we are talking about these entries, we will skip until the support is completed.
 
@@ -1020,20 +1032,11 @@ Hexagon.Kernel.FS.FAT16.listFilesFAT16B:
     cmp byte[esi+11], Hexagon.VFS.FAT16B.longFilenameAttribute ;; If long filename, skip
     je .buildListLoop
 
-    cmp byte[esi], Hexagon.VFS.FAT16B.unlinkedAttribute ;; If file deleted, skip
-    je .buildListLoop
-
 ;; Check for current directory '.' and skip it
 
     mov al, byte[esi]
     cmp al, '.'
     je .buildListLoop ;; Skip if it is '.' (current directory)
-
-;; If this is the last file, we don't want to look any further in the directory for something
-;; that doesn't exist ;-)
-
-    cmp byte[esi], 0   ;; If last file, finish
-    je .finishList
 
     jmp .continueProcessing
 
@@ -2077,7 +2080,7 @@ Hexagon.Kernel.FS.FAT16.removeDirectoryFAT16B:
 
     call Hexagon.Kernel.FS.FAT16.resolvePathFAT16B ;; ESI = last path component
 
-    jc .failure
+    jc .pathNotFound
 
     mov edi, .dirName + 500h ;; Correct EDI with the segment base for the string copy
     mov ecx, 13
@@ -2090,10 +2093,10 @@ Hexagon.Kernel.FS.FAT16.removeDirectoryFAT16B:
 
     call Hexagon.Kernel.FS.FAT16.fileExistsFAT16B
 
-    jc .failure
+    jc .notFound
 
     test byte[ebx+11], Hexagon.VFS.FAT16B.directoryAttribute
-    jz .failure ;; Not a directory
+    jz .notFound ;; Not a directory
 
     mov ax, word[ebx+26]
     mov word[.targetCluster], ax
@@ -2179,7 +2182,7 @@ Hexagon.Kernel.FS.FAT16.removeDirectoryFAT16B:
 
     call Hexagon.Kernel.FS.FAT16.fileExistsFAT16B
 
-    jc .failure
+    jc .notFound
 
     mov byte[ebx], Hexagon.VFS.FAT16B.unlinkedAttribute
 
@@ -2191,7 +2194,7 @@ Hexagon.Kernel.FS.FAT16.removeDirectoryFAT16B:
 
     call Hexagon.Kernel.Dev.i386.Disk.Disk.writeSectors
 
-    jc .failure
+    jc .writeError
 
 .operationSuccess:
 
@@ -2202,6 +2205,24 @@ Hexagon.Kernel.FS.FAT16.removeDirectoryFAT16B:
 .notEmpty:
 
     mov eax, 08h ;; IO.directoryNotEmpty
+
+    jmp .failure
+
+.pathNotFound:
+
+    mov eax, 07h ;; IO.pathNotFound
+
+    jmp .failure
+
+.notFound:
+
+    mov eax, 06h ;; IO.notFound
+
+    jmp .failure
+
+.writeError:
+
+    mov eax, 04h ;; IO.writingError
 
 .failure:
 
