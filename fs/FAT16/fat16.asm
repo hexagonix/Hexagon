@@ -806,10 +806,15 @@ Hexagon.Kernel.FS.FAT16.fileExistsFAT16B:
 ;;
 ;; ESI - Name of the file to load
 ;; EDI - Address of the file to be loaded
+;; ECX - Maximum bytes to copy into EDI, or 0 to copy the whole file
+;;       regardless of size. Every existing caller wants the whole file, so
+;;       this must stay 0 unless a caller deliberately only needs the start
+;;       of a possibly large file (Shell.checkShebang, peeking at a line)
 ;;
 ;; Output:
 ;;
-;; EAX - File size in bytes
+;; EAX - File size in bytes (the file's real size, even when ECX capped how
+;;       much of it actually got copied)
 ;; CF defined in case of file not found or invalid name
 
 Hexagon.Kernel.FS.FAT16.loadFileFAT16B:
@@ -821,6 +826,8 @@ Hexagon.Kernel.FS.FAT16.loadFileFAT16B:
     push esi
 
     mov dword[.loadAddress], edi
+    mov dword[.maxBytes], ecx
+    mov dword[.bytesCopied], 0
 
 ;; Check if the file exists and get the first cluster of it
 
@@ -905,6 +912,23 @@ Hexagon.Kernel.FS.FAT16.loadFileFAT16B:
 
     pop edi
 
+;; Stop once ECX's caller-requested cap (0 = whole file) has been copied,
+;; the same way running out of clusters below does, rather than reading the
+;; rest of a possibly much larger file the caller never asked for
+
+    add dword[.bytesCopied], ebp
+
+    cmp dword[.maxBytes], 0
+    je .noBytesCap
+
+    mov eax, dword[.bytesCopied]
+
+    cmp eax, dword[.maxBytes]
+
+    jae .operationSuccess
+
+.noBytesCap:
+
 ;; Get next cluster in FAT table
 
     movzx ebx, word[.cluster]
@@ -955,6 +979,8 @@ Hexagon.Kernel.FS.FAT16.loadFileFAT16B:
 .cluster      dw 0
 .loadAddress: dd 0
 .fileSize:    dd 0
+.maxBytes:    dd 0
+.bytesCopied: dd 0
 
 ;;************************************************************************************
 
