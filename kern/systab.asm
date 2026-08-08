@@ -80,8 +80,8 @@ Hexagon.Kern.Syscall.hexagonServices:
 ;; Memory and process management
 
     dd Hexagon.Kern.Syscall.nullSystemCall                             ;; 0 - null function
-    dd Hexagon.Arch.Gen.Mm.malloc                                      ;; 1
-    dd Hexagon.Arch.Gen.Mm.free                                        ;; 2
+    dd Hexagon.Kern.Syscall.malloc                                     ;; 1
+    dd Hexagon.Kern.Syscall.free                                       ;; 2
     dd Hexagon.Kern.Proc.exec                                          ;; 3
     dd Hexagon.Kern.Proc.exit                                          ;; 4
     dd Hexagon.Kern.Proc.getPID                                        ;; 5

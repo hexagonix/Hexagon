@@ -234,6 +234,70 @@ Hexagon.Kern.Syscall.nullSystemCall:
 
 ;;************************************************************************************
 
+;; hx.malloc's own registered syscall entry, in place of calling
+;; Hexagon.Arch.Gen.Mm.malloc directly. Mm.malloc operates on genuine
+;; flat/physical addresses (its free-list lives at
+;; Hexagon.Memory.initialAddress, a plain physical constant, and every
+;; internal pointer it walks is in that same frame). Handed back to a
+;; userland caller unchanged, that pointer is only valid under a segment
+;; based at 0. Dereferencing it through the caller's own DS (based at its
+;; own Hexagon.Processes.Table.base) would land at Table.base + pointer
+;; instead of the block Mm.malloc actually returned. Translate it here, the
+;; same way hexagonHandler already translates ESI/EDI on every syscall
+;; return, just against this one specific register, so a plain [ebx] back
+;; in the caller reaches the right place
+;;
+;; Input/output: same as Hexagon.Arch.Gen.Mm.malloc (EBX size in, EAX/EBX
+;; pointer out)
+
+Hexagon.Kern.Syscall.malloc:
+
+    call Hexagon.Arch.Gen.Mm.malloc
+
+    cmp eax, 0
+    je .end ;; Failed; EBX never held a real pointer, nothing to translate
+
+    push eax ;; Preserve the success flag across getCurrentProcessBase
+
+    call Hexagon.Kern.Sched.getCurrentProcessBase ;; EAX = caller's own base
+
+    sub ebx, eax
+    add ebx, 500h
+
+    pop eax
+
+.end:
+
+    ret
+
+;;************************************************************************************
+
+;; hx.free's own registered syscall entry, in place of calling
+;; Hexagon.Arch.Gen.Mm.free directly. The caller only ever has the
+;; process-relative pointer Hexagon.Kern.Syscall.malloc handed back above,
+;; so it has to be translated back to the flat/physical frame Mm.free's own
+;; free-list bookkeeping expects before freeing it, the exact reverse of
+;; the malloc side
+;;
+;; Input/output: same as Hexagon.Arch.Gen.Mm.free (EBX pointer in, ECX size in)
+
+Hexagon.Kern.Syscall.free:
+
+    push eax
+
+    call Hexagon.Kern.Sched.getCurrentProcessBase ;; EAX = caller's own base
+
+    add ebx, eax
+    sub ebx, 500h
+
+    pop eax
+
+    call Hexagon.Arch.Gen.Mm.free
+
+    ret
+
+;;************************************************************************************
+
 ;; hx.open's own registered syscall entry, in place of calling
 ;; Hexagon.Kernel.Dev.Dev.open directly. Hexagon.Kernel.FS.FAT16.loadFileFAT16B,
 ;; underneath Dev.open's own file-opening path, honors ECX as a byte cap (0 =
