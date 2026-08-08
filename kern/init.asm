@@ -145,6 +145,6 @@ Hexagon.Kern.Init.startUserMode:
 Hexagon.Init.Const:
 
 .initHexagon: ;; Name of the init image on the volume
-db "init", 0
+db "/sbin/init", 0
 .shellHexagon: ;; Default shell name
-db "sh", 0
+db "/bin/sh", 0
