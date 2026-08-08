@@ -412,6 +412,8 @@ Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.changeLayout:
 
     mov edi, Hexagon.Keyboard.keyboardDefaultLayout
 
+    xor ecx, ecx ;; Load the whole layout, uncapped
+
     call Hexagon.Kernel.FS.VFS.openFile
 
     ret
