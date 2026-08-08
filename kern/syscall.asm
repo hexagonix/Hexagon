@@ -234,6 +234,20 @@ Hexagon.Kern.Syscall.nullSystemCall:
 
 ;;************************************************************************************
 
+;; hx.open's own registered syscall entry, in place of calling
+;; Hexagon.Kernel.Dev.Dev.open directly. Hexagon.Kernel.FS.FAT16.loadFileFAT16B,
+;; underneath Dev.open's own file-opening path, honors ECX as a byte cap (0 =
+;; whole file, same as it's always been). Every caller is expected to set
+;; ECX itself: 0 for the whole file, same as always, or a real cap like
+;; Shell.checkShebang does when it only needs a file's first line and
+;; shouldn't need a buffer sized for the whole thing just to look at it
+
+Hexagon.Kern.Syscall.open:
+
+    jmp Hexagon.Kernel.Dev.Dev.open
+
+;;************************************************************************************
+
 Hexagon.Kern.Syscall.installInterruption:
 
     cli

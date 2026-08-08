@@ -91,7 +91,7 @@ Hexagon.Kern.Syscall.hexagonServices:
 
 ;; File and device management
 
-    dd Hexagon.Kernel.Dev.Dev.open                                     ;; 9
+    dd Hexagon.Kern.Syscall.open                                       ;; 9
     dd Hexagon.Kernel.Dev.Dev.write                                    ;; 10
     dd Hexagon.Kernel.Dev.Dev.close                                    ;; 11
 
