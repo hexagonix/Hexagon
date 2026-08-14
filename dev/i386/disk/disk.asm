@@ -318,7 +318,6 @@ Hexagon.Kernel.Dev.i386.Disk.Disk.readBPB:
 
     ret
 
-
 ;;************************************************************************************
 
 ;; Restarts a given disk provided as a parameter

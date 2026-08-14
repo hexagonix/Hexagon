@@ -1426,7 +1426,7 @@ Hexagon.Kern.Proc.registerSlot:
 
 ;; Only hx.exec fills this in for real
 
-    mov dword[Hexagon.Processes.Table.parentSlot + edx * 4], 0xFFFFFFFF 
+    mov dword[Hexagon.Processes.Table.parentSlot + edx * 4], 0xFFFFFFFF
 
     movzx ecx, byte[Hexagon.Scheduler.current]
 
