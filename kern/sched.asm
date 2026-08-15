@@ -311,7 +311,27 @@ Hexagon.Kern.Sched.maybeSchedule:
 
     mov dword[Hexagon.Processes.Table.esp + edx * 4], esp
 
+;; The idle slot (PID 0) must never be in the States.ready state. If that were to happen,
+;; it would enter the list of processes contending for the scheduler, which must not occur.
+;; In this scenario, when a process exits and no other process is waiting or ready,
+;; the idle process should execute. Its state is changed to State.running,
+;; but when it is preempted to run another ready process, its status must not
+;; be changed to States.ready, but rather back to States.idle,
+;; so that it does not compete with the other processes.
+
+    cmp edx, Hexagon.Kern.Sched.idleSlot
+    je .outgoingWasIdle
+
     mov byte[Hexagon.Processes.Table.state + edx], Hexagon.Processes.Table.States.ready
+
+    jmp .outgoingDone
+
+.outgoingWasIdle:
+
+    mov byte[Hexagon.Processes.Table.state + edx], Hexagon.Processes.Table.States.idle
+
+.outgoingDone:
+
     mov byte[Hexagon.Processes.Table.state + ebx], Hexagon.Processes.Table.States.running
 
     mov byte[Hexagon.Scheduler.current], bl
@@ -323,11 +343,11 @@ Hexagon.Kern.Sched.maybeSchedule:
 
 .resumeSlot:
 
-    mov eax, dword[Hexagon.Processes.Table.base+ebx*4]
+    mov eax, dword[Hexagon.Processes.Table.base + ebx * 4]
 
     call Hexagon.Kern.Sched.setUserSegmentBase
 
-    mov esp, dword[Hexagon.Processes.Table.esp+ebx*4]
+    mov esp, dword[Hexagon.Processes.Table.esp + ebx * 4]
 
     popa
 
