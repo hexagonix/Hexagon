@@ -119,7 +119,7 @@ header: db "HFNT"
     db 00000000b
     db 00000000b
 
-.quotationMarks: ;; " 
+.quotationMarks: ;; "
 
     db 00000000b
     db 00000000b

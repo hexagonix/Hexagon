@@ -90,9 +90,9 @@ use32
 Hexagon.Users.ID:
 
 .Hexagon    = 000
-.root       = 777
+.root       = 0
 .supervisor = 699
-.default    = 555
+.default    = 1
 
 Hexagon.Users.Groups:
 
@@ -104,46 +104,13 @@ Hexagon.Users.Groups:
 
 ;;************************************************************************************
 
-;; Defines the username and its respective id
+;; Registers the id of the user now logged in
 ;;
 ;; Input:
 ;;
 ;; EAX - Logged in user id (provided by login manager)
-;; ESI - Logged in username
 
 Hexagon.Kern.Users.setUser:
-
-    push eax
-
-    push esi
-
-    push ds
-    pop es
-
-    call Hexagon.Libkern.String.stringSize
-
-    cmp eax, 32
-    jl .validName
-
-    stc
-
-    ret
-
-.validName:
-
-    mov ecx, eax
-
-    inc ecx
-
-;; Copy username
-
-    mov edi, Hexagon.Users.username
-
-    pop esi
-
-    rep movsb ;; Copy (ECX) characters from ESI to EDI
-
-    pop eax
 
     mov dword [Hexagon.Users.userId], eax
 
@@ -153,11 +120,10 @@ Hexagon.Kern.Users.setUser:
 
 ;;************************************************************************************
 
-;; Returns the name of the logged in user to the process, as well as the user id
+;; Returns the id of the logged in user to the process
 ;;
 ;; Output:
 ;;
-;; ESI - Logged in and registered username
 ;; EAX - Logged in user id
 
 Hexagon.Kern.Users.getUser:
@@ -165,8 +131,7 @@ Hexagon.Kern.Users.getUser:
     cmp byte[Hexagon.Users.userLoggedIn], 00h
     je .fim
 
-    mov esi, Hexagon.Users.username ;; Send username
-    mov eax, [Hexagon.Users.userId] ;; Send the user's group id
+    mov eax, [Hexagon.Users.userId]
 
 .fim:
 
@@ -176,11 +141,9 @@ Hexagon.Kern.Users.getUser:
 
 Hexagon.Kern.Users.checkUser:
 
-
 ;;************************************************************************************
 
 Hexagon.Kern.Users.codeUser:
-
 
 ;;************************************************************************************
 
@@ -190,10 +153,17 @@ Hexagon.Kern.Users.getUserGroup:
 
 Hexagon.Kern.Users.validateUser:
 
-
 ;;************************************************************************************
 
 Hexagon.Kern.Users.getUserPermissions:
+
+;; Before any login completes, Hexagon.Users.userId still sits at its
+;; zero-initialized default, the same value root now uses (see the ID table
+;; below), so this must not fall through to the comparisons below or an
+;; unauthenticated caller would be granted root's permissions
+
+    cmp byte[Hexagon.Users.userLoggedIn], 00h
+    je .notLoggedIn
 
     mov eax, [Hexagon.Users.userId]
 
@@ -202,6 +172,12 @@ Hexagon.Kern.Users.getUserPermissions:
 
     cmp eax, Hexagon.Users.ID.supervisor
     je .supervisor
+
+    mov eax, Hexagon.Users.Groups.default
+
+    ret
+
+.notLoggedIn:
 
     mov eax, Hexagon.Users.Groups.default
 
@@ -229,19 +205,22 @@ Hexagon.Kern.Users.getUserPermissions:
 ;; Username    | User ID |                 Permissions              | Account Type
 ;; ------------|---------|------------------------------------------|-------------
 ;; Hexagon     |   000   |        Total (Hardware, Software)        | Kernel
-;; root        |   777   | Reading, writing and execution (total)   | root
+;; root        |   000   | Reading, writing and execution (total)   | root
 ;; supervisor  |   699   | Reading, writing and executing (debug)   | root
-;; Other names |   555   | Reading, writing and execution (partial) | Common
+;; Other names |  1..698 | Reading, writing and execution (partial) | Common
 ;;
 ;; Names are not taken into account (except root, for login services).
-;; What Hexagon will validate are the ids, where the common user id may vary, but always
-;; starting with the number 555 and ending with 699, at most.
+;; What Hexagon will validate are the ids, where the common user id may vary. Userland
+;; account management assigns each new user the next unused id, starting at 1, so no
+;; two accounts ever share a code.
+;;
+;; root and the kernel share id 000, but they are never confused with each other: the
+;; kernel never authenticates through Hexagon.Kern.Users.setUser, and
+;; getUserPermissions only trusts Hexagon.Users.userId once Hexagon.Users.userLoggedIn
+;; is set, so a process running before login completes is never evaluated as root.
 
 Hexagon.Users.userId:  dd 0 ;; Will store the id of the currently logged in user
 Hexagon.Users.groupId: dd 0 ;; Will store the group id of the currently logged in user
-
-Hexagon.Users.username: ;; Will store the name of the currently logged in user
-times 32 db 0
 
 Hexagon.Users.userLoggedIn: db 0 ;; Stores whether or not the login was performed
 

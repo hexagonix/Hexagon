@@ -158,6 +158,9 @@ times Hexagon.Processes.Table.limit dd 0 ;; Absolute tick target while in States
 Hexagon.Processes.Table.argBase:
 times Hexagon.Processes.Table.limit dd 0 ;; Alloc process arguments buffer, own life as the process; 0 = none
 
+Hexagon.Processes.Table.envBase:
+times Hexagon.Processes.Table.limit dd 0 ;; Alloc process environment buffer, own life as the process; 0 = none
+
 Hexagon.Processes.Table.tempBase:
 times Hexagon.Processes.Table.limit dd 0 ;; Alloc temp scratch buffer for process, lazily allocated on first use; 0 = none
 
@@ -207,6 +210,8 @@ Hexagon.Processes.Table.States.reserved = 7
 Hexagon.Processes.Table.stackSize = 16384 ;; Dedicated stack space carved out of each process's own block
 
 Hexagon.Kern.Proc.maxArgumentsLength = 2000 ;; Longer arguments are truncated to fit Hexagon.Processes.Table.argBase's allocation
+
+Hexagon.Kern.Proc.maxEnvironmentLength = 2000 ;; Bytes, not variable count; Hexagon.Processes.Table.envBase's allocation
 
 ;; Kernel's own boot-time stack, saved across the very first hx.exec (called
 ;; directly by Hexagon.Kern.Init.startUserMode, before any process exists to
@@ -734,6 +739,19 @@ Hexagon.Kern.Proc.exit:
 
 .noArgBaseToFree:
 
+    mov ebx, dword[Hexagon.Processes.Table.envBase + edx * 4]
+
+    cmp ebx, 0
+    je .noEnvBaseToFree
+
+    mov ecx, Hexagon.Kern.Proc.maxEnvironmentLength
+
+    call Hexagon.Arch.Gen.Mm.free
+
+    mov dword[Hexagon.Processes.Table.envBase + edx * 4], 0
+
+.noEnvBaseToFree:
+
     mov ebx, dword[Hexagon.Processes.Table.tempBase + edx * 4]
 
     cmp ebx, 0
@@ -1255,6 +1273,8 @@ Hexagon.Kern.Proc.allocateAndLoadImage:
 
     push esi
 
+    xor ecx, ecx ;; Load the whole image, uncapped
+
     call Hexagon.Kernel.FS.VFS.openFile
 
     pop esi
@@ -1370,6 +1390,30 @@ Hexagon.Kern.Proc.registerSlot:
 
 .argBaseReady:
 
+;; Every new process gets its own environment, whether created by exec or
+;; spawn, inherited as a copy of the calling process's own environment
+;; (Hexagon.Kern.Proc.copyCallerEnvironment). Best effort, same reasoning
+;; as the argBase fallback above: the image is already loaded and
+;; committed by this point, so out-of-memory here just means an empty
+;; environment instead of failing the whole exec/spawn
+
+    push ebx
+
+    mov ebx, Hexagon.Kern.Proc.maxEnvironmentLength
+
+    call Hexagon.Arch.Gen.Mm.malloc
+
+    cmp eax, 0
+    je .envBaseSkip
+
+    mov dword[Hexagon.Processes.Table.envBase + edx * 4], ebx
+
+    call Hexagon.Kern.Proc.copyCallerEnvironment ;; EDX = new slot, whose envBase is now allocated
+
+.envBaseSkip:
+
+    pop ebx
+
     inc dword[Hexagon.Processes.Table.nextPID]
 
     mov eax, dword[Hexagon.Processes.Table.nextPID]
@@ -1382,7 +1426,7 @@ Hexagon.Kern.Proc.registerSlot:
 
 ;; Only hx.exec fills this in for real
 
-    mov dword[Hexagon.Processes.Table.parentSlot + edx * 4], 0xFFFFFFFF 
+    mov dword[Hexagon.Processes.Table.parentSlot + edx * 4], 0xFFFFFFFF
 
     movzx ecx, byte[Hexagon.Scheduler.current]
 
@@ -1440,6 +1484,61 @@ Hexagon.Kern.Proc.registerSlot:
 ;; where it actually becomes visible to maybeSchedule/getProcessTable
 
     mov byte[Hexagon.Processes.Table.state + edx], Hexagon.Processes.Table.States.ready
+
+    ret
+
+;;************************************************************************************
+
+;; Fills a freshly allocated envBase with a copy of the calling process's
+;; own environment, bounded by Hexagon.Kern.Proc.maxEnvironmentLength. The
+;; very first hx.exec has no calling process slot yet
+;; (Hexagon.Scheduler.current is still 0xFF at boot) and gets an empty
+;; environment instead
+;;
+;; Input:
+;;
+;; EDX - New slot index (Hexagon.Processes.Table.envBase already allocated)
+
+Hexagon.Kern.Proc.copyCallerEnvironment:
+
+    pushad
+
+;; ES needs to be realigned with DS before writing through ES:EDI (stosb
+;; etc.) below, same reasoning as Hexagon.Kern.Proc.registerSlot's own
+;; name-copy loop
+
+    push es
+
+    push ds
+    pop es
+
+    mov edi, dword[Hexagon.Processes.Table.envBase + edx * 4]
+
+    cmp byte[Hexagon.Scheduler.current], 0xFF
+    je .emptyEnvironment
+
+    movzx eax, byte[Hexagon.Scheduler.current]
+
+    mov esi, dword[Hexagon.Processes.Table.envBase + eax * 4]
+
+    mov ecx, Hexagon.Kern.Proc.maxEnvironmentLength
+
+    cld
+
+    rep movsb
+
+    jmp .end
+
+.emptyEnvironment:
+
+    mov byte[es:edi], 0 ;; Terminates the current entry (none)
+    mov byte[es:edi + 1], 0 ;; Terminates the whole block
+
+.end:
+
+    pop es
+
+    popad
 
     ret
 
@@ -1743,5 +1842,530 @@ Hexagon.Kern.Proc.kill:
     stc
 
     mov eax, 05h
+
+    ret
+
+;;************************************************************************************
+
+;; Looks up a variable in the calling process's own environment
+;;
+;; Input:
+;;
+;; ESI - Variable name (NUL-terminated, no '=')
+;;
+;; Output:
+;;
+;; ESI - Pointer to the value (NUL-terminated), if found
+;; CF - Set if not found
+
+Hexagon.Kern.Proc.getenv:
+
+    push ebx
+    push edi
+    push es
+
+    mov [.wantedName], esi
+
+    push ds
+    pop es
+
+    movzx eax, byte[Hexagon.Scheduler.current]
+
+    mov esi, dword[Hexagon.Processes.Table.envBase + eax * 4]
+
+.entryLoop:
+
+    cmp byte[es:esi], 0
+    je .notFound ;; Double NUL: end of the block
+
+    mov edi, dword[.wantedName]
+
+.compareLoop:
+
+    mov bl, byte[es:esi]
+    mov al, byte[edi]
+
+    cmp al, 0
+    jne .compareChar
+
+;; The wanted name ran out; a match requires the stored entry to hit '='
+;; at exactly this point
+
+    cmp bl, '='
+    je .found
+
+    jmp .skipEntry
+
+.compareChar:
+
+    cmp bl, al
+    jne .skipEntry
+
+    inc esi
+    inc edi
+
+    jmp .compareLoop
+
+.skipEntry:
+
+;; Not a match: advance ESI to just past this entry's own NUL terminator
+
+    cmp byte[es:esi], 0
+    je .entryDone
+
+    inc esi
+
+    jmp .skipEntry
+
+.entryDone:
+
+    inc esi
+
+    jmp .entryLoop
+
+.found:
+
+    inc esi ;; ESI sits on the stored entry's '='; the value starts right after it
+
+    clc
+
+    jmp .scanDone
+
+.notFound:
+
+    stc
+
+.scanDone:
+
+    pop es
+
+.end:
+
+    pop edi
+    pop ebx
+
+    ret
+
+.wantedName: dd 0
+
+;;************************************************************************************
+
+;; Removes a variable from an environment block if present, compacting the
+;; bytes after it back over the gap left behind. Shared by
+;; Hexagon.Kern.Proc.setenv (replacing an existing entry) and
+;; Hexagon.Kern.Proc.unsetenv
+;;
+;; Input:
+;;
+;; ESI - Variable name to remove
+;; EDI - Environment block to modify in place
+;;
+;; Output:
+;;
+;; CF - Set if the variable wasn't found (block left unchanged)
+
+Hexagon.Kern.Proc.removeEnvEntry:
+
+    push eax
+    push ebx
+    push ecx
+    push edx
+    push esi
+    push edi
+    push es
+
+    mov [.wantedName], esi
+    mov [.block], edi
+
+    push ds
+    pop es
+
+;; First pass: find where the block's own terminating NUL sits, needed
+;; below to know how many bytes to shift regardless of how many entries
+;; follow the one being removed
+
+    mov ebx, edi
+
+.measureLoop:
+
+    cmp byte[es:ebx], 0
+    je .measured
+
+.measureSkip:
+
+    cmp byte[es:ebx], 0
+    je .measureSkipped
+
+    inc ebx
+
+    jmp .measureSkip
+
+.measureSkipped:
+
+    inc ebx
+
+    jmp .measureLoop
+
+.measured:
+
+    mov [.blockEnd], ebx
+
+;; Second pass: find the entry matching .wantedName, the same "read up to
+;; '=' or diverge" scan Hexagon.Kern.Proc.getenv uses
+
+    mov ebx, dword[.block]
+
+.entryLoop:
+
+    cmp byte[es:ebx], 0
+    je .notFound ;; Reached the terminating NUL without a match
+
+    mov esi, ebx
+    mov edi, dword[.wantedName]
+
+.matchLoop:
+
+    mov al, byte[es:esi]
+    mov dl, byte[edi]
+
+    cmp dl, 0
+    jne .matchChar
+
+    cmp al, '='
+    je .found
+
+    jmp .nextEntry
+
+.matchChar:
+
+    cmp al, dl
+    jne .nextEntry
+
+    inc esi
+    inc edi
+
+    jmp .matchLoop
+
+.nextEntry:
+
+.skip:
+
+    cmp byte[es:ebx], 0
+    je .skipped
+
+    inc ebx
+
+    jmp .skip
+
+.skipped:
+
+    inc ebx
+
+    jmp .entryLoop
+
+.found:
+
+;; EBX = start of the matched entry. ESI is already inside it, from the
+;; scan above; advance it to just past the entry's own NUL
+
+.findEntryEnd:
+
+    cmp byte[es:esi], 0
+    je .entryEndFound
+
+    inc esi
+
+    jmp .findEntryEnd
+
+.entryEndFound:
+
+    inc esi ;; ESI = start of whatever comes after the matched entry
+
+    mov ecx, dword[.blockEnd]
+    sub ecx, esi
+    inc ecx ;; +1 to also shift the block's own terminating NUL
+
+    mov edi, ebx ;; Destination: where the matched entry started
+
+.shiftLoop:
+
+    cmp ecx, 0
+    je .removed
+
+    mov al, byte[es:esi]
+
+    mov byte[es:edi], al
+
+    inc esi
+    inc edi
+
+    dec ecx
+
+    jmp .shiftLoop
+
+.removed:
+
+    clc
+
+    jmp .end
+
+.notFound:
+
+    stc
+
+.end:
+
+    pop es
+    pop edi
+    pop esi
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+
+    ret
+
+.wantedName: dd 0
+.block:      dd 0
+.blockEnd:   dd 0
+
+;;************************************************************************************
+
+;; Inserts or replaces a variable in the calling process's own environment.
+;; Removes any existing entry with the same name first
+;;
+;; Input:
+;;
+;; ESI - Variable name (NUL-terminated, no '=')
+;; EDI - Value (NUL-terminated)
+;;
+;; Output:
+;;
+;; CF - Set if the new value doesn't fit within
+;;      Hexagon.Kern.Proc.maxEnvironmentLength. Any existing entry with
+;;      this name is still removed either way, so the environment is
+;;      always left well-formed, just possibly without this variable
+
+Hexagon.Kern.Proc.setenv:
+
+    push eax
+    push ebx
+    push ecx
+    push edx
+    push esi
+    push edi
+    push es
+
+    mov [.wantedName], esi
+    mov [.newValue], edi
+
+    movzx eax, byte[Hexagon.Scheduler.current]
+
+    mov edi, dword[Hexagon.Processes.Table.envBase + eax * 4]
+    mov esi, dword[.wantedName]
+
+    call Hexagon.Kern.Proc.removeEnvEntry ;; CF ignored: a no-op if not already present
+
+    push ds
+    pop es
+
+;; Find the (possibly just-shortened) block's terminating NUL again, the
+;; same measuring pass as Hexagon.Kern.Proc.removeEnvEntry
+
+    mov ebx, dword[Hexagon.Processes.Table.envBase + eax * 4]
+
+.measureLoop:
+
+    cmp byte[es:ebx], 0
+    je .measured
+
+.measureSkip:
+
+    cmp byte[es:ebx], 0
+    je .measureSkipped
+
+    inc ebx
+
+    jmp .measureSkip
+
+.measureSkipped:
+
+    inc ebx
+
+    jmp .measureLoop
+
+.measured:
+
+;; EBX = where the new entry starts. Track the remaining budget as we
+;; write, one byte at a time, so a name/value that doesn't fit is caught
+;; instead of overflowing Hexagon.Processes.Table.envBase's allocation.
+;; The -1 reserves room for the block's own terminating NUL, written last
+
+    mov edx, ebx
+    sub edx, dword[Hexagon.Processes.Table.envBase + eax * 4]
+
+    mov ecx, Hexagon.Kern.Proc.maxEnvironmentLength
+    sub ecx, edx
+    dec ecx ;; ECX = room left, minus the block's own terminating NUL
+
+    mov edi, ebx
+    mov esi, dword[.wantedName]
+
+.appendName:
+
+    mov al, byte[esi]
+
+    cmp al, 0
+    je .appendEquals
+
+    cmp ecx, 0
+    je .doesNotFit
+
+    mov byte[es:edi], al
+
+    inc esi
+    inc edi
+    dec ecx
+
+    jmp .appendName
+
+.appendEquals:
+
+    cmp ecx, 0
+    je .doesNotFit
+
+    mov byte[es:edi], '='
+
+    inc edi
+    dec ecx
+
+    mov esi, dword[.newValue]
+
+.appendValue:
+
+    mov al, byte[esi]
+
+    cmp ecx, 0
+    je .doesNotFit
+
+    mov byte[es:edi], al
+
+    inc esi
+    inc edi
+    dec ecx
+
+    cmp al, 0
+    jne .appendValue
+
+    mov byte[es:edi], 0 ;; Block's own terminating NUL, right after the entry's
+
+    clc
+
+    jmp .end
+
+.doesNotFit:
+
+;; Leave what was written so far terminated, so the block stays
+;; well-formed even though this entry didn't make it in
+
+    mov byte[es:edi], 0
+
+    stc
+
+.end:
+
+    pop es
+    pop edi
+    pop esi
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+
+    ret
+
+.wantedName: dd 0
+.newValue:   dd 0
+
+;;************************************************************************************
+
+;; Removes a variable from the calling process's own environment
+;;
+;; Input:
+;;
+;; ESI - Variable name to remove
+;;
+;; Output:
+;;
+;; CF - Set if the variable wasn't found
+
+Hexagon.Kern.Proc.unsetenv:
+
+    push eax
+    push edi
+
+    movzx eax, byte[Hexagon.Scheduler.current]
+
+    mov edi, dword[Hexagon.Processes.Table.envBase + eax * 4]
+
+    call Hexagon.Kern.Proc.removeEnvEntry
+
+    pop edi
+    pop eax
+
+    ret
+
+;;************************************************************************************
+
+;; Returns the calling process's whole environment block
+;;
+;; Output:
+;;
+;; ESI - Pointer to the raw, double-NUL-terminated environment block
+;; EAX - Number of variables in it
+
+Hexagon.Kern.Proc.environ:
+
+    push ebx
+    push es
+
+    push ds
+    pop es
+
+    movzx ebx, byte[Hexagon.Scheduler.current]
+
+    mov esi, dword[Hexagon.Processes.Table.envBase + ebx * 4]
+
+    mov ebx, esi
+
+    xor eax, eax
+
+.entryLoop:
+
+    cmp byte[es:ebx], 0
+    je .end
+
+    inc eax
+
+.skip:
+
+    cmp byte[es:ebx], 0
+    je .skipped
+
+    inc ebx
+
+    jmp .skip
+
+.skipped:
+
+    inc ebx
+
+    jmp .entryLoop
+
+.end:
+
+    pop es
+
+    pop ebx
 
     ret

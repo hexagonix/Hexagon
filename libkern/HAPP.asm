@@ -238,7 +238,14 @@ Hexagon.Libkern.HAPP.checkHAPPImage:
 
     mov edi, Hexagon.Heap.Temp + 1000 ;; Use kernel heap
 
-;; Let's load the image to analyze the image header
+;; Let's load the image to analyze the image header. Only the fixed-size
+;; header actually gets looked at below (checked byte by byte up to
+;; imageType at edi+11), so there's no reason to pull in the rest of a
+;; possibly much larger image just to check it. 128 bytes leaves headroom
+;; over the real header size without pulling in a whole cluster's worth for
+;; nothing
+
+    mov ecx, 128
 
     call Hexagon.Kernel.FS.VFS.openFile
 

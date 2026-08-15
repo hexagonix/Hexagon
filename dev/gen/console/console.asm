@@ -1611,6 +1611,8 @@ Hexagon.Kernel.Dev.Gen.Console.Console.changeFont:
 
     mov edi, Hexagon.Heap.Temp + 500
 
+    xor ecx, ecx ;; Load the whole font, uncapped
+
     call Hexagon.Kernel.FS.VFS.openFile
 
     cmp byte[edi+0], "H"
@@ -1626,6 +1628,8 @@ Hexagon.Kernel.Dev.Gen.Console.Console.changeFont:
     jne .incompatibleFont
 
     mov edi, Hexagon.Libkern.Font.fontBuffer
+
+    xor ecx, ecx ;; Load the whole font, uncapped
 
     call Hexagon.Kernel.FS.VFS.openFile
 
