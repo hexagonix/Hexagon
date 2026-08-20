@@ -258,23 +258,92 @@ Hexagon.Autoconfig:
 
     call Hexagon.Kernel.Dev.Gen.COM.Serial.setupCOM1 ;; Start first serial port for debugging
 
+;;************************************************************************************
+
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.allocateTables
+
+    call Hexagon.Kernel.FS.VFS.allocateMountTable
+
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.detectDisks
+
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.detectPartitions
+
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.logDetectionSummary
+
+;;************************************************************************************
+
     call Hexagon.Kernel.FS.VFS.setBootVolume ;; Sets volume based on boot information
 
 ;;************************************************************************************
 
     call Hexagon.Kernel.FS.VFS.setFilesystem ;; Defines the filesystem to be used for the volume
 
-    kprint Hexagon.Dmesg.hexagonIdentifier
+    call Hexagon.Kernel.FS.VFS.getVolume ;; ESI = device name ("hd0")
 
-    kprint Hexagon.Verbose.startMounting
+    mov edi, Hexagon.Heap.Temp
 
-    call Hexagon.Kernel.FS.VFS.getVolume ;; Get the volume identifier
+    push esi
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.printString ;; Display
+    mov esi, Hexagon.Verbose.startMounting
 
-    kprint Hexagon.Verbose.mountPointDefined
+.buildMountLinePrefix:
 
-    kprint Hexagon.Verbose.newLine
+    mov al, byte[esi]
+
+    cmp al, 0
+    je .buildMountLinePrefixDone
+
+    mov byte[edi], al
+
+    inc esi
+    inc edi
+
+    jmp .buildMountLinePrefix
+
+.buildMountLinePrefixDone:
+
+    pop esi
+
+.buildMountLineDevice:
+
+    mov al, byte[esi]
+
+    cmp al, 0
+    je .buildMountLineDeviceDone
+
+    mov byte[edi], al
+
+    inc esi
+    inc edi
+
+    jmp .buildMountLineDevice
+
+.buildMountLineDeviceDone:
+
+    mov byte[edi], 'p'
+    inc edi
+    mov byte[edi], '0'
+    inc edi
+
+    mov esi, Hexagon.Verbose.mountPointDefined
+
+.buildMountLineSuffix:
+
+    mov al, byte[esi]
+
+    mov byte[edi], al
+
+    cmp al, 0
+    je .buildMountLineDone
+
+    inc esi
+    inc edi
+
+    jmp .buildMountLineSuffix
+
+.buildMountLineDone:
+
+    logHexagon Hexagon.Heap.Temp, Hexagon.Dmesg.Priorities.p5
 
 ;;************************************************************************************
 
@@ -321,20 +390,18 @@ Hexagon.Autoconfig:
 
     call Hexagon.Kernel.FS.VFS.mountVolume ;; Mount the default volume used for booting
 
-    logHexagon Hexagon.Verbose.mountSuccess, Hexagon.Dmesg.Priorities.p5
+    call Hexagon.Kernel.FS.VFS.registerBootMount ;; Registers "/" as mount slot 0
 
 ;;************************************************************************************
 
     call Hexagon.Kern.Services.installInterruptions ;; Install Hexagon interrupt handlers
 
 ;; Firstly, the user must be prevented from killing processes with a special key,
-;; preventing any relevant process, such as login, from being terminated prematurely
+;; preventing any relevant process from being terminated prematurely
 
 ;; Prevents the user from killing processes with a special key
 
     call Hexagon.Kern.Proc.lock
-
-    logHexagon Hexagon.Verbose.locking, Hexagon.Dmesg.Priorities.p5
 
 ;;************************************************************************************
 

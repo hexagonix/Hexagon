@@ -73,8 +73,6 @@
 
 Hexagon.Kern.Init.startUserMode:
 
-    logHexagon Hexagon.Verbose.userMode, Hexagon.Dmesg.Priorities.p5
-
 .startInit:
 
 ;; Now Hexagon will try to load init and, if successful, transfer control to it,

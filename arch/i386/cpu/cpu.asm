@@ -227,7 +227,7 @@ Hexagon.Arch.i386.CPU.CPU.setupProcessor:
 
     mov eax, cr4
 
-;; Floating Point Exceptions
+;; Floating point exceptions
 
     or ax, 001000000000b
     or ax, 010000000000b
@@ -237,6 +237,31 @@ Hexagon.Arch.i386.CPU.CPU.setupProcessor:
 
     finit
     fwait
+
+    ret
+
+;;************************************************************************************
+
+;; Masks IRQ14/IRQ15 (ATA controller) at the secondary PIC. Hexagon has no ATA
+;; driver and does all disk I/O through int13h in real mode. An unmasked IRQ
+;; lands in Hexagon.Kern.Services.nullHandler, which EOIs the PIC but never
+;; acknowledges the controller itself, so the same IRQ fires forever
+
+Hexagon.Arch.i386.CPU.CPU.maskATAInterrupts:
+
+    push eax
+    push edx
+
+    mov dx, 0xA1
+
+    in al, dx
+
+    or al, 11000000b ;; Bits 6-7: IRQ14, IRQ15
+
+    out dx, al
+
+    pop edx
+    pop eax
 
     ret
 

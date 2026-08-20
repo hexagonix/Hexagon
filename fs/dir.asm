@@ -80,8 +80,12 @@ Hexagon.VFS.Directory:
 .code:   db 0
 .offset: db 0
 .status: db 0
+;; "/" by default, so a relative path resolved before the first real cd
+;; still joins against a genuine NUL-terminated string.
+
 .currentDirectory:
-times 64 db " "
+db "/", 0
+times 62 db 0
 .previousDirectory:
 times 64 db 0
 .pathSize equ 64
@@ -95,6 +99,50 @@ times 32 db 0
 .status:    db 0
 .userCode:  db 0
 .lastError: db 0
+
+;;************************************************************************************
+
+;; Real mount table, replacing the single mount point above. Slot 0 is
+;; always "/", registered by Hexagon.Kernel.FS.VFS.registerBootMount.
+;;
+;; malloc'd (Hexagon.Mounts.Table.base, filled by
+;; Hexagon.Kernel.FS.VFS.allocateMountTable) rather than placed in the
+;; kernel's own fixed Hexagon.Heap area - see Hexagon.Disks.Table in
+;; dev/i386/disk/disk.asm for why. Below is only the field layout (byte
+;; offsets, no storage of its own); every access goes through .base
+
+Hexagon.Mounts.Table.limit = 8
+
+virtual at 0
+
+Hexagon.Mounts.Table.inUse:
+times Hexagon.Mounts.Table.limit db 0
+
+Hexagon.Mounts.Table.drive:
+times Hexagon.Mounts.Table.limit db 0 ;; BIOS drive number backing this mount
+
+Hexagon.Mounts.Table.path:
+times Hexagon.Mounts.Table.limit * 64 db 0 ;; Mount point path, null-terminated
+
+Hexagon.Mounts.Table.deviceName:
+times Hexagon.Mounts.Table.limit * 8 db 0 ;; Device name given to hx.mount (such as "hd0p0"), null-terminated
+
+;; Each slot: +0 saved Hexagon.VFS.Control (filesystemType/volumeLabel), then
+;; +Hexagon.VFS.Control.size saved Hexagon.VFS.FAT16B
+
+Hexagon.Mounts.Table.state:
+times Hexagon.Mounts.Table.limit * (Hexagon.VFS.Control.size + Hexagon.VFS.FAT.instanceSize) db 0
+
+Hexagon.Mounts.Table.byteSize = $
+
+end virtual
+
+Hexagon.Mounts.Table.base: dd 0
+
+;; Slot currently loaded into the live Hexagon.VFS.FAT16B working copy.
+;; 0xFFFFFFFF means nothing has been loaded yet (before boot registration)
+
+Hexagon.Mounts.loadedSlot: dd 0xFFFFFFFF
 
 ;;************************************************************************************
 
@@ -115,6 +163,16 @@ times 32 db 0
 ;; CF set in case of error
 
 Hexagon.Kernel.FS.Dir.setCurrentDirectory:
+
+    push es
+
+;; hexagonHandler's own entry stub leaves ES at kernelLinear (base 0) for
+;; every syscall; rep movsb's destination is always ES:EDI, never DS:EDI -
+;; same bug, same fix, as every other kernel-image-data writer (see
+;; Hexagon.Kernel.FS.VFS.registerBootMount's own comment on this)
+
+    mov ax, 10h
+    mov es, ax
 
     push esi ; First, save the path provided in the call
 
@@ -176,6 +234,8 @@ Hexagon.Kernel.FS.Dir.setCurrentDirectory:
     clc
 
 .end:
+
+    pop es
 
     ret
 

@@ -198,3 +198,9 @@ Hexagon.Kern.Syscall.hexagonServices:
     dd Hexagon.Libkern.Clock.getDate                                   ;; 76
     dd Hexagon.Libkern.Clock.getTime                                   ;; 77
 
+;; Filesystem and volume management
+
+    dd Hexagon.Kernel.FS.VFS.mount                                     ;; 78
+    dd Hexagon.Kernel.FS.VFS.unmount                                   ;; 79
+    dd Hexagon.Kernel.FS.VFS.getMounts                                 ;; 80
+

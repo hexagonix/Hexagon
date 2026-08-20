@@ -195,11 +195,112 @@ Hexagon.Dev.Gen.Disk.Codes  Hexagon.Dev.Gen.Disk.General
 Hexagon.Dev.Gen.Disk.HardDisk.IO Hexagon.Dev.Gen.Disk.HardDisk
 Hexagon.Dev.Gen.Disk.Control Hexagon.Dev.Gen.Disk.Control
 
+;;************************************************************************************
+
+;; Table of hard disks detected at boot (hd0-hd3), filled by
+;; Hexagon.Kernel.Dev.i386.Disk.Disk.detectDisks. Independent of whichever
+;; disk is currently mounted (Hexagon.Dev.Gen.Disk.Control.currentDisk).
+;;
+;; malloc'd (Hexagon.Disks.Table.base, filled by allocateTables).
+;; Below is only the field layout, every access goes through .base.
+
+virtual at 0
+
+Hexagon.Disks.Table.present:
+times Hexagon.Disks.Table.limit db 0 ;; 1 if a hard disk answered at this slot's drive number
+
+Hexagon.Disks.Table.drive:
+times Hexagon.Disks.Table.limit db 0 ;; BIOS drive number (80h-83h)
+
+Hexagon.Disks.Table.byteSize = $
+
+Hexagon.Disks.Table.limit = 4
+
+end virtual
+
+Hexagon.Disks.Table.base: dd 0
+
+;;************************************************************************************
+
+;; Table of MBR primary partitions found on detected disks, filled by
+;; Hexagon.Kernel.Dev.i386.Disk.Disk.detectPartitions. A classic MBR has up
+;; to 4 primary partitions, so this covers all 4 disks worst case. malloc'd
+
+virtual at 0
+
+Hexagon.Partitions.Table.present:
+times Hexagon.Partitions.Table.limit db 0 ;; 1 if this MBR entry is used (a non-zero type byte)
+
+Hexagon.Partitions.Table.diskSlot:
+times Hexagon.Partitions.Table.limit db 0 ;; Index into Hexagon.Disks.Table
+
+Hexagon.Partitions.Table.index:
+times Hexagon.Partitions.Table.limit db 0 ;; Which of the disk's 4 primary MBR entries (0-3)
+
+Hexagon.Partitions.Table.filesystemType:
+times Hexagon.Partitions.Table.limit db 0 ;; Raw MBR partition type byte
+
+Hexagon.Partitions.Table.supported:
+times Hexagon.Partitions.Table.limit db 0 ;; 1 if Hexagon has a driver for filesystemType
+
+Hexagon.Partitions.Table.startLBA:
+times Hexagon.Partitions.Table.limit dd 0
+
+Hexagon.Partitions.Table.totalSectors:
+times Hexagon.Partitions.Table.limit dd 0
+
+Hexagon.Partitions.Table.byteSize = $
+
+Hexagon.Partitions.Table.limit = Hexagon.Disks.Table.limit * 4
+
+end virtual
+
+Hexagon.Partitions.Table.base: dd 0
+
+;;************************************************************************************
+
+;; Allocates Hexagon.Disks.Table and Hexagon.Partitions.Table and points .base
+;; at each. Must run once at boot, after Hexagon.Arch.Gen.Mm.initMemory and
+;; before Hexagon.Kernel.Dev.i386.Disk.Disk.detectDisks
+;;
+;; Output: empty
+
+Hexagon.Kernel.Dev.i386.Disk.Disk.allocateTables:
+
+    pushad
+
+    mov ebx, Hexagon.Disks.Table.byteSize
+
+    call Hexagon.Arch.Gen.Mm.malloc
+
+;; Mm.malloc's pointer is flat. Kernel code here addresses memory through
+;; DS, based at 500h, so subtracting 500h once up front keeps every later
+;; [Table.field + reg] access a plain, unprefixed operand.
+
+    sub ebx, 500h
+
+    mov dword[Hexagon.Disks.Table.base], ebx
+
+    mov ebx, Hexagon.Partitions.Table.byteSize
+
+    call Hexagon.Arch.Gen.Mm.malloc
+
+    sub ebx, 500h
+
+    mov dword[Hexagon.Partitions.Table.base], ebx
+
+    popad
+
+    ret
+
+;;************************************************************************************
+
 Hexagon.Dev.Gen.Disk:
 
 .operationCode: db 0
 
-Hexagon.Disk.DiskCache.maxSize = 200000 ;; Budget reserved for FAT/root directory reads; not yet enforced at every read site
+;; Budget reserved for FAT/root directory reads. Not yet enforced at every read site
+Hexagon.Disk.DiskCache.maxSize = 200000
 
 ;;************************************************************************************
 
@@ -403,6 +504,389 @@ Hexagon.Kernel.Dev.i386.Disk.Disk.detectDisk:
 .end:
 
     ret
+
+;;************************************************************************************
+
+;; Detects hard disks hd0-hd3 and records presence in Hexagon.Disks.Table.
+;; A disk counts as present if its sector 0 can actually be read.
+;; A real read is the only reliable signal here
+;;
+;; Output: empty
+
+Hexagon.Kernel.Dev.i386.Disk.Disk.detectDisks:
+
+    pushad
+
+    mov byte[.drive], 80h
+    mov ebx, 0
+
+    call .probeDrive
+
+    mov byte[.drive], 81h
+    mov ebx, 1
+
+    call .probeDrive
+
+    mov byte[.drive], 82h
+    mov ebx, 2
+
+    call .probeDrive
+
+    mov byte[.drive], 83h
+    mov ebx, 3
+
+    call .probeDrive
+
+    popad
+
+    ret
+
+;; Input:
+;;
+;; BL - Slot in Hexagon.Disks.Table for this drive (0-3)
+;; .drive - BIOS drive number to probe (80h-83h), set by the caller
+
+.probeDrive:
+
+    push ebx ;; tryReadSector doesn't return anything through EBX, but be safe
+
+    mov dl, byte[.drive]
+    mov esi, 0 ;; Sector 0 (MBR). A successful read is enough to call it present
+    mov cx, 50h
+    mov edi, Hexagon.Heap.DiskCache + 20000
+
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.tryReadSector
+
+    pop ebx
+
+    jc .absent
+
+    mov al, byte[.drive]
+    mov edx, dword[Hexagon.Disks.Table.base]
+    mov byte[edx + Hexagon.Disks.Table.drive + ebx], al
+    mov byte[edx + Hexagon.Disks.Table.present + ebx], 1
+
+    ret
+
+.absent:
+
+    mov edx, dword[Hexagon.Disks.Table.base]
+    mov byte[edx + Hexagon.Disks.Table.present + ebx], 0
+
+    ret
+
+.drive: db 0
+
+;;************************************************************************************
+
+;; Reads a single sector without Hexagon.Kernel.Dev.i386.Disk.Disk.readSectors'
+;; panic and volume-reset error handling, meant for probing a disk that
+;; answered detectDisk but might still fail to read
+;;
+;; Input:
+;;
+;; DL  - Drive
+;; ESI - LBA
+;; EDI - Destination buffer
+;; CX  - Real mode segment
+;;
+;; Output:
+;;
+;; CF set on any failure
+
+Hexagon.Kernel.Dev.i386.Disk.Disk.tryReadSector:
+
+    push eax
+    push esi
+
+    mov dword[.DAP.totalSectors], 1
+    mov dword[.DAP.LBA], esi
+
+    mov eax, edi
+
+    shr eax, 4
+
+    add cx, ax
+
+    and edi, 0xF
+
+    mov word[.DAP.segment], cx
+    mov word[.DAP.offset], di
+
+    mov esi, .DAP
+    mov ah, 42h
+
+    call Hexagon.Arch.i386.BIOS.BIOS.int13h
+
+    pop esi
+    pop eax
+
+    ret
+
+.DAP:
+.DAP.size:         db 16
+.DAP.reserved:     db 0
+.DAP.totalSectors: dw 0
+.DAP.offset:       dw 0000h
+.DAP.segment:      dw 0
+.DAP.LBA:          dd 0
+                   dd 0
+
+;;************************************************************************************
+
+;; Reads the MBR of every disk marked present in Hexagon.Disks.Table and
+;; records its primary partitions (up to 4 per disk) in
+;; Hexagon.Partitions.Table, including whether Hexagon has a driver for each
+;; one's filesystem type. Leaves Hexagon.Dev.Gen.Disk.Control untouched
+;;
+;; Output: empty
+
+Hexagon.Kernel.Dev.i386.Disk.Disk.detectPartitions:
+
+    pushad
+
+    mov dword[.nextSlot], 0
+
+    mov ebx, 0
+    call .scanDisk
+
+    mov ebx, 1
+    call .scanDisk
+
+    mov ebx, 2
+    call .scanDisk
+
+    mov ebx, 3
+    call .scanDisk
+
+    popad
+
+    ret
+
+;; Input:
+;;
+;; BL - Slot in Hexagon.Disks.Table to scan for partitions
+
+.scanDisk:
+
+    mov edx, dword[Hexagon.Disks.Table.base]
+
+    cmp byte[edx + Hexagon.Disks.Table.present + ebx], 0
+    je .doneDisk
+
+    mov dl, byte[edx + Hexagon.Disks.Table.drive + ebx]
+    mov byte[.driveNumber], dl
+
+    push ebx
+
+    mov dl, byte[.driveNumber]
+    mov esi, 0 ;; MBR is always LBA 0
+    mov cx, 50h
+    mov edi, Hexagon.Heap.DiskCache + 20000
+
+    call Hexagon.Kernel.Dev.i386.Disk.Disk.tryReadSector
+
+    pop ebx
+
+    jc .doneDisk ;; Answered detectDisk, but its MBR isn't readable
+
+    cmp word[Hexagon.Heap.DiskCache + 20000 + 0x1FE], 0xAA55
+    jne .doneDisk ;; No valid partition table
+
+    mov byte[.entry], 0
+
+.nextEntry:
+
+    cmp byte[.entry], 4
+    jae .doneDisk
+
+    movzx esi, byte[.entry]
+
+    shl esi, 4 ;; 16 bytes per entry
+    add esi, Hexagon.Heap.DiskCache + 20000 + 0x1BE
+
+    cmp byte[esi + 4], 0 ;; Partition type. 0 means an unused entry
+    je .skipEntry
+
+    push ebx ;; logHexagon inside .recordPartition clobbers EBX
+
+    call .recordPartition
+
+    pop ebx
+
+.skipEntry:
+
+    inc byte[.entry]
+
+    jmp .nextEntry
+
+.doneDisk:
+
+    ret
+
+;; Input:
+;;
+;; ESI - Pointer to this partition's 16-byte MBR entry (type at +4, LBA
+;;       start at +8, sector count at +12)
+;; BL  - Disk slot this partition belongs to (Hexagon.Disks.Table)
+;; .entry (static) - Which of the disk's 4 primary entries (0-3)
+
+.recordPartition:
+
+    mov edi, dword[.nextSlot]
+
+    cmp edi, Hexagon.Partitions.Table.limit
+    jae .full
+
+    mov edx, dword[Hexagon.Partitions.Table.base]
+
+    mov byte[edx + Hexagon.Partitions.Table.present + edi], 1
+    mov byte[edx + Hexagon.Partitions.Table.diskSlot + edi], bl
+
+    mov al, byte[.entry]
+    mov byte[edx + Hexagon.Partitions.Table.index + edi], al
+
+    mov al, byte[esi + 4]
+    mov byte[edx + Hexagon.Partitions.Table.filesystemType + edi], al
+
+    mov eax, dword[esi + 8]
+    mov dword[edx + Hexagon.Partitions.Table.startLBA + edi * 4], eax
+
+    mov eax, dword[esi + 12]
+    mov dword[edx + Hexagon.Partitions.Table.totalSectors + edi * 4], eax
+
+    mov al, byte[esi + 4]
+
+    call Hexagon.Kernel.FS.VFS.isFilesystemSupported ;; Doesn't touch EDX
+
+    jc .unsupported
+
+    mov byte[edx + Hexagon.Partitions.Table.supported + edi], 1
+
+    jmp .recorded
+
+.unsupported:
+
+    mov byte[edx + Hexagon.Partitions.Table.supported + edi], 0
+
+    logHexagon Hexagon.Verbose.Disk.partitionUnsupported, Hexagon.Dmesg.Priorities.p5
+
+.recorded:
+
+    inc dword[.nextSlot]
+
+.full:
+
+    ret
+
+.entry: db 0
+.nextSlot: dd 0
+.driveNumber: db 0
+
+;;************************************************************************************
+
+;; Logs a one-line summary of every volume found.
+;;
+;; Output: empty
+
+Hexagon.Kernel.Dev.i386.Disk.Disk.logDetectionSummary:
+
+    pushad
+
+    mov edi, .summaryBuffer
+    mov esi, .volumesLabel
+
+.copyVolumesLabel:
+
+    lodsb
+
+    cmp al, 0
+    je .volumesLabelDone
+
+    mov byte[edi], al
+
+    inc edi
+
+    jmp .copyVolumesLabel
+
+.volumesLabelDone:
+
+    mov dword[.listStart], edi
+
+    xor ebx, ebx
+
+    mov edx, dword[Hexagon.Partitions.Table.base]
+
+.volumesLoop:
+
+    cmp ebx, Hexagon.Partitions.Table.limit
+    jae .volumesDone
+
+    cmp byte[edx + Hexagon.Partitions.Table.present + ebx], 0
+    je .volumesNext
+
+    cmp byte[edx + Hexagon.Partitions.Table.supported + ebx], 0
+    je .volumesNext
+
+    mov byte[edi], 'h'
+
+    inc edi
+
+    mov byte[edi], 'd'
+
+    inc edi
+
+    movzx eax, byte[edx + Hexagon.Partitions.Table.diskSlot + ebx]
+
+    add al, '0'
+
+    mov byte[edi], al
+
+    inc edi
+
+    mov byte[edi], 'p'
+
+    inc edi
+
+    movzx eax, byte[edx + Hexagon.Partitions.Table.index + ebx]
+
+    add al, '0'
+
+    mov byte[edi], al
+
+    inc edi
+
+    mov byte[edi], ' '
+
+    inc edi
+
+.volumesNext:
+
+    inc ebx
+
+    jmp .volumesLoop
+
+.volumesDone:
+
+    cmp edi, dword[.listStart]
+    je .volumesNoTrim
+
+    dec edi
+
+.volumesNoTrim:
+
+    mov byte[edi], 0
+
+    logHexagon .summaryBuffer, Hexagon.Dmesg.Priorities.p5
+
+    popad
+
+    ret
+
+.listStart:    dd 0
+.volumesLabel: db "Volumes detected: ", 0
+.summaryBuffer:
+times 128 db 0
 
 ;;************************************************************************************
 

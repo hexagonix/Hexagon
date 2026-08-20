@@ -85,7 +85,7 @@ Hexagon.Syscall.Control:
 .es:                dw 0
 .eip:               dd 0
 .ebp:               dd 0
-.totalCalls:        dd 77
+.totalCalls:        dd 80
 
 ;;************************************************************************************
 

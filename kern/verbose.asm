@@ -91,8 +91,6 @@ db "Copyright (C) 2015-", __stringYear, " Felipe Miguel Nery Lunkes", 10
 db "All rights reserved.", 10, 10, 0
 .version:
 db "Hexagon kernel version: ", Hexagon.Version.definition, 0
-.locking:
-db "Enabling user and security guidelines...", 0
 .timer:
 db "Starting and setting up the timer (119 Hz)...", 0
 .scheduler:
@@ -108,21 +106,17 @@ db "The serial port management service is starting...", 0
 .setVolume:
 db "Hexagon is looking for a volume to mount...", 0
 .startMounting:
-db "The volume ", 0
+db "Mounting volume ", 0
 .mountPointDefined:
-db " has been marked for mounting on /.", 0
+db " on /...", 0
 .filesystem:
 db "The mounted volume is formatted as (FSID): ", 0
 .volumeLabel:
 db "The volume label is: ", 0
-.mountSuccess:
-db "Volume successfully mounted on /.", 0
 .init:
 db "Looking for /init...", 0
 .withoutInit:
 db "/init not found at the root of the volume. Trying /sh...", 0
-.userMode:
-db "Going to user mode...", 0
 .totalMemory:
 db "Total memory installed and available: ", 0
 .megabytes:
@@ -201,6 +195,12 @@ db "The volume is already in use by Hexagon or another process.", 0
 db "Error writing to volume.", 0
 .generalWriteError:
 db "General error when trying to write sectors to the volume.", 0
+.diskDetected:
+db "A hard disk was detected.", 0
+.diskNotDetected:
+db "No hard disk was detected at this slot.", 0
+.partitionUnsupported:
+db "A partition was found, but its filesystem is not supported by Hexagon.", 0
 
 ;;************************************************************************************
 

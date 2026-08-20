@@ -125,6 +125,11 @@ dd 0  ; Inicializa o índice da pilha com 0
 
 Hexagon.VFS.FAT16B Hexagon.VFS.FAT
 
+;; Real byte size of one instance, used by Hexagon.Kernel.FS.VFS.resolveMount to
+;; save/restore a mount's own state into Hexagon.Mounts.Table.state
+
+Hexagon.VFS.FAT.instanceSize = $ - Hexagon.VFS.FAT16B
+
 ;;************************************************************************************
 
 ;; Determine the size of the current directory, in sectors and in entries.
@@ -840,6 +845,13 @@ Hexagon.Kernel.FS.FAT16.loadFileFAT16B:
     mov ax, word[ebx+26]   ;; EBX is the pointer to the entry in the root directory
     mov word[.cluster], ax ;; Save the first cluster
 
+;; A freshly-created empty file has no cluster allocated, cluster 0. Real
+;; data clusters start at 2, so the LBA formula below would wrap to a
+;; bogus sector. Nothing to load either way.
+
+    cmp word[.cluster], 0
+    je .operationSuccess
+
 ;; Load FAT from volume to get file clusters
 
     movzx eax, word[Hexagon.VFS.FAT16B.sectorsPerFAT] ;; Sectors to read
@@ -904,7 +916,26 @@ Hexagon.Kernel.FS.FAT16.loadFileFAT16B:
     add edi, 500h
 
     mov esi, Hexagon.Heap.DiskCache
-    mov ecx, ebp ;; EBP has the bytes per sector
+
+;; A file's last cluster is only partially used. Copying the full cluster
+;; size into EDI regardless overruns the caller's buffer once the file is
+;; smaller than one cluster, so cap this copy to what's actually left.
+
+    mov eax, dword[.fileSize]
+    sub eax, dword[.bytesCopied]
+
+    cmp eax, ebp
+    jb .partialCluster
+
+    mov ecx, ebp
+
+    jmp .haveCopySize
+
+.partialCluster:
+
+    mov ecx, eax
+
+.haveCopySize:
 
     cld
 
@@ -953,6 +984,16 @@ Hexagon.Kernel.FS.FAT16.loadFileFAT16B:
     jmp .loopLoadClusters
 
 .operationSuccess:
+
+;; Null-terminate right after the real file data, since the copy above
+;; only copies the real file size. Callers that print the buffer via
+;; fputs/stringSize rely on this. Same segment-base correction as above.
+
+    mov edi, dword[.loadAddress]
+    add edi, dword[.fileSize]
+    add edi, 500h
+
+    mov byte[es:edi], 0
 
     mov eax, [.fileSize]
 
@@ -1159,6 +1200,7 @@ Hexagon.Kernel.FS.FAT16.saveFileFAT16B:
     push esi
 
     mov ebp, edi ;; Save EDI
+    mov dword[.dataStart], edi ;; Track how much of the source has been consumed so far
     mov dword[.fileSize], eax ;; Save file size
 
 ;; Resolve the path once. The current directory stays parked at the parent
@@ -1342,9 +1384,41 @@ Hexagon.Kernel.FS.FAT16.saveFileFAT16B:
 
     mov esi, ebp
     mov edi, Hexagon.Heap.DiskCache + 500h + 20000
+
+;; A file's last cluster is only partially used. Reading a full clusterSize
+;; from the caller's own source buffer runs past what's actually there once
+;; the file is smaller than one cluster, so cap this copy to what's left.
+
+    mov eax, ebp
+
+    sub eax, dword[.dataStart]
+
+    mov ecx, dword[.fileSize]
+
+    sub ecx, eax
+
+    cmp ecx, dword[Hexagon.VFS.FAT16B.clusterSize]
+    jb .partialSourceCluster
+
     mov ecx, dword[Hexagon.VFS.FAT16B.clusterSize]
 
+.partialSourceCluster:
+
+    mov edx, dword[Hexagon.VFS.FAT16B.clusterSize]
+    sub edx, ecx ;; Remainder of the cluster past the real source data, if any
+
     rep movsb
+
+;; Zero the rest of the cluster (whole cluster's worth of leftover kernel
+;; scratch data from a previous use of this same buffer, when this is the
+;; file's last, partially-used cluster) instead of writing it to disk as-is
+
+    mov ecx, edx
+    xor al, al
+
+    cld
+
+    rep stosb
 
     movzx esi, word[ebx]
 
@@ -1368,8 +1442,14 @@ Hexagon.Kernel.FS.FAT16.saveFileFAT16B:
     mov edi, Hexagon.Heap.DiskCache + 500h + 20000
     mov ecx, 0 ;; Real mode segment
 
+;; Hexagon.Kernel.Dev.i386.Disk.Disk.writeSectors returns its own status in
+;; EBX, overwriting the free-cluster list pointer this loop keeps there
+
+    push ebx
+
     call Hexagon.Kernel.Dev.i386.Disk.Disk.writeSectors
 
+    pop ebx
     pop ecx
 
     add ebp, dword[Hexagon.VFS.FAT16B.clusterSize] ;; Next data block
@@ -1409,6 +1489,7 @@ Hexagon.Kernel.FS.FAT16.saveFileFAT16B:
 
 .fileSize:         dd 0
 .clustersRequired: dd 0
+.dataStart:        dd 0
 .resolvedName:     times 13 db 0
 .savedDirLBA:      dd 0
 .savedStackIndex:  dd 0

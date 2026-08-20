@@ -190,11 +190,16 @@ use32
 
     mov ebp, dword[Hexagon.Arch.i386.BIOS.registerEBP]
 
+;; Only the carry bit is merged in, not the whole saved flags word
+
     pushfd
 
     pop eax
 
-    or ax, word[Hexagon.Arch.i386.BIOS.registerFlags]
+    mov bx, word[Hexagon.Arch.i386.BIOS.registerFlags]
+    and bx, 1
+
+    or ax, bx
 
     push eax
 

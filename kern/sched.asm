@@ -124,6 +124,28 @@ Hexagon.Scheduler.current: db 0xFF ;; 0xFF = kernel boot context, else a Hexagon
 Hexagon.Scheduler.ticks:   dd 0
 Hexagon.Scheduler.sliceLength = 1  ;; Timer ticks per time-slice
 
+;; maybeSchedule refuses to switch away from the running process while this
+;; is non-zero, so a preemption mid-swap of a mount's working copy
+;; (Hexagon.Kernel.FS.VFS.resolveMount/.swapTo) can't corrupt it
+
+Hexagon.Scheduler.preemptionDisabled: db 0
+
+;; Input: none. Output: none. Clobbers nothing
+
+Hexagon.Kern.Sched.disablePreemption:
+
+    mov byte[Hexagon.Scheduler.preemptionDisabled], 1
+
+    ret
+
+;; Input: none. Output: none. Clobbers nothing
+
+Hexagon.Kern.Sched.enablePreemption:
+
+    mov byte[Hexagon.Scheduler.preemptionDisabled], 0
+
+    ret
+
 ;;************************************************************************************
 
 ;; Reprograms the user code/data segment base in the GDT
@@ -216,6 +238,9 @@ Hexagon.Kern.Sched.dispatchSlot:
 ;; itself to carry the CPU state across
 
 Hexagon.Kern.Sched.maybeSchedule:
+
+    cmp byte[Hexagon.Scheduler.preemptionDisabled], 0
+    jne .preemptionOff
 
     pusha
 
@@ -359,6 +384,10 @@ Hexagon.Kern.Sched.maybeSchedule:
 
     ret
 
+.preemptionOff:
+
+    ret
+
 ;;************************************************************************************
 
 ;; Slot 0 is permanently reserved for the idle loop below, installed once at
@@ -452,11 +481,11 @@ Hexagon.Kern.Sched.installIdle:
     mov dword[Hexagon.Processes.Table.esp + Hexagon.Kern.Sched.idleSlot * 4], Hexagon.Kern.Sched.idleFrame + 500h
 
     mov edi, Hexagon.Kern.Sched.idleSlot
-    imul edi, 13
+    imul edi, 64
     add edi, Hexagon.Processes.Table.name
 
     mov esi, Hexagon.Kern.Sched.idleName
-    mov ecx, 13
+    mov ecx, 64
 
 .copyName:
 
