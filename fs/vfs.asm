@@ -2098,14 +2098,37 @@ Hexagon.Kernel.FS.VFS.saveFile:
 
 ;;************************************************************************************
 
-;; Get file list from current directory
+;; Lists the files/directories in the current directory into the caller's
+;; own buffer, matching Hexagon.Kernel.FS.VFS.getMounts's caller-owned-buffer
+;; convention instead of handing back a kernel-cached pointer.
+;;
+;; Entries are separated by Hexagon.VFS.FAT16B.filenameSeparator (a file) or
+;; .directorySeparator (a directory), the whole list NUL-terminated
+;;
+;; Input:
+;;
+;; ESI - Caller's own buffer
+;; ECX - Size of that buffer, in bytes
 ;;
 ;; Output:
 ;;
-;; ESI - Pointer to the file/directory list
-;; EAX - Number of total entries
+;; EAX - Number of entries written, if the buffer was big enough (CF clear)
+;; EAX - Exact buffer size needed, in bytes, if it wasn't (CF set). Nothing
+;;       is written in that case, and the caller is expected to hx.free its
+;;       buffer, hx.malloc exactly EAX bytes, and retry
+;; EAX - 0, if CF is set and EAX is also 0: a real filesystem error rather
+;;       than an undersized buffer (a valid needed size is always at least
+;;       1, for the terminating NUL alone). Retrying will not help
+;; CF  - Set on either of the two failure cases above
 
 Hexagon.Kernel.FS.VFS.listFiles:
+
+;; The caller's buffer/size are parked here; resolveMount needs ESI for a
+;; path instead. ECX itself is untouched by resolveMount ("every other
+;; register is preserved"), only ESI needs saving
+
+    mov dword[.callerBuffer], esi
+    mov dword[.callerSize], ecx
 
 ;; No path argument. Always resolves against the current directory.
 
@@ -2123,17 +2146,79 @@ Hexagon.Kernel.FS.VFS.listFiles:
     cmp ah, Hexagon.VFS.FS.FAT16B
     je .listFilesFAT16B
 
+    xor eax, eax
+
+    stc
+
     call Hexagon.Kern.Sched.enablePreemption
 
     ret
 
 .listFilesFAT16B:
 
-    call Hexagon.Kernel.FS.FAT16.listFilesFAT16B
+    call Hexagon.Kernel.FS.FAT16.listFilesFAT16B ;; ESI = kernel list, EAX = entry count
+
+    jc .hardError
+
+    mov dword[.entryCount], eax
+
+;; The built list is one NUL-terminated run of entries separated by
+;; non-NUL separator bytes - not different in shape from a plain string as
+;; far as stringSize's own scan is concerned
+
+    call Hexagon.Libkern.String.stringSize
+
+    inc eax ;; Include the terminating NUL itself in what gets copied
+
+    cmp eax, dword[.callerSize]
+    ja .tooSmall
+
+    mov edi, dword[.callerBuffer]
+    mov ecx, eax
+
+;; rep movsb reads through DS and writes through ES:EDI. DS is already the
+;; kernel data segment here, but ES was last set to kernelLinear by
+;; hexagonHandler - same correction as hx.getMounts's own copy
+
+    push es
+
+    mov ax, 10h
+    mov es, ax
+
+    cld
+    rep movsb
+
+    pop es
+
+    mov eax, dword[.entryCount]
+
+    clc
+
+    jmp .done
+
+.tooSmall:
+
+;; EAX already holds the exact size needed, computed above
+
+    stc
+
+    jmp .done
+
+.hardError:
+
+    xor eax, eax
+
+    stc
+
+.done:
 
     call Hexagon.Kern.Sched.enablePreemption
 
     ret
+
+.callerBuffer: dd 0
+.callerSize:   dd 0
+.entryCount:   dd 0
 
 ;;************************************************************************************
 
