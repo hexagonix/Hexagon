@@ -139,6 +139,7 @@ include "dev/dev.asm"                   ;; Hardware management and abstraction f
 ;; Processes, process model and executable images
 
 include "kern/proc.asm"                 ;; Functions for handling processes
+include "kern/fd.asm"                   ;; Per-process descriptors
 include "kern/sched.asm"                ;; Round robin scheduler and context switch
 include "libkern/HAPP.asm"              ;; Functions for HAPP image processing
 include "kern/init.asm"                 ;; Functions to start user mode and first process

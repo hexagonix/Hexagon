@@ -189,6 +189,11 @@ times Hexagon.Processes.Table.limit dd 0 ;; VT index this process is attached to
 Hexagon.Processes.Table.savedForegroundSlot:
 times Hexagon.Processes.Table.limit dd 0 ;; Own VT's foregroundSlot value before hx.exec handed it to a child
 
+;; Descriptors this process holds, laid out as kern/fd.asm describes
+
+Hexagon.Processes.Table.fd:
+times Hexagon.Processes.Table.limit * Hexagon.Kern.FD.limit dd 0
+
 ;; This process's own last-resolved draw target, restored on top of the
 ;; shared Console.Memory.addressLFB global by Console.ensureCurrentVT
 ;; whenever another process has since overwritten it
@@ -1026,6 +1031,8 @@ Hexagon.Kern.Proc.exit:
     mov eax, edx
 
     call Hexagon.Arch.Mm.freeProcessBlocks
+
+    call Hexagon.Kern.FD.closeAll
 
 ;; Still under the cli from function entry. Hexagon.Scheduler.current keeps
 ;; pointing at edx all the way through the parentSlot/bootChildSlot checks
@@ -1979,6 +1986,8 @@ Hexagon.Kern.Proc.registerSlot:
 
     mov dword[Hexagon.Processes.Table.tty + edx * 4], ecx
 
+    call Hexagon.Kern.FD.inherit ;; EBX is still the parent slot, or 0xFF
+
 ;; Force this slot's own draw-target cache to resolve fresh on its first
 ;; use, regardless of whatever generation number a previous occupant of
 ;; this same slot left behind
@@ -2528,6 +2537,8 @@ Hexagon.Kern.Proc.killSlot:
     mov eax, edx
 
     call Hexagon.Arch.Mm.freeProcessBlocks
+
+    call Hexagon.Kern.FD.closeAll
 
     mov byte[Hexagon.Processes.Table.state + edx], Hexagon.Processes.Table.States.free
 
