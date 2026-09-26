@@ -311,10 +311,9 @@ Hexagon.Kern.Dmesg.hourToLog:
 
 Hexagon.Kern.Dmesg.createMessage:
 
-;; Hexagon.Kernel.Dev.Dev.open/write below track which device is open via
-;; global state (Hexagon.Dev.Control.*), and Hexagon.Syscall.Control.systemCall
-;; is also read here. None of that is safe to interleave between two
-;; processes, so this whole function runs with interrupts disabled
+;; The serial port and Hexagon.Syscall.Control.systemCall are both shared
+;; state, not safe to interleave between two processes, so this whole function
+;; runs with interrupts disabled
 
     pushfd
     cli
@@ -518,13 +517,17 @@ Hexagon.Kern.Dmesg.messageToSerial:
 
     pushad
 
-    mov esi, Hexagon.Dev.Devices.com1
+;; The port is driver state a process writing to another one may have chosen,
+;; so it is put back afterwards
 
-    call Hexagon.Kernel.Dev.Dev.open
+    push word[Hexagon.Kernel.Dev.Serial.Serial.Ports.currentSerialPort]
 
-    mov esi, [esp + 4] ;; Restore original ESI from pushad's own stack layout (EDI, ESI, EBP, ESP, EBX, EDX, ECX, EAX)
+    mov ax, word[Hexagon.Dev.deviceCodes.com1]
+    mov word[Hexagon.Kernel.Dev.Serial.Serial.Ports.currentSerialPort], ax
 
-    call Hexagon.Kernel.Dev.Dev.write
+    call Hexagon.Kernel.Dev.Serial.Serial.sendViaSerial
+
+    pop word[Hexagon.Kernel.Dev.Serial.Serial.Ports.currentSerialPort]
 
     popad
 

@@ -91,11 +91,7 @@ use32
 
 Hexagon.Dev.Control:
 
-.deviceId:    dw 0
-.openDevice:  db 0
-.deviceClass: db 0
-.isOpen:      db 0
-.file:        db 0
+.file: db 0
 
 Hexagon.Dev.Devices:
 
@@ -469,37 +465,145 @@ Hexagon.Kernel.Dev.Dev.Switch.Proc.attach:
 
 ;;************************************************************************************
 
-;; Closes communication with a device, dispatching to the open class's own
-;; close handler first, while Hexagon.Dev.Control.deviceClass still names it
+;; Resolves a descriptor of the running process into the device behind it. The
+;; controlling terminal becomes the caller's own VT
+;;
+;; Input:
+;;
+;; EAX - Descriptor
+;;
+;; Output:
+;;
+;; EAX - Device id, or Hexagon.Kern.FD.badDescriptor with CF set
+;; EBP - Row of Hexagon.Dev.Switch for the device's class
 
-Hexagon.Kernel.Dev.Dev.close:
+Hexagon.Kernel.Dev.Dev.resolveDescriptor:
 
-    movzx eax, byte[Hexagon.Dev.Control.deviceClass]
+    call Hexagon.Kern.FD.lookup
 
-    cmp eax, 1
-    jb .noClass
+    jc .end
 
-    cmp eax, 5
-    ja .noClass
+    call Hexagon.Kernel.Dev.Dev.classRow
 
-    dec eax
-    
-    imul eax, eax, Hexagon.Dev.Switch.rowSize
-    
-    add eax, Hexagon.Dev.Switch.close
-    add eax, Hexagon.Dev.Switch
+    and eax, 0FFFFh
 
-    call dword[eax]
+    cmp eax, Hexagon.Kern.FD.controllingTTY
 
-.noClass:
+    jne .resolved
 
-    mov byte[Hexagon.Dev.Control.isOpen], 0
-    mov word[Hexagon.Dev.Control.deviceClass], 0
-    mov byte[Hexagon.Dev.Control.deviceId], 00h
+    push ecx
+
+    movzx ecx, byte[Hexagon.Scheduler.current]
+
+    mov ecx, dword[Hexagon.Processes.Table.tty + ecx * 4]
+
+    movzx eax, word[Hexagon.Dev.deviceCodes.tty0 + ecx * 2]
+
+    pop ecx
+
+.resolved:
+
+    clc
+
+.end:
 
     ret
 
 ;;************************************************************************************
+
+;; Input:
+;;
+;; EAX - Descriptor entry, as kern/fd.asm lays it out
+;;
+;; Output:
+;;
+;; EBP - Row of Hexagon.Dev.Switch for its class
+
+Hexagon.Kernel.Dev.Dev.classRow:
+
+    mov ebp, eax
+
+    shr ebp, 16
+
+    and ebp, 0FFh
+
+    dec ebp
+
+    imul ebp, ebp, Hexagon.Dev.Switch.rowSize
+
+    add ebp, Hexagon.Dev.Switch
+
+    ret
+
+;;************************************************************************************
+
+;; Closes a descriptor, letting its class release the device first
+;;
+;; Input:
+;;
+;; EAX - Descriptor
+;;
+;; Output:
+;;
+;; CF set if the descriptor is not open
+
+Hexagon.Kernel.Dev.Dev.close:
+
+    push ebp
+    push eax
+
+    call Hexagon.Kernel.Dev.Dev.resolveDescriptor
+
+    jc .badDescriptor
+
+    call dword[ds:ebp + Hexagon.Dev.Switch.close]
+
+    pop eax
+
+    call Hexagon.Kern.FD.release
+
+    pop ebp
+
+    clc
+
+    ret
+
+.badDescriptor:
+
+    add esp, 4
+
+    pop ebp
+
+    stc
+
+    ret
+
+;; Same as above for a descriptor entry of any slot, for a process that is
+;; ending
+;;
+;; Input:
+;;
+;; EAX - Descriptor entry
+
+Hexagon.Kernel.Dev.Dev.closeEntry:
+
+    push eax
+    push ebp
+
+    call Hexagon.Kernel.Dev.Dev.classRow
+
+    and eax, 0FFFFh
+
+    call dword[ds:ebp + Hexagon.Dev.Switch.close]
+
+    pop ebp
+    pop eax
+
+    ret
+
+;;************************************************************************************
+
+;; Every class close handler takes the device id in EAX
 
 Hexagon.Kernel.Dev.Dev.Switch.Block.close:
 
@@ -518,18 +622,13 @@ Hexagon.Kernel.Dev.Dev.Switch.Parallel.close:
 
 Hexagon.Kernel.Dev.Dev.Switch.Output.close:
 
-    push ebx
+    cmp ax, word[Hexagon.Dev.deviceCodes.au0]
 
-    mov bx, word[Hexagon.Dev.Control.deviceId]
-
-    cmp bx, word[Hexagon.Dev.deviceCodes.au0]
     jne .done
 
     call Hexagon.Kernel.Dev.Snd.Snd.stopSound
 
 .done:
-
-    pop ebx
 
     ret
 
@@ -539,226 +638,203 @@ Hexagon.Kernel.Dev.Dev.Switch.Proc.close:
 
 ;;************************************************************************************
 
-;; Send data to certain open device. Data will be sent to the open device.
-;; In case of error or device not opened, return error
+;; Sends bytes to the device behind a descriptor
 ;;
 ;; Input:
 ;;
-;; ESI - Pointer to the buffer containing the data to be sent
+;; EAX - Descriptor
+;; ESI - Buffer
+;; ECX - Bytes to send
 ;;
 ;; Output:
 ;;
-;; CF set in case of error
+;; EAX - Bytes sent, or an error code with CF set
 
 Hexagon.Kernel.Dev.Dev.write:
 
-    cmp byte[Hexagon.Dev.Control.isOpen], 0
-    je .deviceNotOpen
+;; The bytes are read at CPL 0, so the caller must be able to reach them itself
 
-    push eax
-    push esi
+    push ebx
 
-    movzx eax, byte[Hexagon.Dev.Control.deviceClass]
+    mov ebx, esi
 
-    cmp eax, 1
-    jb .invalidClass
+    call Hexagon.Arch.Paging.rangeIsCallerWritable
 
-    cmp eax, 5
-    ja .invalidClass
+    pop ebx
 
-    dec eax
-    imul eax, eax, Hexagon.Dev.Switch.rowSize
-    add eax, Hexagon.Dev.Switch.write
-    add eax, Hexagon.Dev.Switch
+    jc .badBuffer
 
-    jmp dword[eax] ;; The class handler pops eax/esi itself and returns straight to write's own caller
+    push ebp
 
-.invalidClass:
+    call Hexagon.Kernel.Dev.Dev.resolveDescriptor
 
-    pop esi
-    pop eax
+    jc .end
 
-    stc
+    call dword[ds:ebp + Hexagon.Dev.Switch.write]
+
+.end:
+
+    pop ebp
 
     ret
 
-.deviceNotOpen:
+.badBuffer:
 
-    stc
+    mov eax, Hexagon.Kern.Proc.badAddress
 
     ret
 
 ;;************************************************************************************
+
+;; Every class write handler takes the device id in EAX and ESI/ECX as above
 
 ;; Disk writes aren't supported through this generic channel. A mounted
 ;; filesystem talks to the block driver directly
 
 Hexagon.Kernel.Dev.Dev.Switch.Block.write:
 
-    pop esi
-    pop eax
-
-    call Hexagon.Kernel.Dev.Dev.close
+    stc
 
     ret
+
+;; The port is driver state shared by every caller, so nothing may preempt
+;; between choosing it and the last byte
 
 Hexagon.Kernel.Dev.Dev.Switch.Serial.write:
 
+    push ecx
+    push esi
+
+    call Hexagon.Kern.Sched.disablePreemption
+
+    mov word[Hexagon.Kernel.Dev.Serial.Serial.Ports.currentSerialPort], ax
+
+    jecxz .done
+
+.sendByte:
+
+    lodsb
+
+    call Hexagon.Kernel.Dev.Serial.Serial.performSend
+
+    loop .sendByte
+
+.done:
+
+    call Hexagon.Kern.Sched.enablePreemption
+
     pop esi
-    pop eax
+    pop ecx
 
-    call Hexagon.Kernel.Dev.Serial.Serial.sendViaSerial
+    mov eax, ecx
 
-    jc .error
-
-    call Hexagon.Kernel.Dev.Dev.close
-
-    ret
-
-.error:
-
-    call Hexagon.Kernel.Dev.Dev.close
-
-    stc
+    clc
 
     ret
 
 Hexagon.Kernel.Dev.Dev.Switch.Parallel.write:
 
+    push ecx
+    push esi
+
+    call Hexagon.Kern.Sched.disablePreemption
+
+    mov word[Hexagon.Kernel.Dev.LPT.LPT.currentParallelPort], ax
+
+    jecxz .done
+
+.sendByte:
+
+    lodsb
+
+    call Hexagon.Kernel.Dev.LPT.LPT.send
+
+    loop .sendByte
+
+.done:
+
+    call Hexagon.Kern.Sched.enablePreemption
+
     pop esi
-    pop eax
+    pop ecx
 
-    call Hexagon.Kernel.Dev.LPT.LPT.sendViaParallelPort
+    mov eax, ecx
 
-    jc .error
-
-    call Hexagon.Kernel.Dev.Dev.close
-
-    ret
-
-.error:
-
-    call Hexagon.Kernel.Dev.Dev.close
-
-    stc
+    clc
 
     ret
 
 Hexagon.Kernel.Dev.Dev.Switch.Output.write:
 
-    pop esi
-    pop eax
-
-    mov bx, word[Hexagon.Dev.Control.deviceId]
-
-    cmp word[Hexagon.Dev.deviceCodes.au0], bx
-    je .au0
-
-    call Hexagon.Kernel.Dev.Dev.close
-
-    ret
-
-.au0:
-
-    call Hexagon.Kernel.Dev.Snd.Snd.playSound
+    stc
 
     ret
 
 Hexagon.Kernel.Dev.Dev.Switch.Proc.write:
 
-    pop esi
-    pop eax
-
-    call Hexagon.Kernel.Dev.Dev.close
+    stc
 
     ret
 
 ;;************************************************************************************
 
-;; Reads data from the currently open device into a caller-supplied buffer.
-;; No class has a real byte-stream source wired up yet, so every class
-;; reports "not supported" for now, the same clean failure a caller gets
-;; for a class that doesn't exist at all
+;; Reads bytes from the device behind a descriptor. No class has a byte-stream
+;; source wired up yet, so every class reports "not supported" for now
 ;;
 ;; Input:
 ;;
+;; EAX - Descriptor
 ;; EDI - Buffer to receive the data
 ;; ECX - Maximum bytes to read
 ;;
 ;; Output:
 ;;
-;; EAX - Bytes actually read
-;; CF set if nothing is open, or the open device's class has no reader
+;; EAX - Bytes actually read, or an error code with CF set
 
 Hexagon.Kernel.Dev.Dev.read:
 
-    cmp byte[Hexagon.Dev.Control.isOpen], 0
-    je .deviceNotOpen
+    push ebp
 
-    movzx eax, byte[Hexagon.Dev.Control.deviceClass]
+    call Hexagon.Kernel.Dev.Dev.resolveDescriptor
 
-    cmp eax, 1
-    jb .deviceNotOpen
+    jc .end
 
-    cmp eax, 5
-    ja .deviceNotOpen
+    call dword[ds:ebp + Hexagon.Dev.Switch.read]
 
-    dec eax
-   
-    imul eax, eax, Hexagon.Dev.Switch.rowSize
-   
-    add eax, Hexagon.Dev.Switch.read
-    add eax, Hexagon.Dev.Switch
+.end:
 
-    jmp dword[eax]
-
-.deviceNotOpen:
-
-    xor eax, eax
-
-    stc
+    pop ebp
 
     ret
 
 ;;************************************************************************************
 
 ;; Device-specific control that doesn't fit read/write's byte-stream shape,
-;; dispatched to the open device's own class handler
+;; dispatched to the class of the device behind a descriptor
 ;;
 ;; Input:
 ;;
+;; EAX - Descriptor
 ;; EBX - Command
 ;; ECX - Argument for the command
 ;;
 ;; Output:
 ;;
-;; CF set if nothing is open, or the class has no handler for this command
+;; CF set if the descriptor is not open, or its class has no such command
 
 Hexagon.Kernel.Dev.Dev.ioctl:
 
-    cmp byte[Hexagon.Dev.Control.isOpen], 0
-    je .deviceNotOpen
+    push ebp
 
-    movzx eax, byte[Hexagon.Dev.Control.deviceClass]
+    call Hexagon.Kernel.Dev.Dev.resolveDescriptor
 
-    cmp eax, 1
-    jb .deviceNotOpen
+    jc .end
 
-    cmp eax, 5
-    ja .deviceNotOpen
+    call dword[ds:ebp + Hexagon.Dev.Switch.ioctl]
 
-    dec eax
-    
-    imul eax, eax, Hexagon.Dev.Switch.rowSize
-    
-    add eax, Hexagon.Dev.Switch.ioctl
-    add eax, Hexagon.Dev.Switch
+.end:
 
-    jmp dword[eax]
-
-.deviceNotOpen:
-
-    stc
+    pop ebp
 
     ret
 
@@ -899,8 +975,8 @@ Hexagon.Kernel.Dev.Dev.openSyscall:
 ;;
 ;; Output:
 ;;
-;; EAX - Device class
-;; CF set in case of error
+;; EAX - Descriptor, for a device
+;; CF set in case of error, with EAX holding its code
 
 Hexagon.Kernel.Dev.Dev.open:
 
@@ -927,53 +1003,71 @@ Hexagon.Kernel.Dev.Dev.open:
     cmp byte[Hexagon.Dev.Control.file], 2
     je .notSupportedDevice
 
-;; If not, proceed with opening a device
+;; If not, proceed with opening a device. The descriptor is taken before
+;; the class handler touches the hardware, and given back if it fails
 
-    mov byte[Hexagon.Dev.Control.deviceClass], dl
+    pop bx
 
-;; EBP, not EAX, computes the jump target, since the class handler needs
-;; AH/ECX intact. EBP itself is saved here and restored before the jump,
-;; since open's own caller may rely on it surviving the call
+    cmp dl, 1
 
-    mov dword[.savedEBP], ebp
+    jb .invalidClass
+
+    cmp dl, 5
+
+    ja .invalidClass
+
+    movzx eax, dl
+    shl eax, 16
+    mov ax, bx
+
+    call Hexagon.Kern.FD.allocate
+
+    jc .end
+
+    push ebp
+    push eax
 
     movzx ebp, dl
 
-    cmp ebp, 1
-    jb .invalidClass
-
-    cmp ebp, 5
-    ja .invalidClass
-
     dec ebp
-    
+
     imul ebp, ebp, Hexagon.Dev.Switch.rowSize
-    
-    add ebp, Hexagon.Dev.Switch.open
+
     add ebp, Hexagon.Dev.Switch
 
-;; EBP used bare as a base register addresses through SS, not DS, so the
-;; segment must be forced explicitly to reach this DS-relative table
+    call dword[ds:ebp + Hexagon.Dev.Switch.open] ;; BX = device id, DL = class
 
-    mov ebp, dword[ds:ebp] ;; EBP now holds the class handler's real address
-    mov dword[.handlerAddress], ebp
+    jc .openFailed
 
-    mov ebp, dword[.savedEBP]
+    pop eax
+    pop ebp
 
-    jmp dword[.handlerAddress] ;; The class handler pops bx itself and returns straight to open's own caller
+    clc
 
-.invalidClass:
+.end:
 
-    mov ebp, dword[.savedEBP]
+    ret
 
-    pop bx
+.openFailed:
+
+    xchg eax, dword[esp] ;; EAX = descriptor, the class's error code kept
+
+    call Hexagon.Kern.FD.release
+
+    pop eax
+    pop ebp
 
     stc
 
     ret
 
-.savedEBP:       dd 0
-.handlerAddress: dd 0
+.invalidClass:
+
+    mov eax, 05h
+
+    stc
+
+    ret
 
 .file:
 
@@ -1012,8 +1106,6 @@ Hexagon.Kernel.Dev.Dev.open:
 
 Hexagon.Kernel.Dev.Dev.Switch.Block.open:
 
-    pop bx
-
     clc
 
     cmp dword[kernelExecute], kernelExecutePermission
@@ -1027,10 +1119,6 @@ Hexagon.Kernel.Dev.Dev.Switch.Block.open:
     je .storagePermissionDenied
 
 .storageAuthenticated:
-
-    mov byte[Hexagon.Dev.Control.isOpen], 1
-
-    mov eax, dword[Hexagon.Dev.Control.deviceClass]
 
 ;; The permission check above falls through here via a cmp whose own
 ;; result (comparing a passing group code against the denied one) is not
@@ -1051,8 +1139,6 @@ Hexagon.Kernel.Dev.Dev.Switch.Block.open:
 ;;************************************************************************************
 
 Hexagon.Kernel.Dev.Dev.Switch.Serial.open:
-
-    pop bx
 
     mov word[Hexagon.Kernel.Dev.Serial.Serial.Ports.currentSerialPort], bx
 
@@ -1115,13 +1201,10 @@ Hexagon.Kernel.Dev.Dev.Switch.Serial.open:
 
 .skipSetup:
 
-    mov byte[Hexagon.Dev.Control.isOpen], 1
-
 ;; Only registered here, on a successful open, since there's no way to
 ;; know up front which serial ports actually have something connected
 
     mov ax, bx
-    mov dl, byte[Hexagon.Dev.Control.deviceClass]
 
     call Hexagon.Kernel.Dev.Dev.convertDeviceToDeviceName
 
@@ -1130,8 +1213,6 @@ Hexagon.Kernel.Dev.Dev.Switch.Serial.open:
     mov cl, 0
 
     call Hexagon.Kernel.Dev.Dev.registerDevice
-
-    mov eax, dword[Hexagon.Dev.Control.deviceClass]
 
 ;; Hexagon.Kernel.Dev.Dev.registerDevice reports on its internal name
 ;; dedup through CF, a signal this open() call has no business forwarding
@@ -1143,8 +1224,7 @@ Hexagon.Kernel.Dev.Dev.Switch.Serial.open:
 
 .openingError:
 
-    mov byte[Hexagon.Dev.Control.isOpen], 0
-    mov eax, dword[Hexagon.Dev.Control.deviceClass]
+    mov eax, 05h
 
     ret
 
@@ -1156,8 +1236,6 @@ Hexagon.Dev.Switch.Serial.initializedCom4: db 0
 ;;************************************************************************************
 
 Hexagon.Kernel.Dev.Dev.Switch.Parallel.open:
-
-    pop bx
 
     mov word[Hexagon.Kernel.Dev.LPT.LPT.currentParallelPort], bx
 
@@ -1207,13 +1285,10 @@ Hexagon.Kernel.Dev.Dev.Switch.Parallel.open:
 
 .skipSetup:
 
-    mov byte[Hexagon.Dev.Control.isOpen], 1
-
 ;; Only registered here, on a successful open, same reasoning as the
 ;; serial ports above
 
     mov ax, bx
-    mov dl, byte[Hexagon.Dev.Control.deviceClass]
 
     call Hexagon.Kernel.Dev.Dev.convertDeviceToDeviceName
 
@@ -1222,8 +1297,6 @@ Hexagon.Kernel.Dev.Dev.Switch.Parallel.open:
     mov cl, 0
 
     call Hexagon.Kernel.Dev.Dev.registerDevice
-
-    mov eax, dword[Hexagon.Dev.Control.deviceClass]
 
 ;; Hexagon.Kernel.Dev.Dev.registerDevice reports on its internal name
 ;; dedup through CF, a signal this open() call has no business forwarding
@@ -1235,8 +1308,7 @@ Hexagon.Kernel.Dev.Dev.Switch.Parallel.open:
 
 .openingError:
 
-    mov byte[Hexagon.Dev.Control.isOpen], 0
-    mov eax, dword[Hexagon.Dev.Control.deviceClass]
+    mov eax, 05h
 
     ret
 
@@ -1252,13 +1324,7 @@ Hexagon.Dev.Switch.Parallel.initializedLpt2: db 0
 
 Hexagon.Kernel.Dev.Dev.Switch.Output.open:
 
-    pop bx
-
-    mov byte[Hexagon.Dev.Control.isOpen], 1
-
     clc
-
-    mov eax, dword[Hexagon.Dev.Control.deviceClass]
 
     ret
 
@@ -1328,15 +1394,14 @@ Hexagon.Kernel.Dev.Dev.Switch.Output.claimVT:
 
 ;;************************************************************************************
 
-;; Resolves Hexagon.Dev.Control.deviceId into a VT index, if it names one of
-;; tty0..tty7
+;; Resolves a device id into a VT index, if it names one of tty0..tty7
+;;
+;; Input: AX - Device id
 ;;
 ;; Output: ECX - VT index (0-7), CF clear if resolved. CF set otherwise
 ;; (not a tty device at all), ECX unchanged
 
 Hexagon.Kernel.Dev.Dev.Switch.Output.resolveTTYIndex:
-
-    mov ax, word[Hexagon.Dev.Control.deviceId]
 
     cmp ax, word[Hexagon.Dev.deviceCodes.tty0]
     je .isTTY0
@@ -1476,8 +1541,9 @@ Hexagon.Kernel.Dev.Dev.ensureVTBuffer:
 ;; EBX - Command (1 = activate console, 2 = activate as foreground VT,
 ;;       3 = claim the open tty as the caller's own VT)
 ;; ECX - Argument for command 1 (console index: 0 main, 1 secondary).
-;;       Commands 2 and 3 take no argument, the target VT is whichever
-;;       tty device is currently open, resolved by Output.resolveTTYIndex
+;;       Commands 2 and 3 take no argument, the target VT is the tty behind
+;;       the descriptor
+;; EAX - Device id, from Hexagon.Kernel.Dev.Dev.ioctl
 
 Hexagon.Kernel.Dev.Dev.Switch.Output.ioctl:
 
@@ -1498,7 +1564,7 @@ Hexagon.Kernel.Dev.Dev.Switch.Output.ioctl:
 
     call Hexagon.Kernel.Dev.Dev.Switch.Output.resolveTTYIndex
 
-    jc .end ;; The currently open device isn't a tty at all
+    jc .end ;; Not a tty at all
 
     call Hexagon.Kernel.Dev.Dev.Switch.Output.claimVT
 
@@ -1510,7 +1576,7 @@ Hexagon.Kernel.Dev.Dev.Switch.Output.ioctl:
 
     call Hexagon.Kernel.Dev.Dev.Switch.Output.resolveTTYIndex
 
-    jc .end ;; The currently open device isn't a tty at all
+    jc .end ;; Not a tty at all
 
     mov ebx, ecx
 
@@ -1557,10 +1623,6 @@ Hexagon.Kernel.Dev.Dev.Switch.Output.ioctl:
 ;;************************************************************************************
 
 Hexagon.Kernel.Dev.Dev.Switch.Proc.open:
-
-    pop bx
-
-    mov eax, dword[Hexagon.Dev.Control.deviceClass]
 
 ;; The processor name Hexagon.Arch.CPU.CPU.identifyProcessor read out of CPUID
 ;; at boot is copied into the buffer the caller opened the device with, since
@@ -1770,7 +1832,7 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 .hd0:
 
     mov ah, byte [Hexagon.Dev.deviceCodes.hd0]
-    mov byte[Hexagon.Dev.Control.deviceId], ah
+    movzx bx, ah
     movzx ecx, byte [Hexagon.Dev.deviceCodes.hd0]
     mov dl, 01h
 
@@ -1779,7 +1841,7 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 .hd1:
 
     mov ah, byte [Hexagon.Dev.deviceCodes.hd1]
-    mov byte[Hexagon.Dev.Control.deviceId], ah
+    movzx bx, ah
     movzx ecx, byte [Hexagon.Dev.deviceCodes.hd1]
     mov dl, 01h
 
@@ -1788,7 +1850,7 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 .hd2:
 
     mov ah, byte [Hexagon.Dev.deviceCodes.hd2]
-    mov byte[Hexagon.Dev.Control.deviceId], ah
+    movzx bx, ah
     movzx ecx, byte [Hexagon.Dev.deviceCodes.hd2]
     mov dl, 01h
 
@@ -1797,7 +1859,7 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 .hd3:
 
     mov ah, byte [Hexagon.Dev.deviceCodes.hd3]
-    mov byte[Hexagon.Dev.Control.deviceId], ah
+    movzx bx, ah
     movzx ecx, byte [Hexagon.Dev.deviceCodes.hd3]
     mov dl, 01h
 
@@ -1807,7 +1869,6 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 
     mov ah, 00h
     mov bx, word [Hexagon.Dev.deviceCodes.com1]
-    mov word[Hexagon.Dev.Control.deviceId], bx
     movzx ecx, word [Hexagon.Dev.deviceCodes.com1]
     mov dl, 02h
 
@@ -1817,7 +1878,6 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 
     mov ah, 01h
     mov bx, word [Hexagon.Dev.deviceCodes.com2]
-    mov word[Hexagon.Dev.Control.deviceId], bx
     movzx ecx, word [Hexagon.Dev.deviceCodes.com2]
     mov dl, 02h
 
@@ -1827,7 +1887,6 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 
     mov ah, 02h
     mov bx, word [Hexagon.Dev.deviceCodes.com3]
-    mov word[Hexagon.Dev.Control.deviceId], bx
     movzx ecx, word [Hexagon.Dev.deviceCodes.com3]
     mov dl, 02h
 
@@ -1837,7 +1896,6 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 
     mov ah, 03h
     mov bx, word [Hexagon.Dev.deviceCodes.com4]
-    mov word[Hexagon.Dev.Control.deviceId], bx
     movzx ecx, word [Hexagon.Dev.deviceCodes.com4]
     mov dl, 02h
 
@@ -1846,7 +1904,6 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 .lpt0:
 
     mov bx, word [Hexagon.Dev.deviceCodes.lpt0]
-    mov word[Hexagon.Dev.Control.deviceId], bx
     movzx ecx, word [Hexagon.Dev.deviceCodes.lpt0]
     mov dl, 03h
 
@@ -1855,7 +1912,6 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 .lpt1:
 
     mov bx, word [Hexagon.Dev.deviceCodes.lpt1]
-    mov word[Hexagon.Dev.Control.deviceId], bx
     movzx ecx, word [Hexagon.Dev.deviceCodes.lpt1]
     mov dl, 03h
 
@@ -1864,7 +1920,6 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 .lpt2:
 
     mov bx, word [Hexagon.Dev.deviceCodes.lpt2]
-    mov word[Hexagon.Dev.Control.deviceId], bx
     movzx ecx, word [Hexagon.Dev.deviceCodes.lpt2]
     mov dl, 03h
 
@@ -1894,7 +1949,6 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
     mov ah, dl
 
     mov bx, word[Hexagon.Dev.deviceCodes.tty0 + edx * 2]
-    mov word[Hexagon.Dev.Control.deviceId], bx
     movzx ecx, bx
 
     mov dl, 04h
@@ -1905,7 +1959,6 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 
     mov ah, 00h
     mov bx, word [Hexagon.Dev.deviceCodes.tty0]
-    mov word[Hexagon.Dev.Control.deviceId], bx
 
 ;; Was a bare dword read
 ;; past this word-sized field, harmless before tty1's own code was
@@ -1920,7 +1973,6 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 
     mov ah, 01h
     mov bx, word [Hexagon.Dev.deviceCodes.tty1]
-    mov word[Hexagon.Dev.Control.deviceId], bx
     movzx ecx, word [Hexagon.Dev.deviceCodes.tty1]
     mov dl, 04h
 
@@ -1930,7 +1982,6 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 
     mov ah, 02h
     mov bx, word [Hexagon.Dev.deviceCodes.tty2]
-    mov word[Hexagon.Dev.Control.deviceId], bx
     movzx ecx, word [Hexagon.Dev.deviceCodes.tty2]
     mov dl, 04h
 
@@ -1940,7 +1991,6 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 
     mov ah, 03h
     mov bx, word [Hexagon.Dev.deviceCodes.tty3]
-    mov word[Hexagon.Dev.Control.deviceId], bx
     movzx ecx, word [Hexagon.Dev.deviceCodes.tty3]
     mov dl, 04h
 
@@ -1950,7 +2000,6 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 
     mov ah, 04h
     mov bx, word [Hexagon.Dev.deviceCodes.tty4]
-    mov word[Hexagon.Dev.Control.deviceId], bx
     movzx ecx, word [Hexagon.Dev.deviceCodes.tty4]
     mov dl, 04h
 
@@ -1960,7 +2009,6 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 
     mov ah, 05h
     mov bx, word [Hexagon.Dev.deviceCodes.tty5]
-    mov word[Hexagon.Dev.Control.deviceId], bx
     movzx ecx, word [Hexagon.Dev.deviceCodes.tty5]
     mov dl, 04h
 
@@ -1970,7 +2018,6 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 
     mov ah, 06h
     mov bx, word [Hexagon.Dev.deviceCodes.tty6]
-    mov word[Hexagon.Dev.Control.deviceId], bx
     movzx ecx, word [Hexagon.Dev.deviceCodes.tty6]
     mov dl, 04h
 
@@ -1980,7 +2027,6 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 
     mov ah, 07h
     mov bx, word [Hexagon.Dev.deviceCodes.tty7]
-    mov word[Hexagon.Dev.Control.deviceId], bx
     movzx ecx, word [Hexagon.Dev.deviceCodes.tty7]
     mov dl, 04h
 
@@ -1990,7 +2036,6 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 
     mov ah, byte [Hexagon.Dev.deviceCodes.au0]
     mov bx, word [Hexagon.Dev.deviceCodes.au0]
-    mov word[Hexagon.Dev.Control.deviceId], bx
     mov dl, 04h
 
     ret
@@ -1999,7 +2044,6 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 
     mov ah, 00h
     mov bx, [Hexagon.Dev.deviceCodes.mouse0]
-    mov word[Hexagon.Dev.Control.deviceId], bx
     mov dl, 00h
 
     ret
@@ -2008,7 +2052,6 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 
     mov ah, 00h
     mov bx, word [Hexagon.Dev.deviceCodes.kbd0]
-    mov word[Hexagon.Dev.Control.deviceId], bx
     mov dl, 00h
 
     ret
@@ -2017,7 +2060,6 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 
     mov ah, 00h
     mov bx, word [Hexagon.Dev.deviceCodes.cpu0]
-    mov word[Hexagon.Dev.Control.deviceId], bx
     movzx ecx, word [Hexagon.Dev.deviceCodes.cpu0]
     mov dl, 05h
 

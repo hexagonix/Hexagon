@@ -100,6 +100,11 @@ Hexagon.Kern.FD.outputClass = 04h
 
 Hexagon.Kern.FD.controllingEntry = (Hexagon.Kern.FD.outputClass shl 16) or Hexagon.Kern.FD.controllingTTY
 
+;; Error codes, the same values as lib/fasm/errors.s
+
+Hexagon.Kern.FD.badDescriptor    = 9
+Hexagon.Kern.FD.noFreeDescriptor = 10
+
 ;;************************************************************************************
 
 ;; Gives a new slot its descriptors, a copy of its creator's own. With no
@@ -179,6 +184,7 @@ Hexagon.Kern.FD.inherit:
 
 Hexagon.Kern.FD.closeAll:
 
+    push eax
     push ecx
     push edi
 
@@ -189,7 +195,17 @@ Hexagon.Kern.FD.closeAll:
 
 .closeEntry:
 
+    mov eax, dword[edi]
+
+    cmp eax, 0
+
+    je .nextEntry
+
+    call Hexagon.Kernel.Dev.Dev.closeEntry
+
     mov dword[edi], 0
+
+.nextEntry:
 
     add edi, 4
 
@@ -197,5 +213,144 @@ Hexagon.Kern.FD.closeAll:
 
     pop edi
     pop ecx
+    pop eax
+
+    ret
+
+;;************************************************************************************
+
+;; Takes the lowest free descriptor of the running process
+;;
+;; Input:
+;;
+;; EAX - Entry to store
+;;
+;; Output:
+;;
+;; EAX - Descriptor, or an error code with CF set
+
+Hexagon.Kern.FD.allocate:
+
+    push ecx
+    push edi
+
+    movzx edi, byte[Hexagon.Scheduler.current]
+
+    cmp edi, 0xFF
+
+    je .noneFree
+
+    imul edi, edi, Hexagon.Kern.FD.limit * 4
+    add edi, Hexagon.Processes.Table.fd
+
+    xor ecx, ecx
+
+.checkEntry:
+
+    cmp dword[edi + ecx * 4], 0
+
+    je .found
+
+    inc ecx
+
+    cmp ecx, Hexagon.Kern.FD.limit
+
+    jb .checkEntry
+
+.noneFree:
+
+    mov eax, Hexagon.Kern.FD.noFreeDescriptor
+
+    pop edi
+    pop ecx
+
+    stc
+
+    ret
+
+.found:
+
+    mov dword[edi + ecx * 4], eax
+
+    mov eax, ecx
+
+    pop edi
+    pop ecx
+
+    clc
+
+    ret
+
+;;************************************************************************************
+
+;; Reads one of the running process's descriptors
+;;
+;; Input:
+;;
+;; EAX - Descriptor
+;;
+;; Output:
+;;
+;; EAX - Its entry, or Hexagon.Kern.FD.badDescriptor with CF set
+
+Hexagon.Kern.FD.lookup:
+
+    push edi
+
+    movzx edi, byte[Hexagon.Scheduler.current]
+
+    cmp edi, 0xFF
+
+    je .bad
+
+    cmp eax, Hexagon.Kern.FD.limit
+
+    jae .bad
+
+    imul edi, edi, Hexagon.Kern.FD.limit * 4
+    add edi, Hexagon.Processes.Table.fd
+
+    mov eax, dword[edi + eax * 4]
+
+    cmp eax, 0
+
+    je .bad
+
+    pop edi
+
+    clc
+
+    ret
+
+.bad:
+
+    mov eax, Hexagon.Kern.FD.badDescriptor
+
+    pop edi
+
+    stc
+
+    ret
+
+;;************************************************************************************
+
+;; Frees one of the running process's descriptors
+;;
+;; Input:
+;;
+;; EAX - Descriptor, already checked by Hexagon.Kern.FD.lookup
+
+Hexagon.Kern.FD.release:
+
+    push edi
+
+    movzx edi, byte[Hexagon.Scheduler.current]
+
+    imul edi, edi, Hexagon.Kern.FD.limit * 4
+    add edi, Hexagon.Processes.Table.fd
+
+    mov dword[edi + eax * 4], 0
+
+    pop edi
 
     ret
