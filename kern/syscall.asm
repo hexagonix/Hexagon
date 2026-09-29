@@ -76,7 +76,7 @@ use32
 Hexagon.Syscall.Control:
 
 .systemCall:        db 0 ;; Stores whether or not a call was made
-.totalCalls:        dd 70
+.totalCalls:        dd 71
 
 ;;************************************************************************************
 

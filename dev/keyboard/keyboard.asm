@@ -96,9 +96,11 @@ Hexagon.Keyboard.keyCodes: ;; Keycodes
 .F9        = 0x43
 .F10       = 0x44
 .home      = 0x47
-.end       = 0x49
+.end       = 0x4F
+.upKey     = 0x48
 .leftKey   = 0x4B
 .rightKey  = 0x4D
+.downKey   = 0x50
 .delete    = 0x53
 .print     = 0x54
 .F11       = 0x57
@@ -651,6 +653,156 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.waitKeyboard:
 
 .currentCodesIndex: db 0
 .extendedPending: db 0
+
+;;************************************************************************************
+
+;; Reads the keyboard of a VT as a byte stream. Keys with no byte of their own
+;; become the escape sequences a terminal sends for them. Blocks until there is
+;; at least one byte
+;;
+;; Input:
+;;
+;; EDX - VT
+;; EDI - Buffer
+;; ECX - Maximum bytes, at least 1
+;;
+;; Output:
+;;
+;; EAX - Bytes read
+
+Hexagon.Kernel.Dev.Keyboard.Keyboard.readTTY:
+
+    push ebx
+    push ecx
+    push esi
+    push edi
+
+    cmp byte[.pendingCount + edx], 0
+
+    jne .copy
+
+.waitKey:
+
+    call Hexagon.Kernel.Dev.Keyboard.Keyboard.waitKeyboard ;; AL = character, AH = code
+
+    mov esi, .sequences
+
+.findSequence:
+
+    cmp byte[esi], 0
+
+    je .plainByte
+
+    cmp byte[esi], ah
+
+    je .sequenceFound
+
+    add esi, 5
+
+    jmp .findSequence
+
+.sequenceFound:
+
+    mov eax, dword[esi + 1]
+    mov dword[.pending + edx * 4], eax
+
+    mov byte[.pendingCount + edx], 3
+
+    cmp byte[esi + 4], 0
+
+    je .queued
+
+    mov byte[.pendingCount + edx], 4
+
+    jmp .queued
+
+.plainByte:
+
+    cmp ah, Hexagon.Keyboard.keyCodes.esc
+
+    jne .checkByte
+
+    mov al, 27 ;; The layouts hold no character for it
+
+.checkByte:
+
+    cmp al, 0
+
+    je .waitKey
+
+    cmp al, 0FFh
+
+    je .waitKey
+
+    mov byte[.pending + edx * 4], al
+
+    mov byte[.pendingCount + edx], 1
+
+.queued:
+
+    mov byte[.pendingIndex + edx], 0
+
+.copy:
+
+    xor ebx, ebx ;; Bytes read
+
+.copyByte:
+
+    movzx esi, byte[.pendingIndex + edx]
+
+    mov al, byte[.pending + edx * 4 + esi]
+    mov byte[edi], al
+
+    inc edi
+    inc ebx
+    inc esi
+
+    mov eax, esi
+    mov byte[.pendingIndex + edx], al
+
+    cmp al, byte[.pendingCount + edx]
+
+    je .drained
+
+    cmp ebx, ecx
+
+    jb .copyByte
+
+    jmp .end
+
+.drained:
+
+    mov byte[.pendingCount + edx], 0
+
+.end:
+
+    mov eax, ebx
+
+    pop edi
+    pop esi
+    pop ecx
+    pop ebx
+
+    ret
+
+;; Key code, then its sequence padded to four bytes
+
+.sequences:
+
+db Hexagon.Keyboard.keyCodes.upKey,    27, '[', 'A', 0
+db Hexagon.Keyboard.keyCodes.downKey,  27, '[', 'B', 0
+db Hexagon.Keyboard.keyCodes.rightKey, 27, '[', 'C', 0
+db Hexagon.Keyboard.keyCodes.leftKey,  27, '[', 'D', 0
+db Hexagon.Keyboard.keyCodes.home,     27, '[', 'H', 0
+db Hexagon.Keyboard.keyCodes.end,      27, '[', 'F', 0
+db Hexagon.Keyboard.keyCodes.delete,   27, '[', '3', '~'
+db 0
+
+;; What a VT still has to hand out of the last key, when it did not fit
+
+.pending:      times Hexagon.Console.VT.count dd 0
+.pendingCount: times Hexagon.Console.VT.count db 0
+.pendingIndex: times Hexagon.Console.VT.count db 0
 
 ;;************************************************************************************
 

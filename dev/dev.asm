@@ -766,6 +766,44 @@ Hexagon.Kernel.Dev.Dev.Switch.Parallel.write:
 
 Hexagon.Kernel.Dev.Dev.Switch.Output.write:
 
+    push ecx
+
+    call Hexagon.Kernel.Dev.Dev.Switch.Output.callerTTY
+
+    pop ecx
+
+    jc .notSupported
+
+    push ebx
+    push ecx
+    push esi
+
+    xor ebx, ebx
+
+    jecxz .done
+
+.writeByte:
+
+    lodsb
+
+    call Hexagon.Kernel.Dev.Console.Console.printCharacter
+
+    loop .writeByte
+
+.done:
+
+    pop esi
+    pop ecx
+    pop ebx
+
+    mov eax, ecx
+
+    clc
+
+    ret
+
+.notSupported:
+
     stc
 
     ret
@@ -778,8 +816,7 @@ Hexagon.Kernel.Dev.Dev.Switch.Proc.write:
 
 ;;************************************************************************************
 
-;; Reads bytes from the device behind a descriptor. No class has a byte-stream
-;; source wired up yet, so every class reports "not supported" for now
+;; Reads bytes from the device behind a descriptor
 ;;
 ;; Input:
 ;;
@@ -793,6 +830,20 @@ Hexagon.Kernel.Dev.Dev.Switch.Proc.write:
 
 Hexagon.Kernel.Dev.Dev.read:
 
+    jecxz .nothingAsked
+
+;; The bytes are written at CPL 0, so the caller must be able to reach them itself
+
+    push ebx
+
+    mov ebx, edi
+
+    call Hexagon.Arch.Paging.rangeIsCallerWritable
+
+    pop ebx
+
+    jc .badBuffer
+
     push ebp
 
     call Hexagon.Kernel.Dev.Dev.resolveDescriptor
@@ -804,6 +855,20 @@ Hexagon.Kernel.Dev.Dev.read:
 .end:
 
     pop ebp
+
+    ret
+
+.nothingAsked:
+
+    xor eax, eax
+
+    clc
+
+    ret
+
+.badBuffer:
+
+    mov eax, Hexagon.Kern.Proc.badAddress
 
     ret
 
@@ -866,9 +931,61 @@ Hexagon.Kernel.Dev.Dev.Switch.Parallel.read:
 
 Hexagon.Kernel.Dev.Dev.Switch.Output.read:
 
+    push edx
+    push ecx
+
+    call Hexagon.Kernel.Dev.Dev.Switch.Output.callerTTY
+
+    mov edx, ecx
+
+    pop ecx
+
+    jc .notSupported
+
+    call Hexagon.Kernel.Dev.Keyboard.Keyboard.readTTY
+
+    pop edx
+
+    clc
+
+    ret
+
+.notSupported:
+
+    pop edx
+
     xor eax, eax
 
     stc
+
+    ret
+
+;; Only a tty's own processes may read or write it for now, since the console
+;; still picks the VT by the caller and not by the device
+;;
+;; Input: AX - Device id
+;;
+;; Output: ECX - VT index, CF set if the device is not the caller's own tty
+
+Hexagon.Kernel.Dev.Dev.Switch.Output.callerTTY:
+
+    call Hexagon.Kernel.Dev.Dev.Switch.Output.resolveTTYIndex
+
+    jc .end
+
+    push eax
+
+    movzx eax, byte[Hexagon.Scheduler.current]
+
+    cmp ecx, dword[Hexagon.Processes.Table.tty + eax * 4]
+
+    pop eax
+
+    je .end
+
+    stc
+
+.end:
 
     ret
 

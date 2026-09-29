@@ -200,3 +200,7 @@ Hexagon.Kern.Syscall.hexagonServices:
 
     dd Hexagon.Kern.Dmesg.sysctl                                 ;; 70
 
+;; Hexagon file and device management service
+
+    dd Hexagon.Kernel.Dev.Dev.read                               ;; 71
+
