@@ -766,35 +766,20 @@ Hexagon.Kernel.Dev.Dev.Switch.Parallel.write:
 
 Hexagon.Kernel.Dev.Dev.Switch.Output.write:
 
+    push edx
     push ecx
 
     call Hexagon.Kernel.Dev.Dev.Switch.Output.callerTTY
+
+    mov edx, ecx ;; VT
 
     pop ecx
 
     jc .notSupported
 
-    push ebx
-    push ecx
-    push esi
+    call Hexagon.Kernel.Dev.Console.Terminal.write
 
-    xor ebx, ebx
-
-    jecxz .done
-
-.writeByte:
-
-    lodsb
-
-    call Hexagon.Kernel.Dev.Console.Console.printCharacter
-
-    loop .writeByte
-
-.done:
-
-    pop esi
-    pop ecx
-    pop ebx
+    pop edx
 
     mov eax, ecx
 
@@ -803,6 +788,8 @@ Hexagon.Kernel.Dev.Dev.Switch.Output.write:
     ret
 
 .notSupported:
+
+    pop edx
 
     stc
 
