@@ -189,6 +189,9 @@ times Hexagon.Processes.Table.limit dd 0 ;; VT index this process is attached to
 Hexagon.Processes.Table.savedForegroundSlot:
 times Hexagon.Processes.Table.limit dd 0 ;; Own VT's foregroundSlot value before hx.exec handed it to a child
 
+Hexagon.Processes.Table.drawTTY:
+times Hexagon.Processes.Table.limit dd 0 ;; VT plus 1 a write to another tty is drawing on, 0 otherwise
+
 ;; Descriptors this process holds, laid out as kern/fd.asm describes
 
 Hexagon.Processes.Table.fd:
@@ -1993,6 +1996,7 @@ Hexagon.Kern.Proc.registerSlot:
 ;; this same slot left behind
 
     mov dword[Hexagon.Processes.Table.addressLFBGeneration + edx * 4], 0xFFFFFFFF
+    mov dword[Hexagon.Processes.Table.drawTTY + edx * 4], 0
 
     pop esi
 

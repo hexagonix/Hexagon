@@ -769,13 +769,25 @@ Hexagon.Kernel.Dev.Dev.Switch.Output.write:
     push edx
     push ecx
 
-    call Hexagon.Kernel.Dev.Dev.Switch.Output.callerTTY
+    call Hexagon.Kernel.Dev.Dev.Switch.Output.resolveTTYIndex
+
+    jc .notSupported
+
+;; Another process's VT may never have been drawn on yet
+
+    movzx edx, byte[Hexagon.Scheduler.current]
+
+    cmp ecx, dword[Hexagon.Processes.Table.tty + edx * 4]
+
+    je .ownTTY
+
+    call Hexagon.Kernel.Dev.Dev.ensureVTBuffer
+
+.ownTTY:
 
     mov edx, ecx ;; VT
 
     pop ecx
-
-    jc .notSupported
 
     call Hexagon.Kernel.Dev.Console.Terminal.write
 
@@ -789,6 +801,7 @@ Hexagon.Kernel.Dev.Dev.Switch.Output.write:
 
 .notSupported:
 
+    pop ecx
     pop edx
 
     stc
@@ -947,8 +960,8 @@ Hexagon.Kernel.Dev.Dev.Switch.Output.read:
 
     ret
 
-;; Only a tty's own processes may read or write it for now, since the console
-;; still picks the VT by the caller and not by the device
+;; Only a tty's own processes may read it, since keys go to the foreground
+;; process of the VT they were typed on
 ;;
 ;; Input: AX - Device id
 ;;

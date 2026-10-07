@@ -156,6 +156,15 @@ times Hexagon.Console.VT.count dd 0xFFFFFFFF
 Hexagon.Console.VT.locked:
 times Hexagon.Console.VT.count db 0
 
+;; Colors of each VT. Hexagon.Console.fontColor and backgroundColor are those of
+;; the VT being drawn, loaded by Console.ensureCurrentVT
+
+Hexagon.Console.VT.fontColor:
+times Hexagon.Console.VT.count dd Hexagon.Console.defaultFontColor
+
+Hexagon.Console.VT.backgroundColor:
+times Hexagon.Console.VT.count dd Hexagon.Console.defaultBackgroundColor
+
 ;; Which Console.resolutionGeneration each VT.buffer entry was allocated under.
 ;; A mismatch means it is still sized for a mode the console has moved on from,
 ;; and the current stride would overrun it. Checked before any non-zero entry
@@ -1885,6 +1894,15 @@ Hexagon.Kernel.Dev.Console.Console.setConsoleColor:
     mov dword[Hexagon.Console.fontColor], eax
     mov dword[Hexagon.Console.backgroundColor], ebx
 
+    push edx
+
+    call Hexagon.Kernel.Dev.Console.Console.resolveCallerTTY
+
+    mov dword[Hexagon.Console.VT.fontColor + edx * 4], eax
+    mov dword[Hexagon.Console.VT.backgroundColor + edx * 4], ebx
+
+    pop edx
+
     cmp ecx, 1234h
     je .setTheme
 
@@ -1923,8 +1941,10 @@ Hexagon.Kernel.Dev.Console.Console.getConsoleColor:
 
 .graphicsMode:
 
-    mov eax, dword[Hexagon.Console.fontColor]
-    mov ebx, dword[Hexagon.Console.backgroundColor]
+    call Hexagon.Kernel.Dev.Console.Console.resolveCallerTTY
+
+    mov eax, dword[Hexagon.Console.VT.fontColor + edx * 4]
+    mov ebx, dword[Hexagon.Console.VT.backgroundColor + edx * 4]
 
     mov ecx, dword[Hexagon.Console.fontThemeColor]
     mov edx, dword[Hexagon.Console.backgroundThemeColor]
@@ -2164,6 +2184,18 @@ Hexagon.Kernel.Dev.Console.Console.ensureCurrentVT:
 
 .end:
 
+    push edx
+
+    call Hexagon.Kernel.Dev.Console.Console.resolveCallerTTY
+
+    mov eax, dword[Hexagon.Console.VT.fontColor + edx * 4]
+    mov dword[Hexagon.Console.fontColor], eax
+
+    mov eax, dword[Hexagon.Console.VT.backgroundColor + edx * 4]
+    mov dword[Hexagon.Console.backgroundColor], eax
+
+    pop edx
+
     pop ecx
     pop ebx
     pop eax
@@ -2212,7 +2244,8 @@ Hexagon.Kernel.Dev.Console.Console.useSecondaryConsole:
 
 ;;************************************************************************************
 
-;; Resolves the calling process's own VT index
+;; Resolves the VT the calling process draws on, its own unless a write to
+;; another tty is under way, see Console.Terminal.write
 ;;
 ;; Output: EDX - VT index
 
@@ -2230,6 +2263,18 @@ Hexagon.Kernel.Dev.Console.Console.resolveCallerTTY:
     jmp .resolved
 
 .knownCaller:
+
+    mov edx, dword[Hexagon.Processes.Table.drawTTY + ecx * 4]
+
+    cmp edx, 0
+
+    je .ownTTY
+
+    dec edx
+
+    jmp .resolved
+
+.ownTTY:
 
     mov edx, dword[Hexagon.Processes.Table.tty + ecx * 4]
 

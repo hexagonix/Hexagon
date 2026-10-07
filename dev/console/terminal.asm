@@ -126,7 +126,36 @@ Hexagon.Kernel.Dev.Console.Terminal.write:
 
     mov ebp, edx ;; VT, kept here since no console routine touches EBP
 
-    jecxz .end
+    xor edi, edi ;; Whether the caller's own draw target was set aside
+
+    movzx ebx, byte[Hexagon.Scheduler.current]
+
+    cmp ebx, 0xFF
+
+    je .write
+
+    cmp edx, dword[Hexagon.Processes.Table.tty + ebx * 4]
+
+    je .write
+
+;; Another process's VT. The caller draws on it until the end of this write,
+;; its own target and the generation it was resolved at kept on the stack
+
+    push dword[Hexagon.Processes.Table.addressLFB + ebx * 4]
+    push dword[Hexagon.Processes.Table.addressLFBGeneration + ebx * 4]
+
+    inc edx
+
+    mov dword[Hexagon.Processes.Table.drawTTY + ebx * 4], edx
+
+    call Hexagon.Kernel.Dev.Console.Console.useMainConsole
+    call Hexagon.Kernel.Dev.Console.Console.ensureCurrentVT
+
+    inc edi
+
+.write:
+
+    jecxz .done
 
 .nextByte:
 
@@ -135,6 +164,21 @@ Hexagon.Kernel.Dev.Console.Terminal.write:
     call Hexagon.Kernel.Dev.Console.Terminal.putByte
 
     loop .nextByte
+
+.done:
+
+    cmp edi, 0
+
+    je .end
+
+    movzx ebx, byte[Hexagon.Scheduler.current]
+
+    mov dword[Hexagon.Processes.Table.drawTTY + ebx * 4], 0
+
+    pop dword[Hexagon.Processes.Table.addressLFBGeneration + ebx * 4]
+    pop dword[Hexagon.Processes.Table.addressLFB + ebx * 4]
+
+    call Hexagon.Kernel.Dev.Console.Console.ensureCurrentVT
 
 .end:
 
