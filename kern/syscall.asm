@@ -75,17 +75,8 @@ use32
 
 Hexagon.Syscall.Control:
 
-.lastSystemCall:    dd 0
-.currentSystemCall: dd 0
 .systemCall:        db 0 ;; Stores whether or not a call was made
-.eflags:            dd 0
-.parameter:         dd 0
-.eax:               dd 0
-.cs:                dd 0
-.es:                dw 0
-.eip:               dd 0
-.ebp:               dd 0
-.totalCalls:        dd 80
+.totalCalls:        dd 70
 
 ;;************************************************************************************
 
@@ -98,59 +89,36 @@ Hexagon.Syscall.Control:
 
 Hexagon.Kern.Syscall.hexagonHandler:
 
-    push ebp
-
-    mov ebp, esp
+    push ebp ;; Save caller's EBP
+    push ds  ;; Save caller's DS
+    push es  ;; Save caller's ES
 
     push 10h ;; Kernel data segment
     pop ds
-
-    mov [Hexagon.Syscall.Control.es], es
 
     push 18h ;; Kernel linear segment
     pop es
 
     cld
 
-    mov dword[Hexagon.Syscall.Control.eax], eax
+    push eax
 
     call Hexagon.Kern.Sched.getCurrentProcessBase ;; EAX = base of whichever process is running now
 
     add esi, eax
-
-;; Correct address with segment base (physical address = address + segment base)
-
-    sub esi, 500h
-
     add edi, eax
 
-;; Correct address with segment base (physical address = address + segment base)
+;; The number was pushed on the caller's own stack, which the processor left
+;; behind when it switched to this one on the way in. The frame records where
+;; that stack was, and EAX still carries the base it is measured from
 
-    sub edi, 500h
+    mov ebp, dword[esp + 28] ;; Caller's own ESP, pointing at the number
 
-    pop eax ;; Clear stack
+    add ebp, eax
 
-    mov dword[Hexagon.Syscall.Control.ebp], eax
-
-    pop eax
-
-    mov dword[Hexagon.Syscall.Control.eip], eax
+    mov ebp, dword[ebp] ;; The requested call itself
 
     pop eax
-
-    mov dword[Hexagon.Syscall.Control.cs], eax
-
-    pop eax ;; Flags
-
-    pop eax ;; Requested call, stored on stack
-
-    mov dword[Hexagon.Syscall.Control.parameter], eax ;; System call
-
-    mov dword[Hexagon.Syscall.Control.currentSystemCall], eax
-
-    mov eax, dword[Hexagon.Syscall.Control.eax]
-
-    mov ebp, dword[ds:Hexagon.Syscall.Control.parameter]
 
     cmp ebp, dword[Hexagon.Syscall.Control.totalCalls]
     ja .unavailableCall
@@ -159,68 +127,87 @@ Hexagon.Kern.Syscall.hexagonHandler:
 
     sti
 
-    push dword[Hexagon.Syscall.Control.eip]
-    push dword[Hexagon.Syscall.Control.cs]
-
-    call dword[Hexagon.Kern.Syscall.hexagonServices.table+ebp*4]
-
-    pop dword[Hexagon.Syscall.Control.cs]
-    pop dword[Hexagon.Syscall.Control.eip]
+    call dword[Hexagon.Kern.Syscall.hexagonServices.table + ebp * 4]
 
 .end:
 
-    sti
-
-;; Clear system call request
+    push ebp ;; Save returned EBP (such as from nullSystemCall)
+    pushfd   ;; Save returned flags (including CF)
 
     mov byte[Hexagon.Syscall.Control.systemCall], 00h
 
     push eax
 
-    mov eax, dword[Hexagon.Syscall.Control.currentSystemCall]
-    mov dword[Hexagon.Syscall.Control.lastSystemCall], eax
-
-    pop eax
-
-    pushfd
-
-    push dword[Hexagon.Syscall.Control.cs]
-    push dword[Hexagon.Syscall.Control.eip]
-
-    push eax
-
     call Hexagon.Kern.Sched.getCurrentProcessBase ;; EAX = base of whichever process is running now
 
-    mov ebp, eax ;; EBP is free here. CS/EIP were already pushed above
+    mov ebp, eax
 
     pop eax
 
     sub esi, ebp
-
-;; Correct address with segment base (physical address = address + segment base)
-
-    add esi, 500h
-
     sub edi, ebp
 
-;; Correct address with segment base (physical address = address + segment base)
+    pop ebp ;; Pop returned flags into EBP
 
-    add edi, 500h
+    test ebp, 1 ;; Check CF in returned flags
+    jz .cfClear
 
-    mov es, [Hexagon.Syscall.Control.es]
+    or dword[esp + 24], 1 ;; Set CF in caller's saved EFLAGS
+    jmp .cfDone
 
-    push 38h ;; User environment data segment (processes)
+.cfClear:
+
+    and dword[esp + 24], 0xFFFFFFFE ;; Clear CF in caller's saved EFLAGS
+
+.cfDone:
+
+    pop ebp ;; EBP = returned EBP
+    
+    cmp ebp, 0xABC12345
+    je .keepReturnedEBP
+    
+    mov ebp, dword[esp + 8] ;; Restore caller's original EBP
+
+.keepReturnedEBP:
+
+    pop es
     pop ds
+
+    add esp, 4 ;; Discard saved EBP slot
+
+.returnToUser:
+
+;; The caller pushed the call number on its own stack, and it is still sitting
+;; there. Returning one dword past it is what drops it, so an application never
+;; has to clean up after its own call
+
+    add dword[esp + 12], 4 ;; Caller's own ESP, as the frame recorded it
 
     iret
 
 .unavailableCall:
 
+    push eax
+
+    call Hexagon.Kern.Sched.getCurrentProcessBase
+
+    mov ebp, eax
+
+    pop eax
+
+    sub esi, ebp
+    sub edi, ebp
+
+    or dword[esp + 20], 1 ;; Set CF in caller's saved EFLAGS
+
+    pop es
+    pop ds
+    
+    add esp, 4 ;; Discard saved EBP
+
     mov ebp, 0xABC12345
 
-    stc
-
-    jmp .end
+    jmp .returnToUser
 
 ;;************************************************************************************
 
@@ -235,80 +222,151 @@ Hexagon.Kern.Syscall.nullSystemCall:
 ;;************************************************************************************
 
 ;; hx.malloc's own registered syscall entry, in place of calling
-;; Hexagon.Arch.Gen.Mm.malloc directly. Mm.malloc operates on genuine
-;; flat/physical addresses (its free-list lives at
-;; Hexagon.Memory.initialAddress, a plain physical constant, and every
-;; internal pointer it walks is in that same frame). Handed back to a
-;; userland caller unchanged, that pointer is only valid under a segment
-;; based at 0. Dereferencing it through the caller's own DS (based at its
-;; own Hexagon.Processes.Table.base) would land at Table.base + pointer
-;; instead of the block Mm.malloc actually returned. Translate it here, the
-;; same way hexagonHandler already translates ESI/EDI on every syscall
-;; return, just against this one specific register, so a plain [ebx] back
-;; in the caller reaches the right place
+;; Hexagon.Arch.Mm.malloc directly. Mm.malloc operates on genuine
+;; flat addresses, while a caller's own DS is based at its
+;; Hexagon.Processes.Table.base. Handed back unchanged, a plain [ebx] in the
+;; caller would land at Table.base past the block, so the pointer is
+;; translated here the way hexagonHandler already translates ESI and EDI
 ;;
-;; Input/output: same as Hexagon.Arch.Gen.Mm.malloc (EBX size in, EAX/EBX
+;; Input/output: same as Hexagon.Arch.Mm.malloc (EBX size in, EAX/EBX
 ;; pointer out)
 
 Hexagon.Kern.Syscall.malloc:
 
-    call Hexagon.Arch.Gen.Mm.malloc
+    push ecx
+    push edx
+
+;; What the caller gets begins on a page boundary and covers whole pages, so
+;; that the pages opened to it hold nothing but its own block: no neighbour,
+;; and not even this block's own header, which the allocator leaves behind in
+;; the page in front. Page permissions are the only granularity there is, so
+;; anything sharing a page with the caller would be handed to it as well
+
+    add ebx, 0FFFh
+    and ebx, not 0FFFh
+
+    push ebx ;; The rounded size, which is exactly what gets opened below
+
+    mov edx, 1000h
+
+    call Hexagon.Arch.Mm.mallocAligned
 
     cmp eax, 0
-    je .end ;; Failed; EBX never held a real pointer, nothing to translate
+    je .withoutMemory
 
-    push eax ;; Preserve the success flag across getCurrentProcessBase
+;; Nothing of whoever held this memory before is this process's to read
+
+    mov ecx, dword[esp] ;; The rounded size
+
+    call Hexagon.Kern.Proc.clearForProcess
+
+;; The block comes out of the kernel's own arena and not the caller's block,
+;; so the pages it covers are opened to user level before the pointer goes back
+
+    movzx edx, byte[Hexagon.Scheduler.current] ;; Whose the pages being opened are
+
+    mov eax, dword[Hexagon.Processes.Table.pageDirectory + edx * 4]
+
+    mov ecx, dword[esp] ;; The rounded size
+
+    call Hexagon.Arch.Paging.openRangeToUser ;; EBX already carries the pointer
+
+;; Recorded against the process, so that Hexagon.Kern.Proc.exit gives back
+;; whatever the caller never did, however it happens to end
+
+    mov eax, edx
+
+    call Hexagon.Arch.Mm.setBlockOwner
 
     call Hexagon.Kern.Sched.getCurrentProcessBase ;; EAX = caller's own base
 
     sub ebx, eax
-    add ebx, 500h
 
-    pop eax
+    mov eax, 1 ;; Anything but zero, which is what failure reports
+
+    jmp .end
+
+.withoutMemory:
+
+    xor eax, eax
 
 .end:
+
+    add esp, 4 ;; The rounded size pushed above
+
+    pop edx
+    pop ecx
 
     ret
 
 ;;************************************************************************************
 
 ;; hx.free's own registered syscall entry, in place of calling
-;; Hexagon.Arch.Gen.Mm.free directly. The caller only ever has the
+;; Hexagon.Arch.Mm.free directly. The caller has only the
 ;; process-relative pointer Hexagon.Kern.Syscall.malloc handed back above,
 ;; so it has to be translated back to the flat/physical frame Mm.free's own
 ;; free-list bookkeeping expects before freeing it, the exact reverse of
 ;; the malloc side
 ;;
-;; Input/output: same as Hexagon.Arch.Gen.Mm.free (EBX pointer in, ECX size in)
+;; Input/output: same as Hexagon.Arch.Mm.free (EBX pointer in, ECX ignored)
 
 Hexagon.Kern.Syscall.free:
 
     push eax
+    push ebx
+    push ecx
+    push edx
+    push esi
+    push edi
 
     call Hexagon.Kern.Sched.getCurrentProcessBase ;; EAX = caller's own base
 
     add ebx, eax
-    sub ebx, 500h
 
+    mov edi, ebx ;; The pointer, in the frame the arena works in
+
+;; Memory the caller has given back stops being reachable from it. Without
+;; this a process would keep the pages of every block it ever freed, and be
+;; holding them still when the arena hands the same memory to somebody else
+
+    call Hexagon.Arch.Mm.blockExtent ;; EBX = the block, EDX = its size
+
+    jc .justFree ;; Not ours to close, and Mm.free is about to refuse it too
+
+    mov esi, ebx
+
+    add esi, edx
+    and esi, not 0FFFh ;; The last page boundary inside the block
+
+    cmp esi, edi
+    jbe .justFree ;; None of it was opened a page at a time
+
+    mov ecx, esi
+
+    sub ecx, edi ;; Exactly what was opened, and no more
+
+    movzx edx, byte[Hexagon.Scheduler.current]
+
+    mov eax, dword[Hexagon.Processes.Table.pageDirectory + edx * 4]
+
+    mov ebx, edi
+
+    call Hexagon.Arch.Paging.revokeRangeFromUser
+
+.justFree:
+
+    mov ebx, edi
+
+    call Hexagon.Arch.Mm.free
+
+    pop edi
+    pop esi
+    pop edx
+    pop ecx
+    pop ebx
     pop eax
 
-    call Hexagon.Arch.Gen.Mm.free
-
     ret
-
-;;************************************************************************************
-
-;; hx.open's own registered syscall entry, in place of calling
-;; Hexagon.Kernel.Dev.Dev.open directly. Hexagon.Kernel.FS.FAT16.loadFileFAT16B,
-;; underneath Dev.open's own file-opening path, honors ECX as a byte cap (0 =
-;; whole file, same as it's always been). Every caller is expected to set
-;; ECX itself: 0 for the whole file, same as always, or a real cap like
-;; Shell.checkShebang does when it only needs a file's first line and
-;; shouldn't need a buffer sized for the whole thing just to look at it
-
-Hexagon.Kern.Syscall.open:
-
-    jmp Hexagon.Kernel.Dev.Dev.open
 
 ;;************************************************************************************
 

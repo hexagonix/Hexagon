@@ -183,59 +183,6 @@ Hexagon.Libkern.String.compareWordsInString:
 
 ;;************************************************************************************
 
-;; Compare two strings
-;;
-;; Input:
-;;
-;; ESI - First string
-;; EDI - Second string
-;;
-;; Output:
-;;
-;; Carry defined if strings are equal
-
-Hexagon.Libkern.String.isEqual:
-
-    push eax
-    push esi
-    push edi
-
-.compareLoop:
-
-    mov al, byte[edi]
-
-    cmp al, 0 ;; End of string
-    je .isEqual
-
-    cmp al, byte[esi]
-    jne .isNotEqual
-
-    inc esi
-
-    inc edi
-
-    jmp .compareLoop
-
-.isNotEqual:
-
-    clc
-
-    jmp .end
-
-.isEqual:
-
-    stc
-
-.end:
-
-    pop edi
-    pop esi
-    pop eax
-
-    ret
-
-;;************************************************************************************
-
 ;; Convert a string to uppercase
 ;;
 ;; Input:
@@ -290,76 +237,6 @@ Hexagon.Libkern.String.toUppercase:
 .ok:
 
     sub al, ' ' ;; Convert if character is lowercase
-    mov byte[esi], al
-
-    inc esi
-
-    loop .convertLoop
-
-.end:
-
-    pop esi
-    pop ecx
-    pop eax
-
-    ret
-
-;;************************************************************************************
-
-;; Convert a string to lowercase
-;;
-;; Input:
-;;
-;; ESI - String
-;;
-;; Output:
-;;
-;; ESI - Converted string
-
-Hexagon.Libkern.String.toLowercase:
-
-    push eax
-    push ecx
-    push esi
-
-    mov al, byte[esi]
-
-    cmp al, 0
-    je .end
-
-    call Hexagon.Libkern.String.stringSize
-
-    mov ecx, eax
-
-.convertLoop:
-
-    mov al, byte[esi]
-
-.check1:
-
-    cmp al, 'A' ;; Check if the character is uppercase
-    jae .check2
-
-    inc esi
-
-    loop .convertLoop
-
-    jmp .end
-
-.check2:
-
-    cmp al, 'Z' ;; Check if the character is uppercase
-    jbe .ok
-
-    inc esi
-
-    loop .convertLoop
-
-    jmp .end
-
-.ok:
-
-    add al, ' ' ;; Convert if character is uppercase
     mov byte[esi], al
 
     inc esi
@@ -675,6 +552,8 @@ Hexagon.Libkern.String.findCharacterInString:
 
 Hexagon.Libkern.String.removeCharacterInString:
 
+    push edi ;; Overwritten below, and its sibling insertCharacterInString keeps it
+
     push esi
     push edx
 
@@ -709,6 +588,9 @@ Hexagon.Libkern.String.removeCharacterInString:
     pop esi
 
 .end:
+
+
+    pop edi
 
     ret
 
@@ -787,13 +669,18 @@ Hexagon.Libkern.String.insertCharacterInString:
 
 ;; Converts an integer to a string
 ;;
+;; The caller owns the buffer, so this answers with no pointer of the kernel's for
+;; anyone to hold on to. That is what lets the same routine be both the kernel's
+;; and the system call's, with no adapter in between
+;;
 ;; Input:
 ;;
 ;; EAX - Integer
+;; EDI - Caller's own buffer, at least 12 bytes
 ;;
 ;; Output:
 ;;
-;; ESI - Pointer with content
+;; The number at EDI, NUL terminated. EDI preserved
 
 Hexagon.Libkern.String.integetToString:
 
@@ -819,7 +706,7 @@ Hexagon.Libkern.String.integetToString:
 
     mov al, '-' ;; Print '-'
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
+    call Hexagon.Kernel.Dev.Console.Console.printCharacter
 
     pop eax
 
@@ -847,21 +734,21 @@ Hexagon.Libkern.String.integetToString:
     or eax, eax ;; cmp EAX, 0
     jne .convertLoop
 
-    mov edx, esi
-
     mov edx, 0
 
-    mov ebx, .buffer
+    mov ebx, edi ;; The caller's own buffer, still in EDI under the push above
 
 .printLoop:
 
     pop eax
 
-    mov [ebx+edx], eax
+    mov byte[ebx + edx], al
 
     inc edx
 
     loop .printLoop
+
+    mov byte[ebx + edx], 0
 
 .end:
 
@@ -871,14 +758,9 @@ Hexagon.Libkern.String.integetToString:
     pop ecx
     pop eax
 
-    mov esi, .buffer
-
     pop es
 
     ret
-
-.buffer:
-times 16 db 0
 
 ;;************************************************************************************
 

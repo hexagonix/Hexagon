@@ -94,7 +94,7 @@ use32
 ;; This image must have a header, which declares a series of information that will be used
 ;; by the kernel for loading, dependency resolution and correct execution.
 ;;
-;; According to the HAPP2 (HAPP 2.0) specification, the header fields are:
+;; According to the HAPP2 (HAPP 2.0 revision 1) specification, the header fields are:
 ;;
 ;; Number |           Parameter           | Parameter size | Content (fixed or variable)
 ;; -------|-------------------------------|----------------|----------------------------
@@ -104,7 +104,7 @@ use32
 ;; #4     | Minimal subversion of Hexagon | 1 byte         | 0 to any or corresponding number
 ;; #5     | Entry point (offset)          | 1 dword        | Entry point offset within the image
 ;; #6     | Image type                    | 1 byte         | Static executable image = 01h
-;; #7     | Reserved field                | 1 dword        | Reserved for system use
+;; #7     | BSS (Block Started by Symbol) | 1 dword        | Area for uninitialized data
 ;; #8     | Reserved field                | 1 byte         | Reserved for system use
 ;; #9     | Reserved field                | 1 byte         | Reserved for system use
 ;; #10    | Reserved field                | 1 byte         | Reserved for system use
@@ -116,65 +116,8 @@ use32
 ;; #16    | Reserved field                | 1 word         | Reserved for system use
 ;; #17    | Reserved field                | 1 word         | Reserved for system use
 ;;
-;; For the HAPP2 specification (HAPP 2.1), new fields will already be reserved and can now be
-;; implemented in application images.
-;; The fields have been expanded to be used in future multitasking implementations, which require
-;; storing the contents of registers to save the execution context when switching between
-;; processes.
-;; The number of fields is exaggerated but ensures compatibility for future system needs.
-;; The definitions of each field are already found in the specification below.
-;; There are two extra fields, with one byte and one qword, for storing data pertinent to the
-;; process, along with fields #7 to #17, which are reserved but will already be distributed in
-;; the HAPP2 specification (HAPP 2.2).
-;;
-;; Number |          Parameter          |   Parameter size   | Content (fixed or variable)
-;; -------|-----------------------------|--------------------|-----------------------------
-;; #18    | EAX register                | 1 dword            | eserved for system use
-;; #19    | EBX register                | 1 dword            | Reserved for system use
-;; #20    | ECX register                | 1 dword            | Reserved for system use
-;; #21    | EDX register                | 1 dword            | Reserved for system use
-;; #22    | EDI register                | 1 dword            | Reserved for system use
-;; #23    | ESI register                | 1 dword            | Reserved for system use
-;; #24    | CS register                 | 1 dword            | Reserved for system use
-;; #25    | DS register                 | 1 dword            | Reserved for system use
-;; #26    | ES register                 | 1 dword            | Reserved for system use
-;; #27    | FS register                 | 1 dword            | Reserved for system use
-;; #28    | GS register                 | 1 dword            | Reserved for system use
-;; #29    | EFLAGS register             | 1 dword            | Reserved for system use
-;; #30    | EIP register                | 1 dword            | Reserved for system use
-;; #31    | EBP register                | 1 dword            | Reserved for system use
-;; #32    | ESP register                | 1 dword            | Reserved for system use
-;; #33    | SS register                 | 1 dword            | Reserved for system use
-;; #34    | Number of open files        | 1 dword            | Reserved for system use
-;; #35    | Process identifier (PID)    | 1 dword            | Reserved for system use
-;; #36    | Reserved field              | 1 word             | Reserved for system use
-;; #37    | Reserved field              | 1 qword            | Reserved for system use
-;;
-;; The process has access to these fields, and there will be a copy of fields #18 through #34 in
-;; the kernel's reserved memory area, since the process could intentionally change thread values
-;; ​​and data to force access to memory areas that were not attributed to him.
-;; These fields will be filled in by the system and copied (the structure) to the kernel heap.
-;; The process will be able to read and edit but the copy has already been transferred to the
-;; kernel heap, and from there the data will be read to reestablish the process context.
-;;
-;; Steps:
-;;
-;; Process execution -> copy of initial structure to kernel heap and initialization
-;; -> context switch request -> write context to fields #18 to #37 in user space
-;; and in kernel space (#1 to #20).
-;;
-;; The process will be able to obtain context and memory location data, but will not
-;; be able to change the values ​​in a way that would interfere with the system operation.
-;; This can be useful for manipulating intra-process memory data, serving only as a reference
-;; for the process, but not for any other purpose that circumvents the security of GDT
-;; segmentation.
-;;
-;; Reserved fields are marked for system use.
-;; They may be used by the system to reserve data in context switching in the future,
-;; for example, during multitasking.
-
 ;; This is the initial structure that must follow the current HAPP specifications.
-;; Specification used: HAPP2 (HAPP 2.0)
+;; Specification used: HAPP2 (HAPP 2.0 revision 1)
 
 struc Hexagon.Libkern.HAPP.controlStructure
 
@@ -187,6 +130,7 @@ struc Hexagon.Libkern.HAPP.controlStructure
 .minSubversion:     db 0 ;; Subversion (or revision) of Hexagon required for execution (dependency)
 .entryHAPP:         dd 0 ;; Image entry point
 .imageType:         db 0 ;; Image executable type
+.bssSize:           dd 0 ;; BSS (Block Started by Symbol) size requested
 .exitCode:          dd 0 ;; Image exit code (future)
 .reserved1:         db 0 ;; Reserved (Byte)
 .reserved2:         db 0 ;; Reserved (Byte)
@@ -238,12 +182,9 @@ Hexagon.Libkern.HAPP.checkHAPPImage:
 
     mov edi, Hexagon.Heap.Temp + 1000 ;; Use kernel heap
 
-;; Let's load the image to analyze the image header. Only the fixed-size
-;; header actually gets looked at below (checked byte by byte up to
-;; imageType at edi+11), so there's no reason to pull in the rest of a
-;; possibly much larger image just to check it. 128 bytes leaves headroom
-;; over the real header size without pulling in a whole cluster's worth for
-;; nothing
+;; Only the fixed-size header is looked at below, so the read is capped rather
+;; than pulling in the rest of a possibly much larger image. 128 bytes leaves
+;; headroom over the real header size
 
     mov ecx, 128
 
@@ -320,6 +261,13 @@ Hexagon.Libkern.HAPP.checkHAPPImage:
 
     mov ah, byte[edi+11]
     mov byte[Hexagon.Libkern.HAPP.imageHAPPHeader.imageType], ah
+
+;; How much room past its own image this one asks for. Read here, where the
+;; header is already in hand, because Hexagon.Kern.Proc.addProcess needs it to
+;; size the block before a single byte of the image has been loaded
+
+    mov eax, dword[edi+12]
+    mov dword[Hexagon.Libkern.HAPP.imageHAPPHeader.bssSize], eax
 
 ;; If everything is ok with the header, check that the image can be executed
 

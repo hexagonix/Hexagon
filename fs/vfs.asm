@@ -83,6 +83,7 @@ Hexagon.VFS.FS:
 .FAT16    = 04h ;; FAT16 (< 32 MB)
 .FAT16B   = 06h ;; FAT16B (FAT16B) - Supported
 .FAT16LBA = 0Eh ;; FAT16 (LBA)
+.DEVFS    = 0FFh ;; Virtual filesystem (/dev), no real media behind it
 
 Hexagon.VFS.Control:
 
@@ -121,6 +122,7 @@ struc Hexagon.VFS.FAT
 .maxFiles:             dd 1000    ;; Number of files per directory
 .hiddenAttribute       equ 00h    ;; Attribute of a hidden file
 .systemAttribute       equ 04h    ;; Attribute of a file marked as system file
+.setuidAttribute       equ 02h    ;; Combined with .systemAttribute, grants root on exec
 .directoryAttribute    equ 10h    ;; Attribute of a directory
 .longFilenameAttribute equ 0x0F   ;; Attribute of a long filename (Long File Name)
 .unlinkedAttribute     equ 0xE5   ;; Deleted file/free entry attribute
@@ -170,7 +172,7 @@ include "fs/dir.asm"
 
 ;; Allocates Hexagon.Mounts.Table and points .base at it (see that table's
 ;; own comment for why it's malloc'd instead of living in Hexagon.Heap).
-;; Must run once at boot, after Hexagon.Arch.Gen.Mm.initMemory and before
+;; Must run once at boot, after Hexagon.Arch.Mm.initMemory and before
 ;; Hexagon.Kernel.FS.VFS.registerBootMount
 ;;
 ;; Output: empty
@@ -179,15 +181,37 @@ Hexagon.Kernel.FS.VFS.allocateMountTable:
 
     pushad
 
+    push es
+
     mov ebx, Hexagon.Mounts.Table.byteSize
 
-    call Hexagon.Arch.Gen.Mm.malloc
+    call Hexagon.Arch.Mm.malloc
 
-;; Mm.malloc's pointer is flat. Kernel code here addresses memory through
-;; DS, based at 500h, so this subtracts it once up front.
+;; Mm.malloc does not clear the memory it hands back, so every slot's own
+;; inUse byte starts out as whatever was physically there before, not
+;; necessarily 0. Left unzeroed, a slot nobody ever mounted into can still
+;; read as in use, showing up as a phantom entry in hx.getMounts
 
-    sub ebx, 500h
+    mov edi, ebx ;; Still flat here, before the  adjustment below
+
+    mov ax, 18h ;; Kernel linear segment, needed to reach this flat pointer
+    mov es, ax
+
+    mov ecx, Hexagon.Mounts.Table.byteSize
+
+    xor al, al
+
+    cld
+
+    rep stosb
+
+;; Every segment is based at 0, so Mm.malloc's pointer is already what the
+;; [Table.field + reg] accesses below expect
+
+
     mov dword[Hexagon.Mounts.Table.base], ebx
+
+    pop es
 
     popad
 
@@ -217,9 +241,9 @@ Hexagon.Kernel.FS.VFS.resolveMount:
     mov dword[.realPath], esi
 
 ;; Normalizes the path (joins it with the current directory if relative,
-;; collapses "." and "..") before matching a mount. FAT16 below then only
-;; ever sees a plain downward path already inside the mount that owns it,
-;; so it never needs to cross a mount boundary on its own.
+;; collapses "." and "..") before matching a mount. FAT16 below then sees
+;; only a plain downward path already inside the mount that owns it,
+;; so it never needs to cross a mount boundary by itself.
 
     call .buildJoinedPath ;; ESI (given path) -> .joined, absolute but not yet normalized
     call .normalizePath   ;; .joined -> .normalizedPath, "." and ".." collapsed
@@ -271,7 +295,10 @@ Hexagon.Kernel.FS.VFS.resolveMount:
     cmp byte[esi], '/'
     je .copyRawAbsolute
 
-    mov esi, Hexagon.VFS.Directory.currentDirectory
+    movzx esi, byte[Hexagon.Scheduler.current]
+    imul esi, 64
+    add esi, Hexagon.Processes.Table.cwd
+
     mov edi, .joined
     xor ecx, ecx
 
@@ -330,7 +357,7 @@ Hexagon.Kernel.FS.VFS.resolveMount:
     cmp ecx, 129
     jb .copyRawLoop
 
-    mov byte[edi + ecx], 0 ;; Out of room. Truncate rather than overflow .joined
+    mov byte[edi + ecx], 0 ;; Out of room. Truncate instead of overflowing .joined
 
     jmp .buildDone
 
@@ -490,7 +517,7 @@ Hexagon.Kernel.FS.VFS.resolveMount:
     je .appendFinished
 
     cmp ecx, 129
-    jae .appendFinished ;; Out of room. Truncate rather than overflow
+    jae .appendFinished ;; Out of room. Truncate, do not overflow
 
     mov byte[.normalizedPath + ecx], al
 
@@ -640,7 +667,7 @@ Hexagon.Kernel.FS.VFS.resolveMount:
 
 .swapTo:
 
-;; Masked for the whole swap, not just the copies, since a preempted
+;; Masked for the whole swap, and not only the copies, since a preempted
 ;; mid-copy would interleave two swaps against the same shared state.
 ;; Safe to mask since nothing here touches disk I/O or waits on an
 ;; interrupt.
@@ -655,9 +682,9 @@ Hexagon.Kernel.FS.VFS.resolveMount:
     push ecx
     push es
 
-;; int13h resets ES to kernelLinear after every call, and rep movsb writes
-;; through ES:EDI. Without this reset, the memcpys below would write 500h
-;; too low, into unrelated kernel memory.
+;; The disk calls hand ES back on the kernel linear selector, and the
+;; memcpys below write through ES:EDI, so ES is put on the kernel data
+;; selector first
 
     mov ax, 10h
     mov es, ax
@@ -730,7 +757,7 @@ Hexagon.Kernel.FS.VFS.resolveMount:
 
     pop ebx
 
-    mov byte[Hexagon.Dev.Gen.Disk.Control.currentDisk], al
+    mov byte[Hexagon.Dev.Disk.Control.currentDisk], al
 
     pop es
     pop ecx
@@ -757,9 +784,9 @@ Hexagon.Kernel.FS.VFS.registerBootMount:
     pushad
     push es
 
-;; int13h resets ES to kernelLinear after every call, and pushad/popad
-;; don't cover ES. mountVolume just made several such calls, so ES needs
-;; resetting before the rep movsb below.
+;; The disk read/write path resets ES to kernelLinear after every call, and
+;; pushad/popad don't cover ES. Establishing the root volume just made
+;; several such calls, so ES needs resetting before the rep movsb below
 
     mov ax, 10h
     mov es, ax
@@ -768,15 +795,15 @@ Hexagon.Kernel.FS.VFS.registerBootMount:
 
     mov byte[edi + Hexagon.Mounts.Table.inUse + 0], 1
 
-    mov al, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
+    mov al, byte[Hexagon.Dev.Disk.Control.currentDisk]
     mov byte[edi + Hexagon.Mounts.Table.drive + 0], al
 
 ;; Gives the boot mount the same "hd0p0"-style deviceName hx.mount would
-;; assign. The partition index is always 0, since Saturno/HBoot only ever
+;; assign. The partition index is always 0, since Saturno/HBoot always
 ;; boot from a disk's first primary partition, so only the disk slot needs
-;; looking up.
+;; looking up
 
-    mov al, byte[Hexagon.Dev.Gen.Disk.Control.bootDisk]
+    mov al, byte[Hexagon.Dev.Disk.Control.bootDisk]
 
     xor ebx, ebx
     mov edx, dword[Hexagon.Disks.Table.base]
@@ -856,12 +883,17 @@ Hexagon.Kernel.FS.VFS.registerBootMount:
 ;;************************************************************************************
 
 ;; Mounts a disk's filesystem at a directory in the namespace. Only root may
-;; mount. The disk's first supported partition is used. The mount point
-;; must already exist as a directory.
+;; mount. If the device path names a whole disk, its first supported
+;; partition is used. The mount point must already exist as a directory.
+;;
+;; Reads the target partition's own BPB directly through .findSupportedPartition,
+;; never through the generic device-open dispatch: the same reasoning the boot
+;; mount itself follows
 ;;
 ;; Input:
 ;;
-;; ESI - Device name (such as "hd1")
+;; ESI - Device path (such as "/dev/hd1" or, relative to a devfs mount,
+;;       "hd1p0"), or the reserved name "devfs"
 ;; EDI - Mount point path
 ;;
 ;; Output:
@@ -900,25 +932,62 @@ Hexagon.Kernel.FS.VFS.mount:
 
     call Hexagon.Kern.Sched.disablePreemption
 
-    call .matchDiskName ;; ESI is still the device name here
+    mov byte[.isDevFS], 0
+
+;; "devfs" is a reserved device name for Hexagon.VFS.FS.DEVFS, a synthetic
+;; mount with no partition or BPB behind it, checked before the real disk
+;; name convention below
+
+    mov edi, .devfsName
+
+    call Hexagon.Libkern.String.compareWordsInString
+
+    jc .mountDevFS
+
+;; The device argument is resolved as a path, the same way any other path
+;; is. A bare name only matches something when the current directory is
+;; itself a devfs mount
+
+    mov esi, dword[.deviceName]
+
+    call Hexagon.Kernel.FS.VFS.fileExists
 
     jc .noDevice
 
-    push edx
+    cmp byte[Hexagon.VFS.Control.filesystemType], Hexagon.VFS.FS.DEVFS
+    jne .noDevice
 
-    mov edx, dword[Hexagon.Disks.Table.base]
+;; Hexagon.Kernel.FS.VFS.fileExists above already returns the matched
+;; entry's Hexagon.Dev.Registry class in EBX, major/minor packed in EDX
 
-    cmp byte[edx + Hexagon.Disks.Table.present + eax], 0
+    cmp ebx, 01h ;; Hexagon.Dev.DeviceClasses.block
+    jne .noDevice
 
-    pop edx
+    movzx eax, dh ;; Major: disk slot
+    movzx edx, dl ;; Minor: partition index, or 0FFh for none
 
-    je .noDevice
+    cmp edx, 0FFh
+    jne .explicitPartitionGiven
+
+    mov edx, 0xFFFFFFFF ;; .findSupportedPartition's own "no explicit index" sentinel
+
+.explicitPartitionGiven:
+
+    mov dword[.explicitPartition], edx
 
     call .findSupportedPartition ;; Input: EAX = disk slot. Output: EAX = partition slot
 
     jc .noDevice
 
     mov dword[.partitionSlot], eax
+
+    jmp .validateMountPoint
+
+.mountDevFS:
+
+    mov byte[.isDevFS], 1
+
+.validateMountPoint:
 
 ;; Validate the mount point: must exist and be a directory
 
@@ -928,12 +997,10 @@ Hexagon.Kernel.FS.VFS.mount:
 
     jc .badMountPoint
 
-;; The mount point is stored below by whatever form the caller gave it in.
-;; resolveMount, called by fileExists just above, already normalized it
-;; into an absolute, "."/".."-free path - use that instead of the raw
-;; argument, or a relative mount point (missing its leading '/') would
-;; never match anything in Hexagon.Kernel.FS.VFS.resolveMount's own prefix
-;; matching later, silently leaving this mount unreachable
+;; The normalized path resolveMount already produced is what gets stored, not
+;; the raw argument. A relative mount point would never match
+;; Hexagon.Kernel.FS.VFS.resolveMount's own prefix matching later, leaving the
+;; mount silently unreachable
 
     mov dword[.mountPath], Hexagon.Kernel.FS.VFS.resolveMount.normalizedPath
 
@@ -948,11 +1015,90 @@ Hexagon.Kernel.FS.VFS.mount:
 
 ;; 10h (Hexagon.VFS.FAT.directoryAttribute) written directly: that field is
 ;; an "equ" text macro, scoped to its struc, not forward-referenceable from
-;; here the way a real symbol would be
+;; here the way a real symbol would be. ECX is the attribute byte
+;; Hexagon.Kernel.FS.VFS.fileExists above already read out of the record
 
-    test byte[ebx + 11], 10h
+    test ecx, 10h
 
     jz .badMountPoint
+
+;; Same device already mounted here succeeds as a no-op, so repeated
+;; mount requests for it stay idempotent. A different device already
+;; mounted here is refused, since a mount point backs one
+;; volume at a time
+
+    xor ebx, ebx
+
+.checkExistingMount:
+
+    cmp ebx, Hexagon.Mounts.Table.limit
+    jae .noExistingMount
+
+    mov edx, dword[Hexagon.Mounts.Table.base]
+
+    cmp byte[edx + Hexagon.Mounts.Table.inUse + ebx], 0
+    je .nextExistingMount
+
+    mov edi, edx
+    add edi, Hexagon.Mounts.Table.path
+
+    mov eax, ebx
+
+    shl eax, 6
+    
+    add edi, eax
+
+    mov esi, dword[.mountPath]
+
+    call Hexagon.Libkern.String.compareWordsInString
+
+    jnc .nextExistingMount ;; Different mount point, not a conflict
+
+    mov edi, edx
+    
+    add edi, Hexagon.Mounts.Table.deviceName
+
+    mov eax, ebx
+    
+    shl eax, 5
+    
+    add edi, eax
+
+    mov esi, dword[.deviceName]
+
+    call Hexagon.Libkern.String.compareWordsInString
+
+    jc .alreadyMounted
+
+    jmp .mountPointBusy
+
+.nextExistingMount:
+
+    inc ebx
+
+    jmp .checkExistingMount
+
+.alreadyMounted:
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+    xor eax, eax
+
+    clc
+
+    ret
+
+.mountPointBusy:
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+    mov eax, 06h
+
+    stc
+
+    ret
+
+.noExistingMount:
 
 ;; Find a free mount slot
 
@@ -962,10 +1108,13 @@ Hexagon.Kernel.FS.VFS.mount:
 
     mov dword[.newSlot], eax
 
+    cmp byte[.isDevFS], 0
+    jne .devfsState
+
 ;; .loadPartitionBPB below overwrites the live working copy. Whichever
 ;; mount is currently loaded needs its state saved into its own table slot
 ;; first, the same save .swapTo does, since this new mount becomes the
-;; loaded slot directly below without ever going through .swapTo itself.
+;; loaded slot directly below without ever going through .swapTo itself
 
     mov eax, dword[Hexagon.Mounts.loadedSlot]
 
@@ -977,7 +1126,7 @@ Hexagon.Kernel.FS.VFS.mount:
 
 ;; hexagonHandler leaves ES at kernelLinear for every syscall, and rep
 ;; movsb writes through ES:EDI. Same fix as every other
-;; Hexagon.Mounts.Table.state writer.
+;; Hexagon.Mounts.Table.state writer
 
     mov ax, 10h
     mov es, ax
@@ -1016,7 +1165,7 @@ Hexagon.Kernel.FS.VFS.mount:
 
     jc .badBPB
 
-;; .loadPartitionBPB's own int13h calls reset ES to kernelLinear. Both
+;; .loadPartitionBPB's own disk reads reset ES to kernelLinear. Both
 ;; rep movsb below write through ES:EDI, so ES needs resetting first.
 
     push eax
@@ -1068,7 +1217,50 @@ Hexagon.Kernel.FS.VFS.mount:
 ;; instead of swapped in. Without it, the first operation on a freshly
 ;; mounted volume would still use the previously loaded drive.
 
-    mov byte[Hexagon.Dev.Gen.Disk.Control.currentDisk], al
+    mov byte[Hexagon.Dev.Disk.Control.currentDisk], al
+
+    jmp .copyMountPathAndName
+
+;; Writes straight into the new slot, leaving the live working copy and
+;; Hexagon.Mounts.loadedSlot untouched. The first real resolveMount into
+;; /dev loads this slot for real, through .swapTo.
+
+.devfsState:
+
+    mov eax, dword[.newSlot]
+
+    imul eax, Hexagon.VFS.Control.size + Hexagon.VFS.FAT.instanceSize
+
+    mov edi, dword[Hexagon.Mounts.Table.base]
+
+    add edi, Hexagon.Mounts.Table.state
+    add edi, eax
+
+;; hexagonHandler leaves ES at kernelLinear for every syscall, and stosb
+;; below writes through ES:EDI
+
+    mov ax, 10h
+    mov es, ax
+
+    mov byte[edi], Hexagon.VFS.FS.DEVFS ;; Hexagon.VFS.Control's first field
+
+    inc edi
+
+    mov ecx, Hexagon.VFS.Control.size + Hexagon.VFS.FAT.instanceSize
+    dec ecx
+
+    xor al, al
+
+    cld
+    rep stosb ;; The rest of this slot's state carries no real meaning
+
+;; No real drive backs a devfs mount
+
+    mov ebx, dword[.newSlot]
+    mov edx, dword[Hexagon.Mounts.Table.base]
+    mov byte[edx + Hexagon.Mounts.Table.drive + ebx], 0
+
+.copyMountPathAndName:
 
 ;; Copy the mount point path into the slot
 
@@ -1095,8 +1287,8 @@ Hexagon.Kernel.FS.VFS.mount:
 
     rep movsb
 
-;; Copy the device name into the slot, capped to 7 chars + NUL so it
-;; always fits within the fixed 8-byte field, NUL-padding the rest, the
+;; Copy the device name into the slot, capped to 31 chars + NUL so it
+;; always fits within the fixed 32-byte field, NUL-padding the rest, the
 ;; same approach as Hexagon.Kern.Proc.getProcessTable's own name field
 
     mov edi, dword[Hexagon.Mounts.Table.base]
@@ -1105,7 +1297,8 @@ Hexagon.Kernel.FS.VFS.mount:
 
     mov eax, ebx
 
-    shl eax, 3
+    shl eax, 5
+
     add edi, eax
 
     mov esi, dword[.deviceName]
@@ -1116,7 +1309,7 @@ Hexagon.Kernel.FS.VFS.mount:
 
 .measureDeviceName:
 
-    cmp ebx, 7
+    cmp ebx, 31
     jae .deviceNameMeasured
 
     cmp byte[esi + ebx], 0
@@ -1132,7 +1325,7 @@ Hexagon.Kernel.FS.VFS.mount:
 
     rep movsb ;; Copy the real device name characters
 
-    mov ecx, 8
+    mov ecx, 32
     sub ecx, ebx
 
     xor al, al
@@ -1143,6 +1336,100 @@ Hexagon.Kernel.FS.VFS.mount:
 
     mov edx, dword[Hexagon.Mounts.Table.base]
     mov byte[edx + Hexagon.Mounts.Table.inUse + ebx], 1
+
+;; Builds "Mounted <device> on <path>" into the shared Hexagon.Heap.Temp
+;; scratch buffer, the same piecewise copy Hexagon.userMode already uses
+;; for its own boot-time mount message, then logs it like any other
+;; kernel message
+
+    mov edi, Hexagon.Heap.Temp
+
+    mov esi, Hexagon.Verbose.mounted
+
+.buildMountedPrefix:
+
+    mov al, byte[esi]
+
+    cmp al, 0
+    je .buildMountedPrefixDone
+
+    mov byte[edi], al
+
+    inc esi
+    inc edi
+
+    jmp .buildMountedPrefix
+
+.buildMountedPrefixDone:
+
+    mov esi, dword[.deviceName]
+
+.buildMountedDevice:
+
+    mov al, byte[esi]
+
+    cmp al, 0
+    je .buildMountedDeviceDone
+
+    mov byte[edi], al
+
+    inc esi
+    inc edi
+
+    jmp .buildMountedDevice
+
+.buildMountedDeviceDone:
+
+    mov esi, Hexagon.Verbose.mountedOn
+
+.buildMountedOn:
+
+    mov al, byte[esi]
+
+    cmp al, 0
+    je .buildMountedOnDone
+
+    mov byte[edi], al
+
+    inc esi
+    inc edi
+
+    jmp .buildMountedOn
+
+.buildMountedOnDone:
+
+    mov esi, dword[.mountPath]
+
+.buildMountedPath:
+
+    mov al, byte[esi]
+
+    mov byte[edi], al
+
+    cmp al, 0
+    je .buildMountedDone
+
+    inc esi
+    inc edi
+
+    jmp .buildMountedPath
+
+.buildMountedDone:
+
+;; A mount is a kernel-level event, recorded in Hexagon.Kern.Dmesg's own
+;; buffer even when userland asked for it. createMessage would otherwise tag it
+;; by the calling process and skip the buffer, so systemCall is cleared for
+;; this one call. Serial and the buffer only, never the screen
+
+    mov al, byte[Hexagon.Syscall.Control.systemCall]
+    push eax
+
+    mov byte[Hexagon.Syscall.Control.systemCall], 0
+
+    logHexagon Hexagon.Heap.Temp, Hexagon.Dmesg.Priorities.p4
+
+    pop eax
+    mov byte[Hexagon.Syscall.Control.systemCall], al
 
     call Hexagon.Kern.Sched.enablePreemption
 
@@ -1196,74 +1483,13 @@ Hexagon.Kernel.FS.VFS.mount:
 .newSlot:       dd 0
 .mountPath:     dd 0
 .deviceName:    dd 0
+.isDevFS:       db 0
+.devfsName:     db "devfs", 0
 
-;; Input: ESI - Device name: either a whole disk ("hd0".."hd3") or one of
-;;        its up to 4 MBR primary partitions ("hd0p0".."hd3p3")
-;; Output: EAX - Disk slot (0-3); .explicitPartition - the partition index
-;;         (0-3) from a "pN" suffix, or 0xFFFFFFFF if the name named the
-;;         whole disk; CF set if the name doesn't match this convention at
-;;         all (.explicitPartition is left unchanged on this path)
-
-.matchDiskName:
-
-    mov dword[.explicitPartition], 0xFFFFFFFF
-
-    mov al, byte[esi]
-
-    cmp al, 'h'
-    jne .noMatch
-
-    mov al, byte[esi+1]
-
-    cmp al, 'd'
-    jne .noMatch
-
-    mov al, byte[esi+2]
-
-    cmp al, '0'
-    jb .noMatch
-
-    cmp al, '3'
-    ja .noMatch
-
-    movzx eax, al
-
-    sub eax, '0' ;; EAX = disk slot
-
-    cmp byte[esi+3], 0
-    je .wholeDisk ;; Just "hd0".."hd3", no partition suffix
-
-    cmp byte[esi+3], 'p'
-    jne .noMatch
-
-    mov cl, byte[esi+4] ;; Not ah/al. EAX already holds the disk slot to return
-
-    cmp cl, '0'
-    jb .noMatch
-
-    cmp cl, '3'
-    ja .noMatch
-
-    cmp byte[esi+5], 0
-    jne .noMatch ;; Only a single digit (0-3) is a valid partition index here
-
-    movzx ecx, cl
-
-    sub ecx, '0'
-
-    mov dword[.explicitPartition], ecx
-
-.wholeDisk:
-
-    clc
-
-    ret
-
-.noMatch:
-
-    stc
-
-    ret
+;; Set from Hexagon.Dev.Registry's minor field by
+;; Hexagon.Kernel.FS.VFS.mount before calling .findSupportedPartition below:
+;; the partition index (0-3), or 0xFFFFFFFF for "no explicit partition, use
+;; the first supported one"
 
 .explicitPartition: dd 0xFFFFFFFF
 
@@ -1274,9 +1500,9 @@ Hexagon.Kernel.FS.VFS.mount:
 ;; Output:
 ;;
 ;; EAX - The Hexagon.Partitions.Table entry on that disk matching
-;;       .explicitPartition's index if one was set by .matchDiskName,
-;;       otherwise the first entry present there Hexagon supports; CF set
-;;       if none found (or the explicit one isn't present/supported)
+;;       .explicitPartition's index, if not 0xFFFFFFFF, otherwise the
+;;       first entry present there Hexagon supports. CF set if none found
+;;       (or the explicit one isn't present/supported)
 
 .findSupportedPartition:
 
@@ -1420,29 +1646,26 @@ Hexagon.Kernel.FS.VFS.mount:
     mov edi, dword[Hexagon.Disks.Table.base]
     mov dl, byte[edi + Hexagon.Disks.Table.drive + ebx]
 
-    mov byte[Hexagon.Dev.Gen.Disk.Control.currentDisk], dl
+    mov byte[Hexagon.Dev.Disk.Control.currentDisk], dl
 
     mov edi, dword[Hexagon.Partitions.Table.base]
     mov esi, dword[edi + Hexagon.Partitions.Table.startLBA + eax * 4]
     mov dword[.partitionStartLBA], esi
 
-    mov cx, 50h
+    mov cx, 0 ;; Destination is a flat address, no segment to fold in
     mov edi, Hexagon.Heap.DiskGeometry
 
-    call Hexagon.Kernel.Dev.i386.Disk.Disk.tryReadSector
+    call Hexagon.Kernel.Dev.Disk.Disk.tryReadSector
 
     jc .fail
 
-    mov dword[Hexagon.Dev.Gen.Disk.Control.diskGeometry], Hexagon.Heap.DiskGeometry
+    mov dword[Hexagon.Dev.Disk.Control.diskGeometry], Hexagon.Heap.DiskGeometry
 
-;; +500h reaches the buffer's real physical address here, same as readMBR.
-;;
-;; getFilesystemInfoFAT16B's own field offsets are relative to the BPB
-;; proper, 3 bytes past the sector's leading jmp/nop. A raw sector read via
-;; tryReadSector lands at the true sector start, so needs the same +3
-;; applied explicitly here.
+;; getFilesystemInfoFAT16B's field offsets are relative to the BPB proper,
+;; 3 bytes past the sector's leading jmp/nop, and a raw sector read lands at
+;; the true sector start
 
-    mov esi, Hexagon.Heap.DiskGeometry + 500h + 3
+    mov esi, Hexagon.Heap.DiskGeometry + 3
 
     call Hexagon.Kernel.FS.FAT16.getFilesystemInfoFAT16B
     call Hexagon.Kernel.FS.FAT16.getVolumeLabelFAT16B
@@ -1537,6 +1760,15 @@ Hexagon.Kernel.FS.VFS.unmount:
     push ebx
 
     mov ebx, dword[Hexagon.Mounts.Table.base]
+
+;; Written to physical media before this mount's slot is torn down, not on
+;; every write. See Hexagon.Dev.ATA.flushCache's own comment. EAX/EBX
+;; preserved by flushDisk. EDX is not, but nothing below needs it
+
+    mov dl, byte[ebx + Hexagon.Mounts.Table.drive + eax]
+
+    call Hexagon.Kernel.Dev.Disk.Disk.flushDisk
+
     mov byte[ebx + Hexagon.Mounts.Table.inUse + eax], 0
 
     pop ebx
@@ -1550,6 +1782,62 @@ Hexagon.Kernel.FS.VFS.unmount:
     mov dword[Hexagon.Mounts.loadedSlot], 0xFFFFFFFF
 
 .done:
+
+;; Builds "Unmounted <path>" into the shared Hexagon.Heap.Temp scratch
+;; buffer, same piecewise copy Hexagon.Kernel.FS.VFS.mount's own success
+;; path uses, then logs it like any other kernel message
+
+    mov edi, Hexagon.Heap.Temp
+
+    mov esi, Hexagon.Verbose.unmounted
+
+.buildUnmountedPrefix:
+
+    mov al, byte[esi]
+
+    cmp al, 0
+    je .buildUnmountedPrefixDone
+
+    mov byte[edi], al
+
+    inc esi
+    inc edi
+
+    jmp .buildUnmountedPrefix
+
+.buildUnmountedPrefixDone:
+
+    mov esi, Hexagon.Kernel.FS.VFS.resolveMount.normalizedPath
+
+.buildUnmountedPath:
+
+    mov al, byte[esi]
+
+    mov byte[edi], al
+
+    cmp al, 0
+    je .buildUnmountedDone
+
+    inc esi
+    inc edi
+
+    jmp .buildUnmountedPath
+
+.buildUnmountedDone:
+
+;; Same reasoning as Hexagon.Kernel.FS.VFS.mount's own success path: force
+;; the kernel-origin path so this reaches Hexagon.Kern.Dmesg's own buffer,
+;; serial and the buffer only, no screen output
+
+    mov al, byte[Hexagon.Syscall.Control.systemCall]
+    push eax
+
+    mov byte[Hexagon.Syscall.Control.systemCall], 0
+
+    logHexagon Hexagon.Heap.Temp, Hexagon.Dmesg.Priorities.p4
+
+    pop eax
+    mov byte[Hexagon.Syscall.Control.systemCall], al
 
     call Hexagon.Kern.Sched.enablePreemption
 
@@ -1695,7 +1983,7 @@ Hexagon.Kernel.FS.VFS.unmount:
 ;;************************************************************************************
 
 ;; Lists every mount point currently in use. Unlike hx.getProcesses, the
-;; caller supplies its own buffer rather than reading a kernel-cached one,
+;; caller supplies its own buffer and does not read a kernel-cached one,
 ;; matching BSD's getfsstat(2) instead.
 ;;
 ;; Input:
@@ -1722,6 +2010,23 @@ Hexagon.Kernel.FS.VFS.getMounts.recordSize = 85
 Hexagon.Kernel.FS.VFS.getMounts.controlFieldsSize = 13
 
 Hexagon.Kernel.FS.VFS.getMounts:
+
+;; The caller's own buffer, written into at CPL 0 where paging refuses nothing,
+;; so it is checked against the reach this process already has. The size
+;; comes from this call's own contract, not from ECX, which is not an input here
+
+    push ebx
+    push ecx
+
+    mov ebx, esi
+    mov ecx, Hexagon.Mounts.Table.limit * Hexagon.Kernel.FS.VFS.getMounts.recordSize
+
+    call Hexagon.Arch.Paging.rangeIsCallerWritable
+
+    pop ecx
+    pop ebx
+
+    jc .badBuffer
 
     push ebx
     push ecx
@@ -1760,7 +2065,9 @@ Hexagon.Kernel.FS.VFS.getMounts:
     je .next
 
     mov esi, ebx
+
     imul esi, 64
+    
     add esi, dword[Hexagon.Mounts.Table.base]
     add esi, Hexagon.Mounts.Table.path
 
@@ -1774,13 +2081,13 @@ Hexagon.Kernel.FS.VFS.getMounts:
     pop ecx
 
     mov esi, ebx
-    imul esi, 8
+    imul esi, 32
     add esi, dword[Hexagon.Mounts.Table.base]
     add esi, Hexagon.Mounts.Table.deviceName
 
     push ecx
 
-    mov ecx, 8
+    mov ecx, 32
 
     rep movsb
 
@@ -1834,6 +2141,68 @@ Hexagon.Kernel.FS.VFS.getMounts:
     pop ebx
 
     ret
+.badBuffer:
+
+    mov eax, Hexagon.Kern.Proc.badAddress
+
+    stc
+
+    ret
+
+
+;;************************************************************************************
+
+;; Applies a Unix-style mode to a path. Only root may call this. What
+;; the mode changes is up to the filesystem it lands on: FAT16B has no
+;; owner or real permission bits, so it only derives whether the path
+;; becomes root-only-write, its own SYSTEM attribute. DEVFS ignores the
+;; call outright, a deliberate no-op and not an error
+;;
+;; Input:
+;;
+;; ESI - Path
+;; EBX - Requested mode
+;;
+;; Output:
+;;
+;; EAX - Error code:
+;;       01h - Permission denied
+;;       02h - Path not found
+;; CF set on error
+
+Hexagon.Kernel.FS.VFS.chown:
+
+    call Hexagon.Kern.Sched.disablePreemption
+
+    call Hexagon.Kernel.FS.VFS.resolveMount
+
+    mov ah, byte[Hexagon.VFS.Control.filesystemType]
+
+    cmp ah, Hexagon.VFS.FS.FAT16B
+    je .chownFAT16B
+
+    cmp ah, Hexagon.VFS.FS.DEVFS
+    je .ignored
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+    ret
+
+.chownFAT16B:
+
+    call Hexagon.Kernel.FS.FAT16.chownFAT16B
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+    ret
+
+.ignored:
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+    clc
+
+    ret
 
 ;;************************************************************************************
 
@@ -1851,11 +2220,6 @@ Hexagon.Kernel.FS.VFS.getMounts:
 
 Hexagon.Kernel.FS.VFS.createFile:
 
-    call Hexagon.Kern.Users.getUserPermissions
-
-    cmp eax, 03h ;; Group code for default user
-    je .permissionDenied
-
 ;; A process preempted mid-operation here, resumed after some other process
 ;; swapped a different mount's state into the shared working copy, would
 ;; corrupt both. See Hexagon.Scheduler.preemptionDisabled
@@ -1869,23 +2233,31 @@ Hexagon.Kernel.FS.VFS.createFile:
     cmp ah, Hexagon.VFS.FS.FAT16B
     je .newFileFAT16B
 
+    cmp ah, Hexagon.VFS.FS.DEVFS
+    je .notSupported
+
     call Hexagon.Kern.Sched.enablePreemption
 
     ret
 
 .newFileFAT16B:
 
-    call Hexagon.Kernel.FS.FAT16.createEmptyFileFAT16B
+    call Hexagon.Kernel.FS.FAT16.createFileFAT16B
 
     call Hexagon.Kern.Sched.enablePreemption
 
     ret
 
-.permissionDenied:
+;; DEVFS has no real files to create. Falling through to the generic case
+;; below would silently return success instead
+
+.notSupported:
+
+    call Hexagon.Kern.Sched.enablePreemption
 
     stc
 
-    mov eax, 05h
+    mov eax, 200h ;; VFS.invalidFS, lib/fasm/errors.s
 
     ret
 
@@ -1905,11 +2277,6 @@ Hexagon.Kernel.FS.VFS.createFile:
 
 Hexagon.Kernel.FS.VFS.unlinkFile:
 
-    call Hexagon.Kern.Users.getUserPermissions
-
-    cmp eax, 03h ;; Group code for default user
-    je .permissionDenied
-
 ;; See Hexagon.Kernel.FS.VFS.createFile for why this stays masked across
 ;; the whole operation
 
@@ -1921,6 +2288,9 @@ Hexagon.Kernel.FS.VFS.unlinkFile:
 
     cmp ah, Hexagon.VFS.FS.FAT16B
     je .unlinkFileFAT16B
+
+    cmp ah, Hexagon.VFS.FS.DEVFS
+    je .notSupported
 
     call Hexagon.Kern.Sched.enablePreemption
 
@@ -1934,11 +2304,15 @@ Hexagon.Kernel.FS.VFS.unlinkFile:
 
     ret
 
-.permissionDenied:
+;; See Hexagon.Kernel.FS.VFS.createFile.notSupported
+
+.notSupported:
+
+    call Hexagon.Kern.Sched.enablePreemption
 
     stc
 
-    mov eax, 05h
+    mov eax, 200h ;; VFS.invalidFS, lib/fasm/errors.s
 
     ret
 
@@ -1958,11 +2332,6 @@ Hexagon.Kernel.FS.VFS.unlinkFile:
 
 Hexagon.Kernel.FS.VFS.createDirectory:
 
-    call Hexagon.Kern.Users.getUserPermissions
-
-    cmp eax, 03h ;; Group code for default user
-    je .permissionDenied
-
 ;; See Hexagon.Kernel.FS.VFS.createFile for why this stays masked across
 ;; the whole operation
 
@@ -1974,6 +2343,9 @@ Hexagon.Kernel.FS.VFS.createDirectory:
 
     cmp ah, Hexagon.VFS.FS.FAT16B
     je .newDirectoryFAT16B
+
+    cmp ah, Hexagon.VFS.FS.DEVFS
+    je .notSupported
 
     call Hexagon.Kern.Sched.enablePreemption
 
@@ -1987,11 +2359,15 @@ Hexagon.Kernel.FS.VFS.createDirectory:
 
     ret
 
-.permissionDenied:
+;; See Hexagon.Kernel.FS.VFS.createFile.notSupported
+
+.notSupported:
+
+    call Hexagon.Kern.Sched.enablePreemption
 
     stc
 
-    mov eax, 05h
+    mov eax, 200h ;; VFS.invalidFS, lib/fasm/errors.s
 
     ret
 
@@ -2012,11 +2388,6 @@ Hexagon.Kernel.FS.VFS.createDirectory:
 
 Hexagon.Kernel.FS.VFS.removeDirectory:
 
-    call Hexagon.Kern.Users.getUserPermissions
-
-    cmp eax, 03h ;; Group code for default user
-    je .permissionDenied
-
 ;; See Hexagon.Kernel.FS.VFS.createFile for why this stays masked across
 ;; the whole operation
 
@@ -2028,6 +2399,9 @@ Hexagon.Kernel.FS.VFS.removeDirectory:
 
     cmp ah, Hexagon.VFS.FS.FAT16B
     je .removeDirectoryFAT16B
+
+    cmp ah, Hexagon.VFS.FS.DEVFS
+    je .notSupported
 
     call Hexagon.Kern.Sched.enablePreemption
 
@@ -2041,11 +2415,15 @@ Hexagon.Kernel.FS.VFS.removeDirectory:
 
     ret
 
-.permissionDenied:
+;; See Hexagon.Kernel.FS.VFS.createFile.notSupported
+
+.notSupported:
+
+    call Hexagon.Kern.Sched.enablePreemption
 
     stc
 
-    mov eax, 05h
+    mov eax, 200h ;; VFS.invalidFS, lib/fasm/errors.s
 
     ret
 
@@ -2080,6 +2458,9 @@ Hexagon.Kernel.FS.VFS.saveFile:
     cmp ah, Hexagon.VFS.FS.FAT16B
     je .saveFileFAT16B
 
+    cmp ah, Hexagon.VFS.FS.DEVFS
+    je .notSupported
+
     popad
 
     call Hexagon.Kern.Sched.enablePreemption
@@ -2096,6 +2477,20 @@ Hexagon.Kernel.FS.VFS.saveFile:
 
     ret
 
+;; See Hexagon.Kernel.FS.VFS.createFile.notSupported
+
+.notSupported:
+
+    popad
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+    stc
+
+    mov eax, 200h ;; VFS.invalidFS, lib/fasm/errors.s
+
+    ret
+
 ;;************************************************************************************
 
 ;; Lists the files/directories in the current directory into the caller's
@@ -2104,6 +2499,10 @@ Hexagon.Kernel.FS.VFS.saveFile:
 ;;
 ;; Entries are separated by Hexagon.VFS.FAT16B.filenameSeparator (a file) or
 ;; .directorySeparator (a directory), the whole list NUL-terminated
+;;
+;; Every filesystem's own list builder must return ESI pointing at a
+;; DS-reachable kernel buffer and EAX as the entry count. Building it with
+;; stosb or movsb needs ES reset to kernelData right before, never assumed.
 ;;
 ;; Input:
 ;;
@@ -2123,16 +2522,17 @@ Hexagon.Kernel.FS.VFS.saveFile:
 
 Hexagon.Kernel.FS.VFS.listFiles:
 
-;; The caller's buffer/size are parked here; resolveMount needs ESI for a
-;; path instead. ECX itself is untouched by resolveMount ("every other
-;; register is preserved"), only ESI needs saving
+;; The caller's buffer and size are parked here, since resolveMount needs ESI
+;; for a path. It preserves every other register, so only ESI needs saving
 
     mov dword[.callerBuffer], esi
     mov dword[.callerSize], ecx
 
 ;; No path argument. Always resolves against the current directory.
 
-    mov esi, Hexagon.VFS.Directory.currentDirectory
+    movzx esi, byte[Hexagon.Scheduler.current]
+    imul esi, 64
+    add esi, Hexagon.Processes.Table.cwd
 
 ;; See Hexagon.Kernel.FS.VFS.createFile for why this stays masked across
 ;; the whole operation
@@ -2146,6 +2546,9 @@ Hexagon.Kernel.FS.VFS.listFiles:
     cmp ah, Hexagon.VFS.FS.FAT16B
     je .listFilesFAT16B
 
+    cmp ah, Hexagon.VFS.FS.DEVFS
+    je .listFilesDevFS
+
     xor eax, eax
 
     stc
@@ -2156,15 +2559,31 @@ Hexagon.Kernel.FS.VFS.listFiles:
 
 .listFilesFAT16B:
 
+;; listFilesFAT16B takes no path and trusts
+;; Hexagon.VFS.FAT16B.currentDirLBA, which is per-mount state shared by every
+;; process on it. Walk it to this process's own resolved cwd first, or the
+;; listing is whatever directory somebody else last moved it to
+
+    call Hexagon.Kernel.FS.FAT16.changeDirectoryFAT16B
+
+    jc .hardError
+
     call Hexagon.Kernel.FS.FAT16.listFilesFAT16B ;; ESI = kernel list, EAX = entry count
+
+    jmp .copyListToCaller
+
+.listFilesDevFS:
+
+    call Hexagon.Kernel.FS.DEVFS.listFilesDevFS ;; ESI = kernel list, EAX = entry count
+
+.copyListToCaller:
 
     jc .hardError
 
     mov dword[.entryCount], eax
 
-;; The built list is one NUL-terminated run of entries separated by
-;; non-NUL separator bytes - not different in shape from a plain string as
-;; far as stringSize's own scan is concerned
+;; The built list is one NUL-terminated run of entries separated by non-NUL
+;; bytes, which is the same shape as a plain string to stringSize's own scan
 
     call Hexagon.Libkern.String.stringSize
 
@@ -2177,8 +2596,8 @@ Hexagon.Kernel.FS.VFS.listFiles:
     mov ecx, eax
 
 ;; rep movsb reads through DS and writes through ES:EDI. DS is already the
-;; kernel data segment here, but ES was last set to kernelLinear by
-;; hexagonHandler - same correction as hx.getMounts's own copy
+;; kernel data segment here, but hexagonHandler left ES on the kernel linear
+;; segment, so it has to be realigned first
 
     push es
 
@@ -2246,6 +2665,9 @@ Hexagon.Kernel.FS.VFS.changeDirectory:
     cmp ah, Hexagon.VFS.FS.FAT16B
     je .changeDirectoryFAT16B
 
+    cmp ah, Hexagon.VFS.FS.DEVFS
+    je .changeDirectoryDevFS
+
     call Hexagon.Kern.Sched.enablePreemption
 
     ret
@@ -2256,11 +2678,28 @@ Hexagon.Kernel.FS.VFS.changeDirectory:
 
     jc .failed
 
-;; Hexagon.VFS.Directory.currentDirectory only exists to tell resolveMount
+;; This process's own current directory only exists to tell resolveMount
 ;; which mount a later argument-less call (hx.listFiles, a relative cd)
 ;; should target. Synced from resolveMount's own normalized absolute path
-;; rather than the caller's original argument, so a relative cd and a
+;; and not the caller's original argument, so a relative cd and a
 ;; "cd .." out of a mount keep it in sync just as well as an absolute cd.
+
+    mov esi, Hexagon.Kernel.FS.VFS.resolveMount.normalizedPath
+
+    call Hexagon.Kernel.FS.Dir.setCurrentDirectory
+
+    jmp .done
+
+;; DEVFS has no real subdirectories yet, so the only path landing here is
+;; "/dev" itself, resolved down to just "/" by resolveMount
+
+.changeDirectoryDevFS:
+
+    cmp byte[esi], '/'
+    jne .failed
+
+    cmp byte[esi+1], 0
+    jne .failed
 
     mov esi, Hexagon.Kernel.FS.VFS.resolveMount.normalizedPath
 
@@ -2308,6 +2747,9 @@ Hexagon.Kernel.FS.VFS.renameFile:
     cmp ah, Hexagon.VFS.FS.FAT16B
     je .renameFileFAT16B
 
+    cmp ah, Hexagon.VFS.FS.DEVFS
+    je .notSupported
+
     call Hexagon.Kern.Sched.enablePreemption
 
     ret
@@ -2317,6 +2759,18 @@ Hexagon.Kernel.FS.VFS.renameFile:
     call Hexagon.Kernel.FS.FAT16.renameFileFAT16B
 
     call Hexagon.Kern.Sched.enablePreemption
+
+    ret
+
+;; See Hexagon.Kernel.FS.VFS.createFile.notSupported
+
+.notSupported:
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+    stc
+
+    mov eax, 200h ;; VFS.invalidFS, lib/fasm/errors.s
 
     ret
 
@@ -2348,6 +2802,9 @@ Hexagon.Kernel.FS.VFS.openFile:
     cmp ah, Hexagon.VFS.FS.FAT16B
     je .openFileFAT16B
 
+    cmp ah, Hexagon.VFS.FS.DEVFS
+    je .openFileDevFS
+
     call Hexagon.Kern.Sched.enablePreemption
 
     ret
@@ -2357,6 +2814,44 @@ Hexagon.Kernel.FS.VFS.openFile:
     call Hexagon.Kernel.FS.FAT16.loadFileFAT16B
 
     call Hexagon.Kern.Sched.enablePreemption
+
+    ret
+
+;; Re-enters device opening with the leading '/' stripped, since a device is
+;; matched by its bare name alone. The name is confirmed against the devfs
+;; registry first, or an unmatched one reaches Hexagon.Kernel.Dev.Dev.open's
+;; "maybe it's a file" fallback, which calls back here and recurses forever
+
+.openFileDevFS:
+
+    push esi
+
+    call Hexagon.Kernel.FS.DEVFS.fileExistsDevFS
+
+    pop esi
+
+    jc .notFoundDevFS
+
+;; "/dev" itself, or any future subdirectory, isn't a device to open
+
+    cmp byte[ebx + 11], 0 ;; Directory attribute, Hexagon.Kernel.FS.DEVFS.fileExistsDevFS's own record layout
+    jne .notFoundDevFS
+
+    inc esi ;; Skip the leading '/' resolveMount always leaves here
+
+    call Hexagon.Kernel.Dev.Dev.open
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+    ret
+
+.notFoundDevFS:
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+    mov eax, 6 ;; IO.notFound, lib/fasm/errors.s
+
+    stc
 
     ret
 
@@ -2371,7 +2866,11 @@ Hexagon.Kernel.FS.VFS.openFile:
 ;; Output:
 ;;
 ;; EAX - File size in bytes
-;; EBX - Pointer to entry in the root directory
+;; EBX - Hexagon.Dev.DeviceClasses value, 0 if the path is not a device node
+;;       (a plain file, a directory, or "/dev" itself)
+;; ECX - Attribute byte (bit 10h set means the path is a directory, same
+;;       meaning as Hexagon.VFS.FAT.directoryAttribute), undefined if CF is set
+;; EDX - Device major (DH) and minor (DL), 0:0 if the path is not a device node
 ;; CF defined if the file was not found or has an invalid name
 
 Hexagon.Kernel.FS.VFS.fileExists:
@@ -2388,6 +2887,9 @@ Hexagon.Kernel.FS.VFS.fileExists:
     cmp ah, Hexagon.VFS.FS.FAT16B
     je .fileExistsFAT16B
 
+    cmp ah, Hexagon.VFS.FS.DEVFS
+    je .fileExistsDevFS
+
     call Hexagon.Kern.Sched.enablePreemption
 
     ret
@@ -2396,29 +2898,45 @@ Hexagon.Kernel.FS.VFS.fileExists:
 
     call Hexagon.Kernel.FS.FAT16.fileExistsFAT16B
 
+    jc .fileExistsFAT16BDone
+
+;; EBX still points at fileExistsFAT16B's own directory entry here, so the
+;; attribute byte has to be read out before EBX itself is overwritten below
+
+    movzx ecx, byte[ebx + 11]
+
+;; A FAT16 file is never a device node. mov, not xor: xor would clear CF,
+;; wiping out fileExistsFAT16B's own not-found signal
+
+    mov ebx, 0
+    mov edx, 0
+
+.fileExistsFAT16BDone:
+
     call Hexagon.Kern.Sched.enablePreemption
 
     ret
 
-;;************************************************************************************
+.fileExistsDevFS:
 
-Hexagon.Kernel.FS.VFS.mountVolume:
+    call Hexagon.Kernel.FS.DEVFS.fileExistsDevFS
 
-    mov ah, byte[Hexagon.Dev.Gen.Disk.Control.bootDisk]
+    jc .fileExistsDevFSDone
 
-    mov dl, 01h ;; Storage device class
+;; EBX still points at DEVFS.fileExistsDevFS's own record here, so every
+;; field has to be read out before EBX itself becomes the class below.
+;; EDX cleared first since only its low 16 bits (DH/DL) get written next
 
-    call Hexagon.Kernel.Dev.Dev.convertDeviceToDeviceName ;; Convert to device name
+    xor edx, edx
 
-;; Enable kernel privileges for privileged request
+    movzx ecx, byte[ebx + 11] ;; Attribute (bit 10h set for "/dev" itself)
+    mov dh, byte[ebx + 13] ;; Major
+    mov dl, byte[ebx + 14] ;; Minor
+    movzx ebx, byte[ebx + 12] ;; Class
 
-    mov dword[kernelExecute], kernelExecutePermission
+.fileExistsDevFSDone:
 
-    call Hexagon.Kernel.Dev.Dev.open ;; Open device for read/write with privileges
-
-;; Disable kernel privileges as they are no longer needed
-
-    mov dword[kernelExecute], kernelExecuteDisabled
+    call Hexagon.Kern.Sched.enablePreemption
 
     ret
 
@@ -2429,7 +2947,7 @@ Hexagon.Kernel.FS.VFS.mountVolume:
 
 Hexagon.Kernel.FS.VFS.setFilesystem:
 
-    call Hexagon.Kernel.Dev.i386.Disk.Disk.readMBR
+    call Hexagon.Kernel.Dev.Disk.Disk.readMBR
 
     jc .restoreVolume
 
@@ -2439,8 +2957,8 @@ Hexagon.Kernel.FS.VFS.setFilesystem:
 
 .restoreVolume:
 
-    mov dl, byte [Hexagon.Dev.Gen.Disk.Control.bootDisk]
-    mov byte [Hexagon.Dev.Gen.Disk.Control.currentDisk], dl
+    mov dl, byte [Hexagon.Dev.Disk.Control.bootDisk]
+    mov byte [Hexagon.Dev.Disk.Control.currentDisk], dl
 
     call Hexagon.Kernel.FS.VFS.initFilesystem
 
@@ -2456,7 +2974,7 @@ Hexagon.Kernel.FS.VFS.setFilesystem:
 
 Hexagon.Kernel.FS.VFS.initFilesystem:
 
-    call Hexagon.Kernel.Dev.i386.Disk.Disk.testVolume
+    call Hexagon.Kernel.Dev.Disk.Disk.testVolume
 
     jc .volumeNotPresent
 
@@ -2473,8 +2991,8 @@ Hexagon.Kernel.FS.VFS.initFilesystem:
 
 .volumeNotPresent:
 
-    mov ah, byte[Hexagon.Dev.Gen.Disk.Control.bootDisk]
-    mov byte[Hexagon.Dev.Gen.Disk.Control.currentDisk], ah
+    mov ah, byte[Hexagon.Dev.Disk.Control.bootDisk]
+    mov byte[Hexagon.Dev.Disk.Control.currentDisk], ah
 
     mov ah, byte[Hexagon.VFS.Control.filesystemType]
 
@@ -2515,8 +3033,8 @@ Hexagon.Kernel.FS.VFS.setBootVolume:
 
 ;; Will store the volume to be used by the system (can be changed)
 
-    mov dl, byte[Hexagon.Dev.Gen.Disk.Control.bootDisk]
-    mov byte[Hexagon.Dev.Gen.Disk.Control.currentDisk], dl
+    mov dl, byte[Hexagon.Dev.Disk.Control.bootDisk]
+    mov byte[Hexagon.Dev.Disk.Control.currentDisk], dl
 
     logHexagon Hexagon.Verbose.setVolume, Hexagon.Dmesg.Priorities.p5
 
@@ -2535,7 +3053,7 @@ Hexagon.Kernel.FS.VFS.setBootVolume:
 
 Hexagon.Kernel.FS.VFS.getVolume:
 
-    mov ah, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk] ;; Storage device number
+    mov ah, byte[Hexagon.Dev.Disk.Control.currentDisk] ;; Storage device number
     mov dl, [Hexagon.Dev.DeviceClasses.block] ;; Device class
 
     call Hexagon.Kernel.Dev.Dev.convertDeviceToDeviceName
@@ -2547,3 +3065,156 @@ Hexagon.Kernel.FS.VFS.getVolume:
     mov ah, byte[Hexagon.VFS.Control.filesystemType]
 
     ret
+
+;;************************************************************************************
+
+;; Syscall entries for the filesystem calls above. Every routine below runs
+;; Hexagon.Kernel.FS.VFS.resolveMount, which answers with ESI on a buffer
+;; inside the kernel image, and Hexagon.Kern.Syscall.hexagonHandler translates
+;; ESI on the way back out, so a caller at user level would be handed an
+;; address it cannot read a byte of. The caller's own ESI goes back instead,
+;; through a "pop" that leaves the CF these calls answer with alone
+;;
+;; Input/output: as the routine each one wraps, ESI aside
+
+Hexagon.Kernel.FS.VFS.saveFileSyscall:
+
+    push esi
+
+    call Hexagon.Kernel.FS.VFS.saveFile
+
+    pop esi
+
+    ret
+
+Hexagon.Kernel.FS.VFS.createFileSyscall:
+
+    push esi
+
+    call Hexagon.Kernel.FS.VFS.createFile
+
+    pop esi
+
+    ret
+
+Hexagon.Kernel.FS.VFS.unlinkFileSyscall:
+
+    push esi
+
+    call Hexagon.Kernel.FS.VFS.unlinkFile
+
+    pop esi
+
+    ret
+
+Hexagon.Kernel.FS.VFS.renameFileSyscall:
+
+    push esi
+
+    call Hexagon.Kernel.FS.VFS.renameFile
+
+    pop esi
+
+    ret
+
+Hexagon.Kernel.FS.VFS.listFilesSyscall:
+
+;; The listing is written into the caller's own buffer at CPL 0, so the range it
+;; named is checked against what this process can reach itself
+
+    push ebx
+
+    mov ebx, esi
+
+    call Hexagon.Arch.Paging.rangeIsCallerWritable
+
+    pop ebx
+
+    jc .badBuffer
+
+    push esi
+
+    call Hexagon.Kernel.FS.VFS.listFiles
+
+    pop esi
+
+    ret
+
+.badBuffer:
+
+    mov eax, Hexagon.Kern.Proc.badAddress
+
+    stc
+
+    ret
+
+Hexagon.Kernel.FS.VFS.fileExistsSyscall:
+
+    push esi
+
+    call Hexagon.Kernel.FS.VFS.fileExists
+
+    pop esi
+
+    ret
+
+Hexagon.Kernel.FS.VFS.createDirectorySyscall:
+
+    push esi
+
+    call Hexagon.Kernel.FS.VFS.createDirectory
+
+    pop esi
+
+    ret
+
+Hexagon.Kernel.FS.VFS.removeDirectorySyscall:
+
+    push esi
+
+    call Hexagon.Kernel.FS.VFS.removeDirectory
+
+    pop esi
+
+    ret
+
+Hexagon.Kernel.FS.VFS.changeDirectorySyscall:
+
+    push esi
+
+    call Hexagon.Kernel.FS.VFS.changeDirectory
+
+    pop esi
+
+    ret
+
+Hexagon.Kernel.FS.VFS.mountSyscall:
+
+    push esi
+
+    call Hexagon.Kernel.FS.VFS.mount
+
+    pop esi
+
+    ret
+
+Hexagon.Kernel.FS.VFS.unmountSyscall:
+
+    push esi
+
+    call Hexagon.Kernel.FS.VFS.unmount
+
+    pop esi
+
+    ret
+
+Hexagon.Kernel.FS.VFS.chownSyscall:
+
+    push esi
+
+    call Hexagon.Kernel.FS.VFS.chown
+
+    pop esi
+
+    ret
+

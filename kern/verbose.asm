@@ -101,6 +101,10 @@ db "Setting up the kernel heap...", 0
 db "The keyboard management service has started.", 0
 .mouse:
 db "The mouse management service has started.", 0
+.pci:
+db "The PCI bus management service has started.", 0
+.acpi:
+db "The ACPI power management service has started.", 0
 .serial:
 db "The serial port management service is starting...", 0
 .setVolume:
@@ -109,10 +113,12 @@ db "Hexagon is looking for a volume to mount...", 0
 db "Mounting volume ", 0
 .mountPointDefined:
 db " on /...", 0
-.filesystem:
-db "The mounted volume is formatted as (FSID): ", 0
-.volumeLabel:
-db "The volume label is: ", 0
+.mounted:
+db "Mounted ", 0
+.mountedOn:
+db " on ", 0
+.unmounted:
+db "Unmounted ", 0
 .init:
 db "Looking for /init...", 0
 .withoutInit:
@@ -136,24 +142,21 @@ db "Invalid opcode found at runtime. Failure.", 0
 
 ;;************************************************************************************
 
-Hexagon.Verbose.APM:
+Hexagon.Verbose.Power:
 
-.rebootAPM:
+.reboot:
 db "Requesting restart...", 0
-.serviceAPM:
+.service:
 db "Requesting power management service...", 0
-.shutdownAPM:
-db "Requesting shutdown...", 0
-.errorAPM:
-db "An error occurred in the power management service request.", 0
-.commandErrorAPM:
-db "An error occurred in the command given to power management service.", 0
-.connectionErrorAPM:
-db "There was an error connecting to the power management service.", 0
-.shutdownSuccessAPM:
-db "Success in requesting the power management system.", 0
-.instalationErrorAPM:
-db "Error installing Hexagon power management service.", 0
+
+;;************************************************************************************
+
+Hexagon.Verbose.ACPI:
+
+.shutdownACPI:
+db "Requesting shutdown via ACPI...", 0
+.unavailable:
+db "No usable ACPI power-off mechanism was found.", 0
 
 ;;************************************************************************************
 
@@ -161,6 +164,18 @@ Hexagon.Verbose.Services:
 
 .killProcess:
 db "The process running with this PID was terminated by Hexagon.", 0
+.generalProtectionFault:
+db "general protection fault", 0
+.pageFault:
+db "page fault", 0
+
+;; What a process is told it died of, when the fault was raised against its own
+;; code at user level and not against the kernel
+
+.terminatedGeneralProtectionFault:
+db "Process terminated by Hexagon: general protection fault.", 0
+.terminatedPageFault:
+db "Process terminated by Hexagon: page fault.", 0
 
 ;;************************************************************************************
 
@@ -201,6 +216,13 @@ db "A hard disk was detected.", 0
 db "No hard disk was detected at this slot.", 0
 .partitionUnsupported:
 db "A partition was found, but its filesystem is not supported by Hexagon.", 0
+
+;;************************************************************************************
+
+Hexagon.Verbose.HXBI:
+
+.invalidBlock:
+db "HBoot did not hand off a valid HXBI block.", 0
 
 ;;************************************************************************************
 

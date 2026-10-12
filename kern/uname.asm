@@ -75,22 +75,103 @@ use32
 
 ;; Returns Hexagon version and subversion numbers to requesting applications
 ;;
+;; The two strings are written into a buffer the caller owns, and not named
+;; by a pointer of the kernel's own, which is what a caller at user level could
+;; not read at all and what would otherwise need an adapter between this and
+;; the system call table
+;;
+;; Input:
+;;
+;; EDI - Caller's own buffer, at least Hexagon.Kern.Uname.bufferLength bytes.
+;;       The kernel's name is written at the start of it and its build at
+;;       Hexagon.Kern.Uname.buildOffset, both NUL terminated, so a caller
+;;       reaches either one without walking the other
+;;
+;;       Always required, even by a caller that only wants the numbers. There is
+;;       no "no buffer" value to pass: hexagonHandler adds the process base to
+;;       EDI on every call, so a 0 arrives here as the base itself and the write
+;;       would land on the caller's own image
+;;
 ;; Output:
 ;;
 ;; EAX - Hexagon version number
 ;; EBX - Hexagon subversion number
 ;; ECX - Kernel revision
 ;; EDX - Architecture
-;; ESI - Kernel name string
-;; EDI - Kernel build
+;; EDI - Preserved
+
+Hexagon.Kern.Uname.bufferLength = 96
+Hexagon.Kern.Uname.buildOffset  = 48
 
 Hexagon.Kern.Uname.uname:
+
+;; The buffer is the caller's, and this writes into it at CPL 0, where paging
+;; refuses nothing. Check it is one that caller could reach by itself first
+
+    push ebx
+    push ecx
+
+    mov ebx, edi
+    mov ecx, Hexagon.Kern.Uname.bufferLength
+
+    call Hexagon.Arch.Paging.rangeIsCallerWritable
+
+    pop ecx
+    pop ebx
+
+    jc .badBuffer
+
+    push es
+    push esi
+    push edi
+
+    push ds ;; stosb below writes through ES:EDI
+    pop es
+
+    cld
+
+    mov esi, Hexagon.Version.kernelName
+
+    call .copyString
+
+    mov edi, dword[esp] ;; Back to the start of the buffer, then to the build's own half
+    add edi, Hexagon.Kern.Uname.buildOffset
+
+    mov esi, Hexagon.Version.kernelBuild
+
+    call .copyString
+
+    pop edi
+    pop esi
+    pop es
 
     mov eax, Hexagon.Version.versionNumber
     mov ebx, Hexagon.Version.subversionNumber
     mov ecx, Hexagon.Version.revision
     mov edx, Hexagon.Arch.support
-    mov esi, Hexagon.Version.kernelName
-    mov edi, Hexagon.Version.kernelBuild
+
+    clc
+
+    ret
+
+.badBuffer:
+
+    mov eax, Hexagon.Kern.Proc.badAddress
+
+    stc
+
+    ret
+
+;; One NUL terminated string from ESI to EDI
+
+.copyString:
+
+    lodsb
+
+    stosb
+
+    cmp al, 0
+
+    jne .copyString
 
     ret

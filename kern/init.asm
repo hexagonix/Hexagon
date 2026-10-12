@@ -120,8 +120,6 @@ Hexagon.Kern.Init.startUserMode:
 
     mov esi, Hexagon.Verbose.Init.withoutInit
 
-    mov eax, 1
-
     call Hexagon.Kern.Panic.panic
 
     jmp .end
@@ -130,9 +128,7 @@ Hexagon.Kern.Init.startUserMode:
 
     mov esi, Hexagon.Verbose.Init.shellExited
 
-    mov eax, 1
-
-    call Hexagon.Kern.Panic.panic ;; Request error screen
+    call Hexagon.Kern.Panic.panic
 
 .end:
 

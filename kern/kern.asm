@@ -107,26 +107,33 @@ include "kern/services.asm"             ;; Interrupt routines and IRQ handlers
 
 include "kern/dmesg.asm"                ;; Functions for handling kernel messages
 include "kern/panic.asm"                ;; Functions for displaying and identifying Hexagon errors
+include "kern/hxbi.asm"                 ;; Reads the HXBI block HBoot hands off in EBX
 include "kern/users.asm"                ;; Permissions and user management
 
 ;; Hexagon device management
 
-include "arch/gen/mm.asm"               ;; Hexagon memory management
-include "arch/i386/mm/mm.asm"           ;; Architecture-dependent memory management
-include "dev/i386/disk/disk.asm"        ;; Functions for reading and writing to hard drives
-include "dev/gen/console/console.asm"   ;; Hexagon video management
-include "dev/gen/keyboard/keyboard.asm" ;; Functions required to use the keyboard
-include "arch/i386/cpu/cpu.asm"         ;; IDT, GDT and processor management
-include "arch/i386/BIOS/BIOS.asm"       ;; BIOS interrupts in real mode
-include "arch/i386/APM/apm.asm"         ;; Hexagon APM implementation
-include "dev/gen/snd/snd.asm"           ;; Hexagon sound management
-include "dev/gen/PS2/PS2.asm"           ;; Hexagon PS/2 port management
-include "arch/i386/timer/timer.asm"     ;; Hexagon timer manipulation
+include "arch/mm/mm.asm"                ;; Hexagon memory management
+include "arch/paging/paging.asm"         ;; Identity mapped kernel space and paging control
+include "dev/pci/pci.asm"               ;; PCI bus enumeration (detection/log only for now)
+
+include "dev/sata/ahci.asm"             ;; Native SATA AHCI storage device driver
+
+include "dev/ata/ata.asm"               ;; Native ATA/IDE storage device driver
+include "dev/disk/disk.asm"             ;; Functions for reading and writing to hard drives
+include "dev/cpu/cpu.asm"               ;; Registers the CPU as a device (cpu0)
+include "dev/console/console.asm"       ;; Hexagon video management
+include "dev/keyboard/keyboard.asm"     ;; Functions required to use the keyboard
+include "arch/cpu/cpu.asm"              ;; IDT, GDT and processor management
+include "kern/power.asm"                ;; Power management dispatch (reboot, shutdown)
+include "arch/acpi/acpi.asm"            ;; Hexagon ACPI implementation
+include "dev/snd/snd.asm"               ;; Hexagon sound management
+include "dev/ps2/ps2.asm"               ;; Hexagon PS/2 port management
+include "arch/timer/timer.asm"          ;; Hexagon timer manipulation
 include "fs/vfs.asm"                    ;; Virtual File System (VFS) for Hexagon
-include "dev/gen/mouse/mouse.asm"       ;; Functions for Hexagon PS/2 mouse
-include "dev/gen/lpt/lpt.asm"           ;; Parallel port handling functions
-include "dev/gen/COM/serial.asm"        ;; Functions for handling serial ports in protected mode
-include "arch/i386/CMOS/cmos.asm"       ;; Functions for manipulating date and time
+include "dev/mouse/mouse.asm"           ;; Functions for Hexagon PS/2 mouse
+include "dev/lpt/lpt.asm"               ;; Parallel port handling functions
+include "dev/serial/serial.asm"         ;; Functions for handling serial ports in protected mode
+include "arch/cmos/cmos.asm"            ;; Functions for manipulating date and time
 include "dev/dev.asm"                   ;; Hardware management and abstraction functions
 
 ;; Processes, process model and executable images
@@ -138,7 +145,8 @@ include "kern/init.asm"                 ;; Functions to start user mode and firs
 
 ;; Filesystems supported by Hexagon
 
-include "fs/FAT16/fat16.asm"            ;; File handling in FAT16 file system
+include "fs/fat16/fat16.asm"            ;; File handling in FAT16 file system
+include "fs/devfs/devfs.asm"            ;; Synthetic /dev filesystem
 
 ;; Hexagon kernel libraries
 
@@ -180,9 +188,36 @@ Hexagon.init:
     mov fs, ax
     mov gs, ax
     mov es, ax
-    mov esp, 10000h ;; Set stack pointer
+
+;; Anchored to the malloc arena's own start instead of a flat literal, so
+;; the boot stack keeps a fixed distance from Hexagon.Heap regardless of how
+;; large the kernel image grows
+
+    mov esp, Hexagon.Arch.Memory.kernelReservedMemory - 1000h
 
     cli
+
+;; Boot/Saturno's resident VBR sector isn't reserved from the kernel's own
+;; allocator, and Hexagon.Heap.DiskCache lands close enough to overlap and
+;; zero its start during a normal mount. Copy it into a kernel-owned buffer
+;; here, before any disk activity, and read the copy from now on
+
+    mov esi, dword[Hexagon.Memory.addressBPB]
+    mov edi, Hexagon.Memory.BPBCopy
+
+    mov ecx, 512
+
+.copyBPB:
+
+    mov al, byte[esi]
+    mov byte[edi], al
+
+    inc esi
+    inc edi
+
+    loop .copyBPB
+
+    mov dword[Hexagon.Memory.addressBPB], Hexagon.Memory.BPBCopy
 
 ;; Here begins the kernel self-configuration process, including the enumeration and
 ;; initialization of the compatible devices present.
@@ -190,17 +225,32 @@ Hexagon.init:
 
 Hexagon.Autoconfig:
 
-    call Hexagon.Arch.i386.CPU.CPU.identifyProcessor ;; Identifies the installed processor
+    call Hexagon.Arch.CPU.CPU.identifyProcessor ;; Identifies the installed processor
 
-    call Hexagon.Arch.i386.CPU.CPU.setupProcessor ;; Configures processor operation
+    call Hexagon.Arch.CPU.CPU.setupProcessor ;; Configures processor operation
 
-    call Hexagon.Arch.Gen.Mm.initMemory ;; Starts the Hexagon memory allocator
+    call Hexagon.Arch.CPU.CPU.maskATAInterrupts ;; Prevent an unmasked secondary-PIC IRQ from storming into nullHandler
 
-    call Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.setupKeyboard ;; Start the Hexagon keyboard service
+    call Hexagon.Arch.Mm.initMemory ;; Starts the Hexagon memory allocator
 
-    call Hexagon.Kernel.Dev.Gen.Mouse.Mouse.setupMouse ;; Start the Hexagon mouse service
+    call Hexagon.Arch.Paging.setupKernelPaging ;; Maps the kernel's own space one to one and turns paging on
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.setupConsole ;; Configures default video resolution and settings
+    call Hexagon.Kernel.Dev.Dev.allocateRegistry ;; Allocates the registry table
+
+    call Hexagon.Kernel.Dev.Dev.registerDevices ;; Registers cpu0, tty0-tty7, au0 and com1
+
+    call Hexagon.Kernel.Dev.Keyboard.Keyboard.setupKeyboard ;; Start the Hexagon keyboard service
+
+    call Hexagon.Kernel.Dev.Mouse.Mouse.setupMouse ;; Start the Hexagon mouse service
+
+;; kbd0/mouse0 are not registered here. Their device class has no working
+;; branch in Hexagon.Kernel.Dev.Dev.open, so hx.open always fails for them
+
+    call Hexagon.Kernel.Dev.Dev.Switch.Block.attach
+    call Hexagon.Kernel.Dev.Dev.Switch.Parallel.attach
+    call Hexagon.Kernel.Dev.Dev.Switch.Proc.attach
+
+    call Hexagon.Kernel.Dev.Dev.Switch.Output.attach ;; Configures default video resolution and settings
 
     call Hexagon.Kern.Dmesg.startLog ;; Start Hexagon report
 
@@ -208,9 +258,9 @@ Hexagon.Autoconfig:
 
 ;; This is where the warning messages start when Hexagon starts up
 
-    call Hexagon.Kernel.Dev.Gen.COM.Serial.setupSerialPort ;; Correctly starts the serial interface
+    call Hexagon.Kernel.Dev.Serial.Serial.setupSerialPort ;; Correctly starts the serial interface
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.clearConsole
+    call Hexagon.Kernel.Dev.Console.Console.clearConsole
 
     kprint Hexagon.Verbose.Hexagon
 
@@ -228,19 +278,19 @@ Hexagon.Autoconfig:
 
     kprint Hexagon.Verbose.totalMemory
 
-    call Hexagon.Arch.Gen.Mm.memoryUse
+    call Hexagon.Arch.Mm.memoryUse
 
     mov eax, ecx
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.printDecimal
+    call Hexagon.Kernel.Dev.Console.Console.printDecimal
 
     kprint Hexagon.Verbose.megabytes
 
-    call Hexagon.Arch.Gen.Mm.memoryUse
+    call Hexagon.Arch.Mm.memoryUse
 
     mov eax, ebx
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.printDecimal
+    call Hexagon.Kernel.Dev.Console.Console.printDecimal
 
     kprint Hexagon.Verbose.bytes
 
@@ -252,23 +302,35 @@ Hexagon.Autoconfig:
 
     logHexagon Hexagon.Verbose.mouse, Hexagon.Dmesg.Priorities.p5
 
-    call Hexagon.Arch.i386.Timer.Timer.setupTimer ;; Initializes the Hexagon timer service
+    logHexagon Hexagon.Verbose.pci, Hexagon.Dmesg.Priorities.p5
+
+    call Hexagon.Dev.PCI.setupPCI ;; Scans and logs devices on the PCI bus
+
+    logHexagon Hexagon.Verbose.acpi, Hexagon.Dmesg.Priorities.p5
+
+    call Hexagon.Arch.ACPI.setupACPI ;; Locates the ACPI tables needed to shut down later
+
+    call Hexagon.Arch.Timer.Timer.setupTimer ;; Initializes the Hexagon timer service
 
     call Hexagon.Kern.Sched.setupScheduler ;; Starts the Hexagon process scheduler
 
-    call Hexagon.Kernel.Dev.Gen.COM.Serial.setupCOM1 ;; Start first serial port for debugging
+    call Hexagon.Kernel.Dev.Serial.Serial.setupCOM1 ;; Start first serial port for debugging
 
 ;;************************************************************************************
 
-    call Hexagon.Kernel.Dev.i386.Disk.Disk.allocateTables
+    call Hexagon.Kernel.Dev.Disk.Disk.allocateTables
+
+    call Hexagon.Dev.SATA.AHCI.setupAHCI ;; Initialize native SATA AHCI controller and drives
+
+    call Hexagon.Dev.ATA.setupATA ;; Initialize native ATA/IDE controller and drives
 
     call Hexagon.Kernel.FS.VFS.allocateMountTable
 
-    call Hexagon.Kernel.Dev.i386.Disk.Disk.detectDisks
+    call Hexagon.Kernel.Dev.Disk.Disk.detectDisks
 
-    call Hexagon.Kernel.Dev.i386.Disk.Disk.detectPartitions
+    call Hexagon.Kernel.Dev.Disk.Disk.detectPartitions
 
-    call Hexagon.Kernel.Dev.i386.Disk.Disk.logDetectionSummary
+    call Hexagon.Kernel.Dev.Disk.Disk.logDetectionSummary
 
 ;;************************************************************************************
 
@@ -347,48 +409,18 @@ Hexagon.Autoconfig:
 
 ;;************************************************************************************
 
+;; Hexagon.Kernel.FS.VFS.setFilesystem and .initFilesystem above already
+;; fully establish the root volume by talking to the boot disk directly,
+;; the same way a real root mount never goes through a generic device-open
+;; dispatch. Nothing past this point opens the boot disk again
+
     call Hexagon.Kernel.FS.VFS.initFilesystem ;; Initializes the volume's filesystem structures
-
-    kprint Hexagon.Dmesg.hexagonIdentifier
-
-    kprint Hexagon.Verbose.filesystem
-
-    call Hexagon.Kernel.FS.VFS.getVolume
-
-    push esi
-    push edi
-
-    mov al, ah
-    xor ah, ah
-
-    call Hexagon.Kernel.Dev.Gen.Console.Console.printHexadecimal
-
-    mov al, 10
-
-    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
-
-    kprint Hexagon.Dmesg.hexagonIdentifier
-
-    kprint Hexagon.Verbose.volumeLabel
-
-    pop edi
-    pop esi
-
-    mov esi, edi
-
-    call Hexagon.Kernel.Dev.Gen.Console.Console.printString
-
-    mov al, 10
-
-    call Hexagon.Kernel.Dev.Gen.Console.Console.printCharacter
 
 ;;************************************************************************************
 
     mov esi, "/"
 
     call Hexagon.Kernel.FS.Dir.setMountPoint
-
-    call Hexagon.Kernel.FS.VFS.mountVolume ;; Mount the default volume used for booting
 
     call Hexagon.Kernel.FS.VFS.registerBootMount ;; Registers "/" as mount slot 0
 
@@ -414,11 +446,51 @@ Hexagon.userMode:
 
 ;;************************************************************************************
 
+;; Word-aligned so every Hexagon.Heap.* region starts on an even physical
+;; address, since AHCI's PRDT requires bit 0 of a DMA buffer's address to
+;; be 0.
+
+align 2
+
 Hexagon.Heap: ;; Kernel heap
 
 Hexagon.Heap.DiskGeometry  = Hexagon.Heap + 0 ;; Disk geometry
-Hexagon.Heap.VBE           = Hexagon.Heap.DiskGeometry + 512 ;; Video control block
-Hexagon.Heap.DiskCache     = Hexagon.Heap.VBE+ Hexagon.Console.VBE.maxSize ;; Disk cache
+Hexagon.Heap.DiskCache     = Hexagon.Heap.DiskGeometry + 512 ;; Disk cache
 Hexagon.Heap.ProcessTable  = Hexagon.Heap.DiskCache + Hexagon.Disk.DiskCache.maxSize
 Hexagon.Heap.Temp          = Hexagon.Heap.ProcessTable + Hexagon.Processes.Table.byteSize ;; Temporary kernel data
+
+;; Budget for Hexagon.Heap.Temp's own scratch uses (HAPP header checks, font
+;; loading), covering the largest offsets any of them add to it today, with
+;; headroom for new ones added later
+
+Hexagon.Heap.TempSize = 8192
+
+;; AHCI and native ATA structures, reserved here and not as inline buffers
+;; in their own driver files, so an overlap shows up against Hexagon.Heap.End
+;; like any other region. CLB, FB and CTBA are read by the controller itself,
+;; so their alignment is a requirement on the address these constants carry
+
+Hexagon.Heap.AHCI.CommandList     = (Hexagon.Heap.Temp + Hexagon.Heap.TempSize + 1023) and (not 1023)
+Hexagon.Heap.AHCI.CommandListSize = 1024 ;; 1024-byte aligned, per AHCI spec
+
+Hexagon.Heap.AHCI.ReceivedFIS     = Hexagon.Heap.AHCI.CommandList + Hexagon.Heap.AHCI.CommandListSize
+Hexagon.Heap.AHCI.ReceivedFISSize = 256 ;; 256-byte aligned; CommandList is 1024-aligned and exactly 1024 bytes long
+
+Hexagon.Heap.AHCI.CommandTable     = Hexagon.Heap.AHCI.ReceivedFIS + Hexagon.Heap.AHCI.ReceivedFISSize
+Hexagon.Heap.AHCI.CommandTableSize = 256 ;; 128-byte aligned, as the offset from CommandList (1280) is a multiple of 128
+
+Hexagon.Heap.ATA.IdentifyBuffer     = Hexagon.Heap.AHCI.CommandTable + Hexagon.Heap.AHCI.CommandTableSize
+Hexagon.Heap.ATA.IdentifyBufferSize = 512 ;; PIO, no DMA alignment requirement
+
+;; The kernel's own page directory. CR3 only accepts a 4 KB aligned address,
+;; so this is rounded up instead of following the region above directly
+
+Hexagon.Heap.PageDirectory     = (Hexagon.Heap.ATA.IdentifyBuffer + Hexagon.Heap.ATA.IdentifyBufferSize + 4095) and (not 4095)
+Hexagon.Heap.PageDirectorySize = 4096
+
+Hexagon.Heap.End = Hexagon.Heap.PageDirectory + Hexagon.Heap.PageDirectorySize
+
+if Hexagon.Heap.End >= Hexagon.Arch.Memory.kernelReservedMemory - 1000h
+    err
+end if
 

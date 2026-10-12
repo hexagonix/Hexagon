@@ -91,49 +91,100 @@ Hexagon.Users.ID:
 
 .Hexagon    = 000
 .root       = 0
-.supervisor = 699
 .default    = 1
 
 Hexagon.Users.Groups:
 
 .Hexagon    = 00h
 .root       = 01h
-.supervisor = 02h
 .default    = 03h
 .admin      = 04h
 
 ;;************************************************************************************
 
-;; Registers the id of the user now logged in
+;; Registers the id of the user now logged in on the calling process. A
+;; child created afterward inherits it, the same way it already inherits
+;; its parent's environment
+;;
+;; Only root may switch to an arbitrary id. A non-root caller may only
+;; switch back to its own real id. Either way, the real id moves with the
+;; effective one, so switching away from root as root leaves no path back
 ;;
 ;; Input:
 ;;
-;; EAX - Logged in user id (provided by login manager)
+;; EAX - Logged in user id
+;;
+;; Output:
+;;
+;; CF set on permission denied, id left unchanged
 
 Hexagon.Kern.Users.setUser:
 
-    mov dword [Hexagon.Users.userId], eax
+    push ebx
+    push ecx
 
-    mov byte[Hexagon.Users.userLoggedIn], 01h
+    mov ecx, eax ;; Requested id, saved across the call below
+
+    call Hexagon.Kern.Users.getUserPermissions
+
+    cmp eax, Hexagon.Users.Groups.root
+    je .allowed
+
+    movzx ebx, byte[Hexagon.Scheduler.current]
+
+    cmp ecx, dword[Hexagon.Processes.Table.realUserId + ebx * 4]
+    jne .denied
+
+.allowed:
+
+    movzx ebx, byte[Hexagon.Scheduler.current]
+
+    mov dword[Hexagon.Processes.Table.userId + ebx * 4], ecx
+    mov dword[Hexagon.Processes.Table.realUserId + ebx * 4], ecx
+
+    mov byte[Hexagon.Processes.Table.userLoggedIn + ebx], 01h
+
+    clc
+
+    pop ecx
+    pop ebx
+
+    ret
+
+.denied:
+
+    stc
+
+    pop ecx
+    pop ebx
 
     ret
 
 ;;************************************************************************************
 
-;; Returns the id of the logged in user to the process
+;; Returns the id of the logged in user to the calling process
 ;;
 ;; Output:
 ;;
-;; EAX - Logged in user id
+;; EAX - Logged in (effective) user id
+;; EBX - Real user id, the identity behind a setuid elevation, for
+;;       userland to check authorization against who is really calling it
 
 Hexagon.Kern.Users.getUser:
 
-    cmp byte[Hexagon.Users.userLoggedIn], 00h
+    push ecx
+
+    movzx ecx, byte[Hexagon.Scheduler.current]
+
+    cmp byte[Hexagon.Processes.Table.userLoggedIn + ecx], 00h
     je .fim
 
-    mov eax, [Hexagon.Users.userId]
+    mov eax, dword[Hexagon.Processes.Table.userId + ecx * 4]
+    mov ebx, dword[Hexagon.Processes.Table.realUserId + ecx * 4]
 
 .fim:
+
+    pop ecx
 
     ret
 
@@ -157,41 +208,35 @@ Hexagon.Kern.Users.validateUser:
 
 Hexagon.Kern.Users.getUserPermissions:
 
-;; Before any login completes, Hexagon.Users.userId still sits at its
-;; zero-initialized default, the same value root now uses (see the ID table
-;; below), so this must not fall through to the comparisons below or an
-;; unauthenticated caller would be granted root's permissions
+    push ebx
 
-    cmp byte[Hexagon.Users.userLoggedIn], 00h
+    movzx ebx, byte[Hexagon.Scheduler.current]
+
+    cmp byte[Hexagon.Processes.Table.userLoggedIn + ebx], 00h
     je .notLoggedIn
 
-    mov eax, [Hexagon.Users.userId]
+    mov eax, dword[Hexagon.Processes.Table.userId + ebx * 4]
 
     cmp eax, Hexagon.Users.ID.root
     je .rootUser
 
-    cmp eax, Hexagon.Users.ID.supervisor
-    je .supervisor
-
     mov eax, Hexagon.Users.Groups.default
 
-    ret
+    jmp .done
 
 .notLoggedIn:
 
     mov eax, Hexagon.Users.Groups.default
 
-    ret
+    jmp .done
 
 .rootUser:
 
     mov eax, Hexagon.Users.Groups.root
 
-    ret
+.done:
 
-.supervisor:
-
-    mov eax, Hexagon.Users.Groups.supervisor
+    pop ebx
 
     ret
 
@@ -206,7 +251,6 @@ Hexagon.Kern.Users.getUserPermissions:
 ;; ------------|---------|------------------------------------------|-------------
 ;; Hexagon     |   000   |        Total (Hardware, Software)        | Kernel
 ;; root        |   000   | Reading, writing and execution (total)   | root
-;; supervisor  |   699   | Reading, writing and executing (debug)   | root
 ;; Other names |  1..698 | Reading, writing and execution (partial) | Common
 ;;
 ;; Names are not taken into account (except root, for login services).
@@ -215,14 +259,10 @@ Hexagon.Kern.Users.getUserPermissions:
 ;; two accounts ever share a code.
 ;;
 ;; root and the kernel share id 000, but they are never confused with each other: the
-;; kernel never authenticates through Hexagon.Kern.Users.setUser, and
-;; getUserPermissions only trusts Hexagon.Users.userId once Hexagon.Users.userLoggedIn
-;; is set, so a process running before login completes is never evaluated as root.
+;; kernel's own privileged operations bypass this permission system entirely rather
+;; than going through Hexagon.Kern.Users.setUser.
 
-Hexagon.Users.userId:  dd 0 ;; Will store the id of the currently logged in user
 Hexagon.Users.groupId: dd 0 ;; Will store the group id of the currently logged in user
-
-Hexagon.Users.userLoggedIn: db 0 ;; Stores whether or not the login was performed
 
 ;; Hexagon may also change the permission state of user-requested operations or processes.
 ;; These permissions will be stored in the variables below.
