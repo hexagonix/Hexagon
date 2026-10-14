@@ -73,23 +73,22 @@
 
 ;; Hexagon kernel entry point
 
-;; At this time, the operation environment is the real mode
-
 ;; Hexagon Boot Specifications
 ;;
-;; Parameters that must be provided by HBoot (or compatible manager):
+;; HBoot (or a compatible manager) enters the kernel in 32-bit protected
+;; mode, with the A20 line already enabled and EBX holding the physical
+;; address of an HXBI block. Everything the kernel needs to know about the
+;; machine it booted on is a tag inside that block
 ;;
-;; Parameters must be provided in registers, in absolute value or
-;; memory address for structure, such as device tree, or variables
-;;
-;; BL  - Boot drive code
-;; CX  - Total memory recognized by HBoot (available)
-;; AX  - 16-bit device tree address
-;; EBP - Pointer to BPB (BIOS Parameter Block)
-;; ESI - Command line for Hexagon
-;; EDI - 32-bit device tree address
+;; The entry point is the first byte after the header below, so a loader
+;; only needs the header's own fixed size to find it
 
-use16
+use32
+
+;; Hexagon is loaded at 500h and its descriptors are based at 0, so a label
+;; here already carries the address the machine sees
+
+org 500h
 
 hexagonHeader:
 
@@ -97,7 +96,7 @@ hexagonHeader:
 .architecture:  db 01h    ;; Architecture (i386 = 01h)
 .minVersion:    db 00h    ;; Minimum version of Hexagon (we don't care here)
 .minSubversion: db 00h    ;; Minimal subversion of Hexagon (we don't care here)
-.entryPoint:    dd Hexagon.Libkern.HAPP.denyExecution ;; Entry point offset
+.entryPoint:    dd Hexagon.Libkern.HAPP.denyExecution - 500h ;; Entry point offset, image relative
 .execType:      db 01h    ;; This is an executable image
 .reserved0:     dd 0      ;; Reserved (Dword)
 .reserved1:     db 0      ;; Reserved (Byte)
@@ -111,59 +110,31 @@ hexagonHeader:
 .reserved9:     dw 0      ;; Reserved (Word)
 .reserved10:    dw 0      ;; Reserved (Word)
 
-;; First, the real-mode kernel segments will be defined
+;; Reached directly from HBoot, already in 32-bit protected mode, with EBX
+;; holding the physical address of an HXBI block. HBoot's own descriptors
+;; got the CPU this far, so Hexagon's own GDT/IDT go in before anything
+;; here touches a single one of its labels
 
-    mov ax, 50h
+Hexagon.initFromHXBI:
+
+;; The stack HBoot hands over is its own real-mode one, now read through a
+;; base-0 selector, so it points at the low physical addresses the kernel
+;; image itself occupies. The boot stack goes in before the first call here
+
+    mov esp, Hexagon.Arch.Memory.kernelReservedMemory - 1000h
+
+    call Hexagon.Arch.CPU.CPU.installGDT
+
+    mov ax, 10h
     mov ds, ax
+    mov ax, 18h
+    mov ss, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
 
-;; Set stack for this mode of operation
+    call Hexagon.HXBI.parse
 
-    cli
-
-    mov ax, 5000h
-    mov ss, ax
-    mov sp, 0
-
-;; Save important information from startup.
-;; This data concerns the boot disk.
-;; Future data can be saved in real mode for use in the protected mode environment.
-;; Boot data is made available by HBoot, either as raw values ​​or as addresses to structures
-;; with parameters that must be processed in the Hexagon protected mode environment
-
-;; Will store the volume where the system was booted (cannot be changed)
-
-    mov byte[Hexagon.Dev.Gen.Disk.Control.bootDisk], bl
-
-;; Save the BPB (BIOS Parameter Block) address of the volume used for boot
-
-    mov dword[Hexagon.Memory.addressBPB], ebp
-
-;; Store available RAM memory size provided by HBoot
-
-    mov word[Hexagon.Memory.memoryCMOS], cx
-
-;; Now let's save the location of the parameter structure provided by HBoot
-
-    mov dword[Hexagon.Boot.Parameters.commandLine], esi
-
-;; Now let's tidy up the house to enter protected mode and go to the actual Hexagon
-;; entry point, actually starting the kernel
-
-;; Enable A20, necessary to address 4 GB of RAM and to enter protected mode
-
-    call Hexagon.Arch.i386.CPU.CPU.enableA20Gate ;; Enable A20, required for protected mode
-
-    call Hexagon.Arch.i386.Mm.Mm.getInstalledMemory ;; Gets the total installed memory
-
-    call Hexagon.Arch.i386.CPU.CPU.goToProtectedMode32 ;; Configure 32-bit protected mode
-
-;; Now the protected mode code will run (we are already on 32-bit!)
-
-use32
-
-    jmp Hexagon.init ;; Let's now go to the Hexagon entry point in protected mode
+    jmp Hexagon.init
 
 include "kern.asm" ;; Include the rest of the kernel, in a protected mode environment

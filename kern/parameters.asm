@@ -75,5 +75,21 @@ use32
 
 Hexagon.Boot.Parameters:
 
-.commandLine: dd 0
+.commandLine: rb 256 ;; Copied out of the HXBI block by Hexagon.HXBI.parse, and not pointed to
 .verboseMode: db 0
+
+;;************************************************************************************
+
+;; The mode HBoot already set before handing the kernel the machine, copied
+;; out of the HXBI block's framebuffer tag. Console.setupConsole builds the
+;; whole graphics-mode console from these, so nothing here has to ask the
+;; BIOS for a mode that is already live. An address of 0 means the loader
+;; never got a mode set and the machine is still in the text mode it booted in
+
+Hexagon.Boot.Framebuffer:
+
+.address: dd 0
+.pitch:   dd 0
+.width:   dd 0
+.height:  dd 0
+.bpp:     db 0

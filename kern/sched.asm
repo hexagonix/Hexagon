@@ -124,9 +124,40 @@ Hexagon.Scheduler.current: db 0xFF ;; 0xFF = kernel boot context, else a Hexagon
 Hexagon.Scheduler.ticks:   dd 0
 Hexagon.Scheduler.sliceLength = 1  ;; Timer ticks per time-slice
 
+;; maybeSchedule refuses to switch away from the running process while this is
+;; non-zero, so a preemption cannot land mid-swap of a mount's working copy. A
+;; nesting depth and not a boolean, since these calls nest and clearing it
+;; to 0 would end an outer caller's protection at the first nested return
+
+Hexagon.Scheduler.preemptionDisabled: db 0
+
+;; Input: none. Output: none. Clobbers nothing. Safe to call while already
+;; disabled. Each call needs a matching Hexagon.Kern.Sched.enablePreemption
+;; to actually re-enable it
+
+Hexagon.Kern.Sched.disablePreemption:
+
+    inc byte[Hexagon.Scheduler.preemptionDisabled]
+
+    ret
+
+;; Input: none. Output: none. Clobbers nothing. Only re-enables preemption
+;; once every matching Hexagon.Kern.Sched.disablePreemption call has had
+;; its own matching enablePreemption
+
+Hexagon.Kern.Sched.enablePreemption:
+
+    dec byte[Hexagon.Scheduler.preemptionDisabled]
+
+    ret
+
 ;;************************************************************************************
 
 ;; Reprograms the user code/data segment base in the GDT
+;;
+;; The processor caches a descriptor when its selector is loaded, so what makes
+;; this take effect is the iret back to user level, and the segment registers
+;; restored on the way there, not the table being reloaded
 ;;
 ;; Input:
 ;;
@@ -159,8 +190,6 @@ Hexagon.Kern.Sched.setUserSegmentBase:
     mov byte[GDT.userCode + 7], al
     mov byte[GDT.userData + 7], al
 
-    lgdt[GDTReg]
-
     pop edx
     pop eax
 
@@ -179,43 +208,95 @@ Hexagon.Kern.Sched.setUserSegmentBase:
 
 Hexagon.Kern.Sched.dispatchSlot:
 
+;; Callers arrive with Hexagon.Scheduler.current already naming this slot while
+;; ESP is still on the stack they came in on. A timer landing before the iret
+;; below would save that foreign ESP into this slot, leaving two processes on
+;; one stack. The frame below carries its own EFLAGS, so masking costs nothing
+
+    cli
+
     mov eax, dword[Hexagon.Processes.Table.base + ebx * 4]
 
     call Hexagon.Kern.Sched.setUserSegmentBase
 
-    mov ecx, dword[Hexagon.Processes.Table.size + ebx * 4]
+    mov eax, ebx
 
-    add eax, ecx
-    sub eax, 4 ;; Small headroom from the very top of the block
+    call Hexagon.Arch.Paging.switchSpace ;; Its own directory, and the stack a trap lands on
 
-    mov esp, eax ;; Top of this process's own allocated block
+;; A process's arguments and environment live in the kernel's own arena rather
+;; than in its block, so the pages holding them are opened to user level here,
+;; where everything about the slot is finally in place
+
+    mov eax, dword[Hexagon.Processes.Table.pageDirectory + ebx * 4]
+    mov ecx, Hexagon.Kern.Proc.maxArgumentsLength
+
+    push ebx
+
+    mov edx, ebx ;; Whose the pages being opened are
+
+    mov ebx, dword[Hexagon.Processes.Table.argBase + ebx * 4]
+
+    call Hexagon.Arch.Paging.openRangeToUser
+
+    pop ebx
+
+    mov eax, dword[Hexagon.Processes.Table.pageDirectory + ebx * 4]
+    mov ecx, Hexagon.Kern.Proc.maxEnvironmentLength
+
+    push ebx
+
+    mov edx, ebx ;; Whose the pages being opened are
+
+    mov ebx, dword[Hexagon.Processes.Table.envBase + ebx * 4]
+
+    call Hexagon.Arch.Paging.openRangeToUser
+
+    pop ebx
 
     call Hexagon.Kern.Proc.calculateArgumentsAddress ;; EDI = arguments address for the new process
 
-    sti ;; Make sure interrupts are available
+;; The process's stack lives inside its own segment, so this is an offset from
+;; the base, and not the address the kernel itself would use
 
-    pushfd   ;; Flags
+    mov ecx, dword[Hexagon.Processes.Table.size + ebx * 4]
 
-    push 30h ;; User environment code segment (process)
+    sub ecx, 4 ;; Small headroom from the very top of the block
+
+;; Entering user level is a change of privilege, so the frame the IRET reads
+;; carries the stack to switch to as well as where to resume
+
+    push Hexagon.Arch.CPU.CPU.userDataSelector
+    push ecx
+
+;; Written out, and not taken from pushfd, which would hand the process the
+;; masked flags this function runs under. IF set, IOPL 0, so a process cannot
+;; touch the interrupt flag or an I/O port
+
+    push 202h
+
+    push Hexagon.Arch.CPU.CPU.userCodeSelector
     push dword[Hexagon.Processes.Table.entry + ebx * 4] ;; Image entry point
 
-    mov ax, 38h ;; User environment data segment (process)
+    mov ax, Hexagon.Arch.CPU.CPU.userDataSelector
+
     mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
 
     iret
 
 ;;************************************************************************************
 
-;; Called from Hexagon.Kern.Services.timerHandler, via "call", once per
-;; time-slice. At that point EAX and DS are already saved on the current
-;; stack and ds already points at the kernel data segment. Looks for the next
-;; READY process in round-robin order. Ends with a plain "ret" either way:
-;; with nothing else ready, that returns to the caller normally; when
-;; switching, it returns into whatever context is being resumed, at the same
-;; point in its own earlier call to this function, using the stack-swap
-;; itself to carry the CPU state across
+;; Called from Hexagon.Kern.Services.timerHandler once per time-slice, with EAX
+;; and DS already saved and DS on the kernel data segment. Looks for the next
+;; READY process in round-robin order and ends with a plain "ret" either way,
+;; which lands in the resumed context when it switched, carried by the stack
 
 Hexagon.Kern.Sched.maybeSchedule:
+
+    cmp byte[Hexagon.Scheduler.preemptionDisabled], 0
+    jne .preemptionOff
 
     pusha
 
@@ -233,33 +314,17 @@ Hexagon.Kern.Sched.maybeSchedule:
     cmp byte[Hexagon.Processes.Table.state + ebx], Hexagon.Processes.Table.States.sleeping
     jne .wakeScanNext
 
-;; timerCounter is a plain 32 bit counter, incremented once per tick with no
-;; special handling at the top. After roughly 497 days of uptime at 100 Hz
-;; it silently wraps from FFFFFFFFh back to 0, the same way any fixed width
-;; counter does. A wakeTick recorded just before that wrap (say FFFFFFF0h
-;; plus a 100 tick sleep, landing on 54h once the add itself wraps) would
-;; look, to a plain unsigned comparison, like it has already been reached
-;; the moment timerCounter is still sitting at FFFFFFF1h, since FFFFFFF1h
-;; is numerically far greater than 54h. The process would wake almost
-;; immediately instead of waiting out its real 99 remaining ticks
+;; timerCounter wraps to 0 after about 497 days at 100 Hz, and a wakeTick
+;; recorded just before that wrap is numerically far below it, which an
+;; unsigned comparison reads as already reached
 ;;
-;; Subtracting instead of comparing sidesteps this. timerCounter minus
-;; wakeTick is computed the same way regardless of whether either value has
-;; wrapped, since 32 bit subtraction is itself circular, modulo 2^32. What
-;; changes is how the result is read afterward. FFFFFFF1h minus 54h is
-;; FFFFFF9Dh, which read as an unsigned number looks enormous, but read as
-;; signed two's complement is exactly -99, the correct remaining distance.
-;; jl reads it that way, jumping while the signed result is still negative
-;; and falling through once it reaches zero. jl is used rather than js
-;; because it checks SF against OF rather than the sign bit alone, which
-;; also covers the case where the subtraction itself overflows as signed
-;; arithmetic
+;; Subtracting sidesteps that, since 32 bit subtraction is itself circular:
+;; the difference read as signed is the real remaining distance. jl jumps
+;; while it is still negative, and is used over js because it checks SF
+;; against OF, covering a subtraction that overflows as signed arithmetic
 ;;
-;; This only holds while the true distance between the two values stays
-;; under half the counter's range, 2^31 ticks, around 248 days. Past that
-;; point a circular comparison can no longer tell which direction is really
-;; closer. Every sleep requested through Hexagon.Kern.Sched.sleep is on the
-;; order of seconds, nowhere near that limit
+;; This holds while the two values stay within half the counter's range,
+;; around 248 days, and every sleep here is on the order of seconds
 
     mov eax, dword[Hexagon.Kern.Services.timerHandler.timerCounter]
     sub eax, dword[Hexagon.Processes.Table.wakeTick + ebx * 4]
@@ -347,6 +412,10 @@ Hexagon.Kern.Sched.maybeSchedule:
 
     call Hexagon.Kern.Sched.setUserSegmentBase
 
+    mov eax, ebx
+
+    call Hexagon.Arch.Paging.switchSpace
+
     mov esp, dword[Hexagon.Processes.Table.esp + ebx * 4]
 
     popa
@@ -359,12 +428,16 @@ Hexagon.Kern.Sched.maybeSchedule:
 
     ret
 
+.preemptionOff:
+
+    ret
+
 ;;************************************************************************************
 
 ;; Slot 0 is permanently reserved for the idle loop below, installed once at
 ;; boot by Hexagon.Kern.Sched.installIdle, before init (PID 1) ever runs.
 ;; Unlike every other slot, it is never hx.spawn/hx.exec'd from a HAPP file
-;; on disk and never exits; it is simply always there, in
+;; on disk and never exits, but is simply always there, in
 ;; Hexagon.Processes.Table.States.idle, as the last-resort candidate
 ;; Hexagon.Kern.Proc.exit's own "nothing else is READY" fallback dispatches
 
@@ -373,19 +446,12 @@ Hexagon.Kern.Sched.idleSlot = 0
 Hexagon.Kern.Sched.idleName:
 db "idle", 0
 
-;; The idle loop itself. Note this is never reached through
-;; Hexagon.Kern.Sched.dispatchSlot/iret like a normal HAPP image's first
-;; dispatch: dispatchSlot treats Hexagon.Processes.Table.entry as an offset
-;; relative to Table.base, since a real process is relocated to start at its
-;; own allocated block, and patches the 30h/38h GDT descriptors' base to
-;; match. idleLoop is not a relocatable image, it is this fixed address in
-;; the kernel's own code, so Hexagon.Kern.Sched.installIdle instead seeds a
-;; synthetic frame below for Hexagon.Kern.Proc.exit's ordinary ".resumeNext"
-;; path to "return" into directly, the same plain "ret" (no segment change)
-;; it already uses to resume any other process's own saved context. Once
-;; running, it needs no special handling at all: the timer interrupt's own
-;; Hexagon.Kern.Sched.maybeSchedule preempts it away, and later resumes it,
-;; exactly like it already does between any two ordinary processes
+;; The idle loop itself, never reached through Hexagon.Kern.Sched.dispatchSlot,
+;; which treats Table.entry as an offset into a relocated image and patches the
+;; user descriptors to match. This is a fixed address in the kernel's own code,
+;; so Hexagon.Kern.Sched.installIdle seeds the synthetic frame below for an
+;; ordinary "ret" to land on. Once running it is preempted and resumed like any
+;; other process
 
 Hexagon.Kern.Sched.idleLoop:
 
@@ -397,15 +463,10 @@ Hexagon.Kern.Sched.idleLoop:
 
     jmp .spin
 
-;; Dedicated stack for Hexagon.Kern.Sched.idleLoop, with a synthetic,
-;; ready-made ".resumeNext" frame pre-built at the top: 8 dummy registers in
-;; popa's own load order (EDI, ESI, EBP, a discarded saved-ESP slot, EBX,
-;; EDX, ECX, EAX), followed by idleLoop's own address in the spot where
-;; "ret" expects to find one. Hexagon.Kern.Sched.installIdle points
-;; Table.esp at Hexagon.Kern.Sched.idleFrame, so the very first time
-;; anything dispatches Hexagon.Kern.Sched.idleSlot, popa harmlessly loads
-;; zeroes and "ret" lands on idleLoop, no differently from every later
-;; resume once real register/return values have been saved there instead
+;; Dedicated stack for Hexagon.Kern.Sched.idleLoop, with a ready-made resume
+;; frame at the top: 8 dummy registers in popa's load order, then idleLoop's
+;; own address where "ret" expects one. The first dispatch therefore loads
+;; zeroes and lands on the loop, exactly as every later resume does
 
 Hexagon.Kern.Sched.idleStack:
 times 480 db 0
@@ -414,13 +475,10 @@ dd 0, 0, 0, 0, 0, 0, 0, 0
 dd Hexagon.Kern.Sched.idleLoop
 Hexagon.Kern.Sched.idleStackTop:
 
-;; Installs the idle loop into Hexagon.Kern.Sched.idleSlot. Called once from
-;; Hexagon.Kern.Sched.setupScheduler, before init is ever dispatched.
-;; Bypasses Hexagon.Kern.Proc.registerSlot, since that expects a HAPP image
-;; already loaded from disk (Hexagon.Libkern.HAPP.imageHAPPHeader,
-;; Hexagon.Processes.Table.nextPID) and idle has neither: its "image" is the
-;; loop above, hand-placed here, and it keeps PID 0 forever rather than
-;; taking the next one init would otherwise get
+;; Installs the idle loop into Hexagon.Kern.Sched.idleSlot, once, from
+;; Hexagon.Kern.Sched.setupScheduler. Bypasses Hexagon.Kern.Proc.registerSlot,
+;; which expects a HAPP image loaded from disk, and keeps PID 0 forever rather
+;; than consuming the next one
 
 Hexagon.Kern.Sched.installIdle:
 
@@ -433,30 +491,21 @@ Hexagon.Kern.Sched.installIdle:
     mov dword[Hexagon.Processes.Table.parentSlot + Hexagon.Kern.Sched.idleSlot * 4], 0xFFFFFFFF
     mov dword[Hexagon.Processes.Table.parentPID + Hexagon.Kern.Sched.idleSlot * 4], 0
 
-;; Table.base and Table.esp end up loaded straight into ESP (here, and in
-;; every ordinary resume) and passed to setUserSegmentBase, both of which
-;; treat them as flat physical addresses, the same way SS (0018h) itself
-;; has base 0 rather than the 500h every plain "[label]" access already gets
-;; from DS/CS. A real process's Table.base comes from Mm.allocate, already
-;; physical; idleStack/idleFrame are ordinary kernel-image labels instead,
-;; so they need the same "+ 500h" correction syscall.asm/fat16.asm already
-;; apply whenever a kernel-image address crosses over to that flat side.
-;; Table.entry (unused here, .resumeNext never falls into dispatchSlot for
-;; idleSlot: Table.esp is never 0) and the frame's own saved "return
-;; address" are the other way around, read back through CS/DS, so they are
-;; left exactly as the assembler already computed them
+;; Table.base and Table.esp are loaded straight into ESP and passed to
+;; setUserSegmentBase, which treat them as flat addresses. Every segment is
+;; based at 0, so the kernel-image labels below are already exactly that
 
-    mov dword[Hexagon.Processes.Table.base + Hexagon.Kern.Sched.idleSlot * 4], Hexagon.Kern.Sched.idleStack + 500h
+    mov dword[Hexagon.Processes.Table.base + Hexagon.Kern.Sched.idleSlot * 4], Hexagon.Kern.Sched.idleStack
     mov dword[Hexagon.Processes.Table.size + Hexagon.Kern.Sched.idleSlot * 4], Hexagon.Kern.Sched.idleStackTop - Hexagon.Kern.Sched.idleStack
     mov dword[Hexagon.Processes.Table.entry + Hexagon.Kern.Sched.idleSlot * 4], Hexagon.Kern.Sched.idleLoop
-    mov dword[Hexagon.Processes.Table.esp + Hexagon.Kern.Sched.idleSlot * 4], Hexagon.Kern.Sched.idleFrame + 500h
+    mov dword[Hexagon.Processes.Table.esp + Hexagon.Kern.Sched.idleSlot * 4], Hexagon.Kern.Sched.idleFrame
 
     mov edi, Hexagon.Kern.Sched.idleSlot
-    imul edi, 13
+    imul edi, 64
     add edi, Hexagon.Processes.Table.name
 
     mov esi, Hexagon.Kern.Sched.idleName
-    mov ecx, 13
+    mov ecx, 64
 
 .copyName:
 
@@ -561,11 +610,12 @@ Hexagon.Kern.Sched.sleep:
 
     mov byte[Hexagon.Scheduler.current], bl
 
-;; Table.esp[edx] above is a clean, pusha-only frame now, exactly what the
-;; ordinary wake path in Hexagon.Kern.Sched.maybeSchedule expects to resume
-;; through later, so interrupts can safely come back on here
-
-    sti
+;; Table.esp[edx] is a clean pusha-only frame now, which is what
+;; Hexagon.Kern.Sched.maybeSchedule's own wake path resumes through
+;;
+;; Interrupts stay masked from here: Hexagon.Scheduler.current already names the
+;; incoming slot while ESP is still on this one's stack, and a timer in that gap
+;; would leave the two sharing it
 
     cmp dword[Hexagon.Processes.Table.esp + ebx * 4], 0
     jne .resumeSlot
@@ -577,6 +627,10 @@ Hexagon.Kern.Sched.sleep:
     mov eax, dword[Hexagon.Processes.Table.base + ebx * 4]
 
     call Hexagon.Kern.Sched.setUserSegmentBase
+
+    mov eax, ebx
+
+    call Hexagon.Arch.Paging.switchSpace
 
     mov esp, dword[Hexagon.Processes.Table.esp + ebx * 4]
 

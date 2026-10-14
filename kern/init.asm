@@ -73,8 +73,6 @@
 
 Hexagon.Kern.Init.startUserMode:
 
-    logHexagon Hexagon.Verbose.userMode, Hexagon.Dmesg.Priorities.p5
-
 .startInit:
 
 ;; Now Hexagon will try to load init and, if successful, transfer control to it,
@@ -122,8 +120,6 @@ Hexagon.Kern.Init.startUserMode:
 
     mov esi, Hexagon.Verbose.Init.withoutInit
 
-    mov eax, 1
-
     call Hexagon.Kern.Panic.panic
 
     jmp .end
@@ -132,9 +128,7 @@ Hexagon.Kern.Init.startUserMode:
 
     mov esi, Hexagon.Verbose.Init.shellExited
 
-    mov eax, 1
-
-    call Hexagon.Kern.Panic.panic ;; Request error screen
+    call Hexagon.Kern.Panic.panic
 
 .end:
 

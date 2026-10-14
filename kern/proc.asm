@@ -161,11 +161,65 @@ times Hexagon.Processes.Table.limit dd 0 ;; Alloc process arguments buffer, own 
 Hexagon.Processes.Table.envBase:
 times Hexagon.Processes.Table.limit dd 0 ;; Alloc process environment buffer, own life as the process; 0 = none
 
-Hexagon.Processes.Table.tempBase:
-times Hexagon.Processes.Table.limit dd 0 ;; Alloc temp scratch buffer for process, lazily allocated on first use; 0 = none
+Hexagon.Processes.Table.userId:
+times Hexagon.Processes.Table.limit dd 0 ;; This process's own user id, inherited from its parent at creation
+
+Hexagon.Processes.Table.userLoggedIn:
+times Hexagon.Processes.Table.limit db 0 ;; Whether userId above should be trusted, same reasoning inherited
+
+Hexagon.Processes.Table.realUserId:
+times Hexagon.Processes.Table.limit dd 0 ;; Who actually started this process, untouched by a setuid override
+
+Hexagon.Processes.Table.cwd:
+times Hexagon.Processes.Table.limit*64 db 0 ;; This process's own current directory, inherited from its parent
+
+Hexagon.Processes.Table.previousCwd:
+times Hexagon.Processes.Table.limit*64 db 0 ;; Directory a "cd -" style swap would return to, also inherited
+
+;; Process name, space-padded, for hx.getProcesses.
+;; Holds the kernel-resolved absolute path, not whatever string the caller of
+;; hx.exec/hx.spawn originally passed in
 
 Hexagon.Processes.Table.name:
-times Hexagon.Processes.Table.limit*13 db 0 ;; Process name, space-padded, for ps/hx.getProcesses
+times Hexagon.Processes.Table.limit*64 db 0 
+
+Hexagon.Processes.Table.tty:
+times Hexagon.Processes.Table.limit dd 0 ;; VT index this process is attached to, inherited from its parent
+
+Hexagon.Processes.Table.savedForegroundSlot:
+times Hexagon.Processes.Table.limit dd 0 ;; Own VT's foregroundSlot value before hx.exec handed it to a child
+
+;; This process's own last-resolved draw target, restored on top of the
+;; shared Console.Memory.addressLFB global by Console.ensureCurrentVT
+;; whenever another process has since overwritten it
+
+;; Page directory this process runs under, 0 while it shares the kernel's own.
+;; pagingBlock is what Mm.malloc actually handed back, kept because the
+;; directory itself is the 4 KB aligned address inside that block
+
+Hexagon.Processes.Table.pageDirectory:
+times Hexagon.Processes.Table.limit dd 0
+
+Hexagon.Processes.Table.pagingBlock:
+times Hexagon.Processes.Table.limit dd 0
+
+Hexagon.Processes.Table.pagingSize:
+times Hexagon.Processes.Table.limit dd 0
+
+;; Stack the processor switches to when this process traps in from user level,
+;; carved from the same block as its directory
+
+Hexagon.Processes.Table.kernelStack:
+times Hexagon.Processes.Table.limit dd 0
+
+Hexagon.Processes.Table.addressLFB:
+times Hexagon.Processes.Table.limit dd 0 
+
+;; Never matches Console.generation until this slot has
+;; actually resolved its own draw target at least once
+
+Hexagon.Processes.Table.addressLFBGeneration:
+times Hexagon.Processes.Table.limit dd 0xFFFFFFFF
 
 Hexagon.Processes.Table.nextPID: dd 0 ;; Monotonic counter, next PID to hand out
 
@@ -185,25 +239,16 @@ Hexagon.Processes.Table.States.sleeping = 5
 ;; Permanently owned by Hexagon.Kern.Sched.idleSlot, never anyone else's.
 ;; Deliberately distinct from States.ready so the ordinary round robin scans
 ;; in Hexagon.Kern.Sched.maybeSchedule/Hexagon.Kern.Sched.sleep skip straight
-;; over it instead of giving it a turn on equal footing with real work; only
+;; over it instead of giving it a turn on equal footing with real work. Only
 ;; Hexagon.Kern.Proc.exit's own "nothing else is READY" fallback looks for it
 
 Hexagon.Processes.Table.States.idle     = 6
 
-;; Claimed by Hexagon.Kern.Proc.exec/spawn's own "findSlot" scan the instant a
-;; free slot is picked, before any of the (possibly disk I/O bound) work to
-;; actually populate it has even started. Without this, findSlot's scan for
-;; States.free and Hexagon.Kern.Proc.registerSlot's eventual States.ready
-;; write are far apart in time, with interrupts enabled the whole way through
-;; (checkHAPPImage, allocateAndLoadImage, argument buffer setup). A second,
-;; unrelated exec/spawn call preempting in anywhere in that window would run
-;; its own findSlot scan, see the same slot still States.free, and claim it
-;; too, so both processes end up writing their own base/entry/argBase into
-;; the one shared slot, and both later free the same memory at exit,
-;; corrupting the heap allocator's free list. Never a valid maybeSchedule
-;; candidate (only States.ready is), and never matched by findSlot's own
-;; States.free check either, so a second caller now genuinely waits for a
-;; different slot instead of colliding with this one
+;; Claimed by Hexagon.Kern.Proc.exec/spawn's own "findSlot" the instant a free
+;; slot is picked, since populating it is disk I/O bound and runs with
+;; interrupts on. A second exec landing in that window would otherwise see the
+;; same slot free and claim it too. Neither findSlot nor maybeSchedule matches
+;; this state, so that caller waits for a different slot
 
 Hexagon.Processes.Table.States.reserved = 7
 
@@ -212,6 +257,17 @@ Hexagon.Processes.Table.stackSize = 16384 ;; Dedicated stack space carved out of
 Hexagon.Kern.Proc.maxArgumentsLength = 2000 ;; Longer arguments are truncated to fit Hexagon.Processes.Table.argBase's allocation
 
 Hexagon.Kern.Proc.maxEnvironmentLength = 2000 ;; Bytes, not variable count; Hexagon.Processes.Table.envBase's allocation
+
+;; What Hexagon.Kern.Proc.getErrorCode reports for a process the processor
+;; itself faulted on, terminated by Hexagon.Kern.Services and not by an
+;; hx.exit it made itself
+
+Hexagon.Kern.Proc.faultExitCode = 6
+
+;; What a call answers with when the buffer the caller named is not one it could
+;; reach by itself. See Hexagon.Arch.Paging.rangeIsCallerWritable
+
+Hexagon.Kern.Proc.badAddress = 7
 
 ;; Kernel's own boot-time stack, saved across the very first hx.exec (called
 ;; directly by Hexagon.Kern.Init.startUserMode, before any process exists to
@@ -231,103 +287,219 @@ Hexagon.Kern.Proc.bootChildSlot: dd 0xFFFFFFFF
 
 Hexagon.Kern.Proc.lastErrorCode: dd 0
 
-;; Marks whether the currently running process can be terminated by a key
-;; combination (the "Kill process" key), a safeguard against closing vital
-;; processes such as the login application
+;; Attribute byte of the image exec/spawn is currently loading, set right
+;; after their own Hexagon.Kernel.FS.VFS.fileExists call and consumed by
+;; Hexagon.Kern.Proc.registerSlot's setuid check. cli stays in effect for
+;; this whole span (see .checkImage), so nothing else can interleave here
 
-Hexagon.Kern.Proc.processLocked: dd 0
+Hexagon.Kern.Proc.pendingAttribute: db 0
 
 ;;************************************************************************************
 
-;; Unlock the current process, allowing the user to terminate it
+;; Unlock the caller's own VT, allowing its foreground process to be
+;; terminated by the "Kill process" key. Locking is per-VT (Hexagon.Console.
+;; VT.locked), not global, so this affects the caller's console alone
 
 Hexagon.Kern.Proc.unlock:
 
-    mov dword[Hexagon.Kern.Proc.processLocked], 0
+    movzx ecx, byte[Hexagon.Scheduler.current]
+
+    cmp ecx, 0xFF
+    jne .knownCaller
+
+    xor eax, eax ;; Kernel boot context has no slot. Defaults to VT0
+
+    jmp .setLock
+
+.knownCaller:
+
+    mov eax, dword[Hexagon.Processes.Table.tty + ecx * 4]
+
+.setLock:
+
+    mov byte[Hexagon.Console.VT.locked + eax], 0
 
     ret
 
 ;;************************************************************************************
 
-;; Lock the current process, preventing it from being terminated by a key combination
+;; Lock the caller's own VT, preventing its foreground process from being
+;; terminated by the "Kill process" key. A safeguard against closing vital
+;; processes
 
 Hexagon.Kern.Proc.lock:
 
-    mov dword[Hexagon.Kern.Proc.processLocked], 1
+    movzx ecx, byte[Hexagon.Scheduler.current]
+
+    cmp ecx, 0xFF
+    jne .knownCaller
+
+    xor eax, eax
+
+    jmp .setLock
+
+.knownCaller:
+
+    mov eax, dword[Hexagon.Processes.Table.tty + ecx * 4]
+
+.setLock:
+
+    mov byte[Hexagon.Console.VT.locked + eax], 1
 
     ret
 
 ;;************************************************************************************
 
-;; Allows you to terminate a process currently running by the system, if such
-;; termination is possible
+;; Terminates whichever process owns keyboard input on the active VT right
+;; now (the "Kill process" key's target), if that VT isn't locked and
+;; something is actually attached to it
 
 Hexagon.Kern.Proc.killForegroundProcess:
 
-;; End current running process
+    mov eax, dword[Hexagon.Console.activeVT]
 
-;; First, you must check whether the function of ending a process in the foreground using
-;; a key combination or the special "Kill process" key is enabled by the system.
-;; This is a security measure that aims to prevent the closure of vital processes, such as the
-;; login application, for example.
-
-;; If the function is disabled, the occurrence will be ignored
-
-    cmp dword[Hexagon.Kern.Proc.processLocked], 1
+    cmp byte[Hexagon.Console.VT.locked + eax], 1
     je .end
 
-    cmp byte[Hexagon.Scheduler.current], 0xFF ;; There is no process to be closed
+    mov ecx, dword[Hexagon.Console.VT.foregroundSlot + eax * 4]
+
+    cmp ecx, 0xFFFFFFFF ;; Nothing owns the active VT right now
     je .end
+
+    movzx edx, byte[Hexagon.Scheduler.current]
 
 match =YES, VERBOSE
 {
 
+;; Hexagon.Kern.Dmesg.createMessage's own "[PID: N]" names whichever slot
+;; Hexagon.Scheduler.current holds, so the real target is swapped in for this
+;; one call. It preserves only ESI and flags, and ECX is the resolved kill
+;; target still needed right after
+
+    push ecx
+    push edx
+
+    mov byte[Hexagon.Scheduler.current], cl
+
     mov esi, Hexagon.Verbose.Services.killProcess
-    mov ebx, Hexagon.Dmesg.Priorities.p5
+    mov ebx, Hexagon.Dmesg.Priorities.p4
 
     call Hexagon.Kern.Dmesg.createMessage
 
+    pop edx
+    pop ecx
+
+    mov byte[Hexagon.Scheduler.current], dl
+
 }
 
-    push ds
-    pop es
+    cmp ecx, edx
+    jne .thirdParty
 
-    pop eax
+;; This is the process the ISR interrupted, so resetting what is on screen
+;; before tearing it down is meaningful. A third-party target skips it, since
+;; forcing the console back mid-kill disrupts whoever is drawing right now
 
-    mov ax, 18h
+    mov ax, 18h ;; Kernel linear segment
     mov es, ax
 
     mov eax, dword[Hexagon.Console.fontColor]
     mov ebx, dword[Hexagon.Console.backgroundColor]
 
-;; Set default console color
+    call Hexagon.Kernel.Dev.Console.Console.setConsoleColor
+    call Hexagon.Kernel.Dev.Console.Console.useMainConsole
+    call Hexagon.Kernel.Dev.Console.Console.scrollConsole
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.setConsoleColor
+.thirdParty:
 
-;; Update video buffer (secondary console -> main console)
-;; This update is not mandatory, it is only useful for utilities that use double buffering
-
-    ;; call Hexagon.Kernel.Dev.Gen.Console.Console.updateConsole
-
-;; Use main console
-
-    call Hexagon.Kernel.Dev.Gen.Console.Console.useMainConsole
-
-;; Scroll console
-
-    call Hexagon.Kernel.Dev.Gen.Console.Console.scrollConsole
+;; EOI must fire before Hexagon.Kern.Proc.killSlot either way: its self-kill
+;; branch swaps esp into a different process via Hexagon.Kern.Proc.exit and
+;; never returns to this ISR frame, so there is no later chance to send it
 
     mov al, 20h
 
     out 20h, al
 
-    call Hexagon.Kern.Proc.exit
-
-    ret
+    jmp Hexagon.Kern.Proc.killSlot
 
 .end:
 
     ret
+
+;;************************************************************************************
+
+;; Captures the kernel-resolved absolute path of the file about to run
+;;
+;; Output:
+;;
+;; ESI - This routine's own scratch buffer: the resolved absolute path,
+;;       NUL-terminated, at most 63 characters (the last 63 of the
+;;       resolved path, if it was longer)
+;;
+;; EAX, EBX, ECX, EDX, ES preserved
+
+Hexagon.Kern.Proc.captureDisplayName:
+
+    push eax
+    push ebx
+    push ecx
+    push edx
+    push es
+
+;; A real cli/sti bracket, and not disablePreemption alone, closes the window
+;; where a preempting process could overwrite resolveMount's shared
+;; .normalizedPath before it's copied out below (same reasoning as getMounts)
+
+    pushfd
+
+    cli
+
+    mov esi, Hexagon.Kernel.FS.VFS.resolveMount.normalizedPath
+
+    call Hexagon.Libkern.String.stringSize ;; Preserves ESI. EAX = length
+
+    cmp eax, 63
+    jbe .withinLimit
+
+    add esi, eax
+
+    sub esi, 63 ;; Keep the last 63 characters. The executable's own name
+                ;; at the end of the path matters more than its start
+
+.withinLimit:
+
+;; stosb writes through ES:EDI, and hexagonHandler leaves ES on the kernel
+;; linear segment, while .name needs the kernel data segment
+
+    push ds
+    pop es
+
+    mov edi, .name
+
+    cld
+
+.copyLoop:
+
+    lodsb
+
+    stosb
+
+    cmp al, 0
+    jne .copyLoop
+
+    popfd
+
+    pop es
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+
+    mov esi, .name
+
+    ret
+
+.name: times 64 db 0
 
 ;;************************************************************************************
 
@@ -344,6 +516,8 @@ match =YES, VERBOSE
 ;;
 ;; CF - Set in case of error or file not found
 ;;      Cleared on success
+
+;;************************************************************************************
 
 Hexagon.Kern.Proc.exec:
 
@@ -380,24 +554,34 @@ Hexagon.Kern.Proc.exec:
 
     push eax ;; Remember "has arguments" (0 = no) across the allocation below
 
-;; Give this new process its own arguments buffer up front, whether or not
-;; it actually has arguments - a dedicated allocation freed at
-;; Hexagon.Kern.Proc.exit, rather than a fixed shared address any other
-;; process's own hx.exec could stomp on. Hexagon.Kern.Proc.calculateArgumentsAddress
-;; lets a process keep reading its own arguments at any later point in its
-;; life, not just once at startup, so that address has to stay this
-;; process's own for as long as it's alive
+;; A dedicated allocation, freed at Hexagon.Kern.Proc.exit, and not a
+;; fixed shared address another hx.exec could stomp on. A process can read its
+;; arguments at any point in its life, so the address has to stay its own
 
     mov ebx, Hexagon.Kern.Proc.maxArgumentsLength
 
-    call Hexagon.Arch.Gen.Mm.malloc
+    call Hexagon.Arch.Mm.malloc
 
     cmp eax, 0
     je .argAllocFailed
 
+    mov ecx, Hexagon.Kern.Proc.maxArgumentsLength
+
+    call Hexagon.Kern.Proc.clearForProcess
+
     mov ecx, dword[esp + 4] ;; New slot index, under the flag just pushed
 
     mov dword[Hexagon.Processes.Table.argBase + ecx * 4], ebx
+
+;; Counted against this process from here on, and released with it
+
+    push eax
+
+    mov eax, ecx
+
+    call Hexagon.Arch.Mm.setBlockOwner
+
+    pop eax
 
     mov ebx, ecx ;; Keep the slot in EBX for the rest of the argument handling below
 
@@ -456,7 +640,7 @@ Hexagon.Kern.Proc.exec:
 
     mov edi, dword[Hexagon.Processes.Table.argBase + ebx * 4]
 
-    mov byte[gs:edi], 0
+    mov byte[edi], 0
 
     jmp .checkImage
 
@@ -483,29 +667,27 @@ Hexagon.Kern.Proc.exec:
 
     call Hexagon.Kernel.FS.VFS.fileExists ;; EAX = file size, CF = not found
 
+    mov byte[Hexagon.Kern.Proc.pendingAttribute], cl ;; Hexagon.Kern.Proc.registerSlot reads this for its own setuid check
+
     pop esi
 
     jc .missingImage
 
-    push eax ;; Save the file size across checkHAPPImage
-
-;; Hexagon.Libkern.HAPP.checkHAPPImage reads the image into a single shared
-;; scratch buffer (Hexagon.Heap.Temp + 1000) and reports back through a
-;; single shared Hexagon.Libkern.HAPP.imageHAPPHeader struct, both global,
-;; with no per-call copy. entryHAPP in particular isn't actually consumed
-;; until Hexagon.Kern.Proc.registerSlot, well after
-;; Hexagon.Kern.Proc.allocateAndLoadImage's own disk read further down. A
-;; second exec/spawn preempting in anywhere between here and registerSlot
-;; (entirely plausible, this whole span is disk I/O bound) would run its own
-;; checkHAPPImage over the same buffer and struct and hand this call a
-;; completely different image's header data, most visibly Table.entry
-;; ending up as some other file's entry point. Held through registerSlot
-;; itself, the only place that actually reads imageHAPPHeader.entryHAPP. The
-;; success path never needs an explicit "sti" of its own, since it always
-;; ends up at Hexagon.Kern.Sched.dispatchSlot, which already has one. Every
-;; path that returns without reaching there needs its own "sti" instead
+;; From here on, ESI is the kernel-resolved absolute path, not whatever
+;; the caller passed
 
     cli
+
+    call Hexagon.Kern.Proc.captureDisplayName
+
+    push eax ;; Save the file size across checkHAPPImage
+
+;; Hexagon.Libkern.HAPP.checkHAPPImage answers through one global scratch
+;; buffer and struct, and entryHAPP is not consumed until
+;; Hexagon.Kern.Proc.registerSlot, past a disk read. A second exec in that
+;; window would hand this call another image's header, so the mask is held
+;; through registerSlot. The success path ends at dispatchSlot, which has its
+;; own "sti"; every other return has to supply one
 
     call Hexagon.Libkern.HAPP.checkHAPPImage
 
@@ -533,17 +715,10 @@ Hexagon.Kern.Proc.exec:
 ;; itself a table slot (a normal nested hx.exec) or, for the very first
 ;; hx.exec, the kernel's own boot code, which has no slot of its own
 
-;; Hexagon.Kern.Proc.registerSlot above already left EDX sitting in the
-;; table as States.ready, so a timer-driven Hexagon.Kern.Sched.maybeSchedule
-;; landing anywhere between here and Hexagon.Scheduler.current actually
-;; being moved to EDX below would find it a perfectly valid candidate,
-;; dispatch it on the spot, and in doing so overwrite the caller's own
-;; States.blocked just set below back to States.ready, the same as any
-;; ordinary preempted process. The caller would then resume, still
-;; believing itself mid-hx.exec, and re-run the rest of this function on
-;; top of whatever is by then using this slot. dispatchSlot's own "sti"
-;; closes this back out once Hexagon.Scheduler.current genuinely points at
-;; EDX
+;; registerSlot left EDX as States.ready, so a timer landing before
+;; Hexagon.Scheduler.current moves to it would dispatch the child and undo the
+;; caller's own States.blocked below, resuming it mid-hx.exec on a slot
+;; somebody else is by then using. dispatchSlot stays masked to its own iret
 
     cli
 
@@ -557,12 +732,26 @@ Hexagon.Kern.Proc.exec:
 
     mov dword[Hexagon.Processes.Table.parentSlot + edx * 4], ecx
 
+;; The caller's own VT gains this child as its foreground process for as
+;; long as this blocking hx.exec lasts. The caller's own value is restored
+;; at .resumeParent once the child exits
+
+    mov eax, dword[Hexagon.Processes.Table.tty + ecx * 4]
+    mov ebx, dword[Hexagon.Console.VT.foregroundSlot + eax * 4]
+    mov dword[Hexagon.Processes.Table.savedForegroundSlot + ecx * 4], ebx
+    mov dword[Hexagon.Console.VT.foregroundSlot + eax * 4], edx
+
     jmp .blocked
 
 .blockBootCaller:
 
     mov dword[Hexagon.Kern.Proc.bootCallerESP], esp
     mov dword[Hexagon.Kern.Proc.bootChildSlot], edx
+
+;; This child is the kernel's own one-time boot-exec, with no interactive
+;; caller waiting on it, and it never exits. Claiming VT0's foreground here
+;; would leave Hexagon.Console.VT.foregroundSlot stuck on it forever, so
+;; nothing later could ever become the foreground reader. Leave it untouched
 
 .blocked:
 
@@ -583,6 +772,10 @@ Hexagon.Kern.Proc.exec:
     popa
 
     mov dword[Hexagon.Kern.Proc.lastErrorCode], 01h
+
+    sti ;; cli now starts before Hexagon.Kernel.FS.VFS.fileExists above, which
+        ;; can land here on a missing file before ever reaching the
+        ;; existing "sti" further down this function
 
     stc
 
@@ -667,7 +860,7 @@ Hexagon.Kern.Proc.exec:
 
     mov ecx, Hexagon.Kern.Proc.maxArgumentsLength
 
-    call Hexagon.Arch.Gen.Mm.free
+    call Hexagon.Arch.Mm.free
 
     mov dword[Hexagon.Processes.Table.argBase + edx * 4], 0
 
@@ -693,6 +886,58 @@ Hexagon.Kern.Proc.exec:
 
 ;;************************************************************************************
 
+;; Fills a range with zero before it is handed to a process
+;;
+;; Memory coming back out of the arena still holds whatever the process that
+;; had it last left there, and a process reads its own image and the slack past
+;; it without having written to it first. Anything not cleared here reaches the
+;; next one as data, a password among it
+;;
+;; Input:
+;;
+;; EBX - First address, in the kernel's own flat frame
+;; ECX - Bytes to clear
+
+Hexagon.Kern.Proc.clearForProcess:
+
+    push eax
+    push ecx
+    push edx
+    push edi
+
+    push es
+
+    mov ax, 18h
+    mov es, ax
+
+    mov edi, ebx
+    mov edx, ecx
+
+    xor eax, eax
+
+    shr ecx, 2
+
+    cld
+
+    rep stosd
+
+    mov ecx, edx
+
+    and ecx, 3
+
+    rep stosb
+
+    pop es
+
+    pop edi
+    pop edx
+    pop ecx
+    pop eax
+
+    ret
+
+;;************************************************************************************
+
 ;; Function that receives control after the process ends and performs the necessary
 ;; operations to remove it from the process table
 ;;
@@ -709,6 +954,14 @@ Hexagon.Kern.Proc.exit:
 
     movzx edx, byte[Hexagon.Scheduler.current] ;; EDX = my own slot
 
+;; Masks interrupts for the whole cleanup sequence, and not the
+;; States.free write alone, since a preemption anywhere in here would
+;; resurrect this process as a ghost entry. Safe to nest around
+;; Hexagon.Arch.Mm.free's own pushfd/popfd, which restores to masked
+;; and does not force interrupts back on.
+
+    cli
+
 ;; Free this process's own memory block (individually allocated in Hexagon.Kern.Proc.exec/spawn)
 
     mov ebx, dword[Hexagon.Processes.Table.base + edx * 4]
@@ -717,14 +970,27 @@ Hexagon.Kern.Proc.exit:
     push ebx
     push ecx
 
-    call Hexagon.Arch.Gen.Mm.free ;; Now accounts for Hexagon.Memory.usedMemory itself
+    call Hexagon.Arch.Mm.free ;; Now accounts for Hexagon.Memory.usedMemory itself
 
     pop ecx
     pop ebx
 
-;; Free this process's own arguments buffer and hx.getProcesses scratch
-;; buffer, if it ever called hx.getProcesses - both Hexagon.Arch.Gen.Mm.malloc'd
-;; on demand and recorded per slot rather than living at a fixed address
+;; The directory and the tables that described that block go with it
+
+    push edx
+
+    mov ebx, dword[Hexagon.Processes.Table.pagingBlock + edx * 4]
+    mov ecx, dword[Hexagon.Processes.Table.pagingSize + edx * 4]
+
+    call Hexagon.Arch.Paging.destroyProcessSpace
+
+    pop edx
+
+    mov dword[Hexagon.Processes.Table.pageDirectory + edx * 4], 0
+    mov dword[Hexagon.Processes.Table.pagingBlock + edx * 4], 0
+
+;; Free this process's own arguments buffer, recorded per slot and not
+;; living at a fixed address
 
     mov ebx, dword[Hexagon.Processes.Table.argBase + edx * 4]
 
@@ -733,7 +999,7 @@ Hexagon.Kern.Proc.exit:
 
     mov ecx, Hexagon.Kern.Proc.maxArgumentsLength
 
-    call Hexagon.Arch.Gen.Mm.free
+    call Hexagon.Arch.Mm.free
 
     mov dword[Hexagon.Processes.Table.argBase + edx * 4], 0
 
@@ -746,38 +1012,24 @@ Hexagon.Kern.Proc.exit:
 
     mov ecx, Hexagon.Kern.Proc.maxEnvironmentLength
 
-    call Hexagon.Arch.Gen.Mm.free
+    call Hexagon.Arch.Mm.free
 
     mov dword[Hexagon.Processes.Table.envBase + edx * 4], 0
 
 .noEnvBaseToFree:
 
-    mov ebx, dword[Hexagon.Processes.Table.tempBase + edx * 4]
+;; And whatever this process took through hx.malloc and never gave back. The
+;; Ctrl+C path and a fault it caused both come through here as well, so this
+;; is what keeps a process that was killed, and not asked to stop, from
+;; holding its buffers until the machine is restarted
 
-    cmp ebx, 0
-    je .noTempBaseToFree
+    mov eax, edx
 
-    mov ecx, Hexagon.Kern.Proc.getProcessTable.bufferSize
+    call Hexagon.Arch.Mm.freeProcessBlocks
 
-    call Hexagon.Arch.Gen.Mm.free
-
-    mov dword[Hexagon.Processes.Table.tempBase + edx * 4], 0
-
-.noTempBaseToFree:
-
-;; Hexagon.Scheduler.current still points at edx below, and is about to
-;; keep doing so all the way through the parentSlot/bootChildSlot checks
-;; that decide who to resume. A timer-driven Hexagon.Kern.Sched.maybeSchedule
-;; landing anywhere from the States.free write below until whichever of
-;; .resumeParent/.resumeBoot/.scanNext's own cli takes over would still find
-;; Hexagon.Scheduler.current pointing at this slot, its state already
-;; States.free, and treat it as an ordinary running process to preempt,
-;; writing States.ready right back over the free slot and resurrecting it
-;; as a ghost entry with a bogus saved context, exactly the scenario the
-;; comment further below already describes for the spawned-process case,
-;; just reachable a few instructions earlier than that cli currently covers
-
-    cli
+;; Still under the cli from function entry. Hexagon.Scheduler.current keeps
+;; pointing at edx all the way through the parentSlot/bootChildSlot checks
+;; below that decide who to resume next.
 
     mov byte[Hexagon.Processes.Table.state + edx], Hexagon.Processes.Table.States.free
 
@@ -803,18 +1055,11 @@ Hexagon.Kern.Proc.exit:
 ;; other process is READY next, exactly like a normal preemption would.
 ;; There is no specific caller context to return to here
 
-;; Hexagon.Scheduler.current still points at this slot, which the state=free
-;; write above already turned into stale garbage. A concurrent, timer-driven
-;; Hexagon.Kern.Sched.maybeSchedule reading Hexagon.Scheduler.current before
-;; the scan below settles on someone real would treat this freed slot as an
-;; ordinary running process to preempt, saving its own ESP there and marking
-;; it READY again, resurrecting it as a ghost entry with a bogus saved
-;; context. Interrupts stay off until .scheduleNext/.resumeNext (or
-;; dispatchSlot's own "sti") has moved Hexagon.Scheduler.current somewhere
-;; real, closing the window entirely rather than just narrowing it: the wait
-;; for someone to become READY can now take up to roughly a second (parked
-;; in Hexagon.Kern.Sched.idleSlot), not just the few instructions this scan
-;; used to take
+;; Hexagon.Scheduler.current still names this slot, which the state=free write
+;; above turned into stale garbage. A timer-driven maybeSchedule would preempt
+;; it as an ordinary process, saving its ESP there and marking it READY again.
+;; Interrupts stay off until the scan below settles on someone real, which can
+;; take up to about a second parked in Hexagon.Kern.Sched.idleSlot
 
     cli
 
@@ -866,13 +1111,17 @@ Hexagon.Kern.Proc.exit:
 
     call Hexagon.Kern.Sched.setUserSegmentBase
 
+    mov eax, ebx
+
+    call Hexagon.Arch.Paging.switchSpace
+
     mov esp, dword[Hexagon.Processes.Table.esp + ebx * 4]
 
     mov byte[Hexagon.Processes.Table.state + ebx], Hexagon.Processes.Table.States.running
 
 ;; Re-enable interrupts now that Hexagon.Scheduler.current (set above, in
 ;; .scheduleNext) points at ebx instead of the freed slot this fallback
-;; started from; see the "cli" before .scanNext. dispatchSlot, the other
+;; started from, per the "cli" before .scanNext. dispatchSlot, the other
 ;; place .scheduleNext can lead to, already has its own "sti"
 
     sti
@@ -887,16 +1136,10 @@ Hexagon.Kern.Proc.exit:
 
 .resumeParent:
 
-;; Interrupts stay off until state[ecx] reaches States.running below. A
-;; timer-driven Hexagon.Kern.Sched.maybeSchedule landing anywhere in this
-;; window would find Hexagon.Scheduler.current already pointing at ecx
-;; while its state is still States.ready, and either abandon the rest of
-;; .resumeParent mid-flight via its own "ret" (leaving ecx stuck at
-;; States.ready forever, never getting setUserSegmentBase or its final
-;; States.running) or, if esp below hasn't loaded yet, save the exiting
-;; child's own esp into this slot instead of the parent's, corrupting its
-;; saved context outright. Same class of race .scanNext/.resumeNext above
-;; already closes with its own cli/sti pair
+;; Interrupts stay off until state[ecx] reaches States.running below. A timer
+;; landing in this window finds Hexagon.Scheduler.current already on ecx while
+;; it is still States.ready, and either abandons the rest of this path or saves
+;; the exiting child's own esp into the parent's slot
 
     cli
 
@@ -906,11 +1149,28 @@ Hexagon.Kern.Proc.exit:
 
     mov esp, dword[Hexagon.Processes.Table.esp + ecx * 4]
 
+;; Restore this VT's foregroundSlot to what it held before this child took
+;; over, mirroring the handoff in Hexagon.Kern.Proc.exec. No push/pop here:
+;; esp already points at the parent's own saved frame, about to be consumed
+;; by popa below, so only plain register moves are safe until then
+
+    mov eax, dword[Hexagon.Processes.Table.tty + ecx * 4]
+    mov ebx, dword[Hexagon.Processes.Table.savedForegroundSlot + ecx * 4]
+    mov dword[Hexagon.Console.VT.foregroundSlot + eax * 4], ebx
+
     mov eax, dword[Hexagon.Processes.Table.base + ecx * 4]
 
     push ecx
 
     call Hexagon.Kern.Sched.setUserSegmentBase
+
+    pop ecx
+
+    push ecx
+
+    mov eax, ecx
+
+    call Hexagon.Arch.Paging.switchSpace
 
     pop ecx
 
@@ -932,8 +1192,13 @@ Hexagon.Kern.Proc.exit:
 
     mov esp, dword[Hexagon.Kern.Proc.bootCallerESP]
 
+;; No foreground restore here, unlike .resumeParent. The boot-exec of
+;; /init never claimed VT0's foreground in the first place (see
+;; Hexagon.Kern.Proc.exec's own .blockBootCaller), so there is nothing to
+;; give back
+
 ;; Re-enable interrupts now that Hexagon.Scheduler.current is 0xFF (raw
-;; kernel-boot context) rather than this now-free slot; see the cli before
+;; kernel-boot context) and no longer this now-free slot, per the cli before
 ;; the States.free write above
 
     sti
@@ -1036,168 +1301,255 @@ Hexagon.Kern.Proc.calculateArgumentsAddress:
 
 ;;************************************************************************************
 
-;; Hexagon.Kern.Proc.getProcessTable emits into this caller's own
-;; Hexagon.Processes.Table.tempBase buffer a 4-byte record size, followed by
-;; one record per Hexagon.Processes.Table slot that isn't FREE, in slot
-;; order, each shaped like this:
+;; Hexagon.Kern.Proc.getProcessTable copies into the caller's own buffer a
+;; 4-byte record size, followed by one record per Hexagon.Processes.Table
+;; slot that isn't FREE, in slot order, each shaped like this:
 ;;
 ;; +0  dd PID
 ;; +4  dd Parent PID (0 = launched directly by the kernel, no parent process)
 ;; +8  db State (Hexagon.Processes.Table.States.*)
-;; +9  db Name, NUL-terminated within a fixed 13-byte field
+;; +9  Name, NUL-terminated within a fixed 64-byte field
+;; +73 db VT index (Hexagon.Processes.Table.tty)
+;; +74 dd Bytes the process is holding
 ;;
-;; The record size travels with the data instead of being a constant the
-;; caller has to already know, so ps/top don't need to be rebuilt in lockstep
-;; whenever the record shape changes here
+;; The record size travels with the data, so a field appended at the end
+;; leaves anything built against the shorter layout still stepping correctly
 
-Hexagon.Kern.Proc.getProcessTable.recordSize = 22
+Hexagon.Kern.Proc.getProcessTable.recordSize = 78 ;; 4 + 4 + 1 + 64 + 1 + 4
 
-;; Hexagon.Processes.Table.tempBase is this large, lazily
-;; Hexagon.Arch.Gen.Mm.malloc'd on this caller's first hx.getProcesses call
-;; and kept for the rest of its life (freed at Hexagon.Kern.Proc.exit)
-;; rather than a single shared buffer. ps/top keep reading their result
-;; across many further syscalls while printing each row, and a single
-;; shared buffer would let any other process's own concurrent
-;; hx.getProcesses call - init's own child monitoring loop calls this
-;; constantly - overwrite it out from under a slower reader mid-print
-
-Hexagon.Kern.Proc.getProcessTable.bufferSize = 4 + (Hexagon.Processes.Table.limit * Hexagon.Kern.Proc.getProcessTable.recordSize)
-
+;; Input:
+;;
+;; ESI - Caller's own buffer
+;; ECX - Size of that buffer, in bytes
+;;
 ;; Output:
 ;;
-;; EAX - Number of records, or 0 if this caller's own scratch buffer
-;;       couldn't be allocated (out of memory)
-;; ESI - This caller's own Hexagon.Processes.Table.tempBase buffer: a dd
-;;       record size, followed by that many records
+;; EAX - Number of records written, if the buffer was big enough (CF clear)
+;; EAX - Exact buffer size needed, in bytes, if it wasn't (CF set). Nothing
+;;       is written in that case, and the caller is expected to hx.free its
+;;       buffer, hx.malloc exactly EAX bytes, and retry
+;; CF  - Set if the caller's buffer was too small
 
 Hexagon.Kern.Proc.getProcessTable:
 
-    push ds ;; Kernel data segment
-    pop es
-
-    movzx edx, byte[Hexagon.Scheduler.current]
-
-    mov edi, dword[Hexagon.Processes.Table.tempBase + edx * 4]
-
-    cmp edi, 0
-    jne .bufferReady
+;; The caller's own buffer, written into at CPL 0 where paging refuses nothing,
+;; so it is checked against what this process can reach first
 
     push ebx
 
-    mov ebx, Hexagon.Kern.Proc.getProcessTable.bufferSize
+    mov ebx, esi
 
-    call Hexagon.Arch.Gen.Mm.malloc
-
-    cmp eax, 0
-    je .allocFailed
-
-    mov edi, ebx
+    call Hexagon.Arch.Paging.rangeIsCallerWritable
 
     pop ebx
 
-    mov dword[Hexagon.Processes.Table.tempBase + edx * 4], edi
+    jc .badBuffer
 
-.bufferReady:
+    push ebx
+    push ecx
+    push edx
+
+;; preemptionDisabled alone does not stop another process's own
+;; concurrent int 80h from entering hexagonHandler. A real cli/sti
+;; bracket closes that window, and here also keeps the counting and
+;; writing passes consistent with each other
+
+    pushfd
+
+    cli
+
+    push es
+
+    mov ax, 10h
+    mov es, ax
+
+;; First pass: count live slots (not free, not reserved) without writing
+;; anything, so the exact buffer size needed is known before deciding
+;; whether the caller's own buffer is big enough
+
+    xor ebx, ebx ;; EBX = slot index
+    xor edx, edx ;; EDX = live count
+
+.countLoop:
+
+    cmp ebx, Hexagon.Processes.Table.limit
+    jae .counted
+
+    cmp byte[Hexagon.Processes.Table.state + ebx], Hexagon.Processes.Table.States.free
+    je .countNext
+
+    cmp byte[Hexagon.Processes.Table.state + ebx], Hexagon.Processes.Table.States.reserved
+    je .countNext
+
+    inc edx
+
+.countNext:
+
+    inc ebx
+
+    jmp .countLoop
+
+.counted:
+
+    mov dword[.liveCount], edx
+
+    mov eax, edx
+
+    imul eax, Hexagon.Kern.Proc.getProcessTable.recordSize
+
+    add eax, 4 ;; Leading record-size dd
+
+    cmp eax, ecx
+
+    ja .tooSmall
+
+;; Second pass: write the records for real
+
+    mov edi, esi
 
     mov dword[edi], Hexagon.Kern.Proc.getProcessTable.recordSize
 
     add edi, 4
 
-    xor ecx, ecx ;; ECX = slot index
-    xor edx, edx ;; EDX = record count
+    cld
+
+    xor ebx, ebx ;; EBX = slot index
 
 .loop:
 
-    cmp ecx, Hexagon.Processes.Table.limit
+    cmp ebx, Hexagon.Processes.Table.limit
     jae .done
 
-    cmp byte[Hexagon.Processes.Table.state + ecx], Hexagon.Processes.Table.States.free
+    cmp byte[Hexagon.Processes.Table.state + ebx], Hexagon.Processes.Table.States.free
     je .next
 
 ;; Skip slots States.reserved by a concurrent exec/spawn's findSlot: claimed,
 ;; but with base/pid/name not populated yet, so nothing here is meaningful
 ;; to show a caller of hx.getProcesses yet either
 
-    cmp byte[Hexagon.Processes.Table.state + ecx], Hexagon.Processes.Table.States.reserved
+    cmp byte[Hexagon.Processes.Table.state + ebx], Hexagon.Processes.Table.States.reserved
     je .next
 
-    push ecx
-
-    mov eax, dword[Hexagon.Processes.Table.pid + ecx * 4]
+    mov eax, dword[Hexagon.Processes.Table.pid + ebx * 4]
 
     stosd
 
-    mov eax, dword[Hexagon.Processes.Table.parentPID + ecx * 4]
+    mov eax, dword[Hexagon.Processes.Table.parentPID + ebx * 4]
 
     stosd
 
-    mov al, byte[Hexagon.Processes.Table.state + ecx]
+    mov al, byte[Hexagon.Processes.Table.state + ebx]
 
     stosb
 
-;; Find the real length of this slot's name, capped at 12 so a NUL
-;; terminator always fits within the fixed 13-byte name field
+;; Find the real length of this slot's name, capped at 63 so a NUL
+;; terminator always fits within the 64-byte field. ESI is dead here
+;; (only EDI carries state between slots), free to reuse as a read pointer
 
-    mov esi, ecx
+    mov esi, ebx
 
-    imul esi, 13
+    imul esi, 64
 
     add esi, Hexagon.Processes.Table.name
 
-    xor ebx, ebx
+    xor edx, edx
 
 .measureName:
 
-    cmp ebx, 12
+    cmp edx, 63
     jae .measured
 
-    cmp byte[esi + ebx], ' '
+    cmp byte[esi + edx], ' '
     je .measured
 
-    inc ebx
+    inc edx
 
     jmp .measureName
 
 .measured:
 
-    mov ecx, ebx
+    push edx ;; Real length, needed again below after rep movsb consumes ECX
+
+    mov ecx, edx
 
     rep movsb ;; Copy the real name characters
 
-    mov ecx, 13
-    sub ecx, ebx
+    pop ecx
+
+    mov edx, 64
+
+    sub edx, ecx
+
+    mov ecx, edx
 
     xor al, al
 
     rep stosb ;; NUL-terminate and pad out the rest of the name field
 
-    pop ecx
+;; Appended after name so pid/parentPID/state/name keep their existing offsets
 
-    inc edx
+    mov al, byte[Hexagon.Processes.Table.tty + ebx * 4]
+
+    stosb
+
+;; Everything this process holds, from the allocator's own tally: its image
+;; and stack, its arguments and environment, the tables that map it, and
+;; whatever it took through hx.malloc
+
+    mov eax, ebx
+
+    call Hexagon.Arch.Mm.memoryUsedBySlot
+
+    stosd
 
 .next:
 
-    inc ecx
+    inc ebx
 
     jmp .loop
 
 .done:
 
-    mov eax, edx
+    mov eax, dword[.liveCount]
 
-    movzx esi, byte[Hexagon.Scheduler.current]
-    mov esi, dword[Hexagon.Processes.Table.tempBase + esi * 4]
+    pop es
 
-    ret
+    popfd
 
-.allocFailed:
-
+    pop edx
+    pop ecx
     pop ebx
 
-    xor eax, eax
-    xor esi, esi
+    clc
 
     ret
+.badBuffer:
+
+    mov eax, Hexagon.Kern.Proc.badAddress
+
+    stc
+
+    ret
+
+
+.tooSmall:
+
+;; EAX already holds the exact size needed, computed above before this
+;; branch was taken
+
+    pop es
+
+    popfd
+
+    pop edx
+    pop ecx
+    pop ebx
+
+    stc
+
+    ret
+
+.liveCount: dd 0
 
 ;;************************************************************************************
 
@@ -1222,7 +1574,7 @@ Hexagon.Kern.Proc.getErrorCode:
 ;; EBX - Allocated physical base (on success)
 ;; ECX - Total allocated size, including margins and stack (on success).
 ;;       The caller must remember this, it is needed later by
-;;       Hexagon.Arch.Gen.Mm.free
+;;       Hexagon.Arch.Mm.free
 ;; CF  - Set on error (out of memory, or the image failed to load)
 
 Hexagon.Kern.Proc.allocateAndLoadImage:
@@ -1244,13 +1596,13 @@ Hexagon.Kern.Proc.allocateAndLoadImage:
 
     pop edx
 
-    add eax, 65536 ;; appFileBuffer-style scratch margin, see below for why
+;; Room past the image for whatever it declares but emits no bytes for, as
+;; much as its own header asks for and not a byte more. An image that asks for
+;; nothing gets nothing: the kernel used to hand every one of them 64 KB in
+;; case it read a file into a bare label past its own end, and each image now
+;; says for itself whether it does
 
-;; Many existing apps (login, logind, sh, anything using verUtils.s) read a
-;; configuration file straight into "appFileBuffer", a bare label plaE =ced right
-;; after their own code with no reserved space of its own. They rely on free
-;; slack past their own image at runtime. 64 KB comfortably covers this until
-;; those apps reserve their own buffer space explicitly
+    add eax, dword[Hexagon.Libkern.HAPP.imageHAPPHeader.bssSize]
 
     add eax, Hexagon.Processes.Table.stackSize ;; Dedicated stack for this process
 
@@ -1258,10 +1610,16 @@ Hexagon.Kern.Proc.allocateAndLoadImage:
 
     mov ebx, eax
 
-    call Hexagon.Arch.Gen.Mm.malloc
+    call Hexagon.Arch.Mm.malloc
 
     cmp eax, 0
     je .allocError
+
+;; Nothing of whoever held this block before is this process's to read
+
+    mov ecx, dword[esp] ;; The total size pushed above
+
+    call Hexagon.Kern.Proc.clearForProcess
 
     push ebx ;; Remember the allocated base across the openFile call
 
@@ -1269,7 +1627,6 @@ Hexagon.Kern.Proc.allocateAndLoadImage:
 
 ;; Correct address with segment base (physical address = address + segment base)
 
-    sub edi, 500h
 
     push esi
 
@@ -1297,7 +1654,7 @@ Hexagon.Kern.Proc.allocateAndLoadImage:
     push ebx
     push ecx
 
-    call Hexagon.Arch.Gen.Mm.free ;; Avoid leaking the block for an image that failed to load
+    call Hexagon.Arch.Mm.free ;; Avoid leaking the block for an image that failed to load
 
     pop ecx
     pop ebx
@@ -1318,7 +1675,7 @@ Hexagon.Kern.Proc.allocateAndLoadImage:
 
 ;; Fills in a freshly-found, free table slot with a newly loaded process.
 ;; Common to both Hexagon.Kern.Proc.exec and Hexagon.Kern.Proc.spawn. Leaves
-;; the slot READY either way; hx.exec additionally blocks its caller and
+;; the slot READY either way. hx.exec additionally blocks its caller and
 ;; dispatches the slot immediately right after calling this
 ;;
 ;; Input:
@@ -1326,7 +1683,7 @@ Hexagon.Kern.Proc.allocateAndLoadImage:
 ;; EDX - Slot index (already confirmed free)
 ;; EBX - Allocated physical base
 ;; ECX - Total allocated size
-;; ESI - Filename (used as the process's display name)
+;; ESI - Display name, the kernel-resolved absolute path of the executed file
 ;;
 ;; Output:
 ;;
@@ -1334,39 +1691,72 @@ Hexagon.Kern.Proc.allocateAndLoadImage:
 
 Hexagon.Kern.Proc.registerSlot:
 
-;; The name-copy loop below writes through ES:EDI (stosb). hexagonHandler
-;; leaves ES on the kernel linear segment (base 0), but Hexagon.Processes.Table
-;; is addressed relative to the kernel data segment (base 500h), so ES needs
-;; to be realigned with DS first or the name lands 500h bytes away from
-;; where Hexagon.Kern.Proc.getProcessTable later reads it
+;; The name-copy loop below writes through ES:EDI. A caller at user level
+;; leaves ES on its data segment, based at that process, so ES has to be
+;; realigned with DS before writing into Hexagon.Processes.Table
 
     push ds
     pop es
 
-;; States.ready is written only at the very end of this function, once every
-;; other field below is in place. Hexagon.Kern.Sched.maybeSchedule runs off
-;; the timer interrupt, which stays enabled for the whole duration of a
-;; syscall (hexagonHandler's own "sti"), so it can land anywhere in the
-;; middle of this function. If the slot were marked ready up front, a tick
-;; landing before base/entry/pid/name were actually written would have
-;; maybeSchedule dispatch it immediately off of whatever stale or
-;; uninitialized bytes still sit in those fields, a jump into garbage code
-;; through a garbage segment base
+;; States.ready is written only once every other field below is in place.
+;; The timer stays enabled through a syscall, so a tick landing before
+;; base/entry/pid/name are written would have maybeSchedule dispatch the slot
+;; off whatever still sits in them
 
     mov dword[Hexagon.Processes.Table.base + edx * 4], ebx
+
+;; Counted against this process from here on, and released with it
+
+    push eax
+
+    mov eax, edx
+
+    call Hexagon.Arch.Mm.setBlockOwner
+
+    pop eax
     mov dword[Hexagon.Processes.Table.size + edx * 4], ecx
+
+;; A space of this process's own, so only the pages it owns are reachable from
+;; user level. A slot without one shares the kernel's directory, which still
+;; runs correctly, only without the separation
+
+    push edx ;; The slot, since createProcessSpace answers in four registers
+
+    call Hexagon.Arch.Paging.createProcessSpace ;; EAX = directory, EBX/ECX = block to free with it, EDX = its kernel stack
+
+    push edx ;; The kernel stack, until the slot is back in EDX
+
+    mov edx, dword[esp + 4]
+
+    mov dword[Hexagon.Processes.Table.pageDirectory + edx * 4], eax
+    mov dword[Hexagon.Processes.Table.pagingBlock + edx * 4], ebx
+
+;; Counted against this process from here on, and released with it
+
+    push eax
+
+    mov eax, edx
+
+    call Hexagon.Arch.Mm.setBlockOwner
+
+    pop eax
+    mov dword[Hexagon.Processes.Table.pagingSize + edx * 4], ecx
+
+    pop eax
+
+    mov dword[Hexagon.Processes.Table.kernelStack + edx * 4], eax
+
+    add esp, 4 ;; The slot, already back in EDX
+
 
     mov eax, dword[Hexagon.Libkern.HAPP.imageHAPPHeader.entryHAPP]
     mov dword[Hexagon.Processes.Table.entry + edx * 4], eax
 
     mov dword[Hexagon.Processes.Table.esp + edx * 4], 0 ;; Never dispatched yet
 
-;; Hexagon.Kern.Proc.spawn doesn't support arguments and never fills in
-;; Hexagon.Processes.Table.argBase, so give this slot an empty one here if
-;; Hexagon.Kern.Proc.exec hasn't already allocated and filled one in above.
-;; Hexagon.Kern.Proc.calculateArgumentsAddress always computes an address
-;; from this field regardless of how the process was created, so it must
-;; never be left at 0
+;; Hexagon.Kern.Proc.calculateArgumentsAddress computes an address from this
+;; field however the process was created, so it must never be left at 0. A
+;; spawned process has no arguments and gets an empty buffer here
 
     cmp dword[Hexagon.Processes.Table.argBase + edx * 4], 0
     jne .argBaseReady
@@ -1375,14 +1765,28 @@ Hexagon.Kern.Proc.registerSlot:
 
     mov ebx, Hexagon.Kern.Proc.maxArgumentsLength
 
-    call Hexagon.Arch.Gen.Mm.malloc
+    call Hexagon.Arch.Mm.malloc
 
     cmp eax, 0
-    je .argBaseSkip ;; Best effort; leave it 0 on out-of-memory rather than failing an already-loaded process
+    je .argBaseSkip ;; Best effort; leave it 0 on out-of-memory and do not fail an already-loaded process
+
+    mov ecx, Hexagon.Kern.Proc.maxArgumentsLength
+
+    call Hexagon.Kern.Proc.clearForProcess
 
     mov dword[Hexagon.Processes.Table.argBase + edx * 4], ebx
 
-    mov byte[gs:ebx], 0 ;; Empty arguments string
+;; Counted against this process from here on, and released with it
+
+    push eax
+
+    mov eax, edx
+
+    call Hexagon.Arch.Mm.setBlockOwner
+
+    pop eax
+
+    mov byte[ebx], 0 ;; Empty arguments string
 
 .argBaseSkip:
 
@@ -1391,22 +1795,35 @@ Hexagon.Kern.Proc.registerSlot:
 .argBaseReady:
 
 ;; Every new process gets its own environment, whether created by exec or
-;; spawn, inherited as a copy of the calling process's own environment
-;; (Hexagon.Kern.Proc.copyCallerEnvironment). Best effort, same reasoning
-;; as the argBase fallback above: the image is already loaded and
-;; committed by this point, so out-of-memory here just means an empty
-;; environment instead of failing the whole exec/spawn
+;; spawn, inherited as a copy of the calling process's own environment.
+;; Best effort, same reasoning as the argBase fallback above: the image is
+;; already loaded and committed by this point, so out-of-memory here just
+;; means an empty environment instead of failing the whole exec/spawn
 
     push ebx
 
     mov ebx, Hexagon.Kern.Proc.maxEnvironmentLength
 
-    call Hexagon.Arch.Gen.Mm.malloc
+    call Hexagon.Arch.Mm.malloc
 
     cmp eax, 0
     je .envBaseSkip
 
+    mov ecx, Hexagon.Kern.Proc.maxEnvironmentLength
+
+    call Hexagon.Kern.Proc.clearForProcess
+
     mov dword[Hexagon.Processes.Table.envBase + edx * 4], ebx
+
+;; Counted against this process from here on, and released with it
+
+    push eax
+
+    mov eax, edx
+
+    call Hexagon.Arch.Mm.setBlockOwner
+
+    pop eax
 
     call Hexagon.Kern.Proc.copyCallerEnvironment ;; EDX = new slot, whose envBase is now allocated
 
@@ -1421,8 +1838,7 @@ Hexagon.Kern.Proc.registerSlot:
     mov dword[Hexagon.Processes.Table.pid + edx * 4], eax
 
 ;; Record who created this process: 0 if launched directly by the kernel at
-;; boot, otherwise whoever is currently running. Kept for spawned processes
-;; too, purely so ps/debugging can trace where they came from
+;; boot, otherwise whoever is currently running. Kept for spawned processes too
 
 ;; Only hx.exec fills this in for real
 
@@ -1445,17 +1861,145 @@ Hexagon.Kern.Proc.registerSlot:
 
     mov dword[Hexagon.Processes.Table.parentPID + edx * 4], ecx
 
-;; Copy the process name into the table (for ps/hx.getProcesses)
+;; Every new process inherits its own user id from whoever created it, the
+;; same copy-on-creation model already used for its environment above. With
+;; no parent, it starts out already logged in as root instead
+
+;; EAX holds the new PID from here until the "EAX = new PID" pop further
+;; down this function. The whole user id/setuid block below is pushed
+;; around it instead of using EAX itself, unlike everything above it
+
+    push eax
+
+    movzx ebx, byte[Hexagon.Scheduler.current]
+
+    cmp ebx, 0xFF
+    je .noParentUser
+
+    mov ecx, dword[Hexagon.Processes.Table.userId + ebx * 4]
+    mov eax, dword[Hexagon.Processes.Table.realUserId + ebx * 4] ;; EBX still the parent's slot here
+    mov bl, byte[Hexagon.Processes.Table.userLoggedIn + ebx]
+
+    jmp .parentUserKnown
+
+.noParentUser:
+
+    xor ecx, ecx ;; Hexagon.Users.ID.root
+    xor eax, eax ;; Real id matches, same reasoning
+    mov bl, 1
+
+.parentUserKnown:
+
+    mov dword[Hexagon.Processes.Table.userId + edx * 4], ecx
+    mov byte[Hexagon.Processes.Table.userLoggedIn + edx], bl
+    mov dword[Hexagon.Processes.Table.realUserId + edx * 4], eax
+
+;; A binary marked both root-protected and setuid grants root to whoever runs
+;; it, overriding what was inherited above, while realUserId stays untouched.
+;; 06h is the system and setuid attributes, whose struc is not instantiated
+;; this early in the build
+
+    movzx eax, byte[Hexagon.Kern.Proc.pendingAttribute]
+
+    and eax, 06h
+
+    cmp eax, 06h
+    jne .notSetuid
+
+    mov dword[Hexagon.Processes.Table.userId + edx * 4], 0
+    mov byte[Hexagon.Processes.Table.userLoggedIn + edx], 1
+
+.notSetuid:
+
+    pop eax ;; Restores the new PID this block was pushed around
+
+;; Every new process inherits its own current and previous directory from
+;; whoever created it, defaulting to "/" with no parent. ESI is saved
+;; across this, it's still needed again below
+
+    push esi
+
+    movzx ebx, byte[Hexagon.Scheduler.current]
+
+    cmp ebx, 0xFF
+    je .noParentCwd
+
+    mov esi, ebx
+    imul esi, 64
+    add esi, Hexagon.Processes.Table.cwd
+
+    mov edi, edx
+    imul edi, 64
+    add edi, Hexagon.Processes.Table.cwd
+
+    mov ecx, 64
+
+    rep movsb
+
+    mov esi, ebx
+    imul esi, 64
+    add esi, Hexagon.Processes.Table.previousCwd
+
+    mov edi, edx
+    imul edi, 64
+    add edi, Hexagon.Processes.Table.previousCwd
+
+    mov ecx, 64
+
+    rep movsb
+
+    jmp .cwdKnown
+
+.noParentCwd:
+
+    mov edi, edx
+    imul edi, 64
+    add edi, Hexagon.Processes.Table.cwd
+
+    mov byte[edi], '/'
+    mov byte[edi + 1], 0
+
+.cwdKnown:
+
+;; Every new process also inherits which VT it's attached to, mirroring cwd
+;; above. ebx still holds the parent slot (or 0xFF) from the check above
+
+    cmp ebx, 0xFF
+    je .noParentTTY
+
+    mov ecx, dword[Hexagon.Processes.Table.tty + ebx * 4]
+
+    jmp .ttyKnown
+
+.noParentTTY:
+
+    xor ecx, ecx
+
+.ttyKnown:
+
+    mov dword[Hexagon.Processes.Table.tty + edx * 4], ecx
+
+;; Force this slot's own draw-target cache to resolve fresh on its first
+;; use, regardless of whatever generation number a previous occupant of
+;; this same slot left behind
+
+    mov dword[Hexagon.Processes.Table.addressLFBGeneration + edx * 4], 0xFFFFFFFF
+
+    pop esi
+
+;; Copy the process name into the table (for hx.getProcesses). ESI is
+;; already captureDisplayName's own scratch: a NUL-terminated, at most
+;; 64-byte, kernel-resolved absolute path
 
     push eax
 
     mov edi, edx
 
-    imul edi, 13
+    imul edi, 64
 
     add edi, Hexagon.Processes.Table.name
 
-    mov ecx, 13
+    mov ecx, 64
 
 .copyNameLoop:
 
@@ -1489,6 +2033,23 @@ Hexagon.Kern.Proc.registerSlot:
 
 ;;************************************************************************************
 
+;; hx.getTTY: tells the calling process which VT it's attached to, the same
+;; way real Unix's ttyname() does
+;;
+;; Output:
+;;
+;; EAX - VT index (0-7)
+
+Hexagon.Kern.Proc.getTTY:
+
+    movzx eax, byte[Hexagon.Scheduler.current]
+
+    mov eax, dword[Hexagon.Processes.Table.tty + eax * 4]
+
+    ret
+
+;;************************************************************************************
+
 ;; Fills a freshly allocated envBase with a copy of the calling process's
 ;; own environment, bounded by Hexagon.Kern.Proc.maxEnvironmentLength. The
 ;; very first hx.exec has no calling process slot yet
@@ -1503,14 +2064,14 @@ Hexagon.Kern.Proc.copyCallerEnvironment:
 
     pushad
 
-;; ES needs to be realigned with DS before writing through ES:EDI (stosb
-;; etc.) below, same reasoning as Hexagon.Kern.Proc.registerSlot's own
-;; name-copy loop
+;; Hexagon.Processes.Table.envBase holds an Mm.malloc pointer, so ES goes on
+;; the kernel linear selector here, the same convention every other raw
+;; allocation in the kernel is written through
 
     push es
 
-    push ds
-    pop es
+    mov ax, 18h
+    mov es, ax
 
     mov edi, dword[Hexagon.Processes.Table.envBase + edx * 4]
 
@@ -1523,9 +2084,20 @@ Hexagon.Kern.Proc.copyCallerEnvironment:
 
     mov ecx, Hexagon.Kern.Proc.maxEnvironmentLength
 
+;; rep movsb's source defaults to ds:[esi], and esi is the caller's own
+;; envBase, just as flat/physical as edi's, so ds needs the same 18h
+;; forced on it as es above, only for the copy itself
+
+    push ds
+
+    mov ax, 18h
+    mov ds, ax
+
     cld
 
     rep movsb
+
+    pop ds
 
     jmp .end
 
@@ -1546,12 +2118,13 @@ Hexagon.Kern.Proc.copyCallerEnvironment:
 
 ;; Creates a new process without blocking the caller. Fully validated,
 ;; allocated and loaded, then left READY in the process table for
-;; Hexagon.Kern.Sched.maybeSchedule to dispatch on its own schedule. Does not
-;; support arguments yet, unlike hx.exec
+;; Hexagon.Kern.Sched.maybeSchedule to dispatch when it sees fit
 ;;
 ;; Input:
 ;;
 ;; ESI - Buffer containing the name of the file to be executed
+;; EDI - Program arguments (if they exist)
+;; EAX - 0 if no argument exists
 ;;
 ;; Output:
 ;;
@@ -1561,32 +2134,36 @@ Hexagon.Kern.Proc.copyCallerEnvironment:
 
 Hexagon.Kern.Proc.spawn:
 
+;; EAX/EDI mean nothing to Hexagon.Kernel.FS.VFS.fileExists or anything else
+;; below until the argument buffer is actually allocated, well after. Both
+;; are stashed here and not carried through in registers across calls whose
+;; own preservation isn't guaranteed
+
+    mov dword[.hasArguments], eax
+    mov dword[.arguments], edi
+
     push esi
 
     call Hexagon.Kernel.FS.VFS.fileExists ;; EAX = file size, CF = not found
+
+    mov byte[Hexagon.Kern.Proc.pendingAttribute], cl ;; Hexagon.Kern.Proc.registerSlot reads this for its own setuid check
 
     pop esi
 
     jc .missingImage
 
-    push eax ;; Save the file size across checkHAPPImage
-
-;; Hexagon.Libkern.HAPP.checkHAPPImage reads the image into a single shared
-;; scratch buffer (Hexagon.Heap.Temp + 1000) and reports back through a
-;; single shared Hexagon.Libkern.HAPP.imageHAPPHeader struct, both global,
-;; with no per-call copy. entryHAPP in particular isn't actually consumed
-;; until Hexagon.Kern.Proc.registerSlot, well after
-;; Hexagon.Kern.Proc.allocateAndLoadImage's own disk read further down.
-;; Nothing before this held cli, so a second exec/spawn preempting in
-;; anywhere between here and registerSlot (entirely plausible, this whole
-;; span is disk I/O bound) would run its own checkHAPPImage over the same
-;; buffer and struct and hand this call a completely different image's
-;; header data, most visibly Table.entry ending up as some other file's
-;; entry point. Held through registerSlot itself, the only place that
-;; actually reads imageHAPPHeader.entryHAPP, and closed on every path that
-;; returns without reaching it
+;; From here on, ESI is the kernel-resolved absolute path
 
     cli
+
+    call Hexagon.Kern.Proc.captureDisplayName
+
+    push eax ;; Save the file size across checkHAPPImage
+
+;; Hexagon.Libkern.HAPP.checkHAPPImage answers through one global scratch
+;; buffer and struct, and entryHAPP is not consumed until
+;; Hexagon.Kern.Proc.registerSlot, past a disk read. The mask is held through
+;; registerSlot and closed on every path that returns without reaching it
 
     call Hexagon.Libkern.HAPP.checkHAPPImage
 
@@ -1620,7 +2197,89 @@ Hexagon.Kern.Proc.spawn:
 
     pop eax ;; Restore the file size
 
-    push ecx ;; Remember the free slot index across allocateAndLoadImage
+    push ecx ;; Remember the free slot index across everything below
+
+;; Give this new process its own arguments buffer, the same reasoning as
+;; Hexagon.Kern.Proc.exec's own identical block: a dedicated allocation
+;; freed at Hexagon.Kern.Proc.exit, not a fixed shared address
+
+    push eax ;; Save the file size across this allocation
+
+    mov ebx, Hexagon.Kern.Proc.maxArgumentsLength
+
+    call Hexagon.Arch.Mm.malloc
+
+    cmp eax, 0
+    je .argAllocFailed
+
+    mov ecx, Hexagon.Kern.Proc.maxArgumentsLength
+
+    call Hexagon.Kern.Proc.clearForProcess
+
+    mov ecx, dword[esp + 4] ;; Free slot index, under the file size just pushed
+
+    mov dword[Hexagon.Processes.Table.argBase + ecx * 4], ebx
+
+;; Counted against this process from here on, and released with it
+
+    push eax
+
+    mov eax, ecx
+
+    call Hexagon.Arch.Mm.setBlockOwner
+
+    pop eax
+
+    mov ebx, ecx ;; Keep the slot in EBX for the rest of the argument handling below
+
+    pop eax ;; Restore the file size
+
+    cmp dword[.hasArguments], 0
+    je .noArguments
+
+    push esi
+
+    mov esi, dword[.arguments]
+
+    call Hexagon.Libkern.String.stringSize ;; Preserves EBX, ECX, ESI, EDI, ES. EAX = length
+
+    mov ecx, eax
+
+    inc ecx
+
+    cmp ecx, Hexagon.Kern.Proc.maxArgumentsLength
+    jb .argLengthOk
+
+    mov ecx, Hexagon.Kern.Proc.maxArgumentsLength - 1
+
+.argLengthOk:
+
+    push es
+
+    push 18h ;; Kernel linear segment
+    pop es
+
+    mov esi, dword[.arguments]
+
+    mov edi, dword[Hexagon.Processes.Table.argBase + ebx * 4]
+
+    rep movsb ;; Copy (ECX) characters from ESI to EDI
+
+    mov byte[es:edi], 0 ;; Guarantee NUL-termination even when truncated above
+
+    pop es
+
+    pop esi
+
+    jmp .argumentsReady
+
+.noArguments:
+
+    mov edi, dword[Hexagon.Processes.Table.argBase + ebx * 4]
+
+    mov byte[edi], 0
+
+.argumentsReady:
 
     call Hexagon.Kern.Proc.allocateAndLoadImage ;; EBX = base, ECX = total size, CF = error
 
@@ -1639,6 +2298,10 @@ Hexagon.Kern.Proc.spawn:
     ret
 
 .missingImage:
+
+    sti ;; cli now starts before Hexagon.Kernel.FS.VFS.fileExists above, which
+        ;; can land here on a missing file before ever reaching
+        ;; .missingImage2's own "sti" below
 
     stc
 
@@ -1684,10 +2347,10 @@ Hexagon.Kern.Proc.spawn:
 
 .allocOrLoadFailed:
 
-;; EDX is already the slot index here, popped above at "pop edx ;; EDX = free
-;; slot index". Hexagon.Kern.Proc.registerSlot never ran on this path, so the
-;; slot claimed at .slotFound (States.reserved) needs to go back to
-;; States.free itself, or it would stay reserved and unusable forever
+;; EDX is already the slot index here. Hexagon.Kern.Proc.registerSlot never
+;; ran on this path, so the slot claimed at .slotFound (States.reserved)
+;; needs to go back to States.free itself, or it would stay reserved and
+;; unusable forever
 
     mov byte[Hexagon.Processes.Table.state + edx], Hexagon.Processes.Table.States.free
 
@@ -1699,10 +2362,28 @@ Hexagon.Kern.Proc.spawn:
 
     ret
 
+.argAllocFailed:
+
+    pop eax ;; Discard the file size pushed for this allocation attempt
+    pop ecx ;; Slot index pushed at .slotFound
+
+    mov byte[Hexagon.Processes.Table.state + ecx], Hexagon.Processes.Table.States.free
+
+    sti
+
+    stc
+
+    mov eax, 02h
+
+    ret
+
+.hasArguments: dd 0
+.arguments:    dd 0
+
 ;;************************************************************************************
 
 ;; Terminates an arbitrary process by PID, requested through hx.kill. Unlike
-;; Hexagon.Kern.Proc.killForegroundProcess (the F1 hotkey handler, which
+;; Hexagon.Kern.Proc.killForegroundProcess (the Ctrl-C hotkey handler, which
 ;; always targets whichever process is currently in the foreground), this
 ;; looks the target up in Hexagon.Processes.Table and can be called from any
 ;; process against any other
@@ -1713,7 +2394,7 @@ Hexagon.Kern.Proc.spawn:
 ;;
 ;; Output:
 ;;
-;; CF - Set on error (no process with this PID); EAX = 05h
+;; CF - Set on error (no process with this PID). EAX = 05h
 ;;      Cleared on success
 
 Hexagon.Kern.Proc.kill:
@@ -1739,6 +2420,26 @@ Hexagon.Kern.Proc.kill:
 
 .slotFound:
 
+    jmp Hexagon.Kern.Proc.killSlot
+
+.notFound:
+
+    stc
+
+    mov eax, 05h
+
+    ret
+
+;;************************************************************************************
+
+;; Tears down a specific, already-resolved process slot. Shared by
+;; Hexagon.Kern.Proc.kill (PID lookup above) and Hexagon.Kern.Proc.
+;; killForegroundProcess (VT.foregroundSlot lookup)
+;;
+;; Input: ECX - slot to terminate
+
+Hexagon.Kern.Proc.killSlot:
+
 ;; Slot 0 is the permanent idle process, never allocated like a real process.
 ;; Tearing it down here would free a bogus base/size and erase the scheduler's
 ;; last-resort fallback, so refuse exactly like an unknown PID instead
@@ -1761,14 +2462,10 @@ Hexagon.Kern.Proc.kill:
 
     mov edx, ecx ;; EDX = slot to terminate
 
-;; Unlike Hexagon.Kern.Proc.exit tearing down its own slot (always
-;; States.running, and maybeSchedule never re-selects whoever is already
-;; current), EDX here is a third-party slot that can still legitimately be
-;; States.ready right up until the state=free write below. A timer-driven
-;; Hexagon.Kern.Sched.maybeSchedule landing anywhere between the
-;; Hexagon.Arch.Gen.Mm.free call and that write would find EDX still marked
-;; ready and dispatch/resume it straight off memory this function is in the
-;; middle of freeing out from under it
+;; EDX is a third-party slot, which can still legitimately be States.ready
+;; right up to the state=free write below. A timer landing between the
+;; Hexagon.Arch.Mm.free call and that write would dispatch it straight off
+;; memory this function is in the middle of freeing
 
     cli
 
@@ -1778,23 +2475,68 @@ Hexagon.Kern.Proc.kill:
     push ebx
     push ecx
 
-    call Hexagon.Arch.Gen.Mm.free ;; Now accounts for Hexagon.Memory.usedMemory itself
+    call Hexagon.Arch.Mm.free ;; Now accounts for Hexagon.Memory.usedMemory itself
 
     pop ecx
     pop ebx
+
+;; The directory and the tables that described that block go with it
+
+    push edx
+
+    mov ebx, dword[Hexagon.Processes.Table.pagingBlock + edx * 4]
+    mov ecx, dword[Hexagon.Processes.Table.pagingSize + edx * 4]
+
+    call Hexagon.Arch.Paging.destroyProcessSpace
+
+    pop edx
+
+    mov dword[Hexagon.Processes.Table.pageDirectory + edx * 4], 0
+    mov dword[Hexagon.Processes.Table.pagingBlock + edx * 4], 0
+
+;; Its arguments, its environment, and whatever it took through hx.malloc and
+;; never gave back, none of which a killed process reaches Hexagon.Kern.Proc.exit
+;; to release. They have to go before the state write below, while the slot
+;; still names this process, since a block records its owner as a slot
+
+    mov ebx, dword[Hexagon.Processes.Table.argBase + edx * 4]
+
+    cmp ebx, 0
+    je .noArgBaseToFree
+
+    mov ecx, Hexagon.Kern.Proc.maxArgumentsLength
+
+    call Hexagon.Arch.Mm.free
+
+    mov dword[Hexagon.Processes.Table.argBase + edx * 4], 0
+
+.noArgBaseToFree:
+
+    mov ebx, dword[Hexagon.Processes.Table.envBase + edx * 4]
+
+    cmp ebx, 0
+    je .noEnvBaseToFree
+
+    mov ecx, Hexagon.Kern.Proc.maxEnvironmentLength
+
+    call Hexagon.Arch.Mm.free
+
+    mov dword[Hexagon.Processes.Table.envBase + edx * 4], 0
+
+.noEnvBaseToFree:
+
+    mov eax, edx
+
+    call Hexagon.Arch.Mm.freeProcessBlocks
 
     mov byte[Hexagon.Processes.Table.state + edx], Hexagon.Processes.Table.States.free
 
     sti
 
-;; If the process being killed had itself exec'd a child that hasn't
-;; finished yet (sh running the "kill" command that then targets sh's
-;; own PID), that child's parentSlot still points at this slot. Left alone,
-;; the child's own eventual hx.exit would resume this slot through the
-;; base/esp it still remembers, even though the memory backing it was just
-;; freed above and may belong to someone else by then. Sever the link so
-;; exit treats it as an orphan instead, the same path already used for
-;; hx.spawn'd processes with no blocking caller
+;; A child this process exec'd still points its parentSlot here, and its own
+;; hx.exit would resume this slot through a base and esp whose memory was just
+;; freed above. Sever the link so exit treats it as an orphan, the path
+;; hx.spawn'd processes with no blocking caller already take
 
     xor ebx, ebx
 
@@ -1816,15 +2558,45 @@ Hexagon.Kern.Proc.kill:
 
 .wakeParent:
 
-;; If another process's hx.exec is BLOCKED waiting on this one, wake it by
-;; marking it READY. Hexagon.Kern.Sched.maybeSchedule will resume it through
-;; the normal round-robin path on its own next turn. This does not reproduce
-;; Hexagon.Kern.Proc.exit's own resume trick (swapping ESP to jump straight
-;; into the parent), which would hijack the caller's own stack here instead
-;; of the killed process's, so the resumed hx.exec call does not get exit's
-;; usual clean EAX=0/CF=0 "child succeeded" result injected into it
+;; If the process being killed was its own VT's current foreground process,
+;; that VT's foreground must revert to whoever handed it off, mirroring what
+;; Hexagon.Kern.Proc.exit's own resumeParent/resumeBoot do. This path
+;; tears the slot down directly instead of going through exit, so nothing
+;; else restores it
 
     mov ecx, dword[Hexagon.Processes.Table.parentSlot + edx * 4]
+
+    mov eax, dword[Hexagon.Processes.Table.tty + edx * 4]
+
+    cmp dword[Hexagon.Console.VT.foregroundSlot + eax * 4], edx
+    jne .parentCheck
+
+    cmp ecx, 0xFFFFFFFF
+    je .bootForegroundCheck
+
+    mov ebx, dword[Hexagon.Processes.Table.savedForegroundSlot + ecx * 4]
+    mov dword[Hexagon.Console.VT.foregroundSlot + eax * 4], ebx
+
+    jmp .parentCheck
+
+.bootForegroundCheck:
+
+    cmp edx, dword[Hexagon.Kern.Proc.bootChildSlot]
+    jne .parentCheck
+
+;; /init itself, killed while somehow also its own VT's foreground owner.
+;; Only possible if it ever claims one itself, see
+;; Hexagon.Kern.Proc.exec's own .blockBootCaller, which deliberately never
+;; does this on its behalf. Nothing to hand back to, just clear it
+
+    mov dword[Hexagon.Console.VT.foregroundSlot + eax * 4], 0xFFFFFFFF
+
+.parentCheck:
+
+;; A caller blocked on this process is woken by marking it READY, for
+;; Hexagon.Kern.Sched.maybeSchedule to resume in round-robin order. Swapping
+;; ESP the way Hexagon.Kern.Proc.exit does would hijack this caller's own
+;; stack, so the resumed hx.exec gets no injected success result
 
     cmp ecx, 0xFFFFFFFF
     je .done
@@ -1888,7 +2660,7 @@ Hexagon.Kern.Proc.getenv:
     cmp al, 0
     jne .compareChar
 
-;; The wanted name ran out; a match requires the stored entry to hit '='
+;; The wanted name ran out, so a match requires the stored entry to hit '='
 ;; at exactly this point
 
     cmp bl, '='
@@ -2066,7 +2838,7 @@ Hexagon.Kern.Proc.removeEnvEntry:
 .found:
 
 ;; EBX = start of the matched entry. ESI is already inside it, from the
-;; scan above; advance it to just past the entry's own NUL
+;; scan above, so advance it to just past the entry's own NUL
 
 .findEntryEnd:
 
@@ -2369,3 +3141,4 @@ Hexagon.Kern.Proc.environ:
     pop ebx
 
     ret
+

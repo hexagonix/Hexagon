@@ -124,6 +124,7 @@ Hexagon.Libkern.Graphics.putCharacterBitmap:
 
     and eax, 0xFF
     sub eax, 32
+    
     mov ebx, Hexagon.Libkern.Font.height
 
     mul ebx
@@ -165,6 +166,17 @@ Hexagon.Libkern.Graphics.putCharacterBitmap:
 
     movzx ebx, word[.y]
 
+;; disablePreemption keeps a preempted process from leaving part of this
+;; glyph written into another VT's buffer, same race as putPixel's own
+
+    push edi
+
+    call Hexagon.Kern.Sched.disablePreemption
+
+    call Hexagon.Kernel.Dev.Console.Console.ensureCurrentVT
+
+    pop edi
+
     call Hexagon.Libkern.Graphics.calculatePixelOffset
 
     mov ecx, Hexagon.Libkern.Font.height
@@ -198,9 +210,9 @@ Hexagon.Libkern.Graphics.putCharacterBitmap:
 
     add esi, dword[Hexagon.Console.bytesPerPixel]
 
-    mov word[gs:esi], dx
+    mov word[esi], dx
     shr edx, 8
-    mov byte[gs:esi+2], dh
+    mov byte[esi+2], dh
 
     shl al, 1
 
@@ -212,6 +224,8 @@ Hexagon.Libkern.Graphics.putCharacterBitmap:
     sub esi, dword[.nextLine]
 
     loop .putColumn
+
+    call Hexagon.Kern.Sched.enablePreemption
 
 .end:
 
@@ -238,15 +252,27 @@ Hexagon.Libkern.Graphics.putPixel:
     push ebx
     push esi
 
+;; disablePreemption keeps a preempted process from leaving this pixel
+;; written into another VT's buffer, between ensureCurrentVT resolving the
+;; draw target and calculatePixelOffset reading it
+
+    call Hexagon.Kern.Sched.disablePreemption
+
+    call Hexagon.Kernel.Dev.Console.Console.ensureCurrentVT ;; Preserves EAX/EBX/ECX/EDX itself
+
     push edx
 
     call Hexagon.Libkern.Graphics.calculatePixelOffset ;; Get pixel offset
 
     pop edx
 
-    mov word[gs:esi], dx
+    mov word[esi], dx
+    
     shr edx, 8
-    mov byte[gs:esi+2], dh
+    
+    mov byte[esi+2], dh
+
+    call Hexagon.Kern.Sched.enablePreemption
 
 .end:
 
@@ -271,29 +297,13 @@ Hexagon.Libkern.Graphics.drawBlockSyscall:
 
     sub esi, ecx
 
-;; Correct address with segment base (physical address = address + segment base)
-
-    add esi, 500h
-
     sub edi, ecx
-
-;; Correct address with segment base (physical address = address + segment base)
-
-    add edi, 500h
 
     call Hexagon.Libkern.Graphics.drawBlock
 
     add esi, ecx
 
-;; Correct address with segment base (physical address = address + segment base)
-
-    sub esi, 500h
-
     add edi, ecx
-
-;; Correct address with segment base (physical address = address + segment base)
-
-    sub edi, 500h
 
     ret
 

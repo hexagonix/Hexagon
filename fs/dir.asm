@@ -80,11 +80,6 @@ Hexagon.VFS.Directory:
 .code:   db 0
 .offset: db 0
 .status: db 0
-.currentDirectory:
-times 64 db " "
-.previousDirectory:
-times 64 db 0
-.pathSize equ 64
 
 Hexagon.VFS.Mount:
 
@@ -95,6 +90,48 @@ times 32 db 0
 .status:    db 0
 .userCode:  db 0
 .lastError: db 0
+
+;;************************************************************************************
+
+;; Real mount table, replacing the single mount point above. Slot 0 is
+;; always "/", registered by Hexagon.Kernel.FS.VFS.registerBootMount.
+;;
+;; Allocated, and not placed in the kernel's fixed Hexagon.Heap area, so the
+;; table can be sized once the volume is known. Below is only the field layout,
+;; byte offsets with no storage of their own, reached through .base
+
+Hexagon.Mounts.Table.limit = 8
+
+virtual at 0
+
+Hexagon.Mounts.Table.inUse:
+times Hexagon.Mounts.Table.limit db 0
+
+Hexagon.Mounts.Table.drive:
+times Hexagon.Mounts.Table.limit db 0 ;; BIOS drive number backing this mount
+
+Hexagon.Mounts.Table.path:
+times Hexagon.Mounts.Table.limit * 64 db 0 ;; Mount point path, null-terminated
+
+Hexagon.Mounts.Table.deviceName:
+times Hexagon.Mounts.Table.limit * 32 db 0 ;; Device path given to hx.mount (such as "/dev/hd1p1"), null-terminated
+
+;; Each slot: +0 saved Hexagon.VFS.Control (filesystemType/volumeLabel), then
+;; +Hexagon.VFS.Control.size saved Hexagon.VFS.FAT16B
+
+Hexagon.Mounts.Table.state:
+times Hexagon.Mounts.Table.limit * (Hexagon.VFS.Control.size + Hexagon.VFS.FAT.instanceSize) db 0
+
+Hexagon.Mounts.Table.byteSize = $
+
+end virtual
+
+Hexagon.Mounts.Table.base: dd 0
+
+;; Slot currently loaded into the live Hexagon.VFS.FAT16B working copy.
+;; 0xFFFFFFFF means nothing has been loaded yet (before boot registration)
+
+Hexagon.Mounts.loadedSlot: dd 0xFFFFFFFF
 
 ;;************************************************************************************
 
@@ -116,17 +153,27 @@ times 32 db 0
 
 Hexagon.Kernel.FS.Dir.setCurrentDirectory:
 
+    push es
+
+;; hexagonHandler leaves ES on the kernel linear segment for every syscall,
+;; and rep movsb always writes through ES:EDI, so ES has to be realigned with
+;; DS before writing kernel-image data
+
+    mov ax, 10h
+    mov es, ax
+
     push esi ; First, save the path provided in the call
 
 ;; Now the given path length will be validated to check the requirement
 
     call Hexagon.Libkern.String.stringSize ;; Hexagon function to check the size of a string
 
-    cmp eax, 2
-    jg .continue ;; Greater than 2 (Character plus null)
+;; The path goes into a 64 byte field, so one that would not fit with its
+;; terminator is refused, and nothing is written over what follows it. There is
+;; no lower bound to check, since "/" is one character and has to be accepted
 
-    cmp eax, 65
-    jl .continue ;; Less than 64
+    cmp eax, 64
+    jb .continue
 
     pop esi
 
@@ -139,9 +186,19 @@ Hexagon.Kernel.FS.Dir.setCurrentDirectory:
 
 .continue: ;; The requirements have been met, continue with the process
 
+;; Every process keeps its own current/previous directory in its own
+;; Hexagon.Processes.Table slot, the same reasoning as its own user id or
+;; environment. A background process's own "cd" must never affect anyone else's
+
+    movzx ebx, byte[Hexagon.Scheduler.current]
+    
+    imul ebx, 64
+
 ;; First, copy the path from current directory to previous directory
 
-    mov esi, Hexagon.VFS.Directory.currentDirectory ;; Store this data
+    mov esi, ebx
+
+    add esi, Hexagon.Processes.Table.cwd
 
     call Hexagon.Libkern.String.stringSize
 
@@ -151,9 +208,13 @@ Hexagon.Kernel.FS.Dir.setCurrentDirectory:
 
 ;; Copy path now
 
-    mov edi, Hexagon.VFS.Directory.previousDirectory
+    mov edi, ebx
 
-    mov esi, Hexagon.VFS.Directory.currentDirectory
+    add edi, Hexagon.Processes.Table.previousCwd
+
+    mov esi, ebx
+
+    add esi, Hexagon.Processes.Table.cwd
 
     rep movsb ;; Copy (ECX) characters from ESI to EDI
 
@@ -169,7 +230,8 @@ Hexagon.Kernel.FS.Dir.setCurrentDirectory:
 
 ;; Now copy the given name to the appropriate location
 
-    mov edi, Hexagon.VFS.Directory.currentDirectory
+    mov edi, ebx
+    add edi, Hexagon.Processes.Table.cwd
 
     rep movsb ;; Copy (ECX) characters from ESI to EDI
 
@@ -177,12 +239,15 @@ Hexagon.Kernel.FS.Dir.setCurrentDirectory:
 
 .end:
 
+    pop es
+
     ret
 
 ;;************************************************************************************
 
-;; Get the current directory value, to be used by the user and the
-;; Virtual File System
+;; Get the current directory value, for other kernel code (resolveMount and
+;; similar). Returns pointers into this process's own table slot directly,
+;; not a copy. Fine within the kernel, never handed to userland as-is
 ;;
 ;; Output:
 ;;
@@ -191,13 +256,95 @@ Hexagon.Kernel.FS.Dir.setCurrentDirectory:
 
 Hexagon.Kernel.FS.Dir.getCurrentDirectory:
 
+    push eax
+
+    movzx eax, byte[Hexagon.Scheduler.current]
+
+    imul eax, 64
+
 ;; First, retrieve the current directory path for ESI
 
-    mov esi, Hexagon.VFS.Directory.currentDirectory
+    mov esi, eax
+
+    add esi, Hexagon.Processes.Table.cwd
 
 ;; Now the previous directory path, for EDI
 
-    mov edi, Hexagon.VFS.Directory.previousDirectory
+    mov edi, eax
+    
+    add edi, Hexagon.Processes.Table.previousCwd
+
+    pop eax
+
+    ret
+
+;;************************************************************************************
+
+;; hx.getCurrentDirectory: copies the calling process's own current
+;; directory into a caller-supplied buffer, NUL terminated
+;;
+;; Input:
+;;
+;; EDI - Caller's own buffer, at least 64 bytes
+
+Hexagon.Kernel.FS.Dir.getCurrentDirectorySyscall:
+
+;; Up to 64 bytes go into the caller's own buffer at CPL 0, so the range is
+;; checked against what this process could reach by itself
+
+    push ebx
+    push ecx
+
+    mov ebx, edi
+    mov ecx, 64
+
+    call Hexagon.Arch.Paging.rangeIsCallerWritable
+
+    pop ecx
+    pop ebx
+
+    jc .badBuffer
+
+    push es
+
+;; stosb below is hardwired to ES:EDI, and ES may be the kernel linear
+;; segment this deep into a call chain, and not kernel data
+
+    mov ax, 10h
+    mov es, ax
+
+    push edi ;; Caller's own destination, saved across the call below
+
+    call Hexagon.Kernel.FS.Dir.getCurrentDirectory ;; ESI = this process's own cwd
+
+    pop edi
+
+    mov ecx, 64
+
+.copyLoop:
+
+    lodsb
+
+    stosb
+
+    cmp al, 0
+    je .done
+
+    loop .copyLoop
+
+.done:
+
+    pop es
+
+    clc
+
+    ret
+
+.badBuffer:
+
+    mov eax, Hexagon.Kern.Proc.badAddress
+
+    stc
 
     ret
 
@@ -225,11 +372,12 @@ Hexagon.Kernel.FS.Dir.setMountPoint:
 
     call Hexagon.Libkern.String.stringSize ;; Hexagon function to check the size of a string
 
-    cmp eax, 2
-    jg .continue ;; Greater than 2 (Character plus null)
+;; The path goes into a 64 byte field, so one that would not fit with its
+;; terminator is refused, and nothing is written over what follows it. There is
+;; no lower bound to check, since "/" is one character and has to be accepted
 
-    cmp eax, 65
-    jl .continue ;; Less than 64
+    cmp eax, 64
+    jb .continue
 
     pop esi
 
@@ -277,7 +425,7 @@ Hexagon.Kernel.FS.Dir.getMountPoint:
 
 ;; First, rescue the mounted physical volume, for EDI
 
-    mov ah, byte[Hexagon.Dev.Gen.Disk.Control.currentDisk]
+    mov ah, byte[Hexagon.Dev.Disk.Control.currentDisk]
 
     mov dl, 01h ;; Storage device class
 

@@ -77,117 +77,39 @@ use32
 
 Hexagon.Panic:
 
-.panicHeader:
-db 10, 10, "Kernel Panic: ", 0
-.oopsHeader:
-db 10, 10, "Kernel Oops: ", 0
-.rebootError:
-db "Restart your computer to continue.", 0
-.oopsError:
-db "Press any key to continue...", 0
-.unknownError:
-db 10, 10, "The severity of the error was not provided or is unknown by the Hexagon.", 10, 10, 0
+.header:
+db 10, "panic: ", 0
 
 ;;************************************************************************************
 
-;; Displays an error message on the screen and requests to restart the computer
+;; Prints a fatal kernel error to whatever console is active and to the
+;; serial log, then halts the system for good. There is no recoverable
+;; path back from here, so this never returns
 ;;
 ;; Input:
 ;;
-;; EAX - Is the error fatal? (0 for no and 1 for yes)
-;; ESI - Supplemental error message
+;; ESI - Error message
 
 Hexagon.Kern.Panic.panic:
 
-    push esi
-    push eax
+    cli ;; No timer tick or other interrupt gets to run during or after this
 
-    call Hexagon.Kern.Panic.preparePanic
+    push esi ;; The caller's own message, needed again once the header is printed
 
-    kprint Hexagon.Info.aboutHexagon
+    mov esi, Hexagon.Panic.header
 
-    pop eax
-
-    cmp eax, 0 ;; If the error is not fatal, control can be returned to the calling function
-    je .notFatal
-
-    cmp eax, 1
-    je .fatal
-
-    jmp .unknown
-
-.fatal:
-
-    kprint Hexagon.Panic.panicHeader
-
-    logHexagon Hexagon.Panic.panicHeader, Hexagon.Dmesg.Priorities.p4
+    call Hexagon.Kernel.Dev.Console.Console.printString
 
     pop esi
 
-    call Hexagon.Kernel.Dev.Gen.Console.Console.printString
+    call Hexagon.Kernel.Dev.Console.Console.printString ;; Preserves ESI
 
     mov ebx, Hexagon.Dmesg.Priorities.p4
 
-    call Hexagon.Kern.Dmesg.createMessage
+    call Hexagon.Kern.Dmesg.createMessage ;; Also reaches the serial log, in case the console itself is what's broken
 
-    kprint Hexagon.Panic.rebootError
+.hang:
 
     hlt
 
-    jmp $
-
-.notFatal:
-
-    kprint Hexagon.Panic.oopsHeader
-
-    logHexagon Hexagon.Panic.oopsHeader, Hexagon.Dmesg.Priorities.p4
-
-    call Hexagon.Kern.Dmesg.createMessage
-
-    pop esi
-
-    call Hexagon.Kernel.Dev.Gen.Console.Console.printString
-
-    mov ebx, Hexagon.Dmesg.Priorities.p4
-
-    call Hexagon.Kern.Dmesg.createMessage
-
-    kprint Hexagon.Panic.oopsError
-
-    call Hexagon.Kernel.Dev.Gen.Keyboard.Keyboard.waitKeyboard
-
-    ret
-
-.unknown:
-
-    kprint Hexagon.Panic.unknownError
-
-    ret
-
-;;************************************************************************************
-
-;; Routine that prepares the default video output to display information in
-;; case of a serious system error
-
-Hexagon.Kern.Panic.preparePanic:
-
-    mov esi, Hexagon.Dev.Devices.tty1 ;; First, close tty1
-
-    call Hexagon.Kernel.Dev.Dev.close
-
-    mov esi, Hexagon.Dev.Devices.tty0 ;; Open default video output
-
-    call Hexagon.Kernel.Dev.Dev.open
-
-    mov eax, HEXAGONIX_CLASSICO_BRANCO
-    mov ebx, HEXAGONIX_BLOSSOM_AZUL
-
-    call Hexagon.Kernel.Dev.Gen.Console.Console.setConsoleColor
-
-    call Hexagon.Kernel.Dev.Gen.Console.Console.clearConsole ;; Clear default video output
-
-    mov dx, 0
-
-    call Hexagon.Kernel.Dev.Gen.Console.Console.positionCursor
-
-    ret ;; Return to main routine
+    jmp .hang

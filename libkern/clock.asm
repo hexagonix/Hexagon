@@ -75,11 +75,11 @@ use32
 
 Hexagon.Libkern.Clock.getDate:
 
-    movzx eax, [Hexagon.Arch.i386.CMOS.day]
-    movzx ebx, [Hexagon.Arch.i386.CMOS.month]
-    movzx ecx, [Hexagon.Arch.i386.CMOS.century]
-    movzx edx, [Hexagon.Arch.i386.CMOS.year]
-    movzx esi, [Hexagon.Arch.i386.CMOS.dayOfWeek]
+    movzx eax, [Hexagon.Arch.CMOS.day]
+    movzx ebx, [Hexagon.Arch.CMOS.month]
+    movzx ecx, [Hexagon.Arch.CMOS.century]
+    movzx edx, [Hexagon.Arch.CMOS.year]
+    movzx esi, [Hexagon.Arch.CMOS.dayOfWeek]
 
     ret
 
@@ -87,8 +87,8 @@ Hexagon.Libkern.Clock.getDate:
 
 Hexagon.Libkern.Clock.getTime:
 
-    movzx eax, [Hexagon.Arch.i386.CMOS.hour]
-    movzx ebx, [Hexagon.Arch.i386.CMOS.minute]
-    movzx ecx, [Hexagon.Arch.i386.CMOS.second]
+    movzx eax, [Hexagon.Arch.CMOS.hour]
+    movzx ebx, [Hexagon.Arch.CMOS.minute]
+    movzx ecx, [Hexagon.Arch.CMOS.second]
 
     ret
