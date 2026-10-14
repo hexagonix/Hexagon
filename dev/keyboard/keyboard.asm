@@ -204,6 +204,7 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.getString:
 
     jc .badBuffer
 
+    push ebp
     push eax
     push ecx
     push edx
@@ -211,10 +212,51 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.getString:
 
     push es
 
-    mov dword[.echo], ebx
+;; Each VT edits its own line, so a line left half typed on one is never seen
+;; by a reader on another. EBP holds this VT's state, allocated on its first line
 
-    mov byte[.string], 0
-    mov byte[.currentCharacter], 0
+    push edx
+
+    call Hexagon.Kernel.Dev.Console.Console.resolveCallerTTY
+
+    call Hexagon.Kern.Sched.disablePreemption
+
+    cmp dword[.state + edx * 4], 0
+
+    jne .haveState
+
+    pushad
+
+    mov ebx, .stateSize
+
+    call Hexagon.Arch.Mm.malloc ;; EBX = block, or EAX = 0
+
+    cmp eax, 0
+
+    je .allocated
+
+    mov dword[.state + edx * 4], ebx
+
+.allocated:
+
+    popad
+
+.haveState:
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+    mov ebp, dword[.state + edx * 4]
+
+    pop edx
+
+    cmp ebp, 0
+
+    je .noMemory
+
+    mov dword[ds:ebp + .echo], ebx
+
+    mov byte[ds:ebp + .string], 0
+    mov byte[ds:ebp + .currentCharacter], 0
 
     push ds ;; Kernel data segment
     pop es
@@ -228,12 +270,12 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.getString:
 
     call Hexagon.Kernel.Dev.Console.Console.positionCursor
 
-    cmp dword[.echo], 1234h
+    cmp dword[ds:ebp + .echo], 1234h
     je .continue
 
 .withEcho:
 
-    mov esi, .string
+    lea esi, [ebp + .string]
 
     call Hexagon.Kernel.Dev.Console.Console.printString
 
@@ -245,9 +287,9 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.getString:
 
     push edx
 
-    add dl, byte[.currentCharacter]
+    add dl, byte[ds:ebp + .currentCharacter]
 
-    cmp dword[.echo], 1234h
+    cmp dword[ds:ebp + .echo], 1234h
     je .withoutMoveCursor
 
     call Hexagon.Kernel.Dev.Console.Console.positionCursor
@@ -290,9 +332,9 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.getString:
 
     push edx
 
-    movzx esi, byte[.currentCharacter]
+    movzx esi, byte[ds:ebp + .currentCharacter]
 
-    add esi, .string
+    add esi, ebp
 
     mov edx, 0
 
@@ -300,7 +342,7 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.getString:
 
     pop edx
 
-    inc byte[.currentCharacter]
+    inc byte[ds:ebp + .currentCharacter]
 
     inc cl
 
@@ -308,16 +350,16 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.getString:
 
 .backspaceKey:
 
-    cmp byte[.currentCharacter], 0 ;; Not allowed
+    cmp byte[ds:ebp + .currentCharacter], 0 ;; Not allowed
     je .getKey
 
-    dec byte[.currentCharacter]
+    dec byte[ds:ebp + .currentCharacter]
 
     push ecx
 
-    movzx esi, byte[.currentCharacter]
+    movzx esi, byte[ds:ebp + .currentCharacter]
 
-    add esi, .string
+    add esi, ebp
 
     mov eax, 0
 
@@ -331,14 +373,14 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.getString:
 
 .deleteKey:
 
-    cmp byte[.currentCharacter], cl ;; Not allowed
+    cmp byte[ds:ebp + .currentCharacter], cl ;; Not allowed
     je .getKey
 
     push ecx
 
-    movzx esi, byte[.currentCharacter]
+    movzx esi, byte[ds:ebp + .currentCharacter]
 
-    add esi, .string
+    add esi, ebp
 
     mov eax, 0
 
@@ -352,31 +394,31 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.getString:
 
 .homeKey:
 
-    mov byte[.currentCharacter], 0
+    mov byte[ds:ebp + .currentCharacter], 0
 
     jmp .getKey
 
 .endKey:
 
-    mov byte[.currentCharacter], cl
+    mov byte[ds:ebp + .currentCharacter], cl
 
     jmp .getKey
 
 .leftKey:
 
-    cmp byte[.currentCharacter], 0 ;; Not allowed
+    cmp byte[ds:ebp + .currentCharacter], 0 ;; Not allowed
     je .getKey
 
-    dec byte[.currentCharacter]
+    dec byte[ds:ebp + .currentCharacter]
 
     jmp .getKey
 
 .rightKey:
 
-    cmp byte[.currentCharacter], cl ;; Not allowed
+    cmp byte[ds:ebp + .currentCharacter], cl ;; Not allowed
     je .getKey
 
-    inc byte[.currentCharacter]
+    inc byte[ds:ebp + .currentCharacter]
 
     jmp .getKey
 
@@ -394,7 +436,7 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.getString:
 
     mov edi, dword[esp + 8]
 
-    mov esi, .string
+    lea esi, [ebp + .string]
 
 .copyToCaller:
 
@@ -415,7 +457,9 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.getString:
     pop ecx
     pop eax
 
-    mov dword[.echo], 00h
+    mov dword[ds:ebp + .echo], 00h
+
+    pop ebp
 
     clc
 
@@ -429,9 +473,31 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.getString:
 
     ret
 
-.string: times 256 db 0 ;; Buffer to store characters
-.currentCharacter: db 0
-.echo: dd 0 ;; Registers whether or not the pressed key should be displayed (echo)
+;; An empty line, since there was nowhere to edit one
+
+.noMemory:
+
+    pop es
+    pop edi
+    pop edx
+    pop ecx
+    pop eax
+    pop ebp
+
+    mov byte[edi], 0
+
+    stc
+
+    ret
+
+;; Offsets into one VT's state, the typed line first
+
+.string           = 0
+.currentCharacter = 256
+.echo             = 260 ;; Whether the pressed key should be displayed (echo)
+.stateSize        = 264
+
+.state: times Hexagon.Console.VT.count dd 0 ;; Each VT's block, 0 until its first line
 
 ;;************************************************************************************
 
