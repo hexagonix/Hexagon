@@ -124,6 +124,7 @@ include "dev/cpu/cpu.asm"               ;; Registers the CPU as a device (cpu0)
 include "dev/console/console.asm"       ;; Hexagon video management
 include "dev/console/terminal.asm"      ;; Escape sequences written to a tty
 include "dev/keyboard/keyboard.asm"     ;; Functions required to use the keyboard
+include "dev/tty/tty.asm"               ;; Terminal line discipline
 include "arch/cpu/cpu.asm"              ;; IDT, GDT and processor management
 include "kern/power.asm"                ;; Power management dispatch (reboot, shutdown)
 include "arch/acpi/acpi.asm"            ;; Hexagon ACPI implementation

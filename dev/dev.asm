@@ -942,7 +942,7 @@ Hexagon.Kernel.Dev.Dev.Switch.Output.read:
 
     jc .notSupported
 
-    call Hexagon.Kernel.Dev.Keyboard.Keyboard.readTTY
+    call Hexagon.Kernel.Dev.TTY.read
 
     pop edx
 
@@ -1656,11 +1656,14 @@ Hexagon.Kernel.Dev.Dev.ensureVTBuffer:
 ;;************************************************************************************
 
 ;; EBX - Command (1 = activate console, 2 = activate as foreground VT,
-;;       3 = claim the open tty as the caller's own VT)
-;; ECX - Argument for command 1 (console index: 0 main, 1 secondary).
-;;       Commands 2 and 3 take no argument, the target VT is the tty behind
-;;       the descriptor
+;;       3 = claim the open tty as the caller's own VT, 4 = get the mode of
+;;       the tty, 5 = set it)
+;; ECX - Argument for command 1 (console index: 0 main, 1 secondary), or the
+;;       mode for command 5, as Hexagon.TTY.Modes. Commands 2 and 3 take no
+;;       argument, the target VT is the tty behind the descriptor
 ;; EAX - Device id, from Hexagon.Kernel.Dev.Dev.ioctl
+;;
+;; Output: EAX - Mode, for command 4
 
 Hexagon.Kernel.Dev.Dev.Switch.Output.ioctl:
 
@@ -1673,7 +1676,45 @@ Hexagon.Kernel.Dev.Dev.Switch.Output.ioctl:
     cmp ebx, 3
     je .claim
 
+    cmp ebx, 4
+
+    je .getMode
+
+    cmp ebx, 5
+
+    je .setMode
+
     stc
+
+    ret
+
+.getMode:
+
+    call Hexagon.Kernel.Dev.Dev.Switch.Output.resolveTTYIndex
+
+    jc .end
+
+    movzx eax, byte[Hexagon.TTY.mode + ecx]
+
+    clc
+
+    ret
+
+.setMode:
+
+    push ecx ;; The mode
+
+    call Hexagon.Kernel.Dev.Dev.Switch.Output.resolveTTYIndex
+
+    pop eax
+
+    jc .end
+
+    and al, Hexagon.TTY.Modes.all
+
+    mov byte[Hexagon.TTY.mode + ecx], al
+
+    clc
 
     ret
 
