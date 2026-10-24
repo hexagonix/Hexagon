@@ -225,15 +225,23 @@ db 0
 
 ;;************************************************************************************
 
+;; Only keys sent after the E0 prefix have a sequence, so the keypad keeps its
+;; digits while the arrows, Home, End and Delete sharing their codes do not
+;;
 ;; Input:
 ;;
-;; AH - Key code
+;; AH  - Key code
+;; EDX - VT the key was read on
 ;;
 ;; Output:
 ;;
 ;; ESI - Its entry in Hexagon.Kernel.Dev.TTY.read.sequences, CF set if it has none
 
 Hexagon.Kernel.Dev.TTY.findSequence:
+
+    cmp byte[Hexagon.Kernel.Dev.Keyboard.Keyboard.waitKeyboard.extendedKey + edx], 0
+
+    je .none
 
     mov esi, Hexagon.Kernel.Dev.TTY.read.sequences
 

@@ -671,6 +671,12 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.waitKeyboard:
 
 .notExtendedPrefix:
 
+;; Kept for the tty, where an arrow and the keypad digit sharing its code are
+;; told apart by this prefix alone
+
+    mov bl, byte[.extendedPending]
+    mov byte[.extendedKey + edx], bl
+
 ;; Clear the pending flag on this byte no matter what it turns out to be,
 ;; make or break code, so a release right after E0 (Numpad / being let go)
 ;; can't leave it stuck set for whatever key comes next
@@ -719,6 +725,7 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.waitKeyboard:
 
 .currentCodesIndex: db 0
 .extendedPending: db 0
+.extendedKey: times Hexagon.Console.VT.count db 0 ;; Whether each VT's last key came after E0
 
 ;;************************************************************************************
 
