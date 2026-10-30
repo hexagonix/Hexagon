@@ -159,7 +159,7 @@ Hexagon.Kern.Syscall.hexagonServices:
 ;; Hexagon keyboard input services
 
     dd Hexagon.Kernel.Dev.Keyboard.Keyboard.waitKeyboard         ;; 54
-    dd Hexagon.Kernel.Dev.Keyboard.Keyboard.getString            ;; 55
+    dd Hexagon.Kern.Syscall.nullSystemCall                       ;; 55
     dd Hexagon.Kernel.Dev.Keyboard.Keyboard.getSpecialKeysStatus ;; 56
     dd Hexagon.Kernel.Dev.Console.Console.changeFont             ;; 57
     dd Hexagon.Kernel.Dev.Keyboard.Keyboard.changeLayout         ;; 58
