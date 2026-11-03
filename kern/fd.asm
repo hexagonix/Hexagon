@@ -140,6 +140,14 @@ Hexagon.Kern.FD.inherit:
     mov eax, dword[esi]
     mov dword[edi], eax
 
+    cmp eax, 0
+
+    je .copied
+
+    call Hexagon.Kernel.Dev.Dev.referenceEntry
+
+.copied:
+
     add esi, 4
     add edi, 4
 
@@ -352,5 +360,84 @@ Hexagon.Kern.FD.release:
     mov dword[edi + eax * 4], 0
 
     pop edi
+
+    ret
+
+;;************************************************************************************
+
+;; Makes a descriptor name what another one does, closing it first if it was
+;; open, as BSD's dup2
+;;
+;; Input:
+;;
+;; EAX - Descriptor to copy
+;; EBX - Descriptor to make a copy of it
+;;
+;; Output:
+;;
+;; EAX - EBX's descriptor, or Hexagon.Kern.FD.badDescriptor with CF set
+
+Hexagon.Kern.FD.dup2:
+
+    push ebx
+    push ecx
+    push edi
+
+    cmp ebx, Hexagon.Kern.FD.limit
+
+    jae .bad
+
+    mov ecx, eax ;; The descriptor to copy, kept for the comparison below
+
+    call Hexagon.Kern.FD.lookup ;; EAX = its entry
+
+    jc .bad
+
+    cmp ecx, ebx
+
+    je .same
+
+    push eax
+    push ebx
+    push ecx
+
+    mov eax, ebx
+
+    call Hexagon.Kernel.Dev.Dev.close ;; Nothing to do when it was not open
+
+    pop ecx
+    pop ebx
+    pop eax
+
+    movzx edi, byte[Hexagon.Scheduler.current]
+
+    imul edi, edi, Hexagon.Kern.FD.limit * 4
+    add edi, Hexagon.Processes.Table.fd
+
+    mov dword[edi + ebx * 4], eax
+
+    call Hexagon.Kernel.Dev.Dev.referenceEntry
+
+.same:
+
+    mov eax, ebx
+
+    pop edi
+    pop ecx
+    pop ebx
+
+    clc
+
+    ret
+
+.bad:
+
+    mov eax, Hexagon.Kern.FD.badDescriptor
+
+    pop edi
+    pop ecx
+    pop ebx
+
+    stc
 
     ret

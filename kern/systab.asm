@@ -203,4 +203,5 @@ Hexagon.Kern.Syscall.hexagonServices:
 ;; Hexagon file and device management service
 
     dd Hexagon.Kernel.Dev.Dev.read                               ;; 71
+    dd Hexagon.Kern.FD.dup2                                      ;; 72
 

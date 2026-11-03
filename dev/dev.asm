@@ -370,15 +370,17 @@ Hexagon.Kernel.Dev.Dev.registerDevice:
 ;;************************************************************************************
 
 ;; Dispatch table for the five device classes in Hexagon.Dev.DeviceClasses.
-;; attach runs once, at boot. open/read/write/close/ioctl run per caller
+;; attach runs once, at boot. open/read/write/close/ioctl run per caller, and
+;; reference whenever a descriptor is copied, by hx.dup2 or into a new process
 
-Hexagon.Dev.Switch.attach  = 0
-Hexagon.Dev.Switch.open    = 4
-Hexagon.Dev.Switch.read    = 8
-Hexagon.Dev.Switch.write   = 12
-Hexagon.Dev.Switch.close   = 16
-Hexagon.Dev.Switch.ioctl   = 20
-Hexagon.Dev.Switch.rowSize = 24
+Hexagon.Dev.Switch.attach    = 0
+Hexagon.Dev.Switch.open      = 4
+Hexagon.Dev.Switch.read      = 8
+Hexagon.Dev.Switch.write     = 12
+Hexagon.Dev.Switch.close     = 16
+Hexagon.Dev.Switch.ioctl     = 20
+Hexagon.Dev.Switch.reference = 24
+Hexagon.Dev.Switch.rowSize   = 28
 
 Hexagon.Dev.Switch:
 
@@ -388,6 +390,7 @@ dd Hexagon.Kernel.Dev.Dev.Switch.Block.read
 dd Hexagon.Kernel.Dev.Dev.Switch.Block.write
 dd Hexagon.Kernel.Dev.Dev.Switch.Block.close
 dd Hexagon.Kernel.Dev.Dev.Switch.notSupportedIoctl
+dd Hexagon.Kernel.Dev.Dev.Switch.noReference
 
 dd Hexagon.Kernel.Dev.Dev.Switch.Serial.attach
 dd Hexagon.Kernel.Dev.Dev.Switch.Serial.open
@@ -395,6 +398,7 @@ dd Hexagon.Kernel.Dev.Dev.Switch.Serial.read
 dd Hexagon.Kernel.Dev.Dev.Switch.Serial.write
 dd Hexagon.Kernel.Dev.Dev.Switch.Serial.close
 dd Hexagon.Kernel.Dev.Dev.Switch.notSupportedIoctl
+dd Hexagon.Kernel.Dev.Dev.Switch.noReference
 
 dd Hexagon.Kernel.Dev.Dev.Switch.Parallel.attach
 dd Hexagon.Kernel.Dev.Dev.Switch.Parallel.open
@@ -402,6 +406,7 @@ dd Hexagon.Kernel.Dev.Dev.Switch.Parallel.read
 dd Hexagon.Kernel.Dev.Dev.Switch.Parallel.write
 dd Hexagon.Kernel.Dev.Dev.Switch.Parallel.close
 dd Hexagon.Kernel.Dev.Dev.Switch.notSupportedIoctl
+dd Hexagon.Kernel.Dev.Dev.Switch.noReference
 
 dd Hexagon.Kernel.Dev.Dev.Switch.Output.attach
 dd Hexagon.Kernel.Dev.Dev.Switch.Output.open
@@ -409,6 +414,7 @@ dd Hexagon.Kernel.Dev.Dev.Switch.Output.read
 dd Hexagon.Kernel.Dev.Dev.Switch.Output.write
 dd Hexagon.Kernel.Dev.Dev.Switch.Output.close
 dd Hexagon.Kernel.Dev.Dev.Switch.Output.ioctl
+dd Hexagon.Kernel.Dev.Dev.Switch.Output.reference
 
 dd Hexagon.Kernel.Dev.Dev.Switch.Proc.attach
 dd Hexagon.Kernel.Dev.Dev.Switch.Proc.open
@@ -416,6 +422,13 @@ dd Hexagon.Kernel.Dev.Dev.Switch.Proc.read
 dd Hexagon.Kernel.Dev.Dev.Switch.Proc.write
 dd Hexagon.Kernel.Dev.Dev.Switch.Proc.close
 dd Hexagon.Kernel.Dev.Dev.Switch.notSupportedIoctl
+dd Hexagon.Kernel.Dev.Dev.Switch.noReference
+
+;; For the classes with nothing to count
+
+Hexagon.Kernel.Dev.Dev.Switch.noReference:
+
+    ret
 
 ;; Shared "not supported" stub for every class's ioctl slot besides output
 
@@ -601,6 +614,28 @@ Hexagon.Kernel.Dev.Dev.closeEntry:
 
     ret
 
+;; Tells the class of a descriptor entry that one more descriptor holds it
+;;
+;; Input:
+;;
+;; EAX - Descriptor entry
+
+Hexagon.Kernel.Dev.Dev.referenceEntry:
+
+    push eax
+    push ebp
+
+    call Hexagon.Kernel.Dev.Dev.classRow
+
+    and eax, 0FFFFh
+
+    call dword[ds:ebp + Hexagon.Dev.Switch.reference]
+
+    pop ebp
+    pop eax
+
+    ret
+
 ;;************************************************************************************
 
 ;; Every class close handler takes the device id in EAX
@@ -618,7 +653,7 @@ Hexagon.Kernel.Dev.Dev.Switch.Parallel.close:
     ret
 
 ;; The internal speaker is the only output device that needs anything done
-;; on close
+;; on close, and only once no descriptor holds it any more
 
 Hexagon.Kernel.Dev.Dev.Switch.Output.close:
 
@@ -626,11 +661,29 @@ Hexagon.Kernel.Dev.Dev.Switch.Output.close:
 
     jne .done
 
+    dec dword[Hexagon.Dev.Switch.Output.au0References]
+
+    jnz .done
+
     call Hexagon.Kernel.Dev.Snd.Snd.stopSound
 
 .done:
 
     ret
+
+Hexagon.Kernel.Dev.Dev.Switch.Output.reference:
+
+    cmp ax, word[Hexagon.Dev.deviceCodes.au0]
+
+    jne .done
+
+    inc dword[Hexagon.Dev.Switch.Output.au0References]
+
+.done:
+
+    ret
+
+Hexagon.Dev.Switch.Output.au0References: dd 0 ;; Descriptors holding the internal speaker
 
 Hexagon.Kernel.Dev.Dev.Switch.Proc.close:
 
@@ -1440,6 +1493,14 @@ Hexagon.Dev.Switch.Parallel.initializedLpt2: db 0
 ;; so merely opening a tty node cannot steal that VT from its owner
 
 Hexagon.Kernel.Dev.Dev.Switch.Output.open:
+
+    cmp bx, word[Hexagon.Dev.deviceCodes.au0]
+
+    jne .done
+
+    inc dword[Hexagon.Dev.Switch.Output.au0References]
+
+.done:
 
     clc
 
