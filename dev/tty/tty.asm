@@ -90,10 +90,17 @@ Hexagon.TTY.Modes.echo      = 02h ;; ECHO, typed bytes shown
 
 Hexagon.TTY.Modes.all = Hexagon.TTY.Modes.canonical or Hexagon.TTY.Modes.echo
 
-;; Mode of each VT, the tty's and not its processes', cooked by default
+;; Units of tty. The first ones are the VTs, read from the keyboard and drawn
+;; on the console, and the rest are the subsidiary sides of the ptys
+
+Hexagon.TTY.ptyCount = 4
+Hexagon.TTY.firstPty = Hexagon.Console.VT.count
+Hexagon.TTY.count    = Hexagon.TTY.firstPty + Hexagon.TTY.ptyCount
+
+;; Mode of each unit, the tty's and not its processes', cooked by default
 
 Hexagon.TTY.mode:
-times Hexagon.Console.VT.count db Hexagon.TTY.Modes.all
+times Hexagon.TTY.count db Hexagon.TTY.Modes.all
 
 ;;************************************************************************************
 
@@ -116,6 +123,10 @@ Hexagon.Kernel.Dev.TTY.read:
     test byte[Hexagon.TTY.mode + edx], Hexagon.TTY.Modes.canonical
 
     jnz Hexagon.Kernel.Dev.TTY.readLine
+
+    cmp edx, Hexagon.TTY.firstPty
+
+    jae Hexagon.Kernel.Dev.TTY.readSubsidiaryRaw
 
     push ebx
     push ecx
@@ -393,6 +404,18 @@ Hexagon.Kernel.Dev.TTY.readLine:
 
     jne .deliver
 
+    cmp edx, Hexagon.TTY.firstPty
+
+    jb .keyboard
+
+    call Hexagon.Kernel.Dev.TTY.subsidiaryGet ;; AL = byte, CF set once the manager is gone
+
+    jc .hangUp
+
+    jmp .haveByte
+
+.keyboard:
+
     call Hexagon.Kernel.Dev.Keyboard.Keyboard.waitKeyboard ;; AL = character, AH = code
 
     call Hexagon.Kernel.Dev.TTY.findSequence
@@ -402,6 +425,8 @@ Hexagon.Kernel.Dev.TTY.readLine:
     call Hexagon.Kernel.Dev.TTY.byteOfKey
 
     jc .nextKey
+
+.haveByte:
 
     movzx ebx, byte[ds:ebp + .length]
 
@@ -466,6 +491,10 @@ Hexagon.Kernel.Dev.TTY.readLine:
     mov byte[ds:ebp + .ready], 1
 
     jmp .deliver
+
+.hangUp:
+
+    movzx ebx, byte[ds:ebp + .length]
 
 .endOfFile:
 
@@ -634,7 +663,17 @@ Hexagon.Kernel.Dev.TTY.readLine:
 
     jz .noEcho
 
+    cmp edx, Hexagon.TTY.firstPty
+
+    jae .subsidiaryEcho
+
     call Hexagon.Kernel.Dev.Console.Terminal.write
+
+    ret
+
+.subsidiaryEcho:
+
+    call Hexagon.Kernel.Dev.TTY.subsidiaryPut
 
 .noEcho:
 
@@ -651,4 +690,50 @@ Hexagon.Kernel.Dev.TTY.readLine:
 
 .maxLength = 255 ;; Bytes a line may hold, its end included, as MAX_CANON in BSD
 
-.state: times Hexagon.Console.VT.count dd 0 ;; Each VT's block, 0 until its first line
+.state: times Hexagon.TTY.count dd 0 ;; Each unit's block, 0 until its first line
+
+;;************************************************************************************
+
+;; Raw mode on a pty subsidiary, where bytes come already as bytes
+;;
+;; Input/Output: as Hexagon.Kernel.Dev.TTY.read
+
+Hexagon.Kernel.Dev.TTY.readSubsidiaryRaw:
+
+    call Hexagon.Kernel.Dev.TTY.subsidiaryGet
+
+    jc .hungUp
+
+    mov byte[edi], al
+
+    mov eax, 1
+
+    clc
+
+    ret
+
+.hungUp:
+
+    xor eax, eax ;; The end of the file, once the manager is gone
+
+    clc
+
+    ret
+
+;;************************************************************************************
+
+;; The side of a pty its subsidiary reads from and writes to, taken over by the pty
+;; driver. With no driver, a subsidiary reads as hung up and what it writes is lost
+;;
+;; subsidiaryGet: EDX - unit. Output: AL - next byte, CF set once the manager is gone
+;; subsidiaryPut: EDX - unit, ESI - bytes, ECX - how many
+
+Hexagon.Kernel.Dev.TTY.subsidiaryGet:
+
+    stc
+
+    ret
+
+Hexagon.Kernel.Dev.TTY.subsidiaryPut:
+
+    ret
