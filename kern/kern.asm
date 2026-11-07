@@ -125,6 +125,7 @@ include "dev/console/console.asm"       ;; Hexagon video management
 include "dev/console/terminal.asm"      ;; Escape sequences written to a tty
 include "dev/keyboard/keyboard.asm"     ;; Functions required to use the keyboard
 include "dev/tty/tty.asm"               ;; Terminal line discipline
+include "dev/pty/pty.asm"               ;; Pseudoterminals
 include "arch/cpu/cpu.asm"              ;; IDT, GDT and processor management
 include "kern/power.asm"                ;; Power management dispatch (reboot, shutdown)
 include "arch/acpi/acpi.asm"            ;; Hexagon ACPI implementation
@@ -240,7 +241,7 @@ Hexagon.Autoconfig:
 
     call Hexagon.Kernel.Dev.Dev.allocateRegistry ;; Allocates the registry table
 
-    call Hexagon.Kernel.Dev.Dev.registerDevices ;; Registers cpu0, tty0-tty7, au0 and com1
+    call Hexagon.Kernel.Dev.Dev.registerDevices ;; Registers cpu0, tty0-tty7, au0, com1 and the ptys
 
     call Hexagon.Kernel.Dev.Keyboard.Keyboard.setupKeyboard ;; Start the Hexagon keyboard service
 
@@ -252,6 +253,7 @@ Hexagon.Autoconfig:
     call Hexagon.Kernel.Dev.Dev.Switch.Block.attach
     call Hexagon.Kernel.Dev.Dev.Switch.Parallel.attach
     call Hexagon.Kernel.Dev.Dev.Switch.Proc.attach
+    call Hexagon.Kernel.Dev.Dev.Switch.PTY.attach
 
     call Hexagon.Kernel.Dev.Dev.Switch.Output.attach ;; Configures default video resolution and settings
 

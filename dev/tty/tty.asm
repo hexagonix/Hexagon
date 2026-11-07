@@ -408,7 +408,7 @@ Hexagon.Kernel.Dev.TTY.readLine:
 
     jb .keyboard
 
-    call Hexagon.Kernel.Dev.TTY.subsidiaryGet ;; AL = byte, CF set once the manager is gone
+    call Hexagon.Kernel.Dev.PTY.subsidiaryGet ;; AL = byte, CF set once the manager is gone
 
     jc .hangUp
 
@@ -673,7 +673,7 @@ Hexagon.Kernel.Dev.TTY.readLine:
 
 .subsidiaryEcho:
 
-    call Hexagon.Kernel.Dev.TTY.subsidiaryPut
+    call Hexagon.Kernel.Dev.PTY.subsidiaryPut
 
 .noEcho:
 
@@ -700,7 +700,7 @@ Hexagon.Kernel.Dev.TTY.readLine:
 
 Hexagon.Kernel.Dev.TTY.readSubsidiaryRaw:
 
-    call Hexagon.Kernel.Dev.TTY.subsidiaryGet
+    call Hexagon.Kernel.Dev.PTY.subsidiaryGet
 
     jc .hungUp
 
@@ -722,18 +722,28 @@ Hexagon.Kernel.Dev.TTY.readSubsidiaryRaw:
 
 ;;************************************************************************************
 
-;; The side of a pty its subsidiary reads from and writes to, taken over by the pty
-;; driver. With no driver, a subsidiary reads as hung up and what it writes is lost
+;; A new session on a pty starts its subsidiary's unit over, cooked and with no line
 ;;
-;; subsidiaryGet: EDX - unit. Output: AL - next byte, CF set once the manager is gone
-;; subsidiaryPut: EDX - unit, ESI - bytes, ECX - how many
+;; Input: EDX - Unit
 
-Hexagon.Kernel.Dev.TTY.subsidiaryGet:
+Hexagon.Kernel.Dev.TTY.resetUnit:
 
-    stc
+    push ebp
 
-    ret
+    mov byte[Hexagon.TTY.mode + edx], Hexagon.TTY.Modes.all
 
-Hexagon.Kernel.Dev.TTY.subsidiaryPut:
+    mov ebp, dword[Hexagon.Kernel.Dev.TTY.readLine.state + edx * 4]
+
+    cmp ebp, 0
+
+    je .done
+
+    mov byte[ds:ebp + Hexagon.Kernel.Dev.TTY.readLine.length], 0
+    mov byte[ds:ebp + Hexagon.Kernel.Dev.TTY.readLine.position], 0
+    mov byte[ds:ebp + Hexagon.Kernel.Dev.TTY.readLine.ready], 0
+
+.done:
+
+    pop ebp
 
     ret

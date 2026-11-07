@@ -1,0 +1,976 @@
+;;************************************************************************************
+;;
+;; 88       88
+;; 88       88
+;; 88       88  ,adPPPba, 8b,     ,d8 ,adPPPPba,  ,adPPPb,d8  ,adPPPba,    ,dPPPba,
+;; 88PPPPPPP88 a8P     88  `P8, ,8P'  ""     `P8 a8"    `P88 a8"     "8a 88P'   `"88
+;; 88       88 8PP"""""""    )888(    ,adPPPPP88 8b       88 8b       d8 88       88
+;; 88       88 '8b,   ,aa  ,d8" "8b,  88,    ,88 "8a,   ,d88 "8a,   ,a8" 88       88
+;; 88       88  `"Pbbd8"' 8P'     `P8 `"8bbdP"P8  `"PbbdP"P8  `"PbbdP"'  88       88
+;;                                                aa,    ,88
+;;                                                 "P8bbdP"
+;;
+;;                          Kernel Hexagon - Hexagon kernel
+;;
+;;                 Copyright (c) 2015-2026 Felipe Miguel Nery Lunkes
+;;                Todos os direitos reservados - All rights reserved.
+;;
+;;************************************************************************************
+;;
+;; Português:
+;;
+;; O Hexagon, Hexagonix e seus componentes são licenciados sob licença BSD-3-Clause.
+;; Leia abaixo a licença que governa este arquivo e verifique a licença de cada repositório
+;; para obter mais informações sobre seus direitos e obrigações ao utilizar e reutilizar
+;; o código deste ou de outros arquivos.
+;;
+;; English:
+;;
+;; The Hexagon, the Hexagonix and its components are licensed under a BSD-3-Clause license.
+;; Read below the license that governs this file and check each repository's license for
+;; obtain more information about your rights and obligations when using and reusing
+;; the code of this or other files.
+;;
+;;************************************************************************************
+;;
+;; BSD 3-Clause License
+;;
+;; Copyright (c) 2015-2026, Felipe Miguel Nery Lunkes
+;; All rights reserved.
+;;
+;; Redistribution and use in source and binary forms, with or without
+;; modification, are permitted provided that the following conditions are met:
+;;
+;; 1. Redistributions of source code must retain the above copyright notice, this
+;;    list of conditions and the following disclaimer.
+;;
+;; 2. Redistributions in binary form must reproduce the above copyright notice,
+;;    this list of conditions and the following disclaimer in the documentation
+;;    and/or other materials provided with the distribution.
+;;
+;; 3. Neither the name of the copyright holder nor the names of its
+;;    contributors may be used to endorse or promote products derived from
+;;    this software without specific prior written permission.
+;;
+;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+;; DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+;; FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+;; DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+;; SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+;; CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+;; OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;;
+;; $HexagonixOS$
+
+;;************************************************************************************
+;;
+;;                     This file is part of the Hexagon kernel
+;;
+;;************************************************************************************
+
+
+
+;;************************************************************************************
+;;
+;; Hexagon pseudoterminals
+;;
+;; Pairs of devices, as pty(4) in BSD. What the manager writes is read on the
+;; subsidiary through the line discipline of its tty unit, and what the
+;; subsidiary writes, its echo included, is read on the manager
+;;
+;;************************************************************************************
+
+use32
+
+Hexagon.PTY.count = Hexagon.TTY.ptyCount
+
+;; Device ids, ptyp0 to ptyp3 for the managers, then ttyp0 to ttyp3 for the
+;; subsidiaries
+
+Hexagon.PTY.firstManager    = 60h
+Hexagon.PTY.firstSubsidiary = Hexagon.PTY.firstManager + Hexagon.PTY.count
+
+Hexagon.PTY.nameSize = 6 ;; Of each name in Hexagon.Dev.Devices, from .ptyp0 on
+
+;; Each pair has two rings in one block. Input is written by the manager and read
+;; by the subsidiary, output the other way round
+
+Hexagon.PTY.ringSize = 1024
+
+Hexagon.PTY.Ring.input  = 0
+Hexagon.PTY.Ring.output = 1
+
+;; Sides, numbered as the ring each one writes
+
+Hexagon.PTY.Side.manager    = 0
+Hexagon.PTY.Side.subsidiary = 1
+
+;; One pair. Each ring has its head and the bytes it holds, 8 bytes after the
+;; other ring's
+
+Hexagon.PTY.Pair.block            = 0 ;; Both rings, 0 while the pair is free
+Hexagon.PTY.Pair.head             = 4
+Hexagon.PTY.Pair.used             = 8
+Hexagon.PTY.Pair.managers         = 20 ;; Descriptors holding each side
+Hexagon.PTY.Pair.subsidiaries     = 24
+Hexagon.PTY.Pair.subsidiaryOpened = 28 ;; No end for the manager before a subsidiary
+Hexagon.PTY.Pair.size             = 32
+
+Hexagon.PTY.pairs:
+times Hexagon.PTY.count * Hexagon.PTY.Pair.size db 0
+
+;;************************************************************************************
+
+;; Lists both sides of every pair under /dev. Called by
+;; Hexagon.Kernel.Dev.Dev.registerDevices
+
+Hexagon.Kernel.Dev.PTY.registerDevices:
+
+    mov esi, Hexagon.Dev.Devices.ptyp0
+    mov ecx, Hexagon.PTY.count * 2
+
+.register:
+
+    push ecx
+    push esi
+
+    mov al, 06h ;; Hexagon.Dev.DeviceClasses.pty
+    mov bl, 0
+    mov cl, 0
+
+    call Hexagon.Kernel.Dev.Dev.registerDevice
+
+    pop esi
+    pop ecx
+
+    add esi, Hexagon.PTY.nameSize
+
+    loop .register
+
+    ret
+
+;;************************************************************************************
+
+;; Input:
+;;
+;; ESI - Name
+;;
+;; Output:
+;;
+;; BX - Device id, CF set if the name is a side of a pty
+
+Hexagon.Kernel.Dev.PTY.deviceOfName:
+
+    push ecx
+    push edi
+
+    mov edi, Hexagon.Dev.Devices.ptyp0
+
+    xor ecx, ecx
+
+.check:
+
+    call Hexagon.Libkern.String.compareWordsInString
+
+    jc .found
+
+    add edi, Hexagon.PTY.nameSize
+
+    inc ecx
+
+    cmp ecx, Hexagon.PTY.count * 2
+
+    jb .check
+
+    pop edi
+    pop ecx
+
+    clc
+
+    ret
+
+.found:
+
+    lea ebx, [ecx + Hexagon.PTY.firstManager]
+
+    pop edi
+    pop ecx
+
+    stc
+
+    ret
+
+;; Input:
+;;
+;; AX - Device id
+;;
+;; Output:
+;;
+;; ESI - Its name, CF set if it is not a side of a pty
+
+Hexagon.Kernel.Dev.PTY.nameOfDevice:
+
+    movzx esi, ax
+
+    sub esi, Hexagon.PTY.firstManager
+
+    cmp esi, Hexagon.PTY.count * 2
+
+    jae .none
+
+    imul esi, esi, Hexagon.PTY.nameSize
+
+    add esi, Hexagon.Dev.Devices.ptyp0
+
+    clc
+
+    ret
+
+.none:
+
+    stc
+
+    ret
+
+;;************************************************************************************
+
+;; Input:
+;;
+;; AX - Device id
+;;
+;; Output:
+;;
+;; EBX - Its pair
+;; EDX - Its side
+
+Hexagon.Kernel.Dev.PTY.pairOf:
+
+    movzx ebx, ax
+
+    sub ebx, Hexagon.PTY.firstManager
+
+    mov edx, Hexagon.PTY.Side.manager
+
+    cmp ebx, Hexagon.PTY.count
+
+    jb .manager
+
+    sub ebx, Hexagon.PTY.count
+
+    mov edx, Hexagon.PTY.Side.subsidiary
+
+.manager:
+
+    imul ebx, ebx, Hexagon.PTY.Pair.size
+
+    add ebx, Hexagon.PTY.pairs
+
+    ret
+
+;; Input: EBX - Pair. Output: EDX - Its subsidiary's tty unit
+
+Hexagon.Kernel.Dev.PTY.unitOf:
+
+    mov edx, ebx
+
+    sub edx, Hexagon.PTY.pairs
+
+    shr edx, 5 ;; Hexagon.PTY.Pair.size
+
+    add edx, Hexagon.TTY.firstPty
+
+    ret
+
+;; Input: EDX - Tty unit of a subsidiary. Output: EBX - Its pair
+
+Hexagon.Kernel.Dev.PTY.pairOfUnit:
+
+    lea ebx, [edx - Hexagon.TTY.firstPty]
+
+    imul ebx, ebx, Hexagon.PTY.Pair.size
+
+    add ebx, Hexagon.PTY.pairs
+
+    ret
+
+;;************************************************************************************
+
+;; A manager starts a session on a free pair and allocates its rings. A subsidiary
+;; joins the session of an open manager
+;;
+;; Input:
+;;
+;; BX - Device id
+;;
+;; Output:
+;;
+;; EAX - Error code, with CF set
+
+Hexagon.Kernel.Dev.PTY.open:
+
+    push ebx
+    push edx
+
+    mov eax, ebx
+
+    call Hexagon.Kernel.Dev.PTY.pairOf
+
+    call Hexagon.Kern.Sched.disablePreemption
+
+    cmp edx, Hexagon.PTY.Side.subsidiary
+
+    je .subsidiary
+
+;; One manager at a time, and only once the subsidiaries of the last session are gone
+
+    cmp dword[ebx + Hexagon.PTY.Pair.managers], 0
+
+    jne .refused
+
+    cmp dword[ebx + Hexagon.PTY.Pair.subsidiaries], 0
+
+    jne .refused
+
+    push ebx
+
+    mov ebx, Hexagon.PTY.ringSize * 2
+
+    call Hexagon.Arch.Mm.malloc ;; EBX = block, or EAX = 0
+
+    mov edx, ebx
+
+    pop ebx
+
+    cmp eax, 0
+
+    je .refused
+
+    mov dword[ebx + Hexagon.PTY.Pair.block], edx
+
+    xor eax, eax
+
+    mov dword[ebx + Hexagon.PTY.Pair.head], eax
+    mov dword[ebx + Hexagon.PTY.Pair.used], eax
+    mov dword[ebx + Hexagon.PTY.Pair.head + 8], eax
+    mov dword[ebx + Hexagon.PTY.Pair.used + 8], eax
+    mov dword[ebx + Hexagon.PTY.Pair.subsidiaryOpened], eax
+
+    mov dword[ebx + Hexagon.PTY.Pair.managers], 1
+
+    call Hexagon.Kernel.Dev.PTY.unitOf
+
+    call Hexagon.Kernel.Dev.TTY.resetUnit
+
+    jmp .opened
+
+.subsidiary:
+
+    cmp dword[ebx + Hexagon.PTY.Pair.managers], 0
+
+    je .refused
+
+    inc dword[ebx + Hexagon.PTY.Pair.subsidiaries]
+
+    mov dword[ebx + Hexagon.PTY.Pair.subsidiaryOpened], 1
+
+.opened:
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+    pop edx
+    pop ebx
+
+    clc
+
+    ret
+
+.refused:
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+    pop edx
+    pop ebx
+
+    mov eax, 05h ;; IO.operationDenied
+
+    stc
+
+    ret
+
+;;************************************************************************************
+
+;; The rings are freed once no descriptor holds either side
+;;
+;; Input:
+;;
+;; AX - Device id
+
+Hexagon.Kernel.Dev.PTY.close:
+
+    push ebx
+    push edx
+
+    call Hexagon.Kernel.Dev.PTY.pairOf
+
+    call Hexagon.Kern.Sched.disablePreemption
+
+    cmp edx, Hexagon.PTY.Side.subsidiary
+
+    je .subsidiary
+
+    dec dword[ebx + Hexagon.PTY.Pair.managers]
+
+    jmp .closed
+
+.subsidiary:
+
+    dec dword[ebx + Hexagon.PTY.Pair.subsidiaries]
+
+.closed:
+
+    cmp dword[ebx + Hexagon.PTY.Pair.managers], 0
+
+    jne .done
+
+    cmp dword[ebx + Hexagon.PTY.Pair.subsidiaries], 0
+
+    jne .done
+
+    cmp dword[ebx + Hexagon.PTY.Pair.block], 0
+
+    je .done
+
+    push ebx
+
+    mov ebx, dword[ebx + Hexagon.PTY.Pair.block]
+
+    call Hexagon.Arch.Mm.free
+
+    pop ebx
+
+    mov dword[ebx + Hexagon.PTY.Pair.block], 0
+
+.done:
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+    pop edx
+    pop ebx
+
+    ret
+
+;; Input: AX - Device id
+
+Hexagon.Kernel.Dev.PTY.reference:
+
+    push ebx
+    push edx
+
+    call Hexagon.Kernel.Dev.PTY.pairOf
+
+    cmp edx, Hexagon.PTY.Side.subsidiary
+
+    je .subsidiary
+
+    inc dword[ebx + Hexagon.PTY.Pair.managers]
+
+    jmp .done
+
+.subsidiary:
+
+    inc dword[ebx + Hexagon.PTY.Pair.subsidiaries]
+
+.done:
+
+    pop edx
+    pop ebx
+
+    ret
+
+;;************************************************************************************
+
+;; The manager reads what the subsidiary wrote, waiting for at least one byte. The
+;; subsidiary reads through the line discipline of its unit
+;;
+;; Input:
+;;
+;; AX  - Device id
+;; EDI - Buffer
+;; ECX - Maximum bytes, at least 1
+;;
+;; Output:
+;;
+;; EAX - Bytes read, 0 at the end of the file
+
+Hexagon.Kernel.Dev.PTY.read:
+
+    push ebx
+    push edx
+
+    call Hexagon.Kernel.Dev.PTY.pairOf
+
+    cmp edx, Hexagon.PTY.Side.subsidiary
+
+    je .subsidiary
+
+    push esi
+
+    xor esi, esi ;; Bytes read
+
+    mov edx, Hexagon.PTY.Ring.output
+
+    call Hexagon.Kernel.Dev.PTY.getByte
+
+    jc .copied ;; The subsidiary is gone and left nothing
+
+.copyByte:
+
+    mov byte[edi + esi], al
+
+    inc esi
+
+    cmp esi, ecx
+
+    jae .copied
+
+    call Hexagon.Kernel.Dev.PTY.ringGet
+
+    jnc .copyByte
+
+.copied:
+
+    mov eax, esi
+
+    pop esi
+    pop edx
+    pop ebx
+
+    clc
+
+    ret
+
+.subsidiary:
+
+    call Hexagon.Kernel.Dev.PTY.unitOf
+
+    call Hexagon.Kernel.Dev.TTY.read
+
+    pop edx
+    pop ebx
+
+    ret
+
+;;************************************************************************************
+
+;; The manager writes into the subsidiary's input and the subsidiary into the
+;; manager's output, waiting while the ring is full. Once the side reading it is
+;; gone, what is left is thrown away
+;;
+;; Input:
+;;
+;; AX  - Device id
+;; ESI - Bytes
+;; ECX - How many
+;;
+;; Output:
+;;
+;; EAX - Bytes written
+
+Hexagon.Kernel.Dev.PTY.write:
+
+    push ebx
+    push edx
+
+    call Hexagon.Kernel.Dev.PTY.pairOf ;; EDX = side, the same number as the ring it writes
+
+    call Hexagon.Kernel.Dev.PTY.putBytes
+
+    mov eax, ecx
+
+    pop edx
+    pop ebx
+
+    clc
+
+    ret
+
+;;************************************************************************************
+
+;; The subsidiary's side of its tty unit, for the line discipline
+;;
+;; subsidiaryGet: EDX - Unit. Output: AL - Next byte, CF set once the manager is gone
+;; subsidiaryPut: EDX - Unit, ESI - Bytes, ECX - How many
+
+Hexagon.Kernel.Dev.PTY.subsidiaryGet:
+
+    push ebx
+    push edx
+
+    call Hexagon.Kernel.Dev.PTY.pairOfUnit
+
+    mov edx, Hexagon.PTY.Ring.input
+
+    call Hexagon.Kernel.Dev.PTY.getByte
+
+    pop edx
+    pop ebx
+
+    ret
+
+Hexagon.Kernel.Dev.PTY.subsidiaryPut:
+
+    push ebx
+    push edx
+
+    call Hexagon.Kernel.Dev.PTY.pairOfUnit
+
+    mov edx, Hexagon.PTY.Ring.output
+
+    call Hexagon.Kernel.Dev.PTY.putBytes
+
+    pop edx
+    pop ebx
+
+    ret
+
+;;************************************************************************************
+
+;; Commands 4 and 5 get and set the mode of the subsidiary's unit, on either side,
+;; as in Hexagon.Kernel.Dev.Dev.Switch.Output.ioctl
+;;
+;; Input:
+;;
+;; AX  - Device id
+;; EBX - Command
+;; ECX - Mode, for command 5
+;;
+;; Output:
+;;
+;; EAX - Mode, for command 4
+
+Hexagon.Kernel.Dev.PTY.ioctl:
+
+    push ebx
+    push edx
+
+    cmp ebx, 4
+
+    je .getMode
+
+    cmp ebx, 5
+
+    je .setMode
+
+    pop edx
+    pop ebx
+
+    stc
+
+    ret
+
+.getMode:
+
+    call Hexagon.Kernel.Dev.PTY.pairOf
+    call Hexagon.Kernel.Dev.PTY.unitOf
+
+    movzx eax, byte[Hexagon.TTY.mode + edx]
+
+    jmp .done
+
+.setMode:
+
+    call Hexagon.Kernel.Dev.PTY.pairOf
+    call Hexagon.Kernel.Dev.PTY.unitOf
+
+    mov eax, ecx
+
+    and al, Hexagon.TTY.Modes.all
+
+    mov byte[Hexagon.TTY.mode + edx], al
+
+.done:
+
+    pop edx
+    pop ebx
+
+    clc
+
+    ret
+
+;;************************************************************************************
+
+;; Takes a byte from a ring, waiting while it is empty
+;;
+;; Input:
+;;
+;; EBX - Pair
+;; EDX - Ring
+;;
+;; Output:
+;;
+;; AL - Byte, CF set once the ring is empty and the side writing it is gone
+
+Hexagon.Kernel.Dev.PTY.getByte:
+
+    call Hexagon.Kern.Sched.disablePreemption
+
+    call Hexagon.Kernel.Dev.PTY.ringGet
+
+    jnc .got
+
+    call Hexagon.Kernel.Dev.PTY.sideGone ;; A ring has the number of the side writing it
+
+    jc .gone
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+    call Hexagon.Kernel.Dev.PTY.wait
+
+    jmp Hexagon.Kernel.Dev.PTY.getByte
+
+.got:
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+    clc
+
+    ret
+
+.gone:
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+    stc
+
+    ret
+
+;; Puts bytes into a ring, waiting while it is full. Stops once the side reading
+;; it is gone
+;;
+;; Input:
+;;
+;; EBX - Pair
+;; EDX - Ring
+;; ESI - Bytes
+;; ECX - How many
+
+Hexagon.Kernel.Dev.PTY.putBytes:
+
+    push eax
+    push ecx
+    push esi
+
+    jecxz .done
+
+.nextByte:
+
+    mov al, byte[esi]
+
+.check:
+
+    call Hexagon.Kern.Sched.disablePreemption
+
+    push edx
+
+    xor edx, 1 ;; The other side
+
+    call Hexagon.Kernel.Dev.PTY.sideGone
+
+    pop edx
+
+    jc .gone
+
+    call Hexagon.Kernel.Dev.PTY.ringPut
+
+    jnc .put
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+    call Hexagon.Kernel.Dev.PTY.wait
+
+    jmp .check
+
+.put:
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+    inc esi
+
+    loop .nextByte
+
+    jmp .done
+
+.gone:
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+.done:
+
+    pop esi
+    pop ecx
+    pop eax
+
+    ret
+
+;; Gives the processor away for a tick
+
+Hexagon.Kernel.Dev.PTY.wait:
+
+    push ecx
+
+    mov ecx, 1
+
+    call Hexagon.Kern.Sched.sleep
+
+    pop ecx
+
+    ret
+
+;; Input: EBX - Pair, EDX - Side. Output: CF set if no descriptor holds it any more
+
+Hexagon.Kernel.Dev.PTY.sideGone:
+
+    cmp edx, Hexagon.PTY.Side.subsidiary
+
+    je .subsidiary
+
+    cmp dword[ebx + Hexagon.PTY.Pair.managers], 0
+
+    je .gone
+
+    clc
+
+    ret
+
+.subsidiary:
+
+    cmp dword[ebx + Hexagon.PTY.Pair.subsidiaryOpened], 0
+
+    je .present
+
+    cmp dword[ebx + Hexagon.PTY.Pair.subsidiaries], 0
+
+    je .gone
+
+.present:
+
+    clc
+
+    ret
+
+.gone:
+
+    stc
+
+    ret
+
+;;************************************************************************************
+
+;; ringGet: EBX - Pair, EDX - Ring. Output: AL - Oldest byte, CF set if empty
+;; ringPut: EBX - Pair, EDX - Ring, AL - Byte. Output: CF set if full
+
+Hexagon.Kernel.Dev.PTY.ringGet:
+
+    push esi
+    push edi
+
+    call Hexagon.Kern.Sched.disablePreemption
+
+    lea edi, [ebx + edx * 8] ;; This ring's head and count
+
+    cmp dword[edi + Hexagon.PTY.Pair.used], 0
+
+    je .empty
+
+    imul esi, edx, Hexagon.PTY.ringSize
+
+    add esi, dword[ebx + Hexagon.PTY.Pair.block]
+    add esi, dword[edi + Hexagon.PTY.Pair.head]
+
+    mov al, byte[esi]
+
+    mov esi, dword[edi + Hexagon.PTY.Pair.head]
+
+    inc esi
+
+    and esi, Hexagon.PTY.ringSize - 1
+
+    mov dword[edi + Hexagon.PTY.Pair.head], esi
+
+    dec dword[edi + Hexagon.PTY.Pair.used]
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+    pop edi
+    pop esi
+
+    clc
+
+    ret
+
+.empty:
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+    pop edi
+    pop esi
+
+    stc
+
+    ret
+
+Hexagon.Kernel.Dev.PTY.ringPut:
+
+    push esi
+    push edi
+
+    call Hexagon.Kern.Sched.disablePreemption
+
+    lea edi, [ebx + edx * 8]
+
+    mov esi, dword[edi + Hexagon.PTY.Pair.used]
+
+    cmp esi, Hexagon.PTY.ringSize
+
+    jae .full
+
+    add esi, dword[edi + Hexagon.PTY.Pair.head]
+
+    and esi, Hexagon.PTY.ringSize - 1
+
+    push edx
+
+    imul edx, edx, Hexagon.PTY.ringSize
+
+    add esi, edx
+
+    pop edx
+
+    add esi, dword[ebx + Hexagon.PTY.Pair.block]
+
+    mov byte[esi], al
+
+    inc dword[edi + Hexagon.PTY.Pair.used]
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+    pop edi
+    pop esi
+
+    clc
+
+    ret
+
+.full:
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+    pop edi
+    pop esi
+
+    stc
+
+    ret

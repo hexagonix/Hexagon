@@ -84,6 +84,7 @@
 ;; 3 - Portas paralelas (impressoras)
 ;; 4 - Dispositivos de saída (vídeo e som)
 ;; 5 - Processador(es)
+;; 6 - Pseudoterminais
 ;;
 ;;************************************************************************************
 
@@ -150,6 +151,25 @@ db "tty7", 0
 .au0: ;; Internal speaker
 db "au0", 0
 
+;; Pseudoterminals, managers then subsidiaries, each name 6 bytes long
+
+.ptyp0:
+db "ptyp0", 0
+.ptyp1:
+db "ptyp1", 0
+.ptyp2:
+db "ptyp2", 0
+.ptyp3:
+db "ptyp3", 0
+.ttyp0:
+db "ttyp0", 0
+.ttyp1:
+db "ttyp1", 0
+.ttyp2:
+db "ttyp2", 0
+.ttyp3:
+db "ttyp3", 0
+
 ;; Input devices
 
 .mouse0: ;; Mouse connected to the computer
@@ -169,6 +189,7 @@ Hexagon.Dev.DeviceClasses:
 .parallel: db 03h
 .output:   db 04h
 .proc:     db 05h
+.pty:      db 06h
 
 ;;************************************************************************************
 
@@ -203,7 +224,7 @@ times Hexagon.Dev.Registry.limit db 0
 
 Hexagon.Dev.Registry.byteSize = $
 
-Hexagon.Dev.Registry.limit = 40
+Hexagon.Dev.Registry.limit = 48
 
 end virtual
 
@@ -247,6 +268,7 @@ Hexagon.Kernel.Dev.Dev.registerDevices:
     call Hexagon.Kernel.Dev.Console.Console.registerDevices
     call Hexagon.Kernel.Dev.Snd.Snd.registerDevices
     call Hexagon.Kernel.Dev.Serial.Serial.registerDevices
+    call Hexagon.Kernel.Dev.PTY.registerDevices
 
     ret
 
@@ -369,7 +391,7 @@ Hexagon.Kernel.Dev.Dev.registerDevice:
 
 ;;************************************************************************************
 
-;; Dispatch table for the five device classes in Hexagon.Dev.DeviceClasses.
+;; Dispatch table for the six device classes in Hexagon.Dev.DeviceClasses.
 ;; attach runs once, at boot. open/read/write/close/ioctl run per caller, and
 ;; reference whenever a descriptor is copied, by hx.dup2 or into a new process
 
@@ -424,13 +446,21 @@ dd Hexagon.Kernel.Dev.Dev.Switch.Proc.close
 dd Hexagon.Kernel.Dev.Dev.Switch.notSupportedIoctl
 dd Hexagon.Kernel.Dev.Dev.Switch.noReference
 
+dd Hexagon.Kernel.Dev.Dev.Switch.PTY.attach
+dd Hexagon.Kernel.Dev.PTY.open
+dd Hexagon.Kernel.Dev.PTY.read
+dd Hexagon.Kernel.Dev.PTY.write
+dd Hexagon.Kernel.Dev.PTY.close
+dd Hexagon.Kernel.Dev.PTY.ioctl
+dd Hexagon.Kernel.Dev.PTY.reference
+
 ;; For the classes with nothing to count
 
 Hexagon.Kernel.Dev.Dev.Switch.noReference:
 
     ret
 
-;; Shared "not supported" stub for every class's ioctl slot besides output
+;; Shared "not supported" stub for every class's ioctl slot besides output and pty
 
 Hexagon.Kernel.Dev.Dev.Switch.notSupportedIoctl:
 
@@ -473,6 +503,10 @@ Hexagon.Kernel.Dev.Dev.Switch.Output.attach:
     ret
 
 Hexagon.Kernel.Dev.Dev.Switch.Proc.attach:
+
+    ret
+
+Hexagon.Kernel.Dev.Dev.Switch.PTY.attach:
 
     ret
 
@@ -1182,7 +1216,7 @@ Hexagon.Kernel.Dev.Dev.open:
 
     jb .invalidClass
 
-    cmp dl, 5
+    cmp dl, 6
 
     ja .invalidClass
 
@@ -1996,6 +2030,10 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
     call Hexagon.Libkern.String.compareWordsInString
     jc .cpu0
 
+    call Hexagon.Kernel.Dev.PTY.deviceOfName ;; BX = device id
+
+    jc .pty
+
 ;; None of the fixed names above matched. Check Hexagon.Dev.Registry for a
 ;; dynamically registered entry, such as a disk partition node, before
 ;; falling through to the file case, which would recurse back here forever
@@ -2284,6 +2322,14 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 
     ret
 
+.pty:
+
+    mov ah, bl
+    movzx ecx, bx
+    mov dl, 06h
+
+    ret
+
 ;;************************************************************************************
 
 ;; Convert a device number or physical address to a device name
@@ -2293,7 +2339,7 @@ Hexagon.Kernel.Dev.Dev.convertDeviceNameToDevice:
 ;; AH - Device number (storage case)
 ;; AX - Device number (serial ports, parallel ports, video devices and processors)
 ;; DL - Device class (1 for storage, 2 for serial ports, 3 for parallel ports,
-;;       4 for output devices and 5 for processors)
+;;       4 for output devices, 5 for processors and 6 for pseudoterminals)
 ;;
 ;; Output:
 ;;
@@ -2315,6 +2361,9 @@ Hexagon.Kernel.Dev.Dev.convertDeviceToDeviceName:
 
     cmp dl, 5
     je .processors
+
+    cmp dl, 6
+    je Hexagon.Kernel.Dev.PTY.nameOfDevice
 
     stc ;; In case of invalid class
 
