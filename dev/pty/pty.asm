@@ -769,6 +769,18 @@ Hexagon.Kernel.Dev.PTY.putBytes:
 
     mov al, byte[esi]
 
+    cmp edx, Hexagon.PTY.Ring.input
+
+    jne .check
+
+    cmp al, 03h ;; Ctrl+C
+
+    jne .check
+
+    call Hexagon.Kernel.Dev.PTY.interrupt
+
+    jnc .next
+
 .check:
 
     call Hexagon.Kern.Sched.disablePreemption
@@ -797,6 +809,8 @@ Hexagon.Kernel.Dev.PTY.putBytes:
 
     call Hexagon.Kern.Sched.enablePreemption
 
+.next:
+
     inc esi
 
     loop .nextByte
@@ -812,6 +826,95 @@ Hexagon.Kernel.Dev.PTY.putBytes:
     pop esi
     pop ecx
     pop eax
+
+    ret
+
+;; Ctrl+C from the manager, when the subsidiary's unit has ISIG. Ends the
+;; processes that have the subsidiary as their descriptor 0, as SIGINT to the
+;; foreground group would, and spares those waiting on a child, as a shell
+;; outlives the command it ran. Input not read yet is dropped with it
+;;
+;; Input: EBX - Pair
+;;
+;; Output: CF set if the unit has no ISIG, and 03h is an ordinary byte
+
+Hexagon.Kernel.Dev.PTY.interrupt:
+
+    pushad
+
+    call Hexagon.Kernel.Dev.PTY.unitOf
+
+    test byte[Hexagon.TTY.mode + edx], Hexagon.TTY.Modes.isig
+
+    jz .noSignal
+
+    call Hexagon.Kern.Sched.disablePreemption
+
+    mov dword[ebx + Hexagon.PTY.Pair.used], 0 ;; Of the input ring
+
+    call Hexagon.Kernel.Dev.TTY.discardLine
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+;; The descriptor entry of the subsidiary, as kern/fd.asm lays it out
+
+    lea eax, [edx - Hexagon.TTY.firstPty + Hexagon.PTY.firstSubsidiary + (06h shl 16)]
+
+    xor ecx, ecx
+
+.checkSlot:
+
+    cmp ecx, Hexagon.Processes.Table.limit
+
+    jae .done
+
+    cmp cl, byte[Hexagon.Scheduler.current]
+
+    je .nextSlot
+
+    cmp byte[Hexagon.Processes.Table.state + ecx], Hexagon.Processes.Table.States.ready
+
+    je .checkInput
+
+    cmp byte[Hexagon.Processes.Table.state + ecx], Hexagon.Processes.Table.States.sleeping
+
+    jne .nextSlot ;; Free, or blocked on a child
+
+.checkInput:
+
+    imul edi, ecx, Hexagon.Kern.FD.limit * 4
+
+    cmp dword[Hexagon.Processes.Table.fd + edi], eax
+
+    jne .nextSlot
+
+    push eax
+    push ecx
+
+    call Hexagon.Kern.Proc.killSlot
+
+    pop ecx
+    pop eax
+
+.nextSlot:
+
+    inc ecx
+
+    jmp .checkSlot
+
+.done:
+
+    popad
+
+    clc
+
+    ret
+
+.noSignal:
+
+    popad
+
+    stc
 
     ret
 

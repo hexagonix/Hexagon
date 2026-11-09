@@ -227,12 +227,19 @@ Hexagon.Kern.Services.keyboardHandler:
 
 ;; "Kill process" hotkey is Ctrl+C, like a real terminal's SIGINT, not a bare
 ;; key. A single mis-pressed key cannot close the foreground process by
-;; accident, and F1 itself stays free of any overlap with Ctrl+F1..F8
+;; accident, and F1 itself stays free of any overlap with Ctrl+F1..F8. A VT
+;; without ISIG gets it as the byte 03h instead, as a raw terminal wants
 
     cmp al, Hexagon.Keyboard.keyCodes.c
     jne .notKillCombo
 
     test dword[keyStatus], 0x00000001 ;; Ctrl currently held?
+    jz .notKillCombo
+
+    mov ebx, dword[Hexagon.Console.activeVT]
+
+    test byte[Hexagon.TTY.mode + ebx], Hexagon.TTY.Modes.isig
+
     jnz .killCurrentProcess
 
 .notKillCombo:

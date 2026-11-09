@@ -87,8 +87,10 @@ use32
 
 Hexagon.TTY.Modes.canonical = 01h ;; ICANON, whole lines
 Hexagon.TTY.Modes.echo      = 02h ;; ECHO, typed bytes shown
+Hexagon.TTY.Modes.isig      = 04h ;; ISIG, Ctrl+C ends what runs on the tty
 
-Hexagon.TTY.Modes.all = Hexagon.TTY.Modes.canonical or Hexagon.TTY.Modes.echo
+Hexagon.TTY.Modes.all = Hexagon.TTY.Modes.canonical or Hexagon.TTY.Modes.echo or \
+                        Hexagon.TTY.Modes.isig
 
 ;; Units of tty. The first ones are the VTs, read from the keyboard and drawn
 ;; on the console, and the rest are the subsidiary sides of the ptys
@@ -728,9 +730,15 @@ Hexagon.Kernel.Dev.TTY.readSubsidiaryRaw:
 
 Hexagon.Kernel.Dev.TTY.resetUnit:
 
-    push ebp
-
     mov byte[Hexagon.TTY.mode + edx], Hexagon.TTY.Modes.all
+
+;; Drops the line being typed on a unit, as Ctrl+C does
+;;
+;; Input: EDX - Unit
+
+Hexagon.Kernel.Dev.TTY.discardLine:
+
+    push ebp
 
     mov ebp, dword[Hexagon.Kernel.Dev.TTY.readLine.state + edx * 4]
 
