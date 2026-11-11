@@ -189,6 +189,8 @@ times Hexagon.Processes.Table.limit dd 0 ;; VT index this process is attached to
 Hexagon.Processes.Table.savedForegroundSlot:
 times Hexagon.Processes.Table.limit dd 0 ;; Own VT's foregroundSlot value before hx.exec handed it to a child
 
+Hexagon.Processes.Table.noHandOff = 0xFFFFFFFE ;; In savedForegroundSlot, the child was never handed the VT
+
 Hexagon.Processes.Table.drawTTY:
 times Hexagon.Processes.Table.limit dd 0 ;; VT plus 1 a write to another tty is drawing on, 0 otherwise
 
@@ -742,10 +744,27 @@ Hexagon.Kern.Proc.exec:
 
 ;; The caller's own VT gains this child as its foreground process for as
 ;; long as this blocking hx.exec lasts. The caller's own value is restored
-;; at .resumeParent once the child exits
+;; at .resumeParent once the child exits. A caller that is not that VT's
+;; foreground, as a shell on a pty whose emulator reads the VT, keeps it
+;; where it is
 
     mov eax, dword[Hexagon.Processes.Table.tty + ecx * 4]
     mov ebx, dword[Hexagon.Console.VT.foregroundSlot + eax * 4]
+
+    cmp ebx, ecx
+
+    je .handOff
+
+    cmp ebx, 0xFFFFFFFF
+
+    je .handOff
+
+    mov dword[Hexagon.Processes.Table.savedForegroundSlot + ecx * 4], Hexagon.Processes.Table.noHandOff
+
+    jmp .blocked
+
+.handOff:
+
     mov dword[Hexagon.Processes.Table.savedForegroundSlot + ecx * 4], ebx
     mov dword[Hexagon.Console.VT.foregroundSlot + eax * 4], edx
 
@@ -1166,7 +1185,14 @@ Hexagon.Kern.Proc.exit:
 
     mov eax, dword[Hexagon.Processes.Table.tty + ecx * 4]
     mov ebx, dword[Hexagon.Processes.Table.savedForegroundSlot + ecx * 4]
+
+    cmp ebx, Hexagon.Processes.Table.noHandOff
+
+    je .foregroundKept
+
     mov dword[Hexagon.Console.VT.foregroundSlot + eax * 4], ebx
+
+.foregroundKept:
 
     mov eax, dword[Hexagon.Processes.Table.base + ecx * 4]
 
@@ -2590,6 +2616,17 @@ Hexagon.Kern.Proc.killSlot:
     je .bootForegroundCheck
 
     mov ebx, dword[Hexagon.Processes.Table.savedForegroundSlot + ecx * 4]
+
+    cmp ebx, Hexagon.Processes.Table.noHandOff
+
+    jne .restoreForeground
+
+;; Never handed the VT, it claimed a free one by reading. Free it again
+
+    mov ebx, 0xFFFFFFFF
+
+.restoreForeground:
+
     mov dword[Hexagon.Console.VT.foregroundSlot + eax * 4], ebx
 
     jmp .parentCheck
