@@ -87,10 +87,12 @@ use32
 ;; Recognized sequences, CSI being ESC [
 ;;
 ;; CSI n A/B/C/D      - Cursor up, down, forward, back, n defaulting to 1
+;; CSI n G            - Cursor to column n of its row, counted from 1
 ;; CSI row ; col H/f  - Cursor position, counted from 1
 ;; CSI J, CSI 2 J     - Clear to the end of the screen, the whole screen
 ;; CSI K, 1 K, 2 K    - Clear to the end of the line, to its start, the whole line
-;; CSI ... m          - 0, 30-37, 39, 40-47, 49, 90-97, 100-107, 38;2;r;g;b, 48;2;r;g;b
+;; CSI ... m          - 0, 7, 27, 30-37, 39, 40-47, 49, 90-97, 100-107, 38;2;r;g;b, 48;2;r;g;b
+;; ESC 7, ESC 8       - Save the cursor, and put it back where it was saved
 
 Hexagon.Console.Terminal.maxParams = 5
 
@@ -104,6 +106,8 @@ Hexagon.Console.Terminal:
 .private: times Hexagon.Console.VT.count db 0
 .index:   times Hexagon.Console.VT.count db 0
 .params:  times Hexagon.Console.VT.count * Hexagon.Console.Terminal.maxParams dd 0
+.saved:   times Hexagon.Console.VT.count dw 0 ;; Column and row from ESC 7
+.reverse: times Hexagon.Console.VT.count db 0 ;; Colors swapped by CSI 7 m
 
 ;; The 16 colors of CSI 30-37, 90-97 and their backgrounds
 
@@ -277,6 +281,14 @@ Hexagon.Kernel.Dev.Console.Terminal.putByte:
 
     je .enterCSI
 
+    cmp al, '7'
+
+    je .saveCursor
+
+    cmp al, '8'
+
+    je .restoreCursor
+
     cmp al, 20h
 
     jb .toGround
@@ -286,6 +298,22 @@ Hexagon.Kernel.Dev.Console.Terminal.putByte:
     jbe .end ;; Intermediate bytes, such as the ( of ESC ( B, wait for the final one
 
     jmp .toGround ;; Final byte, dropped with the whole sequence
+
+.saveCursor:
+
+    call Hexagon.Kernel.Dev.Console.Console.getCursor
+
+    mov word[Hexagon.Console.Terminal.saved + ebp * 2], dx
+
+    jmp .toGround
+
+.restoreCursor:
+
+    mov dx, word[Hexagon.Console.Terminal.saved + ebp * 2]
+
+    call Hexagon.Kernel.Dev.Console.Console.positionCursor
+
+    jmp .toGround
 
 .enterCSI:
 
@@ -459,6 +487,10 @@ Hexagon.Kernel.Dev.Console.Terminal.execute:
 
     jbe Hexagon.Kernel.Dev.Console.Terminal.moveCursor
 
+    cmp al, 'G'
+
+    je Hexagon.Kernel.Dev.Console.Terminal.setColumn
+
     cmp al, 'H'
 
     je Hexagon.Kernel.Dev.Console.Terminal.setCursor
@@ -583,6 +615,34 @@ Hexagon.Kernel.Dev.Console.Terminal.setCursor:
     dec esi
 
 .columnGiven:
+
+    call Hexagon.Kernel.Dev.Console.Terminal.clampAndPosition
+
+    ret
+
+;;************************************************************************************
+
+;; CSI n G, counted from 1, on the row the cursor is on
+
+Hexagon.Kernel.Dev.Console.Terminal.setColumn:
+
+    xor ebx, ebx
+
+    call Hexagon.Kernel.Dev.Console.Terminal.param
+
+    mov esi, eax
+
+    cmp esi, 0
+
+    je .columnGiven
+
+    dec esi
+
+.columnGiven:
+
+    call Hexagon.Kernel.Dev.Console.Console.getCursor ;; DH = row
+
+    movzx edi, dh
 
     call Hexagon.Kernel.Dev.Console.Terminal.clampAndPosition
 
@@ -830,6 +890,14 @@ Hexagon.Kernel.Dev.Console.Terminal.setGraphics:
 
     je .reset
 
+    cmp eax, 7
+
+    je .reverse
+
+    cmp eax, 27
+
+    je .notReverse
+
     cmp eax, 38
 
     je .directForeground
@@ -884,6 +952,32 @@ Hexagon.Kernel.Dev.Console.Terminal.setGraphics:
 
     mov esi, dword[esp]
     mov edi, dword[esp + 4]
+
+    mov byte[Hexagon.Console.Terminal.reverse + ebp], 0
+
+    jmp .next
+
+.reverse:
+
+    cmp byte[Hexagon.Console.Terminal.reverse + ebp], 0
+
+    jne .next
+
+    mov byte[Hexagon.Console.Terminal.reverse + ebp], 1
+
+    xchg esi, edi
+
+    jmp .next
+
+.notReverse:
+
+    cmp byte[Hexagon.Console.Terminal.reverse + ebp], 0
+
+    je .next
+
+    mov byte[Hexagon.Console.Terminal.reverse + ebp], 0
+
+    xchg esi, edi
 
     jmp .next
 
