@@ -1752,13 +1752,13 @@ Hexagon.Kernel.Dev.Dev.ensureVTBuffer:
 
 ;; EBX - Command (1 = activate console, 2 = activate as foreground VT,
 ;;       3 = claim the open tty as the caller's own VT, 4 = get the mode of
-;;       the tty, 5 = set it)
+;;       the tty, 5 = set it, 6 = get the size of its window)
 ;; ECX - Argument for command 1 (console index: 0 main, 1 secondary), or the
 ;;       mode for command 5, as Hexagon.TTY.Modes. Commands 2 and 3 take no
 ;;       argument, the target VT is the tty behind the descriptor
 ;; EAX - Device id, from Hexagon.Kernel.Dev.Dev.ioctl
 ;;
-;; Output: EAX - Mode, for command 4
+;; Output: EAX - Mode, for command 4. EAX - Columns, EBX - Rows, for command 6
 
 Hexagon.Kernel.Dev.Dev.Switch.Output.ioctl:
 
@@ -1779,7 +1779,33 @@ Hexagon.Kernel.Dev.Dev.Switch.Output.ioctl:
 
     je .setMode
 
+    cmp ebx, 6
+
+    je .getSize
+
     stc
+
+    ret
+
+;; Every VT has the geometry of the console
+
+.getSize:
+
+    push ecx
+
+    call Hexagon.Kernel.Dev.Dev.Switch.Output.resolveTTYIndex
+
+    pop ecx
+
+    jc .end
+
+    movzx eax, word[Hexagon.Console.maxColumns]
+    movzx ebx, word[Hexagon.Console.maxRows]
+
+    inc eax ;; Counting from 1
+    inc ebx
+
+    clc
 
     ret
 

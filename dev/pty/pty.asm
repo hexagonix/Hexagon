@@ -117,7 +117,19 @@ Hexagon.PTY.Pair.used             = 8
 Hexagon.PTY.Pair.managers         = 20 ;; Descriptors holding each side
 Hexagon.PTY.Pair.subsidiaries     = 24
 Hexagon.PTY.Pair.subsidiaryOpened = 28 ;; No end for the manager before a subsidiary
-Hexagon.PTY.Pair.size             = 32
+Hexagon.PTY.Pair.columns          = 32 ;; Window size, a word each
+Hexagon.PTY.Pair.rows             = 34
+Hexagon.PTY.Pair.sizeShift        = 6 ;; A power of two, so unitOf divides by shifting
+Hexagon.PTY.Pair.size             = 1 shl Hexagon.PTY.Pair.sizeShift
+
+if Hexagon.PTY.Pair.rows + 2 > Hexagon.PTY.Pair.size
+    err
+end if
+
+;; What a new session's window measures until its manager says otherwise
+
+Hexagon.PTY.defaultColumns = 80
+Hexagon.PTY.defaultRows    = 25
 
 Hexagon.PTY.pairs:
 times Hexagon.PTY.count * Hexagon.PTY.Pair.size db 0
@@ -278,7 +290,7 @@ Hexagon.Kernel.Dev.PTY.unitOf:
 
     sub edx, Hexagon.PTY.pairs
 
-    shr edx, 5 ;; Hexagon.PTY.Pair.size
+    shr edx, Hexagon.PTY.Pair.sizeShift
 
     add edx, Hexagon.TTY.firstPty
 
@@ -357,6 +369,9 @@ Hexagon.Kernel.Dev.PTY.open:
     mov dword[ebx + Hexagon.PTY.Pair.head + 8], eax
     mov dword[ebx + Hexagon.PTY.Pair.used + 8], eax
     mov dword[ebx + Hexagon.PTY.Pair.subsidiaryOpened], eax
+
+    mov word[ebx + Hexagon.PTY.Pair.columns], Hexagon.PTY.defaultColumns
+    mov word[ebx + Hexagon.PTY.Pair.rows], Hexagon.PTY.defaultRows
 
     mov dword[ebx + Hexagon.PTY.Pair.managers], 1
 
@@ -639,17 +654,20 @@ Hexagon.Kernel.Dev.PTY.subsidiaryPut:
 ;;************************************************************************************
 
 ;; Commands 4 and 5 get and set the mode of the subsidiary's unit, on either side,
-;; as in Hexagon.Kernel.Dev.Dev.Switch.Output.ioctl
+;; as in Hexagon.Kernel.Dev.Dev.Switch.Output.ioctl. Commands 6 and 7 get and set
+;; the size of the window, which the manager sets for the program it runs
 ;;
 ;; Input:
 ;;
 ;; AX  - Device id
 ;; EBX - Command
-;; ECX - Mode, for command 5
+;; ECX - Mode, for command 5. Columns, for command 7
+;; EDX - Rows, for command 7
 ;;
 ;; Output:
 ;;
-;; EAX - Mode, for command 4
+;; EAX - Mode, for command 4. Columns, for command 6
+;; EBX - Rows, for command 6
 
 Hexagon.Kernel.Dev.PTY.ioctl:
 
@@ -663,6 +681,14 @@ Hexagon.Kernel.Dev.PTY.ioctl:
     cmp ebx, 5
 
     je .setMode
+
+    cmp ebx, 6
+
+    je .getSize
+
+    cmp ebx, 7
+
+    je .setSize
 
     pop edx
     pop ebx
@@ -690,6 +716,33 @@ Hexagon.Kernel.Dev.PTY.ioctl:
     and al, Hexagon.TTY.Modes.all
 
     mov byte[Hexagon.TTY.mode + edx], al
+
+    jmp .done
+
+.getSize:
+
+    call Hexagon.Kernel.Dev.PTY.pairOf
+
+    movzx eax, word[ebx + Hexagon.PTY.Pair.columns]
+    movzx ebx, word[ebx + Hexagon.PTY.Pair.rows]
+
+    pop edx
+
+    add esp, 4 ;; EBX carries the rows back
+
+    clc
+
+    ret
+
+.setSize:
+
+    call Hexagon.Kernel.Dev.PTY.pairOf
+
+    mov word[ebx + Hexagon.PTY.Pair.columns], cx
+
+    mov edx, dword[esp] ;; The rows
+
+    mov word[ebx + Hexagon.PTY.Pair.rows], dx
 
 .done:
 
