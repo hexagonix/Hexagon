@@ -222,10 +222,11 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.changeLayout:
 
 ;; Wait for keys on the keyboard
 ;;
-;; Input:
+;; Output:
 ;;
 ;; AL - ASCII Character
 ;; AH - Code
+;; CF set, with no key, when the read in progress may not wait
 
 Hexagon.Kernel.Dev.Keyboard.Keyboard.waitKeyboard:
 
@@ -265,7 +266,7 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.waitKeyboard:
     mov al, byte[.currentCodesIndex]
 
     cmp byte[Hexagon.Kern.Services.keyboardHandler.scanCodes.index], al
-    je .keyLoop
+    je .noKey
 
 ;; A new scan code is sitting on the shared cursor, but it may only be
 ;; consumed by the foreground process of the currently active VT. An
@@ -273,10 +274,10 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.waitKeyboard:
 ;; the real reader
 
     cmp edx, dword[Hexagon.Console.activeVT]
-    jne .keyLoop
+    jne .noKey
 
     cmp dword[Hexagon.Console.VT.foregroundSlot + edx * 4], ecx
-    jne .keyLoop
+    jne .noKey
 
 ;; Hexagon.Kern.Services.keyboardHandler tags every stored byte with the VT
 ;; that was on screen when it was captured, and that tag is trusted over the
@@ -383,6 +384,22 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.waitKeyboard:
     xlatb
 
 .end:
+
+    pop edx
+    pop ecx
+    pop ebx
+
+    clc
+
+    ret
+
+;; Nothing for this caller yet
+
+.noKey:
+
+    call Hexagon.Kern.FD.mayWait
+
+    jnc .keyLoop
 
     pop edx
     pop ecx

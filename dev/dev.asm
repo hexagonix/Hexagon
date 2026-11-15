@@ -751,6 +751,8 @@ Hexagon.Kernel.Dev.Dev.write:
 
     jc .badBuffer
 
+    call Hexagon.Kern.FD.beginCall
+
     push ebp
 
     call Hexagon.Kernel.Dev.Dev.resolveDescriptor
@@ -760,6 +762,8 @@ Hexagon.Kernel.Dev.Dev.write:
     call dword[ds:ebp + Hexagon.Dev.Switch.write]
 
 .end:
+
+    call Hexagon.Kern.FD.endCall
 
     pop ebp
 
@@ -931,6 +935,8 @@ Hexagon.Kernel.Dev.Dev.read:
 
     jc .badBuffer
 
+    call Hexagon.Kern.FD.beginCall
+
     push ebp
 
     call Hexagon.Kernel.Dev.Dev.resolveDescriptor
@@ -940,6 +946,8 @@ Hexagon.Kernel.Dev.Dev.read:
     call dword[ds:ebp + Hexagon.Dev.Switch.read]
 
 .end:
+
+    call Hexagon.Kern.FD.endCall
 
     pop ebp
 
@@ -973,8 +981,14 @@ Hexagon.Kernel.Dev.Dev.read:
 ;; Output:
 ;;
 ;; CF set if the descriptor is not open, or its class has no such command
+;;
+;; Hexagon.Kern.FD.Commands are taken here for every descriptor, before its class
 
 Hexagon.Kernel.Dev.Dev.ioctl:
+
+    cmp ebx, Hexagon.Kern.FD.Commands.nonBlocking
+
+    je .nonBlocking
 
     push ebp
 
@@ -987,6 +1001,18 @@ Hexagon.Kernel.Dev.Dev.ioctl:
 .end:
 
     pop ebp
+
+    ret
+
+.nonBlocking:
+
+    push edx
+
+    mov edx, Hexagon.Kern.FD.Flags.nonBlocking
+
+    call Hexagon.Kern.FD.setFlag
+
+    pop edx
 
     ret
 

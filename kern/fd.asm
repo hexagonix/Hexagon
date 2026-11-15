@@ -82,13 +82,24 @@
 ;;
 ;;   bits 0-15  - Device id, as in Hexagon.Dev.deviceCodes
 ;;   bits 16-23 - Device class, 0 for a free descriptor
-;;   bits 24-31 - Reserved, always 0
+;;   bits 24-31 - Flags of this descriptor, Hexagon.Kern.FD.Flags
+;;
+;; Whatever names a device reads only the low 24 bits, so a flag never changes
+;; which device an entry is
 ;;
 ;;************************************************************************************
 
 use32
 
 Hexagon.Kern.FD.limit = 8
+
+Hexagon.Kern.FD.Flags.nonBlocking = 80000000h ;; Reads and writes return instead of waiting
+Hexagon.Kern.FD.Flags.all         = 0FF000000h
+
+;; hx.ioctl commands every descriptor takes, out of the range of any class,
+;; as FIONBIO in BSD
+
+Hexagon.Kern.FD.Commands.nonBlocking = 100h ;; ECX = 1 to set, 0 to clear
 
 ;; Device id of the controlling terminal, resolved from Hexagon.Processes.Table.tty
 ;; on every operation and not when the descriptor is made, so 0, 1 and 2 follow
@@ -104,6 +115,7 @@ Hexagon.Kern.FD.controllingEntry = (Hexagon.Kern.FD.outputClass shl 16) or Hexag
 
 Hexagon.Kern.FD.badDescriptor    = 9
 Hexagon.Kern.FD.noFreeDescriptor = 10
+Hexagon.Kern.FD.wouldBlock       = 11
 
 ;;************************************************************************************
 
@@ -122,6 +134,9 @@ Hexagon.Kern.FD.inherit:
     push ecx
     push esi
     push edi
+
+    mov byte[Hexagon.Processes.Table.nonBlocking + edx], 0
+    mov byte[Hexagon.Processes.Table.wouldBlock + edx], 0
 
     imul edi, edx, Hexagon.Kern.FD.limit * 4
     add edi, Hexagon.Processes.Table.fd
@@ -414,6 +429,8 @@ Hexagon.Kern.FD.dup2:
     imul edi, edi, Hexagon.Kern.FD.limit * 4
     add edi, Hexagon.Processes.Table.fd
 
+    and eax, not Hexagon.Kern.FD.Flags.all ;; The copy starts with no flags, as in BSD
+
     mov dword[edi + ebx * 4], eax
 
     call Hexagon.Kernel.Dev.Dev.referenceEntry
@@ -439,5 +456,249 @@ Hexagon.Kern.FD.dup2:
     pop ebx
 
     stc
+
+    ret
+
+;;************************************************************************************
+
+;; Sets or clears a flag of one of the running process's descriptors
+;;
+;; Input:
+;;
+;; EAX - Descriptor
+;; EDX - Flag, from Hexagon.Kern.FD.Flags
+;; ECX - 1 to set it, 0 to clear it
+;;
+;; Output:
+;;
+;; CF set and EAX = Hexagon.Kern.FD.badDescriptor if the descriptor is not open
+
+Hexagon.Kern.FD.setFlag:
+
+    push edx
+    push edi
+
+    movzx edi, byte[Hexagon.Scheduler.current]
+
+    cmp edi, 0xFF
+
+    je .bad
+
+    cmp eax, Hexagon.Kern.FD.limit
+
+    jae .bad
+
+    imul edi, edi, Hexagon.Kern.FD.limit * 4
+    add edi, Hexagon.Processes.Table.fd
+
+    lea edi, [edi + eax * 4]
+
+    cmp dword[edi], 0
+
+    je .bad
+
+    cmp ecx, 0
+
+    je .clear
+
+    or dword[edi], edx
+
+    jmp .done
+
+.clear:
+
+    not edx
+
+    and dword[edi], edx
+
+.done:
+
+    pop edi
+    pop edx
+
+    clc
+
+    ret
+
+.bad:
+
+    mov eax, Hexagon.Kern.FD.badDescriptor
+
+    pop edi
+    pop edx
+
+    stc
+
+    ret
+
+;;************************************************************************************
+
+;; A read or write of the running process starts. Whether it may wait comes from
+;; the descriptor, and is kept for the slot while the call lasts. Every register
+;; is preserved
+;;
+;; Input:
+;;
+;; EAX - Descriptor
+
+Hexagon.Kern.FD.beginCall:
+
+    pushad
+
+    movzx edx, byte[Hexagon.Scheduler.current]
+
+    cmp edx, 0xFF
+
+    je .done
+
+    mov byte[Hexagon.Processes.Table.nonBlocking + edx], 0
+    mov byte[Hexagon.Processes.Table.wouldBlock + edx], 0
+
+    cmp eax, Hexagon.Kern.FD.limit
+
+    jae .done ;; Reported by whoever resolves the descriptor
+
+    imul edi, edx, Hexagon.Kern.FD.limit * 4
+
+    test dword[Hexagon.Processes.Table.fd + edi + eax * 4], Hexagon.Kern.FD.Flags.nonBlocking
+
+    jz .done
+
+    mov byte[Hexagon.Processes.Table.nonBlocking + edx], 1
+
+.done:
+
+    popad
+
+    ret
+
+;; The call has ended. One that returned because it would have had to wait
+;; answers Hexagon.Kern.FD.wouldBlock with CF set, whatever the class returned
+;;
+;; Input/Output: EAX and CF as the class left them
+
+Hexagon.Kern.FD.endCall:
+
+    pushfd
+    push edx
+
+    movzx edx, byte[Hexagon.Scheduler.current]
+
+    cmp edx, 0xFF
+
+    je .keep
+
+    mov byte[Hexagon.Processes.Table.nonBlocking + edx], 0
+
+    cmp byte[Hexagon.Processes.Table.wouldBlock + edx], 0
+
+    je .keep
+
+    mov byte[Hexagon.Processes.Table.wouldBlock + edx], 0
+
+    pop edx
+    popfd
+
+    mov eax, Hexagon.Kern.FD.wouldBlock
+
+    stc
+
+    ret
+
+.keep:
+
+    pop edx
+    popfd
+
+    ret
+
+;; Asked by whatever is about to wait for data or room. A call that may not wait
+;; is marked as having had to, and the caller returns with what it has
+;;
+;; Output:
+;;
+;; CF set if the running process's call may not wait
+
+Hexagon.Kern.FD.mayWait:
+
+    push eax
+
+    movzx eax, byte[Hexagon.Scheduler.current]
+
+    cmp eax, 0xFF
+
+    je .may
+
+    cmp byte[Hexagon.Processes.Table.nonBlocking + eax], 0
+
+    je .may
+
+    mov byte[Hexagon.Processes.Table.wouldBlock + eax], 1
+
+    pop eax
+
+    stc
+
+    ret
+
+.may:
+
+    pop eax
+
+    clc
+
+    ret
+
+;; Something was read or written after all, so the call is not answered with
+;; Hexagon.Kern.FD.wouldBlock. Every register and the flags are preserved
+
+Hexagon.Kern.FD.didTransfer:
+
+    pushfd
+    push eax
+
+    movzx eax, byte[Hexagon.Scheduler.current]
+
+    cmp eax, 0xFF
+
+    je .done
+
+    mov byte[Hexagon.Processes.Table.wouldBlock + eax], 0
+
+.done:
+
+    pop eax
+    popfd
+
+    ret
+
+;; Output: CF set if the running process's call returned because it would have
+;; had to wait, as Hexagon.Kern.FD.mayWait records it
+
+Hexagon.Kern.FD.hadToWait:
+
+    push eax
+
+    movzx eax, byte[Hexagon.Scheduler.current]
+
+    cmp eax, 0xFF
+
+    je .no
+
+    cmp byte[Hexagon.Processes.Table.wouldBlock + eax], 0
+
+    je .no
+
+    pop eax
+
+    stc
+
+    ret
+
+.no:
+
+    pop eax
+
+    clc
 
     ret

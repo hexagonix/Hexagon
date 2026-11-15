@@ -199,6 +199,15 @@ times Hexagon.Processes.Table.limit dd 0 ;; VT plus 1 a write to another tty is 
 Hexagon.Processes.Table.fd:
 times Hexagon.Processes.Table.limit * Hexagon.Kern.FD.limit dd 0
 
+;; For the read or write this process is in, whether it may wait, and whether it
+;; returned because it would have had to
+
+Hexagon.Processes.Table.nonBlocking:
+times Hexagon.Processes.Table.limit db 0
+
+Hexagon.Processes.Table.wouldBlock:
+times Hexagon.Processes.Table.limit db 0
+
 ;; This process's own last-resolved draw target, restored on top of the
 ;; shared Console.Memory.addressLFB global by Console.ensureCurrentVT
 ;; whenever another process has since overwritten it

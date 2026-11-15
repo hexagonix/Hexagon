@@ -582,7 +582,8 @@ Hexagon.Kernel.Dev.PTY.read:
 
 ;; The manager writes into the subsidiary's input and the subsidiary into the
 ;; manager's output, waiting while the ring is full. Once the side reading it is
-;; gone, what is left is thrown away
+;; gone, what is left is thrown away. A descriptor that may not wait writes what
+;; fits
 ;;
 ;; Input:
 ;;
@@ -598,13 +599,23 @@ Hexagon.Kernel.Dev.PTY.write:
 
     push ebx
     push edx
+    push ebp
 
     call Hexagon.Kernel.Dev.PTY.pairOf ;; EDX = side, the same number as the ring it writes
 
+    mov ebp, 1 ;; May give up when the ring is full
+
     call Hexagon.Kernel.Dev.PTY.putBytes
 
-    mov eax, ecx
+    cmp eax, 0
 
+    je .done
+
+    call Hexagon.Kern.FD.didTransfer
+
+.done:
+
+    pop ebp
     pop edx
     pop ebx
 
@@ -640,12 +651,19 @@ Hexagon.Kernel.Dev.PTY.subsidiaryPut:
     push ebx
     push edx
 
+    push eax
+    push ebp
+
     call Hexagon.Kernel.Dev.PTY.pairOfUnit
 
     mov edx, Hexagon.PTY.Ring.output
 
+    xor ebp, ebp ;; The echo always waits for room
+
     call Hexagon.Kernel.Dev.PTY.putBytes
 
+    pop ebp
+    pop eax
     pop edx
     pop ebx
 
@@ -778,6 +796,10 @@ Hexagon.Kernel.Dev.PTY.getByte:
 
     jc .gone
 
+    call Hexagon.Kern.FD.mayWait
+
+    jc .gone ;; Returns as if gone, recorded as having had to wait
+
     call Hexagon.Kern.Sched.enablePreemption
 
     call Hexagon.Kernel.Dev.PTY.wait
@@ -801,7 +823,7 @@ Hexagon.Kernel.Dev.PTY.getByte:
     ret
 
 ;; Puts bytes into a ring, waiting while it is full. Stops once the side reading
-;; it is gone
+;; it is gone, counting what is left as written, since it is thrown away
 ;;
 ;; Input:
 ;;
@@ -809,10 +831,14 @@ Hexagon.Kernel.Dev.PTY.getByte:
 ;; EDX - Ring
 ;; ESI - Bytes
 ;; ECX - How many
+;; EBP - 1 to stop when the ring is full and the call may not wait, 0 to wait
+;;
+;; Output:
+;;
+;; EAX - Bytes written
 
 Hexagon.Kernel.Dev.PTY.putBytes:
 
-    push eax
     push ecx
     push esi
 
@@ -854,6 +880,16 @@ Hexagon.Kernel.Dev.PTY.putBytes:
 
     call Hexagon.Kern.Sched.enablePreemption
 
+    cmp ebp, 0
+
+    je .wait
+
+    call Hexagon.Kern.FD.mayWait
+
+    jc .done ;; Full, and ECX holds what did not fit
+
+.wait:
+
     call Hexagon.Kernel.Dev.PTY.wait
 
     jmp .check
@@ -874,11 +910,16 @@ Hexagon.Kernel.Dev.PTY.putBytes:
 
     call Hexagon.Kern.Sched.enablePreemption
 
+    xor ecx, ecx
+
 .done:
 
     pop esi
+
+    mov eax, dword[esp] ;; How many were asked for
+    sub eax, ecx
+
     pop ecx
-    pop eax
 
     ret
 
@@ -937,7 +978,11 @@ Hexagon.Kernel.Dev.PTY.interrupt:
 
     imul edi, ecx, Hexagon.Kern.FD.limit * 4
 
-    cmp dword[Hexagon.Processes.Table.fd + edi], eax
+    mov edx, dword[Hexagon.Processes.Table.fd + edi]
+
+    and edx, not Hexagon.Kern.FD.Flags.all
+
+    cmp edx, eax
 
     jne .nextSlot
 

@@ -108,7 +108,9 @@ times Hexagon.TTY.count db Hexagon.TTY.Modes.all
 
 ;; Reads the keyboard of a VT as a byte stream. Keys with no byte of their own
 ;; become the escape sequences a terminal sends for them, and Ctrl with a letter
-;; its control character. Blocks until there is at least one byte
+;; its control character. Blocks until there is at least one byte, unless the
+;; descriptor may not wait, when it returns 0 and Hexagon.Kern.FD.endCall turns
+;; that into Hexagon.Kern.FD.wouldBlock
 ;;
 ;; Input:
 ;;
@@ -142,6 +144,8 @@ Hexagon.Kernel.Dev.TTY.read:
 .waitKey:
 
     call Hexagon.Kernel.Dev.Keyboard.Keyboard.waitKeyboard ;; AL = character, AH = code
+
+    jc .wouldBlock
 
     call Hexagon.Kernel.Dev.TTY.findSequence
 
@@ -205,6 +209,12 @@ Hexagon.Kernel.Dev.TTY.read:
 .drained:
 
     mov byte[.pendingCount + edx], 0
+
+    jmp .end
+
+.wouldBlock:
+
+    xor ebx, ebx
 
 .end:
 
@@ -420,6 +430,8 @@ Hexagon.Kernel.Dev.TTY.readLine:
 
     call Hexagon.Kernel.Dev.Keyboard.Keyboard.waitKeyboard ;; AL = character, AH = code
 
+    jc .wouldBlock
+
     call Hexagon.Kernel.Dev.TTY.findSequence
 
     jnc .nextKey ;; Arrows, Home, End and Delete do nothing in a line
@@ -495,6 +507,10 @@ Hexagon.Kernel.Dev.TTY.readLine:
     jmp .deliver
 
 .hangUp:
+
+    call Hexagon.Kern.FD.hadToWait
+
+    jc .wouldBlock
 
     movzx ebx, byte[ds:ebp + .length]
 
@@ -588,6 +604,14 @@ Hexagon.Kernel.Dev.TTY.readLine:
     mov byte[ds:ebp + .ready], 0
     mov byte[ds:ebp + .length], 0
     mov byte[ds:ebp + .position], 0
+
+    jmp .done
+
+;; The line so far stays in the unit's block, for the next read to go on with
+
+.wouldBlock:
+
+    xor esi, esi
 
 .done:
 
