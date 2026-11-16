@@ -93,13 +93,15 @@ use32
 
 Hexagon.Kern.FD.limit = 8
 
-Hexagon.Kern.FD.Flags.nonBlocking = 80000000h ;; Reads and writes return instead of waiting
-Hexagon.Kern.FD.Flags.all         = 0FF000000h
+Hexagon.Kern.FD.Flags.nonBlocking  = 80000000h ;; Reads and writes return instead of waiting
+Hexagon.Kern.FD.Flags.closeOnSpawn = 40000000h ;; Not handed to a new process, as FD_CLOEXEC
+Hexagon.Kern.FD.Flags.all          = 0FF000000h
 
 ;; hx.ioctl commands every descriptor takes, out of the range of any class,
 ;; as FIONBIO in BSD
 
-Hexagon.Kern.FD.Commands.nonBlocking = 100h ;; ECX = 1 to set, 0 to clear
+Hexagon.Kern.FD.Commands.nonBlocking  = 100h ;; ECX = 1 to set, 0 to clear
+Hexagon.Kern.FD.Commands.closeOnSpawn = 101h ;; The same, as FIOCLEX and FIONCLEX
 
 ;; Device id of the controlling terminal, resolved from Hexagon.Processes.Table.tty
 ;; on every operation and not when the descriptor is made, so 0, 1 and 2 follow
@@ -119,7 +121,8 @@ Hexagon.Kern.FD.wouldBlock       = 11
 
 ;;************************************************************************************
 
-;; Gives a new slot its descriptors, a copy of its creator's own. With no
+;; Gives a new slot its descriptors, a copy of its creator's own, apart from
+;; those marked Hexagon.Kern.FD.Flags.closeOnSpawn, which it gets free. With no
 ;; creator, as for the first process the kernel starts, 0, 1 and 2 name the
 ;; controlling terminal and the rest are free
 ;;
@@ -153,6 +156,15 @@ Hexagon.Kern.FD.inherit:
 .copyEntry:
 
     mov eax, dword[esi]
+
+    test eax, Hexagon.Kern.FD.Flags.closeOnSpawn
+
+    jz .inherited
+
+    xor eax, eax
+
+.inherited:
+
     mov dword[edi], eax
 
     cmp eax, 0

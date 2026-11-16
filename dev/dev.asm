@@ -990,6 +990,10 @@ Hexagon.Kernel.Dev.Dev.ioctl:
 
     je .nonBlocking
 
+    cmp ebx, Hexagon.Kern.FD.Commands.closeOnSpawn
+
+    je .closeOnSpawn
+
     push ebp
 
     call Hexagon.Kernel.Dev.Dev.resolveDescriptor
@@ -1009,6 +1013,18 @@ Hexagon.Kernel.Dev.Dev.ioctl:
     push edx
 
     mov edx, Hexagon.Kern.FD.Flags.nonBlocking
+
+    call Hexagon.Kern.FD.setFlag
+
+    pop edx
+
+    ret
+
+.closeOnSpawn:
+
+    push edx
+
+    mov edx, Hexagon.Kern.FD.Flags.closeOnSpawn
 
     call Hexagon.Kern.FD.setFlag
 
