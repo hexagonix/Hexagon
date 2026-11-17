@@ -399,7 +399,28 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.waitKeyboard:
 
     call Hexagon.Kern.FD.mayWait
 
-    jnc .keyLoop
+    jc .noWait
+
+;; The processor goes to someone else until the next key, or a tick at most
+
+    cmp ecx, 0xFF
+
+    je .keyLoop
+
+    push eax
+    push ecx
+
+    mov eax, Hexagon.Kern.Services.keyboardHandler.scanCodes
+    mov ecx, 1
+
+    call Hexagon.Kern.Sched.sleepOn
+
+    pop ecx
+    pop eax
+
+    jmp .keyLoop
+
+.noWait:
 
     pop edx
     pop ecx

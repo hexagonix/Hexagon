@@ -461,6 +461,30 @@ Hexagon.Kern.Sched.idleLoop:
 
     hlt
 
+;; A process an interrupt woke runs now, and not on the next tick
+
+    cli
+
+    xor ebx, ebx
+
+.findReady:
+
+    cmp byte[Hexagon.Processes.Table.state + ebx], Hexagon.Processes.Table.States.ready
+
+    je .ready
+
+    inc ebx
+
+    cmp ebx, Hexagon.Processes.Table.limit
+
+    jb .findReady
+
+    jmp .spin
+
+.ready:
+
+    call Hexagon.Kern.Sched.maybeSchedule
+
     jmp .spin
 
 ;; Dedicated stack for Hexagon.Kern.Sched.idleLoop, with a ready-made resume
@@ -543,6 +567,26 @@ Hexagon.Kern.Sched.installIdle:
 
 Hexagon.Kern.Sched.sleep:
 
+    push eax
+
+    xor eax, eax
+
+    call Hexagon.Kern.Sched.sleepOn
+
+    pop eax
+
+    ret
+
+;; Sleeps as above, and wakes earlier if Hexagon.Kern.Sched.wakeChannel is
+;; called with the same channel, as tsleep and wakeup in BSD
+;;
+;; Input:
+;;
+;; EAX - Channel, any address that names what is waited for
+;; ECX - Ticks to sleep at most
+
+Hexagon.Kern.Sched.sleepOn:
+
     pusha
 
 ;; Keep the scan and the state transition below atomic against a concurrent,
@@ -553,6 +597,8 @@ Hexagon.Kern.Sched.sleep:
     cli
 
     movzx edx, byte[Hexagon.Scheduler.current] ;; EDX = own slot
+
+    mov dword[Hexagon.Processes.Table.waitChannel + edx * 4], eax
 
     add ecx, dword[Hexagon.Kern.Services.timerHandler.timerCounter] ;; ECX = absolute wake tick
 
@@ -569,8 +615,8 @@ Hexagon.Kern.Sched.sleep:
 
 .checkCandidate:
 
-;; Scanned the whole table without finding anyone else ready. Sleeping here
-;; would leave nothing running at all, so wait it out directly instead
+;; Nobody else is ready, so the idle process halts the processor until the
+;; timer wakes this one
 
     cmp ebx, edx
     je .noCandidate
@@ -582,21 +628,7 @@ Hexagon.Kern.Sched.sleep:
 
 .noCandidate:
 
-    sti
-
-.busyWait:
-
-;; Signed difference, same wraparound-safe comparison used by the wake scan
-;; in Hexagon.Kern.Sched.maybeSchedule
-
-    mov eax, dword[Hexagon.Kern.Services.timerHandler.timerCounter]
-    sub eax, ecx
-
-    jl .busyWait
-
-    popa
-
-    ret
+    mov ebx, Hexagon.Kern.Sched.idleSlot
 
 .candidateFound:
 
@@ -635,6 +667,56 @@ Hexagon.Kern.Sched.sleep:
     mov esp, dword[Hexagon.Processes.Table.esp + ebx * 4]
 
     popa
+
+    ret
+
+;;************************************************************************************
+
+;; Makes every process sleeping on a channel ready. Safe from an interrupt handler
+;;
+;; Input:
+;;
+;; EAX - Channel
+
+Hexagon.Kern.Sched.wakeChannel:
+
+    cmp eax, 0
+
+    je .done
+
+    pushfd
+
+    cli
+
+    push ebx
+
+    xor ebx, ebx
+
+.next:
+
+    cmp byte[Hexagon.Processes.Table.state + ebx], Hexagon.Processes.Table.States.sleeping
+
+    jne .skip
+
+    cmp dword[Hexagon.Processes.Table.waitChannel + ebx * 4], eax
+
+    jne .skip
+
+    mov byte[Hexagon.Processes.Table.state + ebx], Hexagon.Processes.Table.States.ready
+
+.skip:
+
+    inc ebx
+
+    cmp ebx, Hexagon.Processes.Table.limit
+
+    jb .next
+
+    pop ebx
+
+    popfd
+
+.done:
 
     ret
 

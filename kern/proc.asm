@@ -155,6 +155,9 @@ times Hexagon.Processes.Table.limit dd 0 ;; Saved stack pointer while not runnin
 Hexagon.Processes.Table.wakeTick:
 times Hexagon.Processes.Table.limit dd 0 ;; Absolute tick target while in States.sleeping
 
+Hexagon.Processes.Table.waitChannel:
+times Hexagon.Processes.Table.limit dd 0 ;; What a sleeping process waits for, 0 for the time alone
+
 Hexagon.Processes.Table.argBase:
 times Hexagon.Processes.Table.limit dd 0 ;; Alloc process arguments buffer, own life as the process; 0 = none
 

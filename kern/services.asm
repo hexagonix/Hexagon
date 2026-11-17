@@ -390,6 +390,10 @@ Hexagon.Kern.Services.keyboardHandler:
 
     inc byte[.scanCodes.index]
 
+    mov eax, .scanCodes
+
+    call Hexagon.Kern.Sched.wakeChannel
+
 .doNotStore:
 
     mov al, 20h
