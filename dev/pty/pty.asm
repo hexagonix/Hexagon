@@ -87,7 +87,7 @@ use32
 
 Hexagon.PTY.count = Hexagon.TTY.ptyCount
 
-;; Device ids, ptyp0 to ptyp3 for the managers, then ttyp0 to ttyp3 for the
+;; Device ids, ptyp0 to ptyp7 for the managers, then ttyp0 to ttyp7 for the
 ;; subsidiaries
 
 Hexagon.PTY.firstManager    = 60h

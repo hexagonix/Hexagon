@@ -161,6 +161,14 @@ db "ptyp1", 0
 db "ptyp2", 0
 .ptyp3:
 db "ptyp3", 0
+.ptyp4:
+db "ptyp4", 0
+.ptyp5:
+db "ptyp5", 0
+.ptyp6:
+db "ptyp6", 0
+.ptyp7:
+db "ptyp7", 0
 .ttyp0:
 db "ttyp0", 0
 .ttyp1:
@@ -169,6 +177,14 @@ db "ttyp1", 0
 db "ttyp2", 0
 .ttyp3:
 db "ttyp3", 0
+.ttyp4:
+db "ttyp4", 0
+.ttyp5:
+db "ttyp5", 0
+.ttyp6:
+db "ttyp6", 0
+.ttyp7:
+db "ttyp7", 0
 
 ;; Input devices
 
@@ -224,7 +240,7 @@ times Hexagon.Dev.Registry.limit db 0
 
 Hexagon.Dev.Registry.byteSize = $
 
-Hexagon.Dev.Registry.limit = 48
+Hexagon.Dev.Registry.limit = 56
 
 end virtual
 

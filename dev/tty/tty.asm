@@ -95,7 +95,7 @@ Hexagon.TTY.Modes.all = Hexagon.TTY.Modes.canonical or Hexagon.TTY.Modes.echo or
 ;; Units of tty. The first ones are the VTs, read from the keyboard and drawn
 ;; on the console, and the rest are the subsidiary sides of the ptys
 
-Hexagon.TTY.ptyCount = 4
+Hexagon.TTY.ptyCount = 8
 Hexagon.TTY.firstPty = Hexagon.Console.VT.count
 Hexagon.TTY.count    = Hexagon.TTY.firstPty + Hexagon.TTY.ptyCount
 

@@ -91,7 +91,7 @@
 
 use32
 
-Hexagon.Kern.FD.limit = 8
+Hexagon.Kern.FD.limit = 16
 
 Hexagon.Kern.FD.Flags.nonBlocking  = 80000000h ;; Reads and writes return instead of waiting
 Hexagon.Kern.FD.Flags.closeOnSpawn = 40000000h ;; Not handed to a new process, as FD_CLOEXEC
