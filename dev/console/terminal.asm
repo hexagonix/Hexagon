@@ -822,6 +822,17 @@ Hexagon.Kernel.Dev.Console.Terminal.clearInLine:
 
     mov edx, ecx
 
+;; Right after the last column the cursor waits one past it for the next line,
+;; and counts as being on the last column here
+
+    cmp dl, byte[Hexagon.Console.maxColumns]
+
+    jbe .inside
+
+    mov dl, byte[Hexagon.Console.maxColumns]
+
+.inside:
+
     cmp eax, 0
 
     je .fromCursor
