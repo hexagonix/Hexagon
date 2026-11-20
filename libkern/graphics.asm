@@ -283,6 +283,38 @@ Hexagon.Libkern.Graphics.putPixel:
 
     ret
 
+;; Reads a pixel, as putPixel writes it
+;;
+;; Input: EAX - X, EBX - Y
+;;
+;; Output: EDX - Color
+
+Hexagon.Libkern.Graphics.getPixel:
+
+    push eax
+    push ebx
+    push esi
+
+    call Hexagon.Kern.Sched.disablePreemption
+
+    call Hexagon.Kernel.Dev.Console.Console.ensureCurrentVT ;; Preserves EAX/EBX/ECX/EDX itself
+
+    call Hexagon.Libkern.Graphics.calculatePixelOffset
+
+    movzx edx, byte[esi + 2]
+
+    shl edx, 16
+
+    mov dx, word[esi]
+
+    call Hexagon.Kern.Sched.enablePreemption
+
+    pop esi
+    pop ebx
+    pop eax
+
+    ret
+
 ;;************************************************************************************
 
 Hexagon.Libkern.Graphics.drawBlockSyscall:
