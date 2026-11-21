@@ -456,6 +456,14 @@ Hexagon.Kern.Services.PS2MouseHandler:
 
     in al, 60h
 
+;; The first byte of every packet has bit 3 set. One that does not was left
+;; over from a packet already out of step, such as an acknowledgement at
+;; setup, and is dropped, so the next byte is tried as the start of one
+
+    test al, 08h
+
+    jz .finish
+
     mov byte[.data], al
 
     mov byte[.status], 1

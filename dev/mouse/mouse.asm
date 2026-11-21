@@ -170,17 +170,20 @@ Hexagon.Kernel.Dev.Mouse.Mouse.setupMouse:
 
 ;; Get current mouse position and button state
 ;;
-;; Input:
+;; Output:
 ;;
 ;; EAX - Mouse X Position
 ;; EBX - Mouse Y Position
-;; EDX - Mouse buttons (bit #0 = left button, bit #1 = right button)
+;; EDX - Mouse buttons (bit #0 = left button, bit #1 = right button, bit #2 = middle)
 
 Hexagon.Kernel.Dev.Mouse.Mouse.getFromMouse:
 
     mov eax, [Hexagon.Kernel.Dev.Mouse.mouseX]
     mov ebx, [Hexagon.Kernel.Dev.Mouse.mouseY]
-    mov edx, 0 ;; byte[manipuladorMousePS2.data]
+
+    movzx edx, byte[Hexagon.Kern.Services.PS2MouseHandler.data]
+
+    and edx, 07h ;; The rest of the first byte is direction and overflow
 
     ret
 
