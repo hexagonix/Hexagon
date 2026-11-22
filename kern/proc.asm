@@ -158,6 +158,15 @@ times Hexagon.Processes.Table.limit dd 0 ;; Absolute tick target while in States
 Hexagon.Processes.Table.waitChannel:
 times Hexagon.Processes.Table.limit dd 0 ;; What a sleeping process waits for, 0 for the time alone
 
+;; Ticks of the timer that found this process running, in its own code and in
+;; the kernel, as the CPU time BSD keeps for each process
+
+Hexagon.Processes.Table.userTicks:
+times Hexagon.Processes.Table.limit dd 0
+
+Hexagon.Processes.Table.systemTicks:
+times Hexagon.Processes.Table.limit dd 0
+
 Hexagon.Processes.Table.argBase:
 times Hexagon.Processes.Table.limit dd 0 ;; Alloc process arguments buffer, own life as the process; 0 = none
 
@@ -1359,11 +1368,13 @@ Hexagon.Kern.Proc.calculateArgumentsAddress:
 ;; +9  Name, NUL-terminated within a fixed 64-byte field
 ;; +73 db VT index (Hexagon.Processes.Table.tty)
 ;; +74 dd Bytes the process is holding
+;; +78 dd Ticks of the timer spent in its own code
+;; +82 dd Ticks of the timer spent in the kernel for it
 ;;
 ;; The record size travels with the data, so a field appended at the end
 ;; leaves anything built against the shorter layout still stepping correctly
 
-Hexagon.Kern.Proc.getProcessTable.recordSize = 78 ;; 4 + 4 + 1 + 64 + 1 + 4
+Hexagon.Kern.Proc.getProcessTable.recordSize = 86 ;; 4 + 4 + 1 + 64 + 1 + 4 + 4 + 4
 
 ;; Input:
 ;;
@@ -1547,6 +1558,14 @@ Hexagon.Kern.Proc.getProcessTable:
     mov eax, ebx
 
     call Hexagon.Arch.Mm.memoryUsedBySlot
+
+    stosd
+
+    mov eax, dword[Hexagon.Processes.Table.userTicks + ebx * 4]
+
+    stosd
+
+    mov eax, dword[Hexagon.Processes.Table.systemTicks + ebx * 4]
 
     stosd
 
@@ -1801,6 +1820,9 @@ Hexagon.Kern.Proc.registerSlot:
     mov dword[Hexagon.Processes.Table.entry + edx * 4], eax
 
     mov dword[Hexagon.Processes.Table.esp + edx * 4], 0 ;; Never dispatched yet
+
+    mov dword[Hexagon.Processes.Table.userTicks + edx * 4], 0
+    mov dword[Hexagon.Processes.Table.systemTicks + edx * 4], 0
 
 ;; Hexagon.Kern.Proc.calculateArgumentsAddress computes an address from this
 ;; field however the process was created, so it must never be left at 0. A

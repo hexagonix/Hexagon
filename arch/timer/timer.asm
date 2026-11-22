@@ -73,6 +73,8 @@
 
 use32
 
+Hexagon.Arch.Timer.frequency = 100 ;; Ticks a second, as the PIT is set below
+
 ;; Initializes the timer, using the appropriate parameters
 
 Hexagon.Arch.Timer.Timer.setupTimer:

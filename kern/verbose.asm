@@ -92,7 +92,7 @@ db "All rights reserved.", 10, 10, 0
 .version:
 db "Hexagon kernel version: ", Hexagon.Version.definition, 0
 .timer:
-db "Starting and setting up the timer (119 Hz)...", 0
+db "Starting and setting up the timer (100 Hz)...", 0
 .scheduler:
 db "Starting and setting up the scheduler...", 0
 .heapKernel:

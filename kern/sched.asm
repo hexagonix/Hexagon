@@ -124,6 +124,13 @@ Hexagon.Scheduler.current: db 0xFF ;; 0xFF = kernel boot context, else a Hexagon
 Hexagon.Scheduler.ticks:   dd 0
 Hexagon.Scheduler.sliceLength = 1  ;; Timer ticks per time-slice
 
+;; Ticks of the timer since boot by what the processor was doing, as kern.cp_time
+
+Hexagon.Scheduler.cpuTime:
+.user:   dd 0 ;; Code of a process
+.system: dd 0 ;; The kernel, for a process or for itself
+.idle:   dd 0 ;; The idle process, with nothing to do
+
 ;; maybeSchedule refuses to switch away from the running process while this is
 ;; non-zero, so a preemption cannot land mid-swap of a mount's working copy. A
 ;; nesting depth and not a boolean, since these calls nest and clearing it
@@ -667,6 +674,132 @@ Hexagon.Kern.Sched.sleepOn:
     mov esp, dword[Hexagon.Processes.Table.esp + ebx * 4]
 
     popa
+
+    ret
+
+;;************************************************************************************
+
+;; Counts a tick of the timer for whatever it found running. Called from
+;; Hexagon.Kern.Services.timerHandler only
+;;
+;; Input:
+;;
+;; EAX - CS of the code interrupted
+
+Hexagon.Kern.Sched.countTick:
+
+    push ebx
+
+    movzx ebx, byte[Hexagon.Scheduler.current]
+
+    cmp ebx, 0xFF
+
+    je .system ;; Still booting, with no slot
+
+    cmp ebx, Hexagon.Kern.Sched.idleSlot
+
+    je .idle
+
+    test eax, 3
+
+    jz .systemSlot
+
+    inc dword[Hexagon.Scheduler.cpuTime.user]
+    inc dword[Hexagon.Processes.Table.userTicks + ebx * 4]
+
+    jmp .done
+
+.idle:
+
+    inc dword[Hexagon.Scheduler.cpuTime.idle]
+    inc dword[Hexagon.Processes.Table.systemTicks + ebx * 4] ;; Shown as the time of idle
+
+    jmp .done
+
+.systemSlot:
+
+    inc dword[Hexagon.Processes.Table.systemTicks + ebx * 4]
+
+.system:
+
+    inc dword[Hexagon.Scheduler.cpuTime.system]
+
+.done:
+
+    pop ebx
+
+    ret
+
+;; Function 2 of hx.sysctl, copied into the caller's buffer:
+;;
+;; +0  dd Ticks of the timer a second
+;; +4  dd Ticks in the code of processes
+;; +8  dd Ticks in the kernel
+;; +12 dd Ticks in the idle process
+;;
+;; Input:
+;;
+;; ESI - Caller's buffer, already checked by Hexagon.Kern.Sysctl.sysctl
+;; ECX - Caller's buffer size
+;;
+;; Output:
+;;
+;; EAX - Bytes copied, or the size needed with CF set
+
+Hexagon.Kern.Sched.readCPUTime.size = 16
+
+Hexagon.Kern.Sched.readCPUTime:
+
+    mov eax, Hexagon.Kern.Sched.readCPUTime.size
+
+    cmp ecx, eax
+
+    jb .tooSmall
+
+    push es
+    push edi
+
+    mov di, 10h ;; The caller's buffer, as hx.getProcesses reaches its own
+    mov es, di
+
+    mov edi, esi
+
+    cld
+
+    pushfd
+
+    cli ;; The three counters from the same instant
+
+    mov eax, Hexagon.Arch.Timer.frequency
+
+    stosd
+
+    mov eax, dword[Hexagon.Scheduler.cpuTime.user]
+
+    stosd
+
+    mov eax, dword[Hexagon.Scheduler.cpuTime.system]
+
+    stosd
+
+    mov eax, dword[Hexagon.Scheduler.cpuTime.idle]
+
+    stosd
+
+    popfd
+
+    pop edi
+    pop es
+
+    mov eax, Hexagon.Kern.Sched.readCPUTime.size
+
+    clc
+
+    ret
+
+.tooSmall:
+
+    stc
 
     ret
 
