@@ -896,7 +896,15 @@ Hexagon.Kernel.Dev.Dev.Switch.Output.write:
 
     pop ecx
 
+;; Bytes for a VT another process holds for itself are taken and not drawn
+
+    call Hexagon.Kernel.Dev.Console.Console.mayDrawOn
+
+    jc .taken
+
     call Hexagon.Kernel.Dev.Console.Terminal.write
+
+.taken:
 
     pop edx
 
@@ -1810,7 +1818,8 @@ Hexagon.Kernel.Dev.Dev.ensureVTBuffer:
 
 ;; EBX - Command (1 = activate console, 2 = activate as foreground VT,
 ;;       3 = claim the open tty as the caller's own VT, 4 = get the mode of
-;;       the tty, 5 = set it, 6 = get the size of its window)
+;;       the tty, 5 = set it, 6 = get the size of its window, 8 = hold it
+;;       for the caller alone, ECX = 1, or let go of it, ECX = 0)
 ;; ECX - Argument for command 1 (console index: 0 main, 1 secondary), or the
 ;;       mode for command 5, as Hexagon.TTY.Modes. Commands 2 and 3 take no
 ;;       argument, the target VT is the tty behind the descriptor
@@ -1840,6 +1849,66 @@ Hexagon.Kernel.Dev.Dev.Switch.Output.ioctl:
     cmp ebx, 6
 
     je .getSize
+
+    cmp ebx, 8
+
+    je .exclusive
+
+    stc
+
+    ret
+
+;; Only the VT's foreground process may take it, and only its holder let it go
+
+.exclusive:
+
+    push ecx ;; 1 to take it, 0 to let it go
+
+    call Hexagon.Kernel.Dev.Dev.Switch.Output.resolveTTYIndex
+
+    pop eax
+
+    jc .end
+
+    push edx
+
+    movzx edx, byte[Hexagon.Scheduler.current]
+
+    cmp eax, 0
+
+    je .letGo
+
+    cmp dword[Hexagon.Console.VT.foregroundSlot + ecx * 4], edx
+
+    jne .refused
+
+    mov dword[Hexagon.Console.VT.exclusiveSlot + ecx * 4], edx
+
+    pop edx
+
+    clc
+
+    ret
+
+.letGo:
+
+    cmp dword[Hexagon.Console.VT.exclusiveSlot + ecx * 4], edx
+
+    jne .notHeld
+
+    mov dword[Hexagon.Console.VT.exclusiveSlot + ecx * 4], 0xFFFFFFFF
+
+.notHeld:
+
+    pop edx
+
+    clc
+
+    ret
+
+.refused:
+
+    pop edx
 
     stc
 

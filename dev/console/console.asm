@@ -153,6 +153,12 @@ times Hexagon.Console.VT.count dd 0
 Hexagon.Console.VT.foregroundSlot:
 times Hexagon.Console.VT.count dd 0xFFFFFFFF
 
+;; The one process that may draw on each VT, as X takes a VT in BSD with
+;; KD_GRAPHICS, 0FFFFFFFFh while anyone may. Set through hx.ioctl command 8
+
+Hexagon.Console.VT.exclusiveSlot:
+times Hexagon.Console.VT.count dd 0xFFFFFFFF
+
 Hexagon.Console.VT.locked:
 times Hexagon.Console.VT.count db 0
 
@@ -1742,6 +1748,48 @@ Hexagon.Kernel.Dev.Console.Console.positionCursor:
     pop edx
     pop ebx
     pop eax
+
+    ret
+
+;;************************************************************************************
+
+;; Whether the running process may draw on a VT, which it may unless another
+;; one holds that VT for itself. Every register is preserved
+;;
+;; Input: EDX - VT
+;;
+;; Output: CF set if it may not
+
+Hexagon.Kernel.Dev.Console.Console.mayDrawOn:
+
+    push eax
+    push ecx
+
+    mov eax, dword[Hexagon.Console.VT.exclusiveSlot + edx * 4]
+
+    cmp eax, 0xFFFFFFFF
+
+    je .may
+
+    movzx ecx, byte[Hexagon.Scheduler.current]
+
+    cmp eax, ecx
+
+    je .may
+
+    pop ecx
+    pop eax
+
+    stc
+
+    ret
+
+.may:
+
+    pop ecx
+    pop eax
+
+    clc
 
     ret
 

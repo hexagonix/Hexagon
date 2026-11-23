@@ -80,6 +80,52 @@ Hexagon.Syscall.Control:
 
 ;;************************************************************************************
 
+;; The calls that draw on the console of the caller, or change how it is drawn,
+;; are refused when another process holds that VT for itself. Every register
+;; is preserved
+;;
+;; Input: EBP - Number of the call
+;;
+;; Output: CF set if it is refused
+
+Hexagon.Kern.Syscall.mayDraw:
+
+    cmp ebp, 40 ;; hx.print
+
+    jb .may
+
+    cmp ebp, 48 ;; hx.setColor, the last drawing call of the run from hx.print
+
+    jbe .check
+
+    cmp ebp, 51 ;; hx.updateScreen
+
+    je .check
+
+    cmp ebp, 57 ;; hx.changeConsoleFont
+
+    je .check
+
+.may:
+
+    clc
+
+    ret
+
+.check:
+
+    push edx
+
+    call Hexagon.Kernel.Dev.Console.Console.resolveCallerTTY ;; EDX = VT drawn on
+
+    call Hexagon.Kernel.Dev.Console.Console.mayDrawOn
+
+    pop edx
+
+    ret
+
+;;************************************************************************************
+
 ;; Hexagonix Interrupt Handler
 ;;
 ;; Output:
@@ -126,6 +172,18 @@ Hexagon.Kern.Syscall.hexagonHandler:
     mov byte[Hexagon.Syscall.Control.systemCall], 01h ;; A call was requested
 
     sti
+
+;; A call that draws on a VT another process holds for itself does nothing
+
+    call Hexagon.Kern.Syscall.mayDraw
+
+    jnc .allowed
+
+    clc
+
+    jmp .end
+
+.allowed:
 
     call dword[Hexagon.Kern.Syscall.hexagonServices.table + ebp * 4]
 

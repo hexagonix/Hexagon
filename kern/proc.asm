@@ -2484,7 +2484,8 @@ Hexagon.Kern.Proc.kill:
 
 ;; Hands back the foreground a process that is ending holds. The VT the caller
 ;; of hx.exec handed it goes back to what that caller had, and a VT it claimed,
-;; or took by reading, is left with none, for its next reader to take
+;; or took by reading, is left with none, for its next reader to take. A VT it
+;; held for itself is let go
 ;;
 ;; Input: EDX - Slot ending
 
@@ -2529,6 +2530,24 @@ Hexagon.Kern.Proc.releaseForeground:
     mov dword[Hexagon.Console.VT.foregroundSlot + eax * 4], 0xFFFFFFFF
 
 .done:
+
+    xor ecx, ecx
+
+.nextVT:
+
+    cmp dword[Hexagon.Console.VT.exclusiveSlot + ecx * 4], edx
+
+    jne .notHeld
+
+    mov dword[Hexagon.Console.VT.exclusiveSlot + ecx * 4], 0xFFFFFFFF
+
+.notHeld:
+
+    inc ecx
+
+    cmp ecx, Hexagon.Console.VT.count
+
+    jb .nextVT
 
     pop ecx
     pop ebx
