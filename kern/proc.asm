@@ -751,11 +751,9 @@ Hexagon.Kern.Proc.exec:
 
     mov dword[Hexagon.Processes.Table.parentSlot + edx * 4], ecx
 
-;; The caller's own VT gains this child as its foreground process for as
-;; long as this blocking hx.exec lasts. The caller's own value is restored
-;; at .resumeParent once the child exits. A caller that is not that VT's
-;; foreground, as a shell on a pty whose emulator reads the VT, keeps it
-;; where it is
+;; The child becomes the foreground of the caller's VT while hx.exec lasts, and
+;; .resumeParent hands it back. A caller that is not that VT's foreground, as a
+;; shell on a pty, leaves it where it is
 
     mov eax, dword[Hexagon.Processes.Table.tty + ecx * 4]
     mov ebx, dword[Hexagon.Console.VT.foregroundSlot + eax * 4]

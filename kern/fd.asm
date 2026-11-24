@@ -113,7 +113,7 @@ Hexagon.Kern.FD.outputClass = 04h
 
 Hexagon.Kern.FD.controllingEntry = (Hexagon.Kern.FD.outputClass shl 16) or Hexagon.Kern.FD.controllingTTY
 
-;; Error codes, the same values as lib/fasm/errors.s
+;; Error codes, as the system calls return them
 
 Hexagon.Kern.FD.badDescriptor    = 9
 Hexagon.Kern.FD.noFreeDescriptor = 10
