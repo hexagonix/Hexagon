@@ -153,8 +153,23 @@ times Hexagon.Console.VT.count dd 0
 Hexagon.Console.VT.foregroundSlot:
 times Hexagon.Console.VT.count dd 0xFFFFFFFF
 
+;; The one process that may draw on each VT, as X takes a VT in BSD with
+;; KD_GRAPHICS, 0FFFFFFFFh while anyone may. Set through hx.ioctl command 8
+
+Hexagon.Console.VT.exclusiveSlot:
+times Hexagon.Console.VT.count dd 0xFFFFFFFF
+
 Hexagon.Console.VT.locked:
 times Hexagon.Console.VT.count db 0
+
+;; Colors of each VT. Hexagon.Console.fontColor and backgroundColor are those of
+;; the VT being drawn, loaded by Console.ensureCurrentVT
+
+Hexagon.Console.VT.fontColor:
+times Hexagon.Console.VT.count dd Hexagon.Console.defaultFontColor
+
+Hexagon.Console.VT.backgroundColor:
+times Hexagon.Console.VT.count dd Hexagon.Console.defaultBackgroundColor
 
 ;; Which Console.resolutionGeneration each VT.buffer entry was allocated under.
 ;; A mismatch means it is still sized for a mode the console has moved on from,
@@ -741,6 +756,18 @@ align 16
 
 .graphicsMode:
 
+;; Everything is painted over, the cursor's bar with it
+
+    push edx
+
+    call Hexagon.Kernel.Dev.Console.Console.resolveCallerTTY ;; EDX = caller's VT
+
+    movzx edx, dl
+
+    mov word[Hexagon.Kernel.Dev.Console.Console.positionCursorGraphicMode.previousX + edx * 2], Hexagon.Kernel.Dev.Console.Console.noCursor
+
+    pop edx
+
     mov ebx, Hexagon.Console.defaultBackgroundColor
 
     cmp dword[Hexagon.Console.backgroundColor], ebx
@@ -983,6 +1010,20 @@ Hexagon.Kernel.Dev.Console.Console.scrollConsole:
     jmp .end
 
 .graphicsMode:
+
+;; The cursor's bar would go up with everything else, so it goes first
+
+    push edx
+    push esi
+
+    call Hexagon.Kernel.Dev.Console.Console.resolveCallerTTY ;; EDX = caller's VT
+
+    movzx esi, dl
+
+    call Hexagon.Kernel.Dev.Console.Console.eraseCursor
+
+    pop esi
+    pop edx
 
     mov esi, dword[Hexagon.Console.Memory.addressLFB]
 
@@ -1512,23 +1553,7 @@ Hexagon.Kernel.Dev.Console.Console.printCharacterGraphicMode:
 
     movzx esi, byte[.callerVT]
 
-    movzx eax, word[Hexagon.Kernel.Dev.Console.Console.positionCursorGraphicMode.previousX + esi * 2]
-    movzx ebx, word[Hexagon.Kernel.Dev.Console.Console.positionCursorGraphicMode.previousY + esi * 2]
-
-    push edx
-
-    mov ecx, Hexagon.Libkern.Font.height
-    mov edx, [Hexagon.Kernel.Dev.Console.Console.positionCursorGraphicMode.previousCursorColor + esi * 4]
-
-.clearPreviousCursor:
-
-    call Hexagon.Libkern.Graphics.putPixel
-
-    inc ebx
-
-    loop .clearPreviousCursor
-
-    pop edx
+    call Hexagon.Kernel.Dev.Console.Console.eraseCursor
 
     mov dl, 0
 
@@ -1567,6 +1592,10 @@ Hexagon.Kernel.Dev.Console.Console.printCharacterGraphicMode:
     call Hexagon.Libkern.Graphics.putCharacterBitmap
 
     pop edx
+
+    movzx esi, byte[.callerVT]
+
+    call Hexagon.Kernel.Dev.Console.Console.coverCursor
 
     inc dl
 
@@ -1724,6 +1753,125 @@ Hexagon.Kernel.Dev.Console.Console.positionCursor:
 
 ;;************************************************************************************
 
+;; Whether the running process may draw on a VT, which it may unless another
+;; one holds that VT for itself. Every register is preserved
+;;
+;; Input: EDX - VT
+;;
+;; Output: CF set if it may not
+
+Hexagon.Kernel.Dev.Console.Console.mayDrawOn:
+
+    push eax
+    push ecx
+
+    mov eax, dword[Hexagon.Console.VT.exclusiveSlot + edx * 4]
+
+    cmp eax, 0xFFFFFFFF
+
+    je .may
+
+    movzx ecx, byte[Hexagon.Scheduler.current]
+
+    cmp eax, ecx
+
+    je .may
+
+    pop ecx
+    pop eax
+
+    stc
+
+    ret
+
+.may:
+
+    pop ecx
+    pop eax
+
+    clc
+
+    ret
+
+;;************************************************************************************
+
+;; The cursor of a VT is a bar over the first column of its cell, and the pixels
+;; under it are kept to put back when the cursor moves. Once something else is
+;; drawn there, the bar is gone, and putting them back would draw a stale line
+
+Hexagon.Kernel.Dev.Console.Console.noCursor = 0FFFFh ;; In previousX, no bar to paint out
+
+;; Paints out the bar of a VT, if it still has one
+;;
+;; Input: ESI - VT
+
+Hexagon.Kernel.Dev.Console.Console.eraseCursor:
+
+    pushad
+
+    cmp word[Hexagon.Kernel.Dev.Console.Console.positionCursorGraphicMode.previousX + esi * 2], Hexagon.Kernel.Dev.Console.Console.noCursor
+
+    je .done
+
+    movzx eax, word[Hexagon.Kernel.Dev.Console.Console.positionCursorGraphicMode.previousX + esi * 2]
+    movzx ebx, word[Hexagon.Kernel.Dev.Console.Console.positionCursorGraphicMode.previousY + esi * 2]
+    mov ecx, Hexagon.Libkern.Font.height
+
+    imul edi, esi, Hexagon.Libkern.Font.height * 4
+    add edi, Hexagon.Kernel.Dev.Console.Console.positionCursorGraphicMode.underCursor
+
+.paint:
+
+    mov edx, dword[edi]
+
+    call Hexagon.Libkern.Graphics.putPixel
+
+    add edi, 4
+
+    inc ebx
+
+    loop .paint
+
+    mov word[Hexagon.Kernel.Dev.Console.Console.positionCursorGraphicMode.previousX + esi * 2], Hexagon.Kernel.Dev.Console.Console.noCursor
+
+.done:
+
+    popad
+
+    ret
+
+;; A character was drawn on a cell. If the bar was there, it is gone
+;;
+;; Input: ESI - VT, DL - Column, DH - Row
+
+Hexagon.Kernel.Dev.Console.Console.coverCursor:
+
+    pushad
+
+    movzx eax, dl
+    imul eax, eax, Hexagon.Libkern.Font.width
+
+    cmp ax, word[Hexagon.Kernel.Dev.Console.Console.positionCursorGraphicMode.previousX + esi * 2]
+
+    jne .done
+
+    movzx eax, dh
+    imul eax, eax, Hexagon.Libkern.Font.height
+
+    cmp ax, word[Hexagon.Kernel.Dev.Console.Console.positionCursorGraphicMode.previousY + esi * 2]
+
+    jne .done
+
+    mov word[Hexagon.Kernel.Dev.Console.Console.positionCursorGraphicMode.previousX + esi * 2], Hexagon.Kernel.Dev.Console.Console.noCursor
+
+.done:
+
+    popad
+
+    ret
+
+;;************************************************************************************
+
 Hexagon.Kernel.Dev.Console.Console.positionCursorGraphicMode:
 
     push eax
@@ -1760,19 +1908,7 @@ Hexagon.Kernel.Dev.Console.Console.positionCursorGraphicMode:
 
     mov word[.y], ax
 
-    movzx eax, word[.previousX + esi * 2]
-    movzx ebx, word[.previousY + esi * 2]
-
-    mov ecx, Hexagon.Libkern.Font.height
-    mov edx, dword[.previousCursorColor + esi * 4]
-
-.clearPreviousCursor:
-
-    call Hexagon.Libkern.Graphics.putPixel
-
-    inc ebx
-
-    loop .clearPreviousCursor
+    call Hexagon.Kernel.Dev.Console.Console.eraseCursor
 
     mov bx, word[.x]
     mov word[.previousX + esi * 2], bx
@@ -1780,8 +1916,28 @@ Hexagon.Kernel.Dev.Console.Console.positionCursorGraphicMode:
     mov bx, word[.y]
     mov word[.previousY + esi * 2], bx
 
-    mov edx, dword[Hexagon.Console.backgroundColor]
-    mov dword[.previousCursorColor + esi * 4], edx
+    push edi
+
+    movzx eax, word[.x]
+    movzx ebx, word[.y]
+    mov ecx, Hexagon.Libkern.Font.height
+
+    imul edi, esi, Hexagon.Libkern.Font.height * 4
+    add edi, .underCursor
+
+.keepPixel:
+
+    call Hexagon.Libkern.Graphics.getPixel
+
+    mov dword[edi], edx
+
+    add edi, 4
+
+    inc ebx
+
+    loop .keepPixel
+
+    pop edi
 
     movzx eax, word[.x]
     movzx ebx, word[.y]
@@ -1809,8 +1965,8 @@ Hexagon.Kernel.Dev.Console.Console.positionCursorGraphicMode:
 times Hexagon.Console.VT.count dw 0
 .previousY:
 times Hexagon.Console.VT.count dw 0
-.previousCursorColor:
-times Hexagon.Console.VT.count dd Hexagon.Console.defaultBackgroundColor
+.underCursor: ;; The pixels the bar of each VT covers, from the top
+times Hexagon.Console.VT.count * Hexagon.Libkern.Font.height dd Hexagon.Console.defaultBackgroundColor
 .x: dw 0
 .y: dw 0
 
@@ -1885,6 +2041,15 @@ Hexagon.Kernel.Dev.Console.Console.setConsoleColor:
     mov dword[Hexagon.Console.fontColor], eax
     mov dword[Hexagon.Console.backgroundColor], ebx
 
+    push edx
+
+    call Hexagon.Kernel.Dev.Console.Console.resolveCallerTTY
+
+    mov dword[Hexagon.Console.VT.fontColor + edx * 4], eax
+    mov dword[Hexagon.Console.VT.backgroundColor + edx * 4], ebx
+
+    pop edx
+
     cmp ecx, 1234h
     je .setTheme
 
@@ -1923,8 +2088,10 @@ Hexagon.Kernel.Dev.Console.Console.getConsoleColor:
 
 .graphicsMode:
 
-    mov eax, dword[Hexagon.Console.fontColor]
-    mov ebx, dword[Hexagon.Console.backgroundColor]
+    call Hexagon.Kernel.Dev.Console.Console.resolveCallerTTY
+
+    mov eax, dword[Hexagon.Console.VT.fontColor + edx * 4]
+    mov ebx, dword[Hexagon.Console.VT.backgroundColor + edx * 4]
 
     mov ecx, dword[Hexagon.Console.fontThemeColor]
     mov edx, dword[Hexagon.Console.backgroundThemeColor]
@@ -2164,6 +2331,18 @@ Hexagon.Kernel.Dev.Console.Console.ensureCurrentVT:
 
 .end:
 
+    push edx
+
+    call Hexagon.Kernel.Dev.Console.Console.resolveCallerTTY
+
+    mov eax, dword[Hexagon.Console.VT.fontColor + edx * 4]
+    mov dword[Hexagon.Console.fontColor], eax
+
+    mov eax, dword[Hexagon.Console.VT.backgroundColor + edx * 4]
+    mov dword[Hexagon.Console.backgroundColor], eax
+
+    pop edx
+
     pop ecx
     pop ebx
     pop eax
@@ -2212,7 +2391,8 @@ Hexagon.Kernel.Dev.Console.Console.useSecondaryConsole:
 
 ;;************************************************************************************
 
-;; Resolves the calling process's own VT index
+;; Resolves the VT the calling process draws on, its own unless a write to
+;; another tty is under way, see Console.Terminal.write
 ;;
 ;; Output: EDX - VT index
 
@@ -2230,6 +2410,18 @@ Hexagon.Kernel.Dev.Console.Console.resolveCallerTTY:
     jmp .resolved
 
 .knownCaller:
+
+    mov edx, dword[Hexagon.Processes.Table.drawTTY + ecx * 4]
+
+    cmp edx, 0
+
+    je .ownTTY
+
+    dec edx
+
+    jmp .resolved
+
+.ownTTY:
 
     mov edx, dword[Hexagon.Processes.Table.tty + ecx * 4]
 

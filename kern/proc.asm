@@ -189,6 +189,25 @@ times Hexagon.Processes.Table.limit dd 0 ;; VT index this process is attached to
 Hexagon.Processes.Table.savedForegroundSlot:
 times Hexagon.Processes.Table.limit dd 0 ;; Own VT's foregroundSlot value before hx.exec handed it to a child
 
+Hexagon.Processes.Table.noHandOff = 0xFFFFFFFE ;; In savedForegroundSlot, the child was never handed the VT
+
+Hexagon.Processes.Table.drawTTY:
+times Hexagon.Processes.Table.limit dd 0 ;; VT plus 1 a write to another tty is drawing on, 0 otherwise
+
+;; Descriptors this process holds, laid out as kern/fd.asm describes
+
+Hexagon.Processes.Table.fd:
+times Hexagon.Processes.Table.limit * Hexagon.Kern.FD.limit dd 0
+
+;; For the read or write this process is in, whether it may wait, and whether it
+;; returned because it would have had to
+
+Hexagon.Processes.Table.nonBlocking:
+times Hexagon.Processes.Table.limit db 0
+
+Hexagon.Processes.Table.wouldBlock:
+times Hexagon.Processes.Table.limit db 0
+
 ;; This process's own last-resolved draw target, restored on top of the
 ;; shared Console.Memory.addressLFB global by Console.ensureCurrentVT
 ;; whenever another process has since overwritten it
@@ -732,12 +751,27 @@ Hexagon.Kern.Proc.exec:
 
     mov dword[Hexagon.Processes.Table.parentSlot + edx * 4], ecx
 
-;; The caller's own VT gains this child as its foreground process for as
-;; long as this blocking hx.exec lasts. The caller's own value is restored
-;; at .resumeParent once the child exits
+;; The child becomes the foreground of the caller's VT while hx.exec lasts, and
+;; .resumeParent hands it back. A caller that is not that VT's foreground, as a
+;; shell on a pty, leaves it where it is
 
     mov eax, dword[Hexagon.Processes.Table.tty + ecx * 4]
     mov ebx, dword[Hexagon.Console.VT.foregroundSlot + eax * 4]
+
+    cmp ebx, ecx
+
+    je .handOff
+
+    cmp ebx, 0xFFFFFFFF
+
+    je .handOff
+
+    mov dword[Hexagon.Processes.Table.savedForegroundSlot + ecx * 4], Hexagon.Processes.Table.noHandOff
+
+    jmp .blocked
+
+.handOff:
+
     mov dword[Hexagon.Processes.Table.savedForegroundSlot + ecx * 4], ebx
     mov dword[Hexagon.Console.VT.foregroundSlot + eax * 4], edx
 
@@ -1027,6 +1061,10 @@ Hexagon.Kern.Proc.exit:
 
     call Hexagon.Arch.Mm.freeProcessBlocks
 
+    call Hexagon.Kern.FD.closeAll
+
+    call Hexagon.Kern.Proc.releaseForeground
+
 ;; Still under the cli from function entry. Hexagon.Scheduler.current keeps
 ;; pointing at edx all the way through the parentSlot/bootChildSlot checks
 ;; below that decide who to resume next.
@@ -1156,7 +1194,14 @@ Hexagon.Kern.Proc.exit:
 
     mov eax, dword[Hexagon.Processes.Table.tty + ecx * 4]
     mov ebx, dword[Hexagon.Processes.Table.savedForegroundSlot + ecx * 4]
+
+    cmp ebx, Hexagon.Processes.Table.noHandOff
+
+    je .foregroundKept
+
     mov dword[Hexagon.Console.VT.foregroundSlot + eax * 4], ebx
+
+.foregroundKept:
 
     mov eax, dword[Hexagon.Processes.Table.base + ecx * 4]
 
@@ -1979,11 +2024,14 @@ Hexagon.Kern.Proc.registerSlot:
 
     mov dword[Hexagon.Processes.Table.tty + edx * 4], ecx
 
+    call Hexagon.Kern.FD.inherit ;; EBX is still the parent slot, or 0xFF
+
 ;; Force this slot's own draw-target cache to resolve fresh on its first
 ;; use, regardless of whatever generation number a previous occupant of
 ;; this same slot left behind
 
     mov dword[Hexagon.Processes.Table.addressLFBGeneration + edx * 4], 0xFFFFFFFF
+    mov dword[Hexagon.Processes.Table.drawTTY + edx * 4], 0
 
     pop esi
 
@@ -2432,6 +2480,81 @@ Hexagon.Kern.Proc.kill:
 
 ;;************************************************************************************
 
+;; Hands back the foreground a process that is ending holds. The VT the caller
+;; of hx.exec handed it goes back to what that caller had, and a VT it claimed,
+;; or took by reading, is left with none, for its next reader to take. A VT it
+;; held for itself is let go
+;;
+;; Input: EDX - Slot ending
+
+Hexagon.Kern.Proc.releaseForeground:
+
+    push eax
+    push ebx
+    push ecx
+
+    mov ecx, dword[Hexagon.Processes.Table.parentSlot + edx * 4]
+
+    cmp ecx, 0xFFFFFFFF
+
+    je .ownVT
+
+    mov eax, dword[Hexagon.Processes.Table.tty + ecx * 4]
+
+    cmp dword[Hexagon.Console.VT.foregroundSlot + eax * 4], edx
+
+    jne .ownVT
+
+    mov ebx, dword[Hexagon.Processes.Table.savedForegroundSlot + ecx * 4]
+
+    cmp ebx, Hexagon.Processes.Table.noHandOff
+
+    jne .handBack
+
+    mov ebx, 0xFFFFFFFF
+
+.handBack:
+
+    mov dword[Hexagon.Console.VT.foregroundSlot + eax * 4], ebx
+
+.ownVT:
+
+    mov eax, dword[Hexagon.Processes.Table.tty + edx * 4]
+
+    cmp dword[Hexagon.Console.VT.foregroundSlot + eax * 4], edx
+
+    jne .done
+
+    mov dword[Hexagon.Console.VT.foregroundSlot + eax * 4], 0xFFFFFFFF
+
+.done:
+
+    xor ecx, ecx
+
+.nextVT:
+
+    cmp dword[Hexagon.Console.VT.exclusiveSlot + ecx * 4], edx
+
+    jne .notHeld
+
+    mov dword[Hexagon.Console.VT.exclusiveSlot + ecx * 4], 0xFFFFFFFF
+
+.notHeld:
+
+    inc ecx
+
+    cmp ecx, Hexagon.Console.VT.count
+
+    jb .nextVT
+
+    pop ecx
+    pop ebx
+    pop eax
+
+    ret
+
+;;************************************************************************************
+
 ;; Tears down a specific, already-resolved process slot. Shared by
 ;; Hexagon.Kern.Proc.kill (PID lookup above) and Hexagon.Kern.Proc.
 ;; killForegroundProcess (VT.foregroundSlot lookup)
@@ -2529,6 +2652,8 @@ Hexagon.Kern.Proc.killSlot:
 
     call Hexagon.Arch.Mm.freeProcessBlocks
 
+    call Hexagon.Kern.FD.closeAll
+
     mov byte[Hexagon.Processes.Table.state + edx], Hexagon.Processes.Table.States.free
 
     sti
@@ -2558,38 +2683,12 @@ Hexagon.Kern.Proc.killSlot:
 
 .wakeParent:
 
-;; If the process being killed was its own VT's current foreground process,
-;; that VT's foreground must revert to whoever handed it off, mirroring what
-;; Hexagon.Kern.Proc.exit's own resumeParent/resumeBoot do. This path
-;; tears the slot down directly instead of going through exit, so nothing
-;; else restores it
+;; This path tears the slot down directly instead of going through exit, so
+;; nothing else hands its foreground back
+
+    call Hexagon.Kern.Proc.releaseForeground
 
     mov ecx, dword[Hexagon.Processes.Table.parentSlot + edx * 4]
-
-    mov eax, dword[Hexagon.Processes.Table.tty + edx * 4]
-
-    cmp dword[Hexagon.Console.VT.foregroundSlot + eax * 4], edx
-    jne .parentCheck
-
-    cmp ecx, 0xFFFFFFFF
-    je .bootForegroundCheck
-
-    mov ebx, dword[Hexagon.Processes.Table.savedForegroundSlot + ecx * 4]
-    mov dword[Hexagon.Console.VT.foregroundSlot + eax * 4], ebx
-
-    jmp .parentCheck
-
-.bootForegroundCheck:
-
-    cmp edx, dword[Hexagon.Kern.Proc.bootChildSlot]
-    jne .parentCheck
-
-;; /init itself, killed while somehow also its own VT's foreground owner.
-;; Only possible if it ever claims one itself, see
-;; Hexagon.Kern.Proc.exec's own .blockBootCaller, which deliberately never
-;; does this on its behalf. Nothing to hand back to, just clear it
-
-    mov dword[Hexagon.Console.VT.foregroundSlot + eax * 4], 0xFFFFFFFF
 
 .parentCheck:
 

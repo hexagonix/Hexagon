@@ -285,7 +285,7 @@ Hexagon.Kernel.Dev.Serial.Serial.setupCOM1:
     mov bx, word[Hexagon.Kernel.Dev.Serial.Serial.Ports.currentSerialPort]
     mov word[Hexagon.Kernel.Dev.Serial.Serial.Ports.previousSerialPort], bx
 
-    mov bx, Hexagon.Dev.deviceCodes.com1
+    mov bx, word[Hexagon.Dev.deviceCodes.com1]
     mov word[Hexagon.Kernel.Dev.Serial.Serial.Ports.currentSerialPort], bx
 
     call Hexagon.Kernel.Dev.Serial.Serial.setupSerialPort
@@ -322,5 +322,5 @@ Hexagon.Kernel.Dev.Serial.Serial.registerDevices:
 
 Hexagon.Kernel.Dev.Serial.Serial.Ports:
 
-.currentSerialPort:  db 0
-.previousSerialPort: db 0
+.currentSerialPort:  dw 0
+.previousSerialPort: dw 0

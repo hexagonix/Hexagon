@@ -225,14 +225,19 @@ Hexagon.Kern.Services.keyboardHandler:
 
     in al, 60h
 
-;; "Kill process" hotkey is Ctrl+C, like a real terminal's SIGINT, not a bare
-;; key. A single mis-pressed key cannot close the foreground process by
-;; accident, and F1 itself stays free of any overlap with Ctrl+F1..F8
+;; Ctrl+C ends the foreground process of a VT with ISIG, as SIGINT would, and
+;; reaches a VT without ISIG as the byte 03h
 
     cmp al, Hexagon.Keyboard.keyCodes.c
     jne .notKillCombo
 
     test dword[keyStatus], 0x00000001 ;; Ctrl currently held?
+    jz .notKillCombo
+
+    mov ebx, dword[Hexagon.Console.activeVT]
+
+    test byte[Hexagon.TTY.mode + ebx], Hexagon.TTY.Modes.isig
+
     jnz .killCurrentProcess
 
 .notKillCombo:
@@ -448,6 +453,14 @@ Hexagon.Kern.Services.PS2MouseHandler:
 .dataPackage:
 
     in al, 60h
+
+;; The first byte of every packet has bit 3 set. One that does not was left
+;; over from a packet already out of step, such as an acknowledgement at
+;; setup, and is dropped, so the next byte is tried as the start of one
+
+    test al, 08h
+
+    jz .finish
 
     mov byte[.data], al
 

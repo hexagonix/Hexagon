@@ -122,7 +122,10 @@ include "dev/ata/ata.asm"               ;; Native ATA/IDE storage device driver
 include "dev/disk/disk.asm"             ;; Functions for reading and writing to hard drives
 include "dev/cpu/cpu.asm"               ;; Registers the CPU as a device (cpu0)
 include "dev/console/console.asm"       ;; Hexagon video management
+include "dev/console/terminal.asm"      ;; Escape sequences written to a tty
 include "dev/keyboard/keyboard.asm"     ;; Functions required to use the keyboard
+include "dev/tty/tty.asm"               ;; Terminal line discipline
+include "dev/pty/pty.asm"               ;; Pseudoterminals
 include "arch/cpu/cpu.asm"              ;; IDT, GDT and processor management
 include "kern/power.asm"                ;; Power management dispatch (reboot, shutdown)
 include "arch/acpi/acpi.asm"            ;; Hexagon ACPI implementation
@@ -139,6 +142,7 @@ include "dev/dev.asm"                   ;; Hardware management and abstraction f
 ;; Processes, process model and executable images
 
 include "kern/proc.asm"                 ;; Functions for handling processes
+include "kern/fd.asm"                   ;; Per-process descriptors
 include "kern/sched.asm"                ;; Round robin scheduler and context switch
 include "libkern/HAPP.asm"              ;; Functions for HAPP image processing
 include "kern/init.asm"                 ;; Functions to start user mode and first process
@@ -237,7 +241,7 @@ Hexagon.Autoconfig:
 
     call Hexagon.Kernel.Dev.Dev.allocateRegistry ;; Allocates the registry table
 
-    call Hexagon.Kernel.Dev.Dev.registerDevices ;; Registers cpu0, tty0-tty7, au0 and com1
+    call Hexagon.Kernel.Dev.Dev.registerDevices ;; Registers cpu0, tty0-tty7, au0, com1 and the ptys
 
     call Hexagon.Kernel.Dev.Keyboard.Keyboard.setupKeyboard ;; Start the Hexagon keyboard service
 
@@ -249,6 +253,7 @@ Hexagon.Autoconfig:
     call Hexagon.Kernel.Dev.Dev.Switch.Block.attach
     call Hexagon.Kernel.Dev.Dev.Switch.Parallel.attach
     call Hexagon.Kernel.Dev.Dev.Switch.Proc.attach
+    call Hexagon.Kernel.Dev.Dev.Switch.PTY.attach
 
     call Hexagon.Kernel.Dev.Dev.Switch.Output.attach ;; Configures default video resolution and settings
 

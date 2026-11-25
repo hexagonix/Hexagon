@@ -159,7 +159,7 @@ Hexagon.Kern.Syscall.hexagonServices:
 ;; Hexagon keyboard input services
 
     dd Hexagon.Kernel.Dev.Keyboard.Keyboard.waitKeyboard         ;; 54
-    dd Hexagon.Kernel.Dev.Keyboard.Keyboard.getString            ;; 55
+    dd Hexagon.Kern.Syscall.nullSystemCall                       ;; 55
     dd Hexagon.Kernel.Dev.Keyboard.Keyboard.getSpecialKeysStatus ;; 56
     dd Hexagon.Kernel.Dev.Console.Console.changeFont             ;; 57
     dd Hexagon.Kernel.Dev.Keyboard.Keyboard.changeLayout         ;; 58
@@ -199,4 +199,9 @@ Hexagon.Kern.Syscall.hexagonServices:
 ;; Hexagon kernel diagnostics service
 
     dd Hexagon.Kern.Dmesg.sysctl                                 ;; 70
+
+;; Hexagon file and device management service
+
+    dd Hexagon.Kernel.Dev.Dev.read                               ;; 71
+    dd Hexagon.Kern.FD.dup2                                      ;; 72
 

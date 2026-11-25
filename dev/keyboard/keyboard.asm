@@ -96,9 +96,11 @@ Hexagon.Keyboard.keyCodes: ;; Keycodes
 .F9        = 0x43
 .F10       = 0x44
 .home      = 0x47
-.end       = 0x49
+.end       = 0x4F
+.upKey     = 0x48
 .leftKey   = 0x4B
 .rightKey  = 0x4D
+.downKey   = 0x50
 .delete    = 0x53
 .print     = 0x54
 .F11       = 0x57
@@ -166,273 +168,6 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.setupKeyboard:
 
 ;;************************************************************************************
 
-;; Get string from keyboard
-;;
-;; The line goes into a buffer the caller owns. Nothing of the kernel's own is
-;; ever named by a pointer going back, which is what lets this be both the
-;; kernel's routine and the system call, with no adapter in between
-;;
-;; Input:
-;;
-;; AL  - Maximum string length to obtain
-;; EBX - Echo of what was typed (1234h = without echo, <> 1234h = with echo)
-;; EDI - Caller's own buffer, room for that many characters plus a terminator
-;;
-;; Output:
-;;
-;; The line at EDI, NUL terminated. EDI preserved
-
-Hexagon.Kernel.Dev.Keyboard.Keyboard.getString:
-
-;; The line is written into the caller's own buffer at CPL 0, where paging
-;; refuses nothing. Check the caller could have reached it itself first
-
-    push ebx
-    push ecx
-
-    movzx ecx, al
-    inc ecx ;; Room for the terminator this leaves behind
-
-    mov ebx, edi
-
-    call Hexagon.Arch.Paging.rangeIsCallerWritable
-
-    pop ecx
-    pop ebx
-
-    jc .badBuffer
-
-    push eax
-    push ecx
-    push edx
-    push edi ;; The caller's own destination, which the editing below does not keep
-
-    push es
-
-    mov dword[.echo], ebx
-
-    mov byte[.string], 0
-    mov byte[.currentCharacter], 0
-
-    push ds ;; Kernel data segment
-    pop es
-
-    mov ecx, 0 ;; Character counter
-    movzx ebx, al ;; Maximum characters
-
-    call Hexagon.Kernel.Dev.Console.Console.getCursor
-
-.getKey:
-
-    call Hexagon.Kernel.Dev.Console.Console.positionCursor
-
-    cmp dword[.echo], 1234h
-    je .continue
-
-.withEcho:
-
-    mov esi, .string
-
-    call Hexagon.Kernel.Dev.Console.Console.printString
-
-    mov al, ' '
-
-    call Hexagon.Kernel.Dev.Console.Console.printCharacter
-
-.continue:
-
-    push edx
-
-    add dl, byte[.currentCharacter]
-
-    cmp dword[.echo], 1234h
-    je .withoutMoveCursor
-
-    call Hexagon.Kernel.Dev.Console.Console.positionCursor
-
-.withoutMoveCursor:
-
-    pop edx
-
-    call Hexagon.Kernel.Dev.Keyboard.Keyboard.waitKeyboard ;; Get character
-
-    cmp ah, Hexagon.Keyboard.keyCodes.home ;; Code
-    je .homeKey
-
-    cmp ah, Hexagon.Keyboard.keyCodes.end
-    je .endKey
-
-    cmp ah, Hexagon.Keyboard.keyCodes.delete
-    je .deleteKey
-
-    cmp ah, Hexagon.Keyboard.keyCodes.leftKey
-    je .leftKey
-
-    cmp ah, Hexagon.Keyboard.keyCodes.rightKey
-    je .rightKey
-
-    cmp al, 10 ;; ASCII code
-    je .end
-
-    cmp al, Hexagon.Keyboard.keyCodes.backspace
-    je .backspaceKey
-
-    cmp al, ' '
-    jb .getKey ;; Do not use this key
-
-    cmp al, '~'
-    ja .getKey ;; Do not use this key
-
-    cmp cl, bl
-    je .getKey
-
-    push edx
-
-    movzx esi, byte[.currentCharacter]
-
-    add esi, .string
-
-    mov edx, 0
-
-    call Hexagon.Libkern.String.insertCharacterInString
-
-    pop edx
-
-    inc byte[.currentCharacter]
-
-    inc cl
-
-    jmp .getKey
-
-.backspaceKey:
-
-    cmp byte[.currentCharacter], 0 ;; Not allowed
-    je .getKey
-
-    dec byte[.currentCharacter]
-
-    push ecx
-
-    movzx esi, byte[.currentCharacter]
-
-    add esi, .string
-
-    mov eax, 0
-
-    call Hexagon.Libkern.String.removeCharacterInString
-
-    pop ecx
-
-    dec cl
-
-    jmp .getKey
-
-.deleteKey:
-
-    cmp byte[.currentCharacter], cl ;; Not allowed
-    je .getKey
-
-    push ecx
-
-    movzx esi, byte[.currentCharacter]
-
-    add esi, .string
-
-    mov eax, 0
-
-    call Hexagon.Libkern.String.removeCharacterInString
-
-    pop ecx
-
-    dec cl
-
-    jmp .getKey
-
-.homeKey:
-
-    mov byte[.currentCharacter], 0
-
-    jmp .getKey
-
-.endKey:
-
-    mov byte[.currentCharacter], cl
-
-    jmp .getKey
-
-.leftKey:
-
-    cmp byte[.currentCharacter], 0 ;; Not allowed
-    je .getKey
-
-    dec byte[.currentCharacter]
-
-    jmp .getKey
-
-.rightKey:
-
-    cmp byte[.currentCharacter], cl ;; Not allowed
-    je .getKey
-
-    inc byte[.currentCharacter]
-
-    jmp .getKey
-
-.end:
-
-    and ecx, 0x0F
-
-;; Into the buffer the caller gave, so nothing of the kernel's own goes back.
-;; EDI comes off the stack and not out of the register: the line editing
-;; above runs Hexagon.Libkern.String.removeCharacterInString on every backspace,
-;; which does not preserve it, and copying into whatever it left behind walks
-;; this very buffer forward over itself and never reaches a terminator
-
-    push esi
-
-    mov edi, dword[esp + 8]
-
-    mov esi, .string
-
-.copyToCaller:
-
-    lodsb
-
-    stosb
-
-    cmp al, 0
-
-    jne .copyToCaller
-
-    pop esi
-
-    pop es
-
-    pop edi
-    pop edx
-    pop ecx
-    pop eax
-
-    mov dword[.echo], 00h
-
-    clc
-
-    ret
-
-.badBuffer:
-
-    mov eax, Hexagon.Kern.Proc.badAddress
-
-    stc
-
-    ret
-
-.string: times 256 db 0 ;; Buffer to store characters
-.currentCharacter: db 0
-.echo: dd 0 ;; Registers whether or not the pressed key should be displayed (echo)
-
-;;************************************************************************************
-
 ;; Get special key status
 ;;
 ;; Output:
@@ -487,10 +222,11 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.changeLayout:
 
 ;; Wait for keys on the keyboard
 ;;
-;; Input:
+;; Output:
 ;;
 ;; AL - ASCII Character
 ;; AH - Code
+;; CF set, with no key, when the read in progress may not wait
 
 Hexagon.Kernel.Dev.Keyboard.Keyboard.waitKeyboard:
 
@@ -530,7 +266,7 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.waitKeyboard:
     mov al, byte[.currentCodesIndex]
 
     cmp byte[Hexagon.Kern.Services.keyboardHandler.scanCodes.index], al
-    je .keyLoop
+    je .noKey
 
 ;; A new scan code is sitting on the shared cursor, but it may only be
 ;; consumed by the foreground process of the currently active VT. An
@@ -538,10 +274,10 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.waitKeyboard:
 ;; the real reader
 
     cmp edx, dword[Hexagon.Console.activeVT]
-    jne .keyLoop
+    jne .noKey
 
     cmp dword[Hexagon.Console.VT.foregroundSlot + edx * 4], ecx
-    jne .keyLoop
+    jne .noKey
 
 ;; Hexagon.Kern.Services.keyboardHandler tags every stored byte with the VT
 ;; that was on screen when it was captured, and that tag is trusted over the
@@ -603,6 +339,12 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.waitKeyboard:
 
 .notExtendedPrefix:
 
+;; Kept for the tty, where an arrow and the keypad digit sharing its code are
+;; told apart by this prefix alone
+
+    mov bl, byte[.extendedPending]
+    mov byte[.extendedKey + edx], bl
+
 ;; Clear the pending flag on this byte no matter what it turns out to be,
 ;; make or break code, so a release right after E0 (Numpad / being let go)
 ;; can't leave it stuck set for whatever key comes next
@@ -647,10 +389,27 @@ Hexagon.Kernel.Dev.Keyboard.Keyboard.waitKeyboard:
     pop ecx
     pop ebx
 
+    clc
+
+    ret
+
+;; Nothing for this caller yet
+
+.noKey:
+
+    call Hexagon.Kern.FD.mayWait
+
+    jnc .keyLoop
+
+    pop edx
+    pop ecx
+    pop ebx
+
     ret
 
 .currentCodesIndex: db 0
 .extendedPending: db 0
+.extendedKey: times Hexagon.Console.VT.count db 0 ;; Whether each VT's last key came after E0
 
 ;;************************************************************************************
 
