@@ -82,10 +82,13 @@ use32
 
 Hexagon.Kern.Sysctl.Functions.kernelLog = 1 ;; The kernel's own messages
 Hexagon.Kern.Sysctl.Functions.cpuTime   = 2 ;; Ticks of the processor, as kern.cp_time
+Hexagon.Kern.Sysctl.Functions.vmStats   = 3 ;; Memory in pages, as vm.stats
+Hexagon.Kern.Sysctl.Functions.blocks    = 4 ;; Blocks of a process, as KERN_PROC_VMMAP
 
 ;; Input:
 ;;
 ;; EBX - Function number
+;; EDX - PID, for function 4
 ;; ESI - Caller's buffer
 ;; ECX - Caller's buffer size
 ;;
@@ -116,6 +119,14 @@ Hexagon.Kern.Sysctl.sysctl:
     cmp ebx, Hexagon.Kern.Sysctl.Functions.cpuTime
 
     je Hexagon.Kern.Sched.readCPUTime
+
+    cmp ebx, Hexagon.Kern.Sysctl.Functions.vmStats
+
+    je Hexagon.Arch.Mm.readVMStats
+
+    cmp ebx, Hexagon.Kern.Sysctl.Functions.blocks
+
+    je Hexagon.Kern.Proc.readBlocks
 
     stc
 

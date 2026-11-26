@@ -714,6 +714,74 @@ Hexagon.Arch.Paging.revokeRangeFromUser:
 
 ;;************************************************************************************
 
+;; Whether a block of a process is one of the tables its directory points at,
+;; such as Hexagon.Arch.Paging.splitLargePage makes
+;;
+;; Input:
+;;
+;; EAX - Slot
+;; EBX - The block, as malloc gave it
+;;
+;; Output:
+;;
+;; CF set if it is
+
+Hexagon.Arch.Paging.isTableOf:
+
+    pushad
+
+    mov esi, dword[Hexagon.Processes.Table.pageDirectory + eax * 4]
+
+    cmp esi, 0
+
+    je .not ;; It runs on the kernel's own directory
+
+    xor ecx, ecx
+
+.nextEntry:
+
+    mov edx, dword[esi + ecx * 4]
+
+    test edx, Hexagon.Arch.Paging.Entry.present
+
+    jz .skip
+
+    test edx, Hexagon.Arch.Paging.Entry.largePage
+
+    jnz .skip
+
+    and edx, not 0FFFh
+
+    cmp edx, ebx
+
+    je .is
+
+.skip:
+
+    inc ecx
+
+    cmp ecx, Hexagon.Arch.Paging.directoryEntries
+
+    jb .nextEntry
+
+.not:
+
+    popad
+
+    clc
+
+    ret
+
+.is:
+
+    popad
+
+    stc
+
+    ret
+
+;;************************************************************************************
+
 ;; Replaces the 4 MB entry describing a region with a table of 1024 pages that
 ;; maps exactly the same memory, so that a range inside it can be granted page
 ;; by page. Without this there is nothing finer than the whole region to grant,
