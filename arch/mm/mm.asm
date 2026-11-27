@@ -172,7 +172,7 @@ Hexagon.Memory.Allocator Hexagon.Arch.Memory.Allocator Hexagon.Arch.Memory.proce
 ;; EBX - Total memory found and available for use, in bytes
 ;; ECX - Total memory found and available for use, in Mbytes (less precise)
 ;; EDX - Memory reserved for Hexagon, in bytes
-;; ESI - Total allocated memory (reserved+processes), in kbytes
+;; ESI - Memory reserved for Hexagon and allocated since, in kbytes
 
 Hexagon.Arch.Mm.memoryUse:
 
@@ -197,24 +197,157 @@ Hexagon.Arch.Mm.memoryUse:
 
 .provideAllocatedMemory:
 
-;; Add Hexagon reserved memory
+    mov esi, eax
 
-    push eax
-    push ebx
+    add esi, Hexagon.Arch.Memory.kernelReservedMemory
 
-    mov eax, Hexagon.Arch.Memory.kernelReservedMemory
+    shr esi, 10 ;; Bytes to kbytes
 
-;; Convert from bytes to kbytes now
+    ret
 
-    shr eax, 10 ;; EAX/1024
-    shr eax, 10 ;; EAX/1024
+;;************************************************************************************
+
+Hexagon.Arch.Mm.pageSize = 4096
+
+;; Function 3 of hx.sysctl, the memory in pages, as vm.stats in BSD. Pages
+;; held by the kernel are wired, as nothing of theirs can be given away:
+;;
+;; +0  dd Bytes in a page
+;; +4  dd Pages in all
+;; +8  dd Pages free
+;; +12 dd Pages wired from boot, the image, data and stack of the kernel
+;; +16 dd Pages wired since, taken by the kernel for itself or for a process
+;; +20 dd Pages processes hold
+;;
+;; Input:
+;;
+;; ESI - Caller's buffer, already checked by Hexagon.Kern.Sysctl.sysctl
+;; ECX - Caller's buffer size
+;;
+;; Output:
+;;
+;; EAX - Bytes copied, or the size needed with CF set
+
+Hexagon.Arch.Mm.readVMStats.size = 24
+
+Hexagon.Arch.Mm.readVMStats:
+
+    mov eax, Hexagon.Arch.Mm.readVMStats.size
+
+    cmp ecx, eax
+
+    jb .tooSmall
+
+    pushad
+
+    pushfd
+
+    cli ;; The tallies from the same instant
+
+;; What processes hold is the sum of their tallies, and what the kernel took
+;; since boot is the rest of what the allocator gave
+
+    xor edx, edx
+    xor ecx, ecx
+
+.sumSlots:
+
+    add edx, [Hexagon.Memory.Allocator.perSlot + ecx * 4]
+
+    inc ecx
+
+    cmp ecx, 256
+
+    jb .sumSlots
 
     mov ebx, dword[Hexagon.Memory.usedMemory]
-    add ebx, eax
-    mov esi, ebx
 
-    pop ebx
-    pop eax
+    sub ebx, edx
+
+    jae .kernelKnown
+
+    xor ebx, ebx
+
+.kernelKnown:
+
+    mov ebp, dword[Hexagon.Memory.totalMemory]
+
+    popfd
+
+;; In pages, a part of one counting as a whole
+
+    shr ebp, 12
+
+    add ebx, Hexagon.Arch.Mm.pageSize - 1
+    shr ebx, 12
+
+    add edx, Hexagon.Arch.Mm.pageSize - 1
+    shr edx, 12
+
+    mov ecx, ebp
+
+    sub ecx, (Hexagon.Arch.Memory.kernelReservedMemory + Hexagon.Arch.Mm.pageSize - 1) shr 12
+
+    sub ecx, ebx
+
+    jb .noneFree
+
+    sub ecx, edx
+
+    jae .freeKnown
+
+.noneFree:
+
+    xor ecx, ecx
+
+.freeKnown:
+
+    push es
+
+    mov di, 10h ;; The caller's buffer, as hx.getProcesses reaches its own
+    mov es, di
+
+    mov edi, esi
+
+    cld
+
+    mov eax, Hexagon.Arch.Mm.pageSize
+
+    stosd
+
+    mov eax, ebp
+
+    stosd
+
+    mov eax, ecx
+
+    stosd
+
+    mov eax, (Hexagon.Arch.Memory.kernelReservedMemory + Hexagon.Arch.Mm.pageSize - 1) shr 12
+
+    stosd
+
+    mov eax, ebx
+
+    stosd
+
+    mov eax, edx
+
+    stosd
+
+    pop es
+
+    popad
+
+    mov eax, Hexagon.Arch.Mm.readVMStats.size
+
+    clc
+
+    ret
+
+.tooSmall:
+
+    stc
 
     ret
 
@@ -1007,6 +1140,101 @@ Hexagon.Arch.Mm.memoryUsedBySlot:
     and eax, Hexagon.Arch.Mm.Block.slotMask
 
     mov eax, [Hexagon.Memory.Allocator.perSlot + eax * 4]
+
+    ret
+
+;;************************************************************************************
+
+;; Finds the next block a slot holds, in address order. The caller keeps
+;; interrupts off from the first call to the last
+;;
+;; Input:
+;;
+;; EAX - Slot
+;; EBX - Pointer the last call gave, 0 to start
+;;
+;; Output:
+;;
+;; EBX - The block, as malloc gave it
+;; EDX - Its size, header included
+;; CF set when there is none left
+
+Hexagon.Arch.Mm.nextBlockOf:
+
+    push eax
+    push ecx
+
+    push es
+
+    mov cx, 18h
+    mov es, cx
+
+    and eax, Hexagon.Arch.Mm.Block.slotMask
+    or eax, Hexagon.Arch.Mm.Block.stamp
+
+    cmp ebx, 0
+
+    jne .fromLast
+
+    mov ebx, [Hexagon.Memory.Allocator.arenaStart]
+
+    jmp .check
+
+.fromLast:
+
+    sub ebx, Hexagon.Arch.Mm.Block.headerSize
+
+    add ebx, [es:ebx + Hexagon.Arch.Mm.Block.size]
+
+.check:
+
+    cmp ebx, [Hexagon.Memory.Allocator.arenaEnd]
+
+    jae .none
+
+    mov ecx, [es:ebx + Hexagon.Arch.Mm.Block.size]
+
+;; Same guard as freeProcessBlocks, for a chain that no longer describes the arena
+
+    cmp ecx, Hexagon.Arch.Mm.Block.minimumSize
+
+    jb .none
+
+    test ecx, 3
+
+    jnz .none
+
+    cmp [es:ebx + Hexagon.Arch.Mm.Block.owner], eax
+
+    je .found
+
+    add ebx, ecx
+
+    jmp .check
+
+.found:
+
+    mov edx, ecx
+
+    add ebx, Hexagon.Arch.Mm.Block.headerSize
+
+    pop es
+
+    pop ecx
+    pop eax
+
+    clc
+
+    ret
+
+.none:
+
+    pop es
+
+    pop ecx
+    pop eax
+
+    stc
 
     ret
 

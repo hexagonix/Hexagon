@@ -612,55 +612,19 @@ Hexagon.Kern.Dmesg.appendToBuffer:
 
 ;;************************************************************************************
 
-;; hx.sysctl's own entry point, a single place to read kernel-maintained
-;; data selected by a function number instead of a dedicated syscall per
-;; kind of data. Only function 1 exists so far, the kernel's own log
-;; buffer above (userland messages excluded, see createMessage). Reading
-;; it never resets writeIndex/totalWritten, so repeated calls always see
-;; the same accumulated history
+;; Function 1 of hx.sysctl, the kernel's own log buffer above, without the
+;; messages of userland. Reading it leaves the buffer as it was
 ;;
 ;; Input:
 ;;
-;; EBX - Function number
-;; ESI - Caller's buffer
+;; ESI - Caller's buffer, already checked by Hexagon.Kern.Sysctl.sysctl
 ;; ECX - Caller's buffer size
 ;;
 ;; Output:
 ;;
 ;; EAX - Bytes copied
-;; CF defined in case of unknown function number
 
-Hexagon.Kern.Dmesg.sysctl:
-
-;; The caller's own buffer, written into at CPL 0 where paging refuses nothing,
-;; so the range is checked against what the process can reach first
-
-    push ebx
-
-    mov ebx, esi
-
-    call Hexagon.Arch.Paging.rangeIsCallerWritable
-
-    pop ebx
-
-    jc .badBuffer
-
-    cmp ebx, 1
-    je .getKernelLog
-
-    stc
-
-    ret
-.badBuffer:
-
-    mov eax, Hexagon.Kern.Proc.badAddress
-
-    stc
-
-    ret
-
-
-.getKernelLog:
+Hexagon.Kern.Dmesg.readLog:
 
     push ebx
     push ecx

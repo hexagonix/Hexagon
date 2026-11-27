@@ -172,6 +172,12 @@ Hexagon.Kern.Services.timerHandler:
     inc dword[.timerCounter] ;; Increment the counter
     inc dword[.relativeCounter]
 
+;; The tick goes to what the processor was doing, as statclock does in BSD
+
+    mov eax, dword[esp + 16] ;; CS of the code interrupted, past EAX, DS, ES and EIP
+
+    call Hexagon.Kern.Sched.countTick
+
     mov al, 20h
 
     out 20h, al ;; Sent unconditionally and up front. Hexagon.Kern.Sched.maybeSchedule
@@ -389,6 +395,10 @@ Hexagon.Kern.Services.keyboardHandler:
 .incrementIndex:
 
     inc byte[.scanCodes.index]
+
+    mov eax, .scanCodes
+
+    call Hexagon.Kern.Sched.wakeChannel
 
 .doNotStore:
 

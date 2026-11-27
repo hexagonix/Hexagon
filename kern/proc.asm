@@ -155,6 +155,18 @@ times Hexagon.Processes.Table.limit dd 0 ;; Saved stack pointer while not runnin
 Hexagon.Processes.Table.wakeTick:
 times Hexagon.Processes.Table.limit dd 0 ;; Absolute tick target while in States.sleeping
 
+Hexagon.Processes.Table.waitChannel:
+times Hexagon.Processes.Table.limit dd 0 ;; What a sleeping process waits for, 0 for the time alone
+
+;; Ticks of the timer that found this process running, in its own code and in
+;; the kernel, as the CPU time BSD keeps for each process
+
+Hexagon.Processes.Table.userTicks:
+times Hexagon.Processes.Table.limit dd 0
+
+Hexagon.Processes.Table.systemTicks:
+times Hexagon.Processes.Table.limit dd 0
+
 Hexagon.Processes.Table.argBase:
 times Hexagon.Processes.Table.limit dd 0 ;; Alloc process arguments buffer, own life as the process; 0 = none
 
@@ -1356,11 +1368,18 @@ Hexagon.Kern.Proc.calculateArgumentsAddress:
 ;; +9  Name, NUL-terminated within a fixed 64-byte field
 ;; +73 db VT index (Hexagon.Processes.Table.tty)
 ;; +74 dd Bytes the process is holding
+;; +78 dd Ticks of the timer spent in its own code
+;; +82 dd Ticks of the timer spent in the kernel for it
+;; +86 dd Bytes of its image: code, data and stack
+;; +90 dd Bytes of the tables that map it and of its kernel stack
+;; +94 dd Bytes of its arguments and environment
+;; +98 dd Bytes it took through hx.malloc
+;; +102 dd Bytes it shares with other processes
 ;;
 ;; The record size travels with the data, so a field appended at the end
 ;; leaves anything built against the shorter layout still stepping correctly
 
-Hexagon.Kern.Proc.getProcessTable.recordSize = 78 ;; 4 + 4 + 1 + 64 + 1 + 4
+Hexagon.Kern.Proc.getProcessTable.recordSize = 106 ;; 4 + 4 + 1 + 64 + 1 + 4 * 9
 
 ;; Input:
 ;;
@@ -1547,6 +1566,73 @@ Hexagon.Kern.Proc.getProcessTable:
 
     stosd
 
+    mov eax, dword[Hexagon.Processes.Table.userTicks + ebx * 4]
+
+    stosd
+
+    mov eax, dword[Hexagon.Processes.Table.systemTicks + ebx * 4]
+
+    stosd
+
+;; What it holds by kind, as the text, data and stack sizes of BSD, from the
+;; blocks the table points at. The heap is what is left of its tally
+
+    mov eax, dword[Hexagon.Processes.Table.base + ebx * 4]
+
+    call Hexagon.Kern.Proc.blockSize
+
+    mov esi, eax
+
+    stosd
+
+    mov eax, dword[Hexagon.Processes.Table.pagingBlock + ebx * 4]
+
+    call Hexagon.Kern.Proc.blockSize
+
+    mov edx, eax
+
+    mov eax, ebx
+
+    call Hexagon.Kern.Proc.tableBytes
+
+    add eax, edx
+    add esi, eax
+
+    stosd
+
+    mov eax, dword[Hexagon.Processes.Table.argBase + ebx * 4]
+
+    call Hexagon.Kern.Proc.blockSize
+
+    mov edx, eax
+
+    mov eax, dword[Hexagon.Processes.Table.envBase + ebx * 4]
+
+    call Hexagon.Kern.Proc.blockSize
+
+    add eax, edx
+    add esi, eax
+
+    stosd
+
+    mov eax, ebx
+
+    call Hexagon.Arch.Mm.memoryUsedBySlot
+
+    sub eax, esi
+
+    jae .heapKnown
+
+    xor eax, eax
+
+.heapKnown:
+
+    stosd
+
+    xor eax, eax ;; Nothing is shared yet
+
+    stosd
+
 .next:
 
     inc ebx
@@ -1595,6 +1681,283 @@ Hexagon.Kern.Proc.getProcessTable:
     ret
 
 .liveCount: dd 0
+
+;; Input: EAX - Pointer to a block, or 0. Output: EAX - Its size, 0 if none
+
+Hexagon.Kern.Proc.blockSize:
+
+    push ebx
+    push edx
+
+    mov ebx, eax
+
+    call Hexagon.Arch.Mm.blockExtent
+
+    mov eax, edx
+
+    jnc .known
+
+    xor eax, eax
+
+.known:
+
+    pop edx
+    pop ebx
+
+    ret
+
+;; Bytes of the page tables a process holds as blocks of their own
+;;
+;; Input: EAX - Slot. Output: EAX - Bytes
+
+Hexagon.Kern.Proc.tableBytes:
+
+    push ebx
+    push ecx
+    push edx
+
+    mov ecx, eax ;; Slot
+    xor ebx, ebx
+    xor eax, eax ;; Bytes
+
+.next:
+
+    push eax
+
+    mov eax, ecx
+
+    call Hexagon.Arch.Mm.nextBlockOf
+
+    pop eax
+
+    jc .done
+
+    push eax
+
+    mov eax, ecx
+
+    call Hexagon.Arch.Paging.isTableOf
+
+    pop eax
+
+    jnc .next
+
+    add eax, edx
+
+    jmp .next
+
+.done:
+
+    pop edx
+    pop ecx
+    pop ebx
+
+    ret
+
+;;************************************************************************************
+
+;; Function 4 of hx.sysctl, the blocks of memory a process holds, as
+;; KERN_PROC_VMMAP in FreeBSD. A dword with the size of a record leads the
+;; buffer, and each record is:
+;;
+;; +0 dd Address of the block in physical memory
+;; +4 dd Bytes, its header included
+;; +8 dd Kind, one of Hexagon.Kern.Proc.Blocks
+;;
+;; Input:
+;;
+;; EDX - PID
+;; ESI - Caller's buffer, already checked by Hexagon.Kern.Sysctl.sysctl
+;; ECX - Caller's buffer size
+;;
+;; Output:
+;;
+;; EAX - Records written, or the size needed with CF set
+;; CF set with EAX at 0 if there is no such process
+
+Hexagon.Kern.Proc.Blocks.recordSize  = 12
+Hexagon.Kern.Proc.Blocks.image       = 1 ;; Code, data and stack
+Hexagon.Kern.Proc.Blocks.paging      = 2 ;; Tables that map it and its kernel stack
+Hexagon.Kern.Proc.Blocks.arguments   = 3
+Hexagon.Kern.Proc.Blocks.environment = 4
+Hexagon.Kern.Proc.Blocks.heap        = 5 ;; Taken through hx.malloc
+
+Hexagon.Kern.Proc.readBlocks:
+
+    push ebx
+    push ecx
+    push edx
+    push esi
+    push edi
+    push ebp
+
+    pushfd
+
+    cli ;; The blocks must not change between the two passes
+
+    mov [.bufferSize], ecx
+
+    xor ebp, ebp ;; Slot
+
+.findSlot:
+
+    cmp ebp, Hexagon.Processes.Table.limit
+
+    jae .noProcess
+
+    cmp byte[Hexagon.Processes.Table.state + ebp], Hexagon.Processes.Table.States.free
+
+    je .nextSlot
+
+    cmp byte[Hexagon.Processes.Table.state + ebp], Hexagon.Processes.Table.States.reserved
+
+    je .nextSlot
+
+    cmp dword[Hexagon.Processes.Table.pid + ebp * 4], edx
+
+    je .slotFound
+
+.nextSlot:
+
+    inc ebp
+
+    jmp .findSlot
+
+.slotFound:
+
+;; First the room it takes, so nothing is written to a buffer too small
+
+    xor ecx, ecx
+    xor ebx, ebx
+
+.count:
+
+    mov eax, ebp
+
+    call Hexagon.Arch.Mm.nextBlockOf
+
+    jc .counted
+
+    inc ecx
+
+    jmp .count
+
+.counted:
+
+    mov eax, ecx
+
+    imul eax, Hexagon.Kern.Proc.Blocks.recordSize
+
+    add eax, 4
+
+    cmp eax, [.bufferSize]
+
+    ja .tooSmall
+
+    mov edi, esi
+
+    mov dword[edi], Hexagon.Kern.Proc.Blocks.recordSize
+
+    add edi, 4
+
+    xor ecx, ecx
+    xor ebx, ebx
+
+.write:
+
+    mov eax, ebp
+
+    call Hexagon.Arch.Mm.nextBlockOf
+
+    jc .written
+
+    mov dword[edi], ebx
+    mov dword[edi + 4], edx
+
+;; Its kind, from whichever field of the table points at it
+
+    mov eax, Hexagon.Kern.Proc.Blocks.image
+
+    cmp ebx, dword[Hexagon.Processes.Table.base + ebp * 4]
+
+    je .kindKnown
+
+    mov eax, Hexagon.Kern.Proc.Blocks.paging
+
+    cmp ebx, dword[Hexagon.Processes.Table.pagingBlock + ebp * 4]
+
+    je .kindKnown
+
+    mov eax, ebp
+
+    call Hexagon.Arch.Paging.isTableOf
+
+    mov eax, Hexagon.Kern.Proc.Blocks.paging
+
+    jc .kindKnown
+
+    mov eax, Hexagon.Kern.Proc.Blocks.arguments
+
+    cmp ebx, dword[Hexagon.Processes.Table.argBase + ebp * 4]
+
+    je .kindKnown
+
+    mov eax, Hexagon.Kern.Proc.Blocks.environment
+
+    cmp ebx, dword[Hexagon.Processes.Table.envBase + ebp * 4]
+
+    je .kindKnown
+
+    mov eax, Hexagon.Kern.Proc.Blocks.heap
+
+.kindKnown:
+
+    mov dword[edi + 8], eax
+
+    add edi, Hexagon.Kern.Proc.Blocks.recordSize
+
+    inc ecx
+
+    jmp .write
+
+.written:
+
+    mov eax, ecx
+
+    popfd
+
+    clc
+
+    jmp .end
+
+.tooSmall:
+
+    popfd
+
+    stc
+
+    jmp .end
+
+.noProcess:
+
+    popfd
+
+    xor eax, eax
+
+    stc
+
+.end:
+
+    pop ebp
+    pop edi
+    pop esi
+    pop edx
+    pop ecx
+    pop ebx
+
+    ret
+
+.bufferSize: dd 0
 
 ;;************************************************************************************
 
@@ -1798,6 +2161,9 @@ Hexagon.Kern.Proc.registerSlot:
     mov dword[Hexagon.Processes.Table.entry + edx * 4], eax
 
     mov dword[Hexagon.Processes.Table.esp + edx * 4], 0 ;; Never dispatched yet
+
+    mov dword[Hexagon.Processes.Table.userTicks + edx * 4], 0
+    mov dword[Hexagon.Processes.Table.systemTicks + edx * 4], 0
 
 ;; Hexagon.Kern.Proc.calculateArgumentsAddress computes an address from this
 ;; field however the process was created, so it must never be left at 0. A

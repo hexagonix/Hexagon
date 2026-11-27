@@ -198,7 +198,7 @@ Hexagon.Kern.Syscall.hexagonServices:
 
 ;; Hexagon kernel diagnostics service
 
-    dd Hexagon.Kern.Dmesg.sysctl                                 ;; 70
+    dd Hexagon.Kern.Sysctl.sysctl                                ;; 70
 
 ;; Hexagon file and device management service
 

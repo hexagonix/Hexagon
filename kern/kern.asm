@@ -106,6 +106,7 @@ include "kern/services.asm"             ;; Interrupt routines and IRQ handlers
 ;; Users and other utilities
 
 include "kern/dmesg.asm"                ;; Functions for handling kernel messages
+include "kern/sysctl.asm"               ;; Data the kernel keeps, read through hx.sysctl
 include "kern/panic.asm"                ;; Functions for displaying and identifying Hexagon errors
 include "kern/hxbi.asm"                 ;; Reads the HXBI block HBoot hands off in EBX
 include "kern/users.asm"                ;; Permissions and user management
